@@ -79,3 +79,82 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Note
 
 This application does not store aiml.com content locally beyond temporary caching. It respects the source website's content and only provides a streamlined way to access publicly available resources.
+
+# Crawl4AI Implementation Examples
+
+This repository contains examples and reference documentation for [Crawl4AI](https://github.com/unclecode/crawl4ai), an open-source LLM-friendly web crawler and scraper designed for AI applications.
+
+## Contents
+
+- `llm4crawl.md`: Comprehensive reference guide for Crawl4AI
+- `crawl4ai_example.py`: Example implementations for various extraction techniques
+- `requirements.txt`: Dependencies for the examples
+
+## Installation
+
+1. Install the required dependencies:
+
+```bash
+# Install base requirements
+pip install -r requirements.txt
+
+# Run the post-installation setup
+crawl4ai-setup
+```
+
+2. For advanced features, uncomment the relevant dependencies in `requirements.txt` before installing:
+
+```bash
+# For clustering features
+pip install crawl4ai[torch]
+crawl4ai-setup
+
+# For transformer-based features  
+pip install crawl4ai[transformer]
+crawl4ai-setup
+
+# For all features
+pip install crawl4ai[all]
+crawl4ai-setup
+```
+
+## Running the Examples
+
+The example script demonstrates several extraction approaches:
+
+```bash
+# Run all examples
+python crawl4ai_example.py
+```
+
+## Example Features
+
+1. **Basic Crawling**: Extracts clean markdown from a webpage
+2. **CSS-based Extraction**: Extracts structured data using CSS selectors
+3. **Clustering-based Extraction**: Extracts content clusters based on semantic similarity
+4. **Parallel Crawling**: Crawls multiple URLs in parallel
+
+## Customizing the Examples
+
+To use the examples with your own websites:
+
+1. Update the URLs in the `main()` function in `crawl4ai_example.py`
+2. Adjust the CSS selectors in the schema to match the structure of your target website
+3. Customize the extraction parameters based on your specific needs
+
+## Additional Resources
+
+- [Crawl4AI Documentation](https://docs.crawl4ai.com/)
+- [Crawl4AI GitHub Repository](https://github.com/unclecode/crawl4ai)
+
+## Troubleshooting
+
+If you encounter browser-related issues:
+```bash
+python -m playwright install --with-deps chromium
+```
+
+For detailed diagnostics:
+```bash
+crawl4ai-doctor
+```

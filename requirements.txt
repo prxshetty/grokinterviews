@@ -1,0 +1,8 @@
+# Core Crawl4AI installation
+crawl4ai>=0.4.3b
+
+# Optional dependencies for advanced features
+# Uncomment as needed
+# torch>=2.0.0
+# transformers>=4.30.0
+# nltk>=3.8.1 

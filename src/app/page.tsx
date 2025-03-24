@@ -10,6 +10,13 @@ interface SearchResult {
   title: string;
   url: string;
   description: string;
+  markdown?: string; // Optional markdown content from Crawl4AI
+  metadata?: {
+    author?: string;
+    date?: string;
+    tags?: string[];
+    [key: string]: any;
+  }
 }
 
 export default function Home() {
@@ -104,11 +111,11 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
+    <main className="min-h-screen bg-blue-100 py-12">
       <div className="container mx-auto px-4">
         <header className="mb-12 text-center">
           <h1 className="text-4xl font-bold mb-4 text-blue-800">Grok Interviews</h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-blue-600 bg-yellow-100 p-2 rounded inline-block">
             Your one-stop resource for Data Science interview preparation
           </p>
         </header>
