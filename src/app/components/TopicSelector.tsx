@@ -13,7 +13,7 @@ const TopicSelector: React.FC<TopicSelectorProps> = ({
 }) => {
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Select a Topic</h2>
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">Select a Topic</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {topics.map((topic) => (
           <button
@@ -21,7 +21,7 @@ const TopicSelector: React.FC<TopicSelectorProps> = ({
             className={`p-3 rounded-lg border transition-colors ${
               selectedTopic === topic
                 ? 'bg-blue-600 text-white'
-                : 'bg-white hover:bg-gray-100'
+                : 'bg-white text-slate-900 hover:bg-gray-100'
             }`}
             onClick={() => onSelectTopic(topic)}
           >

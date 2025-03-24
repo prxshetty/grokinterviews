@@ -16,14 +16,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Custom Search</h2>
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">Custom Search</h2>
       <form onSubmit={handleSubmit} className="flex">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for keywords (e.g., gradient descent)"
-          className="flex-grow p-3 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-grow p-3 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-slate-900"
         />
         <button
           type="submit"

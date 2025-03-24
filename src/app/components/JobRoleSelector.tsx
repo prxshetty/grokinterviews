@@ -13,7 +13,7 @@ const JobRoleSelector: React.FC<JobRoleSelectorProps> = ({
 }) => {
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">Select a Job Role</h2>
+      <h2 className="text-xl font-semibold mb-4 text-slate-900">Select a Job Role</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {jobRoles.map((role) => (
           <button
@@ -21,7 +21,7 @@ const JobRoleSelector: React.FC<JobRoleSelectorProps> = ({
             className={`p-4 rounded-lg border transition-colors ${
               selectedRole === role
                 ? 'bg-green-600 text-white'
-                : 'bg-white hover:bg-gray-100'
+                : 'bg-white text-slate-900 hover:bg-gray-100'
             }`}
             onClick={() => onSelectRole(role)}
           >
