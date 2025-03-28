@@ -1,7 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -14,6 +17,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        mono: ['Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
       },
       boxShadow: {
         'card': '0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)',
@@ -23,9 +27,9 @@ module.exports = {
           css: {
             color: theme('colors.gray.800'),
             a: {
-              color: theme('colors.blue.600'),
+              color: theme('colors.gray.700'),
               '&:hover': {
-                color: theme('colors.blue.800'),
+                color: theme('colors.gray.900'),
               },
             },
             h1: {
@@ -97,6 +101,40 @@ module.exports = {
               padding: '0.5rem 1rem',
               borderWidth: '1px',
               borderColor: theme('colors.gray.200'),
+            },
+          },
+        },
+        invert: {
+          css: {
+            color: theme('colors.gray.200'),
+            a: {
+              color: theme('colors.gray.300'),
+              '&:hover': {
+                color: theme('colors.white'),
+              },
+            },
+            h1: {
+              color: theme('colors.white'),
+            },
+            h2: {
+              color: theme('colors.white'),
+            },
+            h3: {
+              color: theme('colors.white'),
+            },
+            h4: {
+              color: theme('colors.white'),
+            },
+            strong: {
+              color: theme('colors.white'),
+            },
+            code: {
+              color: theme('colors.white'),
+              backgroundColor: theme('colors.gray.800'),
+            },
+            blockquote: {
+              color: theme('colors.gray.300'),
+              borderLeftColor: theme('colors.gray.700'),
             },
           },
         },

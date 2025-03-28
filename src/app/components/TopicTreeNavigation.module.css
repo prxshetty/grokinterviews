@@ -1,0 +1,176 @@
+.treeNavContainer {
+  font-family: monospace;
+  margin: 0;
+  padding: 0.5rem 2rem;
+  width: 100%;
+  overflow-x: auto;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  background-color: rgba(249, 250, 251, 0.4);
+}
+
+.treeRoot {
+  display: flex;
+  position: relative;
+  align-items: flex-start;
+  padding-left: 1rem;
+}
+
+.treeNode {
+  display: flex;
+  position: relative;
+  margin-bottom: 0.25rem;
+  align-items: flex-start;
+}
+
+.treeNodeContent {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.25rem 0;
+}
+
+.childrenContainer {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+/* Horizontal line from parent to child */
+.horizontalConnector {
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  width: 1rem;
+  height: 1px;
+  background-color: #aaa;
+}
+
+/* Vertical line connecting sibling nodes */
+.verticalConnector {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background-color: #aaa;
+}
+
+.nestedLevel {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-left: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.nodeLabel {
+  cursor: pointer;
+  padding: 0.1rem 0.25rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  color: #555;
+}
+
+.nodeLabel:hover {
+  text-decoration: underline;
+  color: #000;
+}
+
+.nodeLabel.selected {
+  font-weight: bold;
+  color: #000;
+}
+
+/* Main branches style */
+.mainBranch {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.5rem;
+  position: relative;
+}
+
+/* Tree layout for different elements */
+.treeTable,
+.treeCell,
+.treeRow,
+.treeColumn,
+.treeTopBar,
+.treeKeyboard,
+.treeError {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* For the main topic label */
+.branchLabel {
+  position: relative;
+  padding-right: 1rem;
+  font-weight: bold;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  color: #333;
+  margin-right: 0.5rem;
+}
+
+.branchConnector {
+  position: absolute;
+  right: -0.5rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 1px;
+  background-color: #aaa;
+}
+
+/* For right side content types */
+.contentGroup {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-left: 0.5rem;
+  border-left: 1px solid #aaa;
+  padding-left: 1rem;
+}
+
+.contentType {
+  position: relative;
+  margin-bottom: 0.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentType::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 0.75rem;
+  width: 1rem;
+  height: 1px;
+  background-color: #aaa;
+}
+
+/* Dark mode styles */
+:global(.dark) .treeNavContainer {
+  background-color: rgba(17, 24, 39, 0.4);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+:global(.dark) .nodeLabel {
+  color: #aaa;
+}
+
+:global(.dark) .nodeLabel:hover {
+  color: #fff;
+}
+
+:global(.dark) .nodeLabel.selected {
+  color: #fff;
+}
+
+:global(.dark) .branchLabel {
+  color: #eee;
+} 

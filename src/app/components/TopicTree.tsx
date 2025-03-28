@@ -1,188 +1,190 @@
-import { useState, useEffect } from 'react';
-import styles from './TopicTree.module.css';
+"use client";
 
-interface TopicNode {
-  id: string;
-  name: string;
-  children?: TopicNode[];
-}
+import { useState } from 'react';
+
+// Topics data structure
+const topics = {
+  ml: {
+    label: 'Machine Learning',
+    subtopics: {
+      'ml-foundations': { label: 'Foundations & Core Concepts' },
+      'ml-math-foundations': { label: 'Mathematical Foundations' },
+      'ml-data-preprocessing': { label: 'Data Preprocessing' },
+      'ml-supervised': {
+        label: 'Supervised Learning',
+        subtopics: {
+          'ml-regression': { label: 'Regression' },
+          'ml-classification': { label: 'Classification' }
+        }
+      },
+      'ml-unsupervised': {
+        label: 'Unsupervised Learning',
+        subtopics: {
+          'ml-clustering': { label: 'Clustering' },
+          'ml-dimensionality': { label: 'Dimensionality Reduction' }
+        }
+      },
+      'ml-neural-networks': {
+        label: 'Neural Networks',
+        subtopics: {
+          'ml-nn-fundamentals': { label: 'Neural Network Fundamentals' },
+          'ml-nn-architectures': { label: 'Neural Network Architectures' },
+          'ml-cnn': { label: 'Convolutional Neural Networks (CNNs)' },
+          'ml-rnn': { label: 'Recurrent Neural Networks (RNNs)' },
+          'ml-transformers': { label: 'Transformers' }
+        }
+      },
+      'ml-decision-trees': { label: 'Decision Trees' },
+      'ml-naive-bayes': { label: 'Naive Bayes' },
+      'ml-ensemble': { label: 'Ensemble Methods' },
+      'ml-model-evaluation': { 
+        label: 'Model Evaluation',
+        subtopics: {
+          'ml-validation': { label: 'Validation Techniques' },
+          'ml-metrics': { label: 'Evaluation Metrics' }
+        }
+      },
+      'ml-deep-learning': {
+        label: 'Deep Learning',
+        subtopics: {
+          'ml-transfer-learning': { label: 'Transfer Learning' },
+          'ml-gans': { label: 'Generative Adversarial Networks (GANs)' }
+        }
+      },
+      'ml-nlp': {
+        label: 'Natural Language Processing',
+        subtopics: {
+          'ml-word-embeddings': { label: 'Word Embeddings' },
+          'ml-llm': { label: 'Large Language Models (LLMs)' }
+        }
+      },
+      'ml-reinforcement': { label: 'Reinforcement Learning' },
+      'ml-time-series': { label: 'Time Series Analysis' },
+      'ml-practical': { label: 'Practical ML Engineering' }
+    }
+  },
+  ai: {
+    label: 'Artificial Intelligence',
+    subtopics: {
+      'ai-foundations': { label: 'AI Foundations' },
+      'ai-nlp': { label: 'Natural Language Processing' },
+      'ai-cv': { label: 'Computer Vision' },
+      'ai-rl': { label: 'Reinforcement Learning' },
+      'ai-ethics': { label: 'AI Ethics & Responsible AI' }
+    }
+  },
+  webdev: {
+    label: 'Web Development',
+    subtopics: {
+      'webdev-frontend': { label: 'Frontend Development' },
+      'webdev-backend': { label: 'Backend Development' },
+      'webdev-fullstack': { label: 'Full Stack Development' },
+      'webdev-frameworks': { label: 'Web Frameworks' }
+    }
+  },
+  'system-design': {
+    label: 'System Design',
+    subtopics: {
+      'sd-basics': { label: 'System Design Basics' },
+      'sd-scalability': { label: 'Scalability' },
+      'sd-db': { label: 'Database Design' },
+      'sd-distributed': { label: 'Distributed Systems' },
+      'sd-microservices': { label: 'Microservices Architecture' }
+    }
+  },
+  dsa: {
+    label: 'Data Structures & Algorithms',
+    subtopics: {
+      'dsa-arrays': { label: 'Arrays & Strings' },
+      'dsa-linked-lists': { label: 'Linked Lists' },
+      'dsa-stacks-queues': { label: 'Stacks & Queues' },
+      'dsa-trees': { label: 'Trees & Graphs' },
+      'dsa-sorting': { label: 'Sorting & Searching' },
+      'dsa-dp': { label: 'Dynamic Programming' },
+      'dsa-greedy': { label: 'Greedy Algorithms' }
+    }
+  }
+};
 
 interface TopicTreeProps {
   onSelectTopic: (topicId: string) => void;
 }
 
 export default function TopicTree({ onSelectTopic }: TopicTreeProps) {
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
-  const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>({});
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
 
-  // Ensure we're only rendering on the client
-  useEffect(() => {
-    setMounted(true);
-    return () => {
-      setMounted(false);
-    };
-  }, []);
-
-  // Topic categories - only showing ML for now with complete hierarchy
-  const topicData: TopicNode[] = [
-    {
-      id: "ml",
-      name: "Machine Learning",
-      children: [
-        { 
-          id: "ml-foundations", 
-          name: "Foundations of Machine Learning",
-          children: [
-            { id: "ml-core-concepts", name: "Core Concepts" },
-            { id: "ml-math-foundations", name: "Mathematical Foundations" },
-            { id: "ml-data-preprocessing", name: "Data Preprocessing" }
-          ]
-        },
-        { 
-          id: "ml-supervised", 
-          name: "Supervised Learning",
-          children: [
-            { id: "ml-regression", name: "Regression Methods" },
-            { id: "ml-classification", name: "Classification Techniques" },
-            { id: "ml-decision-trees", name: "Decision Trees and Random Forests" },
-            { id: "ml-naive-bayes", name: "Naive Bayes" },
-            { id: "ml-ensemble", name: "Ensemble Methods" }
-          ]
-        },
-        { 
-          id: "ml-unsupervised", 
-          name: "Unsupervised Learning",
-          children: [
-            { id: "ml-clustering", name: "Clustering" },
-            { id: "ml-dimensionality", name: "Dimensionality Reduction" }
-          ]
-        },
-        { 
-          id: "ml-neural-networks", 
-          name: "Neural Networks",
-          children: [
-            { id: "ml-nn-fundamentals", name: "Fundamental Concepts" },
-            { id: "ml-nn-architectures", name: "Architectures" },
-            { id: "ml-cnn", name: "Convolutional Neural Networks" },
-            { id: "ml-rnn", name: "Recurrent Neural Networks" },
-            { id: "ml-transformers", name: "Transformers" }
-          ]
-        },
-        {
-          id: "ml-model-evaluation",
-          name: "Model Evaluation",
-          children: [
-            { id: "ml-validation", name: "Validation Techniques" },
-            { id: "ml-metrics", name: "Performance Metrics" }
-          ]
-        },
-        {
-          id: "ml-deep-learning",
-          name: "Advanced Deep Learning",
-          children: [
-            { id: "ml-transfer-learning", name: "Transfer Learning" },
-            { id: "ml-gans", name: "Generative Adversarial Networks" },
-            { id: "ml-reinforcement", name: "Reinforcement Learning" }
-          ]
-        },
-        {
-          id: "ml-nlp",
-          name: "Natural Language Processing",
-          children: [
-            { id: "ml-word-embeddings", name: "Word Embeddings" },
-            { id: "ml-llm", name: "Large Language Models" }
-          ]
-        },
-        {
-          id: "ml-time-series",
-          name: "Time Series Analysis"
-        },
-        {
-          id: "ml-practical",
-          name: "Practical ML and Deployment"
-        }
-      ]
-    },
-    {
-      id: "ai",
-      name: "Artificial Intelligence"
-    },
-    {
-      id: "webdev",
-      name: "Web Development"
-    },
-    {
-      id: "system-design",
-      name: "System Design"
-    },
-    {
-      id: "dsa",
-      name: "Data Structures & Algorithms"
-    }
-  ];
-
-  const handleNodeClick = (nodeId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event bubbling
-    
-    // Toggle expanded state
-    setExpandedNodes(prev => {
-      const newState = { ...prev };
-      newState[nodeId] = !prev[nodeId];
-      return newState;
-    });
-    
-    // Set as active node
-    setActiveNode(nodeId);
-    onSelectTopic(nodeId);
+  const toggleTopic = (topicId: string) => {
+    setExpandedTopics(prev => ({
+      ...prev,
+      [topicId]: !prev[topicId]
+    }));
   };
 
-  // Function to check if a node should be expanded
-  const isExpanded = (nodeId: string) => {
-    return !!expandedNodes[nodeId];
+  const handleTopicSelect = (topicId: string) => {
+    setSelectedTopic(topicId);
+    onSelectTopic(topicId);
   };
 
-  // Recursive function to render a node and its children
-  const renderNode = (node: TopicNode, depth: number = 0) => {
-    const isActive = activeNode === node.id;
-    const expanded = isExpanded(node.id);
-    const hasChildren = node.children && node.children.length > 0;
-    
+  const renderSubtopics = (topicId: string, subtopics: any, level = 1) => {
+    if (!expandedTopics[topicId]) return null;
+
     return (
-      <div key={`node-${node.id}`} className={styles.node}>
-        <div 
-          className={`${styles.nodeContent} ${isActive ? styles.active : ''}`}
-          onClick={(e) => handleNodeClick(node.id, e)}
-        >
-          {hasChildren && (
-            <span className={`${styles.disclosureIcon} ${expanded ? styles.expanded : ''}`}>
-              ▼
-            </span>
-          )}
-          {!hasChildren && <span style={{ width: '1rem', display: 'inline-block' }}></span>}
-          {node.name}
-        </div>
-        
-        {hasChildren && expanded && (
-          <div className={styles.children}>
-            {node.children!.map(child => renderNode(child, depth + 1))}
+      <div className={`ml-${level * 4} mt-2 space-y-2`}>
+        {Object.entries(subtopics).map(([id, topic]: [string, any]) => (
+          <div key={id} className="flex flex-col">
+            <div className="flex items-center">
+              {topic.subtopics && (
+                <button
+                  onClick={() => toggleTopic(id)}
+                  className="p-1 mr-1 rounded focus:outline-none"
+                >
+                  <span className={`transform transition-transform inline-block ${expandedTopics[id] ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
+                </button>
+              )}
+              <button
+                onClick={() => handleTopicSelect(id)}
+                className={`text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                  selectedTopic === id ? 'bg-gray-200 dark:bg-gray-700 font-bold' : ''
+                }`}
+              >
+                {topic.label}
+              </button>
+            </div>
+            {topic.subtopics && renderSubtopics(id, topic.subtopics, level + 1)}
           </div>
-        )}
+        ))}
       </div>
     );
   };
 
-  // Don't render until client-side hydration is complete
-  if (!mounted) {
-    return <div className={styles.topicTree}><div style={{ display: 'flex' }}></div></div>;
-  }
-
   return (
-    <div className={styles.topicTree}>
-      <div>
-        {topicData.map((category) => (
-          <div key={`branch-${category.id}`} className={styles.branch}>
-            {renderNode(category)}
+    <div className="mt-8 font-mono">
+      <h2 className="text-xl mb-4 text-gray-800 dark:text-white">Topics</h2>
+      <div className="space-y-2">
+        {Object.entries(topics).map(([id, topic]: [string, any]) => (
+          <div key={id} className="flex flex-col">
+            <div className="flex items-center">
+              <button
+                onClick={() => toggleTopic(id)}
+                className="p-1 mr-1 rounded focus:outline-none"
+              >
+                <span className={`transform transition-transform inline-block ${expandedTopics[id] ? 'rotate-90' : ''}`}>
+                  ▶
+                </span>
+              </button>
+              <button
+                onClick={() => handleTopicSelect(id)}
+                className={`text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                  selectedTopic === id ? 'bg-gray-200 dark:bg-gray-700 font-bold' : ''
+                }`}
+              >
+                {topic.label}
+              </button>
+            </div>
+            {topic.subtopics && renderSubtopics(id, topic.subtopics)}
           </div>
         ))}
       </div>
