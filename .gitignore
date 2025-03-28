@@ -1,5 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 topics/*
+.cursor
 # dependencies
 /node_modules
 /.pnp
@@ -23,6 +24,7 @@ interview_prep.db
 # misc
 .DS_Store
 *.pem
+HANDOFF.md
 
 # debug
 npm-debug.log*

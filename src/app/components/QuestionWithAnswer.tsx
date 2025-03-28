@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
@@ -252,9 +254,9 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
     return (
       <div className="p-4 font-mono">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 mb-2"></div>
         </div>
       </div>
     );
@@ -270,25 +272,34 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
 
   if (questions.length === 0) {
     return (
-      <div className="p-4 font-mono text-gray-500">
-        No questions found for this topic.
+      <div className="p-4 font-mono">
+        <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <h2 className="text-xl mb-4 text-gray-800 dark:text-white">No Questions Yet</h2>
+          <p className="text-gray-600 dark:text-gray-300">
+            Questions and answers for this topic will be added soon. Check back later or explore other topics!
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="mt-8 font-mono">
-      <h2 className="text-xl mb-4 text-gray-800">Questions ({questions.length})</h2>
+      <h2 className="text-xl mb-4 text-gray-800 dark:text-white">Questions ({questions.length})</h2>
       
       <div className="space-y-4">
         {questions.map((question) => (
-          <div key={`question-${question.question_id}`} className="border-b border-gray-200 pb-2">
+          <div key={`question-${question.question_id}`} className="border-b border-gray-200 dark:border-gray-700 pb-2">
             <div 
               onClick={(e) => toggleQuestion(question.question_id, e)}
-              className={`cursor-pointer py-2 ${expandedQuestionId === question.question_id ? 'text-gray-900 font-bold' : 'text-gray-800'}`}
+              className={`cursor-pointer py-2 ${
+                expandedQuestionId === question.question_id 
+                  ? 'text-gray-900 dark:text-white font-bold' 
+                  : 'text-gray-800 dark:text-gray-200'
+              }`}
             >
               {loadingContentId === question.question_id ? (
-                <span className="inline-block w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mr-2"></span>
+                <span className="inline-block w-4 h-4 border-2 border-gray-500 dark:border-gray-300 border-t-transparent rounded-full animate-spin mr-2"></span>
               ) : (
                 <span className={`inline-block mr-2 transform transition-transform ${expandedQuestionId === question.question_id ? 'rotate-90' : ''}`}>
                   ▼
@@ -298,13 +309,13 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
             </div>
             
             {expandedQuestionId === question.question_id && (
-              <div className="py-4 pl-6 text-gray-800">
+              <div className="py-4 pl-6 text-gray-800 dark:text-gray-200">
                 {contentMap[question.question_id] ? (
                   <div className="space-y-4">
                     {contentMap[question.question_id].map((item) => (
                       <div key={`content-${item.content_id}`}>
                         {item.content_type === 'text' && item.content && (
-                          <div className="prose max-w-none">
+                          <div className="prose dark:prose-invert max-w-none">
                             <ReactMarkdown>
                               {item.content}
                             </ReactMarkdown>
@@ -320,7 +331,7 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
                               loading="lazy"
                             />
                             {item.caption && (
-                              <p className="mt-2 text-sm text-gray-600 italic">{item.caption}</p>
+                              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 italic">{item.caption}</p>
                             )}
                           </div>
                         )}
@@ -353,9 +364,9 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
                   </div>
                 ) : (
                   <div className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
                   </div>
                 )}
               </div>
