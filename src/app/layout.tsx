@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "./components/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Grok Interviews - AI and ML Interview Prep",
-  description: "Prepare for AI and machine learning interviews with curated topics and answers",
+  title: "Machine Learning Topics",
+  description: "Explore machine learning topics organized in a hierarchical structure",
 };
 
 export default function RootLayout({
@@ -17,9 +16,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-background`}>
-        <Navbar />
-        <main>{children}</main>
+      <body className={`${inter.className} bg-[#f8f8f8]`}>
+        {children}
       </body>
     </html>
   );

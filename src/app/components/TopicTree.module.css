@@ -1,0 +1,104 @@
+.topicTree {
+  font-family: monospace;
+  line-height: 1.5;
+  padding: 2rem 1rem;
+  max-width: 100%;
+  overflow-x: auto;
+  background-color: #f8f8f8;
+  border-radius: 0;
+}
+
+.branch {
+  display: flex;
+  flex-direction: column;
+  margin-right: 0;
+  min-width: 300px;
+  position: relative;
+  border-left: 2px solid #ccc;
+  padding-left: 1.5rem;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.nodeContent {
+  cursor: pointer;
+  padding: 0.25rem 0;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.nodeContent:hover {
+  color: #333;
+}
+
+.children {
+  margin-left: 2rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid #ccc;
+  position: relative;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.children::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  width: 1.5rem;
+  height: 2px;
+  background-color: #ccc;
+}
+
+.connector {
+  position: absolute;
+  left: -1.5rem;
+  top: 0.75rem;
+  width: 1.5rem;
+  height: 2px;
+  background-color: #ccc;
+}
+
+.active {
+  color: #333;
+  font-weight: bold;
+}
+
+/* Main category styling */
+.branch > .node > .nodeContent {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+  position: relative;
+}
+
+.branch > .node > .nodeContent::before {
+  content: '';
+  position: absolute;
+  left: -1.5rem;
+  top: 0.75rem;
+  width: 1.5rem;
+  height: 2px;
+  background-color: #ccc;
+}
+
+/* Animation for disclosure triangles */
+.disclosureIcon {
+  display: inline-block;
+  margin-right: 0.5rem;
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.expanded {
+  transform: rotate(90deg);
+} 

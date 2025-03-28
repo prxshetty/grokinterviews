@@ -62,11 +62,11 @@ p {
 .question-content {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease;
+  transition: max-height 0.5s ease-in-out;
 }
 
 .question-content.expanded {
-  max-height: 2000px; /* A large value to ensure content fits */
+  max-height: 10000px; /* Much higher value to ensure all content fits */
 }
 
 /* Button styling */
@@ -78,4 +78,47 @@ button:focus {
   outline: none;
   ring: 2px;
   ring-color: var(--primary-color);
+}
+
+/* Tailwind prose overrides for better markdown rendering */
+.prose img {
+  margin: 1rem auto;
+  border-radius: 0.375rem;
+}
+
+.prose pre {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+}
+
+.prose code {
+  background-color: #f3f4f6;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.prose blockquote {
+  border-left-color: var(--primary-color);
+  background-color: #f9fafb;
+  padding: 0.5rem 1rem;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+.prose th, .prose td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+.prose th {
+  background-color: #f9fafb;
+  font-weight: 600;
 }
