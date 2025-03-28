@@ -1,14 +1,37 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TopicNav from './TopicNav';
 import TopicTreeNavigation from './TopicTreeNavigation';
 
 export default function TopicNavWrapper() {
   const [selectedMainTopic, setSelectedMainTopic] = useState<string | null>(null);
+  const [treeVisible, setTreeVisible] = useState<boolean>(true);
+
+  // Listen for reset navigation events
+  useEffect(() => {
+    const handleResetNavigation = () => {
+      setSelectedMainTopic(null);
+      setTreeVisible(true);
+    };
+
+    window.addEventListener('resetNavigation', handleResetNavigation);
+    
+    return () => {
+      window.removeEventListener('resetNavigation', handleResetNavigation);
+    };
+  }, []);
 
   const handleTopicSelect = (topicId: string) => {
-    setSelectedMainTopic(topicId);
+    if (selectedMainTopic === topicId) {
+      // If the same main topic is clicked again, toggle tree visibility
+      setTreeVisible(!treeVisible);
+    } else {
+      // If a new main topic is selected, show the tree and set the new topic
+      setSelectedMainTopic(topicId);
+      setTreeVisible(true);
+    }
+    
     // Use a custom event to communicate with the page component
     window.dispatchEvent(new CustomEvent('topicChange', { detail: topicId }));
   };
@@ -20,11 +43,13 @@ export default function TopicNavWrapper() {
 
   return (
     <div className="topic-navigation">
-      <TopicNav onTopicSelect={handleTopicSelect} />
-      <TopicTreeNavigation 
-        selectedMainTopic={selectedMainTopic} 
-        onSelectTopic={handleSubTopicSelect} 
-      />
+      <TopicNav onTopicSelect={handleTopicSelect} selectedTopic={selectedMainTopic} />
+      {treeVisible && (
+        <TopicTreeNavigation 
+          selectedMainTopic={selectedMainTopic} 
+          onSelectTopic={handleSubTopicSelect} 
+        />
+      )}
     </div>
   );
 } 

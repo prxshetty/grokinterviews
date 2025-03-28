@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
 
   // Handle initial setup after mount
@@ -31,46 +31,35 @@ export default function Navbar() {
     localStorage.setItem('darkMode', String(newDarkMode));
   };
 
+  const handleTitleClick = () => {
+    // Reset all topic selections
+    window.dispatchEvent(new CustomEvent('resetNavigation'));
+    
+    // For safety, also reset the topicChange event with null
+    window.dispatchEvent(new CustomEvent('topicChange', { detail: null }));
+  };
+
   if (!mounted) {
     return <nav className="w-full py-4 px-6 border-b border-gray-200 font-mono"></nav>;
   }
 
   return (
     <nav className="w-full py-4 px-6 border-b border-gray-200 dark:border-gray-800 font-mono">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Search Bar */}
-        <div className="flex-1 max-w-xs">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 bg-transparent dark:bg-gray-900 dark:text-white"
-            />
-            <svg
-              className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 dark:text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
+      <div className="max-w-7xl mx-auto flex items-center">
+        {/* Empty div for spacing */}
+        <div className="w-12"></div>
+        
+        {/* Centered Title */}
+        <div className="flex-grow flex justify-center">
+          <Link href="/" onClick={handleTitleClick}>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white cursor-pointer hover:underline">
+              Grok Interviews
+            </h1>
+          </Link>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-center flex-1 text-gray-800 dark:text-white">
-          Grokking Interviews
-        </h1>
-
         {/* Dark Mode Toggle */}
-        <div className="flex-1 flex justify-end">
+        <div className="w-12 flex justify-end">
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none text-gray-700 dark:text-gray-300"

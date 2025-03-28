@@ -7,35 +7,56 @@
   line-height: 1.6;
   font-size: 0.9rem;
   border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-  background-color: rgba(249, 250, 251, 0.4);
+  background-color: transparent;
 }
 
 .treeRoot {
   display: flex;
   position: relative;
   align-items: flex-start;
-  padding-left: 1rem;
 }
 
-.treeNode {
+/* Horizontal layout for main content group */
+.contentGroup {
   display: flex;
   position: relative;
+  padding-left: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem 3rem;
+  width: 100%;
+}
+
+.contentType {
+  position: relative;
   margin-bottom: 0.25rem;
-  align-items: flex-start;
-}
-
-.treeNodeContent {
   display: flex;
-  align-items: center;
-  white-space: nowrap;
-  padding: 0.25rem 0;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: 250px;
 }
 
+.contentType:first-child::before {
+  display: none;
+}
+
+.contentType::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 0.75rem;
+  width: 1rem;
+  height: 1px;
+  background-color: #aaa;
+}
+
+/* Vertical layout for children */
 .childrenContainer {
   display: flex;
   flex-direction: column;
   padding-left: 1.5rem;
   position: relative;
+  margin-top: 0.5rem;
 }
 
 /* Horizontal line from parent to child */
@@ -84,78 +105,17 @@
   color: #000;
 }
 
-/* Main branches style */
-.mainBranch {
-  display: flex;
-  flex-direction: column;
-  margin-top: 0.5rem;
-  position: relative;
-}
-
-/* Tree layout for different elements */
-.treeTable,
-.treeCell,
-.treeRow,
-.treeColumn,
-.treeTopBar,
-.treeKeyboard,
-.treeError {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-/* For the main topic label */
-.branchLabel {
-  position: relative;
-  padding-right: 1rem;
+/* Category headers for main subtopics */
+.categoryHeader {
   font-weight: bold;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  color: #333;
-  margin-right: 0.5rem;
-}
-
-.branchConnector {
-  position: absolute;
-  right: -0.5rem;
-  top: 50%;
-  width: 0.5rem;
-  height: 1px;
-  background-color: #aaa;
-}
-
-/* For right side content types */
-.contentGroup {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  margin-left: 0.5rem;
-  border-left: 1px solid #aaa;
-  padding-left: 1rem;
-}
-
-.contentType {
-  position: relative;
   margin-bottom: 0.25rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.contentType::before {
-  content: '';
-  position: absolute;
-  left: -1rem;
-  top: 0.75rem;
-  width: 1rem;
-  height: 1px;
-  background-color: #aaa;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.25rem;
+  color: #333;
 }
 
 /* Dark mode styles */
 :global(.dark) .treeNavContainer {
-  background-color: rgba(17, 24, 39, 0.4);
   border-bottom: 1px solid rgba(55, 65, 81, 0.5);
 }
 
@@ -171,6 +131,13 @@
   color: #fff;
 }
 
-:global(.dark) .branchLabel {
+:global(.dark) .categoryHeader {
   color: #eee;
+  border-bottom-color: #333;
+}
+
+:global(.dark) .horizontalConnector,
+:global(.dark) .verticalConnector,
+:global(.dark) .contentType::before {
+  background-color: #666;
 } 
