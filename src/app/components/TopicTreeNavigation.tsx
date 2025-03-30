@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import styles from './TopicTreeNavigation.module.css';
+import { useTopicData } from './TopicDataProvider';
 
-// Topic data structure updated with all ML subtopics from ml.md
-const topics = {
+// Default hardcoded topic data as fallback
+const defaultTopics = {
   ml: {
     label: 'Machine Learning',
     subtopics: {
@@ -280,6 +281,12 @@ export default function TopicTreeNavigation({
   onSelectTopic 
 }: TopicTreeNavigationProps) {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const { topicData, isLoading, error, refetchData } = useTopicData();
+
+  // Get the topics data, using the dynamic data when available or fallback to default
+  const topics = useMemo(() => {
+    return Object.keys(topicData).length > 0 ? topicData : defaultTopics;
+  }, [topicData]);
 
   // Reset selection when main topic changes
   useEffect(() => {
@@ -291,14 +298,7 @@ export default function TopicTreeNavigation({
     onSelectTopic(topicId);
   };
 
-  // If no main topic is selected, don't render anything
-  if (!selectedMainTopic || !topics[selectedMainTopic as keyof typeof topics]) {
-    return null;
-  }
-
-  const mainTopic = topics[selectedMainTopic as keyof typeof topics];
-
-  // Render subtopics for each main topic category
+  // Render subtopics for each main topic category - moved BEFORE useMemo that uses it
   const renderNestedSubtopics = (subtopics: Record<string, any>) => {
     if (!subtopics || Object.keys(subtopics).length === 0) {
       return null;
@@ -322,9 +322,14 @@ export default function TopicTreeNavigation({
     );
   };
 
-  // Render each main topic category in the horizontal layout
-  const renderMainTopicCard = ([topicId, topic]: [string, any]) => {
-    return (
+  // Memoize the render of topic cards - now after renderNestedSubtopics is defined
+  const topicCards = useMemo(() => {
+    if (!selectedMainTopic || !topics[selectedMainTopic as keyof typeof topics]) {
+      return null;
+    }
+    
+    const mainTopic = topics[selectedMainTopic as keyof typeof topics];
+    return Object.entries(mainTopic.subtopics).map(([topicId, topic]: [string, any]) => (
       <div className={styles.contentType} key={topicId}>
         <div className={styles.categoryHeader}>
           {topic.label}
@@ -339,14 +344,49 @@ export default function TopicTreeNavigation({
         {/* Render nested subtopics if available */}
         {topic.subtopics && renderNestedSubtopics(topic.subtopics)}
       </div>
+    ));
+  }, [selectedMainTopic, topics, selectedTopic]);
+
+  // If no main topic is selected, don't render anything
+  if (!selectedMainTopic || !topics[selectedMainTopic as keyof typeof topics]) {
+    return null;
+  }
+
+  const mainTopic = topics[selectedMainTopic as keyof typeof topics];
+
+  // Show a loading state when data is being fetched
+  if (isLoading && Object.keys(topicData).length === 0) {
+    return (
+      <div className={styles.treeNavContainer}>
+        <div className="text-center p-4 text-gray-500 dark:text-gray-400">
+          Loading topic data...
+        </div>
+      </div>
     );
-  };
+  }
+
+  // Show an error state if loading failed
+  if (error && Object.keys(topicData).length === 0) {
+    return (
+      <div className={styles.treeNavContainer}>
+        <div className="text-center p-4 text-red-500">
+          {error} Using fallback data.
+          <button 
+            onClick={() => refetchData()} 
+            className="ml-2 text-blue-500 underline hover:text-blue-600"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.treeNavContainer}>
       <div className={styles.treeRoot}>
         <div className={styles.contentGroup}>
-          {Object.entries(mainTopic.subtopics).map(renderMainTopicCard)}
+          {topicCards}
         </div>
       </div>
     </div>
