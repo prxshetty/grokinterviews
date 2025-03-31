@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { logQuestionView } from '../utils/activity';
 
 // Define mapping from our topic IDs to numeric database IDs
 const TOPIC_ID_MAP: Record<string, number> = {
@@ -242,6 +243,8 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
     } else {
       setExpandedQuestionId(questionId);
       await fetchContentForQuestion(questionId);
+      // Log the question view
+      await logQuestionView(questionId);
     }
   };
 

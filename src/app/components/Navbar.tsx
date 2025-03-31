@@ -58,8 +58,16 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Dark Mode Toggle */}
-        <div className="w-12 flex justify-end">
+        {/* Right Side Controls */}
+        <div className="flex items-center space-x-2">
+          {/* Sign In Button */}
+          <button
+            className="px-4 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            Sign In
+          </button>
+          
+          {/* Dark Mode Toggle */}
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none text-gray-700 dark:text-gray-300"
