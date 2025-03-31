@@ -301,6 +301,46 @@ export default function TopicTreeNavigation({
     }
   }, [selectedMainTopic]);
 
+  // Listen for double-click events from TopicNav
+  useEffect(() => {
+    const handleTopicDoubleClick = (event: CustomEvent<{ topicId: string, isExpanded: boolean }>) => {
+      const { topicId, isExpanded } = event.detail;
+      
+      // Get all top-level subtopics for this main topic
+      if (selectedMainTopic && topics[selectedMainTopic as keyof typeof topics]) {
+        const mainTopic = topics[selectedMainTopic as keyof typeof topics];
+        
+        if (isExpanded) {
+          // Expand all top-level subtopics
+          const newExpandedTopics = new Set(expandedTopics);
+          
+          // Add all top-level subtopics to expanded set
+          Object.keys(mainTopic.subtopics).forEach(subtopicId => {
+            newExpandedTopics.add(subtopicId);
+          });
+          
+          setExpandedTopics(newExpandedTopics);
+        } else {
+          // Collapse all top-level subtopics
+          const newExpandedTopics = new Set(expandedTopics);
+          
+          // Remove all top-level subtopics from expanded set
+          Object.keys(mainTopic.subtopics).forEach(subtopicId => {
+            newExpandedTopics.delete(subtopicId);
+          });
+          
+          setExpandedTopics(newExpandedTopics);
+        }
+      }
+    };
+
+    window.addEventListener('topicDoubleClicked', handleTopicDoubleClick as EventListener);
+    
+    return () => {
+      window.removeEventListener('topicDoubleClicked', handleTopicDoubleClick as EventListener);
+    };
+  }, [selectedMainTopic, topics, expandedTopics]);
+
   const handleTopicSelect = (topicId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedTopic(topicId);
@@ -317,6 +357,15 @@ export default function TopicTreeNavigation({
       newExpandedTopics.add(topicId);
     }
     setExpandedTopics(newExpandedTopics);
+  };
+
+  // Handle double click on topic to toggle expansion
+  const handleTopicDoubleClick = (topicId: string, hasChildren: boolean, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    if (hasChildren) {
+      toggleExpand(topicId, event);
+    }
   };
 
   // Render a topic node with the appropriate indicator
@@ -361,6 +410,7 @@ export default function TopicTreeNavigation({
       <div 
         className={`${styles.topicNode} ${isSelected ? styles.selected : ''} ${hasContent && !hasChildren ? styles.clickable : ''}`}
         onClick={(e) => hasChildren ? toggleExpand(id, e) : handleTopicSelect(id, e)}
+        onDoubleClick={(e) => handleTopicDoubleClick(id, hasChildren, e)}
       >
         <span 
           className={styles.indicator}
@@ -426,15 +476,22 @@ export default function TopicTreeNavigation({
     const mainCategories = Object.entries(mainTopic.subtopics)
       .filter(([_, topic]: [string, any]) => topic.subtopics && Object.keys(topic.subtopics).length > 0);
     
-    // Arrange in balanced columns - no need for letters anymore
-    const columnCount = 5; // Display in 5 columns
-    const columns: Array<Array<[string, any]>> = Array(columnCount).fill(null).map(() => []);
+    // Set desired number of columns
+    const columnCount = 5; 
     
-    // Distribute topics across columns
-    mainCategories.forEach(([id, topic], index) => {
-      const columnIndex = index % columnCount;
-      columns[columnIndex].push([id, topic]);
-    });
+    // Calculate how many items should be in each column for even distribution
+    const totalCategories = mainCategories.length;
+    const itemsPerColumn = Math.ceil(totalCategories / columnCount);
+    
+    // Create balanced columns
+    const columns: Array<Array<[string, any]>> = [];
+    
+    // Evenly distribute items across columns
+    for (let i = 0; i < totalCategories; i += itemsPerColumn) {
+      // Get a slice of categories for this column, limited by itemsPerColumn or remaining items
+      const columnItems = mainCategories.slice(i, Math.min(i + itemsPerColumn, totalCategories));
+      columns.push(columnItems);
+    }
     
     return (
       <div className={styles.categoriesContainer}>

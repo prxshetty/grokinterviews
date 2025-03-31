@@ -17,6 +17,8 @@ interface TopicNavProps {
 
 export default function TopicNav({ onTopicSelect, selectedTopic: externalSelectedTopic }: TopicNavProps) {
   const [internalSelectedTopic, setInternalSelectedTopic] = useState<string | null>(null);
+  const [lastClickTime, setLastClickTime] = useState<{[key: string]: number}>({});
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
   
   // Sync with external state when it changes
   useEffect(() => {
@@ -25,7 +27,31 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
     }
   }, [externalSelectedTopic]);
 
+  // Detect double click on a topic
   const handleTopicClick = (topicId: string) => {
+    const now = new Date().getTime();
+    const lastClick = lastClickTime[topicId] || 0;
+    const isDoubleClick = now - lastClick < 300; // 300ms threshold for double-click
+    
+    // Update last click time
+    setLastClickTime(prev => ({
+      ...prev,
+      [topicId]: now
+    }));
+    
+    // Handle the click
+    if (isDoubleClick) {
+      // Double click: toggle expanded status
+      const newExpandedTopic = expandedTopic === topicId ? null : topicId;
+      setExpandedTopic(newExpandedTopic);
+      
+      // Dispatch custom event for TopicTreeNavigation to listen to
+      window.dispatchEvent(new CustomEvent('topicDoubleClicked', { 
+        detail: { topicId, isExpanded: newExpandedTopic === topicId }
+      }));
+    }
+    
+    // Always handle single click (whether part of double-click or not)
     setInternalSelectedTopic(topicId);
     onTopicSelect(topicId);
   };
