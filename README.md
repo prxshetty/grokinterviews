@@ -1,20 +1,32 @@
 # Grok Interviews
 
-A web application that aggregates and organizes Data Science interview preparation resources from aiml.com.
+A modern web application that aggregates, organizes, and presents Data Science and Software Engineering interview preparation resources.
 
 ## Features
 
-- **Topic-based browsing**: Browse interview questions by topic (e.g., Neural Networks, Deep Learning)
-- **Job role exploration**: Find relevant questions for specific job roles (e.g., Data Scientist, ML Engineer)
-- **Custom search**: Search for specific keywords or concepts
-- **Direct links**: Click through to aiml.com for complete answers and resources
+- **Hierarchical Topic Navigation**: Browse interview questions by main topics and dive into subtopics with an intuitive two-tier navigation system
+- **Comprehensive Topic Coverage**: Access content across multiple domains including Machine Learning, Data Structures & Algorithms, System Design, Web Development, and more
+- **Responsive Design**: Enjoy a seamless experience across all device sizes
+- **Dark Mode Support**: Switch between light and dark themes for comfortable reading
+- **Clean Interface**: Focus on learning with a distraction-free, modern UI
 
 ## Tech Stack
 
-- **Frontend**: Next.js with React and Tailwind CSS
-- **API Routes**: Next.js API routes for data fetching and processing
-- **Scraping**: Cheerio for parsing HTML content
-- **Caching**: Node-cache for temporary storage
+- **Frontend**: 
+  - Next.js 15.2 with React 19
+  - TypeScript for type safety
+  - Tailwind CSS for styling
+  - Framer Motion for animations
+  
+- **Content Management**:
+  - Markdown-based topic structure
+  - Dynamic content parsing
+  - SQLite database for structured data
+
+- **Performance Optimizations**:
+  - Multi-level caching (localStorage, HTTP caching)
+  - Memoized components
+  - Server components where appropriate
 
 ## Getting Started
 
@@ -42,119 +54,57 @@ A web application that aggregates and organizes Data Science interview preparati
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
+## Project Structure
+
+```
+grokinterviews/
+├── src/                 # Source code
+│   ├── app/             # Next.js app directory
+│   └── utils/           # Utility functions
+├── topics/              # Markdown topic files
+│   ├── ml.md            # Machine Learning topics
+│   ├── dsa.md           # Data Structures & Algorithms topics
+│   ├── sdesign.md       # System Design topics
+│   ├── webdev.md        # Web Development topics
+│   └── ai.md            # AI topics
+├── public/              # Static assets
+└── ...
+```
+
 ## Architecture
 
 ### Core Components
 
-1. **API Layer**:
-   - `/api/search` - Fetches and scrapes search results from aiml.com
-   - `/api/job-topics` - Maps job roles to relevant ML topics
+1. **Navigation System**:
+   - Main topic navigation (horizontal bar)
+   - Subtopic tree navigation (expandable hierarchical structure)
+   - Topic data provider for centralized state management
 
-2. **UI Components**:
-   - Topic selection
-   - Job role selection
-   - Custom search bar
-   - Results display
+2. **Content Management**:
+   - Dynamic loading of topics from markdown files
+   - Hierarchical parsing with support for nested subtopics
+   - Question and answer display components
+
+3. **API Layer**:
+   - `/api/topics` - Serves parsed topic data from markdown files
 
 ### Data Flow
 
-1. User selects a topic or job role (or enters a custom search)
-2. The app constructs a search URL for aiml.com
-3. Backend fetches and processes the HTML content
-4. Results are displayed to the user
-5. User can click through to read full articles on aiml.com
+1. User selects a main topic from the navigation bar
+2. The application loads the corresponding topic structure
+3. Subtopics are displayed in a card-based layout below the main navigation
+4. User can navigate through the subtopic hierarchy to find specific content
+5. Questions and answers for the selected topic are displayed in the main content area
 
-## Alternative Names
+## Contributing
 
-- DataPrep Pro
-- InterviewML
-- AIQuest Hub
-- MLPrep Central
-- DataSciQuery
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Note
+## Acknowledgments
 
-This application does not store aiml.com content locally beyond temporary caching. It respects the source website's content and only provides a streamlined way to access publicly available resources.
-
-# Crawl4AI Implementation Examples
-
-This repository contains examples and reference documentation for [Crawl4AI](https://github.com/unclecode/crawl4ai), an open-source LLM-friendly web crawler and scraper designed for AI applications.
-
-## Contents
-
-- `llm4crawl.md`: Comprehensive reference guide for Crawl4AI
-- `crawl4ai_example.py`: Example implementations for various extraction techniques
-- `requirements.txt`: Dependencies for the examples
-
-## Installation
-
-1. Install the required dependencies:
-
-```bash
-# Install base requirements
-pip install -r requirements.txt
-
-# Run the post-installation setup
-crawl4ai-setup
-```
-
-2. For advanced features, uncomment the relevant dependencies in `requirements.txt` before installing:
-
-```bash
-# For clustering features
-pip install crawl4ai[torch]
-crawl4ai-setup
-
-# For transformer-based features  
-pip install crawl4ai[transformer]
-crawl4ai-setup
-
-# For all features
-pip install crawl4ai[all]
-crawl4ai-setup
-```
-
-## Running the Examples
-
-The example script demonstrates several extraction approaches:
-
-```bash
-# Run all examples
-python crawl4ai_example.py
-```
-
-## Example Features
-
-1. **Basic Crawling**: Extracts clean markdown from a webpage
-2. **CSS-based Extraction**: Extracts structured data using CSS selectors
-3. **Clustering-based Extraction**: Extracts content clusters based on semantic similarity
-4. **Parallel Crawling**: Crawls multiple URLs in parallel
-
-## Customizing the Examples
-
-To use the examples with your own websites:
-
-1. Update the URLs in the `main()` function in `crawl4ai_example.py`
-2. Adjust the CSS selectors in the schema to match the structure of your target website
-3. Customize the extraction parameters based on your specific needs
-
-## Additional Resources
-
-- [Crawl4AI Documentation](https://docs.crawl4ai.com/)
-- [Crawl4AI GitHub Repository](https://github.com/unclecode/crawl4ai)
-
-## Troubleshooting
-
-If you encounter browser-related issues:
-```bash
-python -m playwright install --with-deps chromium
-```
-
-For detailed diagnostics:
-```bash
-crawl4ai-doctor
-```
+- All content is organized for educational purposes
+- Special thanks to the Next.js and React communities for their excellent documentation
