@@ -1,8 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Navbar from './Navbar'; // Assuming Navbar is in the same directory
-import TopicNavWrapper from './TopicNavWrapper'; // Assuming TopicNavWrapper is in the same directory
+import Navbar from './Navbar';
+import TopicNavWrapper from './TopicNavWrapper';
 import React from 'react';
 
 export default function ConditionalNavWrapper({

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ConditionalNavWrapper from './components/ConditionalNavWrapper';
 import TopicDataProvider from './components/TopicDataProvider';
+import Footer from './components/Footer';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,11 +19,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white dark:bg-black dark:text-white">
+      <body className="min-h-screen bg-white dark:bg-black dark:text-white flex flex-col">
         <TopicDataProvider>
-          <ConditionalNavWrapper>
-            {children}
-          </ConditionalNavWrapper>
+          <div className="flex-grow">
+            <ConditionalNavWrapper>
+              {children}
+            </ConditionalNavWrapper>
+          </div>
+          <Footer />
         </TopicDataProvider>
       </body>
     </html>

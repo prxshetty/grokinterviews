@@ -1,6 +1,8 @@
 import { loadAllTopicTrees } from '@/utils/markdownParser';
 import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
+import StatsSection from './components/StatsSection';
+import TopicCarouselWrapper from './components/TopicCarouselWrapper';
 
 export default async function Home() {
   const topicIds = ['ml', 'sdesign', 'webdev', 'dsa', 'ai'];
@@ -12,16 +14,16 @@ export default async function Home() {
   const numTopics = topics.length;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full max-w-5xl mx-auto p-8 md:p-12 relative font-sans">
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full p-8 md:p-12 relative font-sans">
       
       <div className="absolute top-8 left-8 text-xs text-gray-500 dark:text-gray-400">
         <p>grokinterviews</p>
         <p>change starts within.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-start mt-16 md:mt-8">
+      <div className="flex flex-col md:flex-row justify-between items-center mt-16 md:mt-8">
         
-        <div className="w-full md:w-2/3 mb-8 md:mb-0">
+        <div className="w-full md:w-7/12 mb-8 md:mb-0">
           <h1 className="text-5xl md:text-7xl font-bold uppercase leading-none tracking-tight mb-4">
             IT'S ABOUT<br />
             DAMN TIME<br />
@@ -57,6 +59,11 @@ export default async function Home() {
            <p>Click the red box above to explore all topics!</p>
         </div>
       </div>
+
+      <StatsSection />
+      
+      {/* Add the Topic Carousel for Q&A section */}
+      <TopicCarouselWrapper />
 
     </div>
   );
