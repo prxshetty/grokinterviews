@@ -29,14 +29,25 @@ export default function TopicsPage() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState('');
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { topicData } = useTopicData();
 
   const handleTopicClick = (topicId: string) => {
     setSelectedTopic(topicId);
+    setSelectedCategory(null); // Reset category selection when topic changes
   };
 
   const handleCloseTopicTree = () => {
     setSelectedTopic(null);
+    setSelectedCategory(null);
+  };
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+  };
+
+  const handleBackToMainCategories = () => {
+    setSelectedCategory(null);
   };
 
   const handleSearchIconClick = () => {
@@ -73,18 +84,18 @@ export default function TopicsPage() {
     const isExpanded = expandedTopics.has(topicId);
     
     return (
-      <div key={topicId} className="mb-2">
+      <div key={topicId} className="mb-1.5">
         <div 
-          className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1"
+          className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded transition-colors"
           onClick={() => hasChildren ? toggleTopic(topicId) : null}
         >
           {hasChildren && (
-            <span className="mr-2 text-gray-500 w-4 inline-block">
+            <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">
               {isExpanded ? '[-]' : '[+]'}
             </span>
           )}
-          {!hasChildren && <span className="mr-2 w-4 inline-block">[·]</span>}
-          <span className="font-mono">{topic.label}</span>
+          {!hasChildren && <span className="mr-2 w-4 inline-block font-mono text-sm">[·]</span>}
+          <span className="font-mono text-sm">{topic.label}</span>
         </div>
         
         {hasChildren && isExpanded && (
@@ -98,23 +109,66 @@ export default function TopicsPage() {
     );
   };
 
-  // Organize subtopics into columns
-  const organizeIntoColumns = () => {
+  // Get all main categories for the current topic
+  const getMainCategories = () => {
     if (!selectedTopic || !topicData || !topicData[selectedTopic]?.subtopics) return [];
-    
-    const subtopics = Object.entries(topicData[selectedTopic].subtopics);
-    const columnCount = 4;
-    const itemsPerColumn = Math.ceil(subtopics.length / columnCount);
-    
-    const columns = [];
-    for (let i = 0; i < subtopics.length; i += itemsPerColumn) {
-      columns.push(subtopics.slice(i, i + itemsPerColumn));
-    }
-    
-    return columns;
+    return Object.entries(topicData[selectedTopic].subtopics);
   };
 
-  const columns = organizeIntoColumns();
+  // Get all subtopics for a specific category
+  const getCategorySubtopics = (categoryId: string) => {
+    if (!selectedTopic || !topicData || !topicData[selectedTopic]?.subtopics || 
+        !topicData[selectedTopic].subtopics[categoryId]?.subtopics) return [];
+    
+    return Object.entries(topicData[selectedTopic].subtopics[categoryId].subtopics);
+  };
+
+  const mainCategories = getMainCategories();
+
+  // Main ML categories
+  const mlCategories = [
+    { id: 'foundations', label: 'Foundations of Machine Learning' },
+    { id: 'supervised', label: 'Supervised Learning' },
+    { id: 'unsupervised', label: 'Unsupervised Learning' },
+    { id: 'neural-networks', label: 'Neural Networks' },
+    { id: 'model-evaluation', label: 'Model Evaluation' },
+    { id: 'math-foundations', label: 'Mathematical Foundations' },
+    { id: 'data-preprocessing', label: 'Data Preprocessing and Exploration' }
+  ];
+
+  // Mid column topics
+  const midColumnTopics = [
+    { id: 'advanced-regression', label: 'Advanced Regression Techniques' },
+    { id: 'classification', label: 'Classification Techniques' },
+    { id: 'decision-trees', label: 'Decision Trees and Random Forests' },
+    { id: 'naive-bayes', label: 'Naive Bayes' },
+    { id: 'ensemble-methods', label: 'Ensemble Methods' },
+    { id: 'validation', label: 'Validation Techniques' },
+    { id: 'clustering-algorithms', label: 'Clustering Algorithms', 
+      subtopics: [
+        { id: 'kmeans', label: 'K-Means' },
+        { id: 'hierarchical', label: 'Hierarchical Clustering' },
+        { id: 'dbscan', label: 'DBSCAN' },
+        { id: 'gmm', label: 'Gaussian Mixture Models (GMM)' }
+      ] 
+    }
+  ];
+
+  // Right column topics
+  const rightColumnTopics = [
+    { id: 'dimensionality-reduction', label: 'Dimensionality Reduction Techniques' },
+    { id: 'autoencoders', label: 'Autoencoders' },
+    { id: 'nn-architectures', label: 'Neural Network Architectures' },
+    { id: 'deep-learning', label: 'Advanced Deep Learning' },
+    { id: 'bayesian-methods', label: 'Bayesian Methods' },
+    { id: 'markov-models', label: 'Markov Models' },
+    { id: 'sampling-methods', label: 'Sampling Methods' },
+    { id: 'optimization', label: 'Optimization and Model Tuning' },
+    { id: 'feature-engineering', label: 'Feature Engineering' },
+    { id: 'time-series', label: 'Time Series Analysis' },
+    { id: 'practical-ml', label: 'Practical ML and Deployment' },
+    { id: 'emerging-trends', label: 'Emerging Trends' }
+  ];
 
   return (
     <div className="bg-white min-h-screen">
@@ -148,8 +202,152 @@ export default function TopicsPage() {
             
             {/* Content area */}
             <div className="p-6">
-              {/* Topic metadata grid or selected topic tree */}
-              {!selectedTopic ? (
+              {selectedTopic ? (
+                // Show improved topic tree when a topic is selected
+                <div className="mb-12">
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                      <h2 className="text-2xl font-bold">
+                        {mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'} Topic Tree
+                      </h2>
+                      {selectedCategory && (
+                        <button
+                          onClick={handleBackToMainCategories}
+                          className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                          Back to Categories
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleCloseTopicTree}
+                      className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  
+                  {/* Main topic categories */}
+                  <div className="flex flex-wrap">
+                    {selectedCategory === null ? (
+                      // Show all main categories when no specific category is selected
+                      <div className="w-full grid grid-cols-3 gap-4 animate-fadeIn">
+                        {mlCategories.map((category, index) => (
+                          <div 
+                            key={category.id}
+                            className="transform transition-all duration-300 ease-in-out animate-slideRight"
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                          >
+                            <div 
+                              className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider cursor-pointer hover:bg-gray-200 transition-colors rounded"
+                              onClick={() => handleCategorySelect(category.id)}
+                            >
+                              {category.label}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // Show detailed view for the selected category
+                      <div className="w-full animate-fadeIn">
+                        {/* Left column - Selected main category and its direct subtopics */}
+                        <div className="flex flex-wrap">
+                          <div className="w-3/12 pr-4 space-y-3 animate-slideRight">
+                            <div className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider rounded">
+                              {mlCategories.find(cat => cat.id === selectedCategory)?.label || 'Selected Category'}
+                            </div>
+                            <div className="ml-2 pl-4 border-l border-gray-200">
+                              {selectedCategory === 'supervised' && (
+                                <>
+                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
+                                      <span className="font-mono text-sm">Regression Methods</span>
+                                    </div>
+                                  </div>
+                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
+                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
+                                      <span className="font-mono text-sm">Classification Techniques</span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                              {selectedCategory === 'unsupervised' && (
+                                <>
+                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
+                                      <span className="font-mono text-sm">Clustering</span>
+                                    </div>
+                                  </div>
+                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
+                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
+                                      <span className="font-mono text-sm">Dimensionality Reduction</span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                              {selectedCategory === 'foundations' && (
+                                <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+                                  <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+                                    <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
+                                    <span className="font-mono text-sm">Core Concepts</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Middle column - Related topics */}
+                          <div className="w-5/12 px-4 space-y-3 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
+                            {midColumnTopics.map((topic, index) => (
+                              <div key={topic.id} className="animate-fadeIn" style={{ animationDelay: `${0.2 + index * 0.05}s` }}>
+                                <div className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider rounded">
+                                  {topic.label}
+                                </div>
+                                {topic.subtopics && (
+                                  <div className="ml-2 pl-4 border-l border-gray-200">
+                                    {topic.subtopics.map((subtopic, subIndex) => (
+                                      <div 
+                                        key={subtopic.id} 
+                                        className="mb-1.5 animate-fadeIn" 
+                                        style={{ animationDelay: `${0.3 + subIndex * 0.05}s` }}
+                                      >
+                                        <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+                                          <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
+                                          <span className="font-mono text-sm">{subtopic.label}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Right column */}
+                          <div className="w-4/12 pl-4 space-y-3 animate-slideLeft">
+                            {rightColumnTopics.map((topic, index) => (
+                              <div 
+                                key={topic.id} 
+                                className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider rounded animate-fadeIn" 
+                                style={{ animationDelay: `${0.2 + index * 0.03}s` }}
+                              >
+                                {topic.label}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
                 // Show metadata grid when no topic is selected
                 <div className="grid grid-cols-4 gap-10 mb-12 pb-8 border-b border-gray-200">
                   <div>
@@ -190,29 +388,15 @@ export default function TopicsPage() {
                     </div>
                   </div>
                 </div>
-              ) : (
-                // Show topic tree when a topic is selected
-                <div className="mb-12 pb-8 border-b border-gray-200">
-                  <div className="text-xs uppercase text-gray-500 mb-4">TOPIC TREE</div>
-                  <div className="grid grid-cols-4 gap-6">
-                    {columns.map((column, colIndex) => (
-                      <div key={colIndex} className="topic-column">
-                        {column.map(([subtopicId, subtopic]: [string, any]) => 
-                          renderTopicNode(subtopic, subtopicId)
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
               )}
               
               {/* Topic list */}
-              <div className="space-y-3">
-              <h1 className="text-4xl font-bold mb-8">
-                {selectedTopic 
-                  ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
-                  : 'All Topics'}
-              </h1>
+              <div className="space-y-3 mt-8 border-t border-gray-200 pt-8">
+                <h1 className="text-4xl font-bold mb-8">
+                  {selectedTopic 
+                    ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
+                    : 'All Topics'}
+                </h1>
                 {mainTopics.map((topic, index) => (
                   <div 
                     key={topic.id}
