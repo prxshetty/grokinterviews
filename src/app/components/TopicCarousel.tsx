@@ -57,9 +57,11 @@ export default function TopicCarousel() {
               
               // Subtle arc effect calculations
               // Cards further from center are positioned lower with subtle rotation
-              const verticalOffset = Math.abs(distanceFromMiddle) * (isMobile ? 8 : 10); // px lower for cards away from center
-              const rotationDeg = distanceFromMiddle * (isMobile ? 3 : 4); // subtle rotation
-              const scale = isActive ? 1 : (1 - Math.abs(distanceFromMiddle) * 0.05); // subtle scaling
+              const verticalOffset = Math.pow(Math.abs(distanceFromMiddle), 1.5) * (isMobile ? 10 : 12); // Adjusted curve calculation
+              const rotationDeg = (distanceFromMiddle * (isMobile ? 2.5 : 3)) * (1 - Math.abs(distanceFromMiddle) * 0.1); // Smoother rotation
+              const scale = 1 - Math.abs(distanceFromMiddle) * 0.04; // Base scale for non-active cards
+              const activeScale = 1.05; // Scale for the active card
+              const hoverScale = 1.1; // Scale on hover
               
               // Card visibility logic - hide cards that would be way off screen
               const isVisible = Math.abs(distanceFromMiddle) <= 5; // Show only cards close enough to center
@@ -69,15 +71,38 @@ export default function TopicCarousel() {
               return (
                 <div
                   key={topic.id}
-                  className={`w-[168px] md:w-[216px] h-[264px] md:h-[312px] rounded-lg ${topic.shade} text-white dark:text-black cursor-pointer transition-all duration-300 transform-gpu select-none flex-shrink-0 hover:-translate-y-3 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90 border border-white/10 dark:border-black/10 shadow-[0_8px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_16px_rgba(255,255,255,0.1)]`}
+                  className={`
+                    group w-[168px] md:w-[216px] h-[264px] md:h-[312px] rounded-lg ${topic.shade} 
+                    text-white dark:text-black cursor-pointer transform-gpu select-none flex-shrink-0 
+                    backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90 
+                    border border-white/10 dark:border-black/10 
+                    shadow-[0_8px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_16px_rgba(255,255,255,0.1)]
+                    transition-all duration-300 ease-in-out 
+                    hover:ring-2 hover:ring-white/20 dark:hover:ring-black/20 
+                    ${isActive ? 'ring-2 ring-white/30 dark:ring-black/30' : ''}
+                    z-10 hover:z-20
+                  `}
                   style={{ 
-                    transform: `translateY(${verticalOffset}px) rotate(${rotationDeg}deg) scale(${scale})`,
-                    opacity: isActive ? 1 : (1 - Math.abs(distanceFromMiddle) * 0.1),
+                    // Base transform for position and rotation
+                    transform: `
+                      translateY(${verticalOffset * 1.2}px) 
+                      rotate(${rotationDeg * 0.8}deg) 
+                      scale(${isActive ? 1.05 : scale})
+                    `,
+                    opacity: isActive ? 1 : (1 - Math.abs(distanceFromMiddle) * 0.15),
                     backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
                   }}
                   onClick={() => setActiveIndex(index)}
                 >
-                  <div className="p-5 md:p-7 h-full flex flex-col justify-between" style={{ transform: `rotate(${-rotationDeg}deg)` }}>
+                  {/* Inner content div with counter-rotation */}
+                  <div 
+                    className={`
+                      p-5 md:p-7 h-full flex flex-col justify-between
+                      transition-transform duration-300
+                      group-hover:scale-105 
+                    `} 
+                    style={{ transform: `rotate(${-rotationDeg * 0.8}deg)` }}
+                  >
                     {/* Top section with number */}
                     <div className="text-2xl md:text-4xl font-bold opacity-80 font-sans">{topic.id}</div>
                     

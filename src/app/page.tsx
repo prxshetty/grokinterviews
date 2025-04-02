@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import StatsSection from './components/StatsSection';
 import TopicCarouselWrapper from './components/TopicCarouselWrapper';
+import RotatingTopics from './components/RotatingTopics';
 
 export default async function Home() {
   const topicIds = ['ml', 'sdesign', 'webdev', 'dsa', 'ai'];
@@ -36,17 +37,8 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="w-full md:w-auto flex justify-end">
-           <Link href="/topics" className="bg-red-600 text-white p-6 rounded-lg flex flex-col items-start justify-between w-full md:w-48 h-48 transform transition-transform hover:scale-105">
-             <div>
-               <p className="text-xs uppercase font-semibold mb-1">Topics</p>
-               <h2 className="text-xl font-bold leading-tight">EXPLORE ALL INTERVIEW TOPICS</h2>
-             </div>
-             <div className="flex justify-between items-end w-full mt-auto">
-               <ArrowRightIcon className="h-8 w-8" />
-               <span className="text-4xl font-bold">{numTopics}</span>
-             </div>
-          </Link>
+        <div className="w-full md:w-4/12 flex justify-center md:justify-end items-center">
+          <RotatingTopics />
         </div>
       </div>
 
