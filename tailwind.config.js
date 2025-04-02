@@ -22,6 +22,20 @@ module.exports = {
       boxShadow: {
         'card': '0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)',
       },
+      animation: {
+        'spin-slow': 'spin 60s linear infinite',
+        'scroll-up': 'scroll-up 30s linear infinite',
+      },
+      keyframes: {
+         spin: {
+           '0%': { transform: 'rotate(0deg)' },
+           '100%': { transform: 'rotate(360deg)' },
+         },
+         'scroll-up': {
+           '0%': { transform: 'translateY(0)' },
+           '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
+         }
+      },
       typography: (theme) => ({
         DEFAULT: {
           css: {
