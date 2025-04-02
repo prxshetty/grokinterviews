@@ -4,16 +4,24 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const quizTopics = [
-  { id: '01', shade: 'bg-black opacity-10 dark:bg-white dark:opacity-10', title: 'JavaScript Basics', subtitle: 'Core language fundamentals' },
-  { id: '02', shade: 'bg-black opacity-20 dark:bg-white dark:opacity-20', title: 'React Essentials', subtitle: 'Component patterns & hooks' },
-  { id: '03', shade: 'bg-black opacity-30 dark:bg-white dark:opacity-30', title: 'CSS & Styling', subtitle: 'Modern layout techniques' },
+  { id: '01', shade: 'bg-black opacity-10 dark:bg-white dark:opacity-10', title: 'JavaScript', subtitle: 'Core language fundamentals' },
+  { id: '02', shade: 'bg-black opacity-20 dark:bg-white dark:opacity-20', title: 'React', subtitle: 'Component patterns & hooks' },
+  { id: '03', shade: 'bg-black opacity-30 dark:bg-white dark:opacity-30', title: 'CSS', subtitle: 'Modern layout techniques' },
   { id: '04', shade: 'bg-black opacity-40 dark:bg-white dark:opacity-40', title: 'System Design', subtitle: 'Architecture fundamentals' },
   { id: '05', shade: 'bg-black opacity-50 dark:bg-white dark:opacity-50', title: 'Data Structures', subtitle: 'Algorithms & problem solving' },
   { id: '06', shade: 'bg-black opacity-60 dark:bg-white dark:opacity-60', title: 'Web Performance', subtitle: 'Optimization strategies' },
-  { id: '07', shade: 'bg-black opacity-70 dark:bg-white dark:opacity-70', title: 'Backend Dev', subtitle: 'API design & implementation' },
+  { id: '07', shade: 'bg-black opacity-70 dark:bg-white dark:opacity-70', title: 'Node.js', subtitle: 'API design & implementation' },
   { id: '08', shade: 'bg-black opacity-80 dark:bg-white dark:opacity-80', title: 'GraphQL', subtitle: 'Modern API development' },
-  { id: '09', shade: 'bg-black opacity-90 dark:bg-white dark:opacity-90', title: 'State Management', subtitle: 'Managing application state' },
+  { id: '09', shade: 'bg-black opacity-90 dark:bg-white dark:opacity-90', title: 'Redux', subtitle: 'Managing application state' },
   { id: '10', shade: 'bg-black opacity-90 dark:bg-white dark:opacity-90', title: 'DevOps', subtitle: 'CI/CD and deployment' },
+  { id: '11', shade: 'bg-black opacity-80 dark:bg-white dark:opacity-80', title: 'TypeScript', subtitle: 'Static typing for JavaScript' },
+  { id: '12', shade: 'bg-black opacity-70 dark:bg-white dark:opacity-70', title: 'Python', subtitle: 'Versatile programming language' },
+  { id: '13', shade: 'bg-black opacity-60 dark:bg-white dark:opacity-60', title: 'AWS', subtitle: 'Cloud infrastructure & services' },
+  { id: '14', shade: 'bg-black opacity-50 dark:bg-white dark:opacity-50', title: 'Docker', subtitle: 'Containerization technology' },
+  { id: '15', shade: 'bg-black opacity-40 dark:bg-white dark:opacity-40', title: 'Kubernetes', subtitle: 'Container orchestration' },
+  { id: '16', shade: 'bg-black opacity-30 dark:bg-white dark:opacity-30', title: 'SQL', subtitle: 'Database query language' },
+  { id: '17', shade: 'bg-black opacity-20 dark:bg-white dark:opacity-20', title: 'MongoDB', subtitle: 'NoSQL database solutions' },
+  { id: '18', shade: 'bg-black opacity-10 dark:bg-white dark:opacity-10', title: 'Rust', subtitle: 'Performance & safety focused' },
 ];
 
 export default function TopicCarousel() {
