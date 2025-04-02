@@ -32,27 +32,34 @@
 .categoriesContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem 2.25rem;
+  gap: 1.5rem 2.5rem;
 }
 
 .categoryColumn {
   display: flex;
   flex-direction: column;
   min-width: 180px;
+  flex: 1;
 }
 
 .categoryGroup {
   display: flex;
   flex-direction: column;
-  margin-bottom: 0.875rem;
+  margin-bottom: 1.5rem;
 }
 
 .categoryHeader {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   font-weight: normal;
   font-size: 1rem;
   margin-bottom: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.categoryHeader:hover {
+  background-color: #f3f4f6;
 }
 
 .letterIndicator {
@@ -65,7 +72,9 @@
 .categoryTopics {
   display: flex;
   flex-direction: column;
-  margin-left: 3ch;
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid #e5e7eb;
 }
 
 /* Topic styling */
@@ -74,7 +83,13 @@
   align-items: baseline;
   cursor: pointer;
   white-space: nowrap;
-  padding: 0.1rem 0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s ease;
+}
+
+.topicNode:hover {
+  background-color: #f9fafb;
 }
 
 .indicator {
@@ -101,7 +116,7 @@
   font-family: monospace;
 }
 
-.bracketLeft, .bracketRight {
+.bracket {
   display: inline-block;
   font-family: monospace;
   line-height: 1;
@@ -141,6 +156,10 @@
 }
 
 /* Selected state */
+.topicNode.selected {
+  background-color: #f3f4f6;
+}
+
 .topicNode.selected .indicator {
   opacity: 1;
 }
@@ -165,13 +184,37 @@
 }
 
 .nestedSubtopics {
-  margin-left: 3ch;
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid #e5e7eb;
 }
 
 /* Dark mode styles */
 :global(.dark) .treeNavContainer {
   border-bottom: 1px solid rgba(55, 65, 81, 0.3);
   color: #ddd;
+  background-color: #1f2937;
+}
+
+:global(.dark) .categoryHeader {
+  background-color: #374151 !important;
+}
+
+:global(.dark) .categoryHeader:hover {
+  background-color: #4b5563 !important;
+}
+
+:global(.dark) .topicNode:hover {
+  background-color: #374151;
+}
+
+:global(.dark) .topicNode.selected {
+  background-color: #374151;
+}
+
+:global(.dark) .nestedSubtopics,
+:global(.dark) .categoryTopics {
+  border-left: 1px solid #4b5563;
 }
 
 :global(.dark) .indicator {

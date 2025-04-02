@@ -25,6 +25,10 @@ module.exports = {
       animation: {
         'spin-slow': 'spin 60s linear infinite',
         'scroll-up': 'scroll-up 30s linear infinite',
+        'fadeIn': 'fadeIn 0.3s ease-out forwards',
+        'fadeOut': 'fadeOut 0.3s ease-out forwards',
+        'slideRight': 'slideRight 0.3s ease-out forwards',
+        'slideLeft': 'slideLeft 0.3s ease-out forwards',
       },
       keyframes: {
          spin: {
@@ -34,7 +38,23 @@ module.exports = {
          'scroll-up': {
            '0%': { transform: 'translateY(0)' },
            '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
-         }
+         },
+         fadeIn: {
+           '0%': { opacity: '0', transform: 'translateY(10px)' },
+           '100%': { opacity: '1', transform: 'translateY(0)' },
+         },
+         fadeOut: {
+           '0%': { opacity: '1', transform: 'translateY(0)' },
+           '100%': { opacity: '0', transform: 'translateY(10px)' },
+         },
+         slideRight: {
+           '0%': { transform: 'translateX(-20px)', opacity: '0' },
+           '100%': { transform: 'translateX(0)', opacity: '1' },
+         },
+         slideLeft: {
+           '0%': { transform: 'translateX(20px)', opacity: '0' },
+           '100%': { transform: 'translateX(0)', opacity: '1' },
+         },
       },
       typography: (theme) => ({
         DEFAULT: {
@@ -153,6 +173,11 @@ module.exports = {
           },
         },
       }),
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
     },
   },
   plugins: [

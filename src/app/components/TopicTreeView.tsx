@@ -64,15 +64,15 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
     return (
       <div key={topicId} className="mb-2">
         <div 
-          className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1"
+          className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded transition-colors"
           onClick={() => hasChildren ? toggleTopic(topicId) : null}
         >
           {hasChildren && (
-            <span className="mr-2 text-gray-500 w-4 inline-block">
+            <span className="mr-2 text-gray-500 w-4 inline-block font-mono">
               {isExpanded ? '[-]' : '[+]'}
             </span>
           )}
-          {!hasChildren && <span className="mr-2 w-4 inline-block">[·]</span>}
+          {!hasChildren && <span className="mr-2 w-4 inline-block font-mono">[·]</span>}
           <span className="font-mono">{topic.label}</span>
         </div>
         
@@ -107,7 +107,7 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-start justify-center pt-12">
-      <div className="w-full max-w-6xl bg-white text-black rounded-lg overflow-hidden">
+      <div className="w-full max-w-6xl bg-white text-black rounded-lg overflow-hidden shadow-2xl">
         {/* Search header */}
         <div className="flex border-b border-gray-200">
           <div className="p-4 flex items-center text-gray-700">
@@ -125,7 +125,7 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
           />
           <button 
             onClick={onClose}
-            className="p-4 flex items-center text-gray-700 hover:bg-gray-100"
+            className="p-4 flex items-center text-gray-700 hover:bg-gray-100 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -134,19 +134,45 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
         </div>
 
         {/* Title and info */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold">{selectedTopic.label}</h2>
-          <p className="text-gray-500 text-sm mt-1">SEARCH BY TAGS</p>
+        <div className="px-6 py-5 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">{selectedTopic.label}</h2>
+            <p className="text-gray-500 text-sm mt-1">SEARCH BY TAGS</p>
+          </div>
+          <div className="flex space-x-2">
+            <span className="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded-full uppercase cursor-pointer hover:bg-gray-400 transition-colors">Beginner</span>
+            <span className="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded-full uppercase cursor-pointer hover:bg-gray-400 transition-colors">Expert</span>
+            <span className="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded-full uppercase cursor-pointer hover:bg-gray-400 transition-colors">Technical</span>
+          </div>
         </div>
 
         {/* Topic tree */}
         <div className="p-6">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-5 gap-6">
             {columns.map((column, colIndex) => (
               <div key={colIndex} className="topic-column">
-                {column.map(([subtopicId, subtopic]: [string, any]) => 
-                  renderTopic(subtopic, subtopicId)
-                )}
+                {column.map(([subtopicId, subtopic]: [string, any]) => {
+                  const hasChildren = subtopic.subtopics && Object.keys(subtopic.subtopics).length > 0;
+                  
+                  return (
+                    <div key={subtopicId} className="mb-5">
+                      <div 
+                        className="font-medium text-sm uppercase tracking-wider text-gray-500 mb-2 pb-1 border-b border-gray-200"
+                        onClick={() => hasChildren ? toggleTopic(subtopicId) : null}
+                      >
+                        {subtopic.label}
+                      </div>
+                      
+                      {hasChildren && (
+                        <div className="mt-1">
+                          {Object.entries(subtopic.subtopics).map(([childId, childTopic]: [string, any]) => 
+                            renderTopic(childTopic, childId)
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>

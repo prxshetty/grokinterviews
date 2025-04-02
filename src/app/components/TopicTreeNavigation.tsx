@@ -503,8 +503,8 @@ export default function TopicTreeNavigation({
               
               return (
                 <div key={categoryId} className={styles.categoryGroup}>
-                  <div className={styles.categoryHeader}>
-                    {renderTopicNode(categoryId, category.label, hasChildren, false)}
+                  <div className={`${styles.categoryHeader} bg-gray-100 px-3 py-2 rounded-md mb-3`}>
+                    <h3 className="text-sm font-medium uppercase tracking-wider text-gray-700">{category.label}</h3>
                   </div>
                   
                   {/* Show children if expanded */}
@@ -550,7 +550,7 @@ export default function TopicTreeNavigation({
   }
 
   return (
-    <div className={styles.treeNavContainer}>
+    <div className={`${styles.treeNavContainer} bg-white shadow-sm`}>
       <div className={styles.treeNavContent}>
         {renderMainCategories()}
       </div>
