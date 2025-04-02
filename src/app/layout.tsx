@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from './components/Navbar';
-import TopicNavWrapper from './components/TopicNavWrapper';
+import ConditionalNavWrapper from './components/ConditionalNavWrapper';
 import TopicDataProvider from './components/TopicDataProvider';
+import Footer from './components/Footer';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,13 +19,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white dark:bg-black dark:text-white">
+      <body className="min-h-screen bg-white dark:bg-black dark:text-white flex flex-col">
         <TopicDataProvider>
-          <Navbar />
-          <TopicNavWrapper />
-          <main className="max-w-7xl mx-auto px-4 py-8">
-            {children}
-          </main>
+          <div className="flex-grow">
+            <ConditionalNavWrapper>
+              {children}
+            </ConditionalNavWrapper>
+          </div>
+          <Footer />
         </TopicDataProvider>
       </body>
     </html>
