@@ -12,11 +12,12 @@ export default function ConditionalNavWrapper({
 }) {
   const pathname = usePathname();
   const isOnLandingPage = pathname === '/';
+  const isOnTopicsPage = pathname === '/topics';
 
   return (
     <>
-      {/* If NOT on landing page, render nav bars AND the containing main element */}
-      {!isOnLandingPage ? (
+      {/* If NOT on landing page or topics page, render nav bars AND the containing main element */}
+      {!isOnLandingPage && !isOnTopicsPage ? (
         <>
           <Navbar />
           <TopicNavWrapper />
@@ -25,7 +26,7 @@ export default function ConditionalNavWrapper({
           </main>
         </>
       ) : (
-        /* If ON landing page, render only the children (page content) */
+        /* If ON landing page or topics page, render only the children (page content) */
         children
       )}
     </>
