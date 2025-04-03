@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, createContext, useContext, ReactNode, useRef } from 'react';
-import { TopicTree } from '@/utils/markdownParser';
+import TopicDataService, { TopicTree } from '@/services/TopicDataService';
 
 // Create a context for the topic data
 const TopicDataContext = createContext<{
@@ -45,19 +45,8 @@ export default function TopicDataProvider({
       isFetchingRef.current = true;
       setIsLoading(true);
       
-      // Fetch topic data from API
-      const response = await fetch('/api/topics', {
-        // Add cache control headers
-        headers: {
-          'Cache-Control': 'max-age=3600' // 1 hour
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to load topic data');
-      }
-      
-      const data = await response.json();
+      // Use our service to fetch topic data
+      const data = await TopicDataService.getAllTopicData();
       setTopicData(data);
       
       // Save to localStorage with timestamp for cache expiry
@@ -77,6 +66,8 @@ export default function TopicDataProvider({
 
   // Function to manually refetch data when needed
   const refetchData = async () => {
+    // Clear the service cache first to ensure fresh data
+    TopicDataService.clearCache();
     await fetchTopicData();
   };
 
