@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useTopicData } from '../components/TopicDataProvider';
+import TopicDataService from '@/services/TopicDataService';
+import { TopicItem } from '@/utils/markdownParser';
 
 // Main topics with their corresponding colors
 const mainTopics = [
@@ -12,16 +14,9 @@ const mainTopics = [
   { id: 'dsa', label: 'Data Structures & Algorithms', color: 'bg-green-500' }
 ];
 
-type TopicData = {
-  [key: string]: {
-    label: string;
-    subtopics: {
-      [key: string]: {
+type CategoryItem = {
+  id: string;
         label: string;
-        subtopics?: any;
-      }
-    }
-  }
 };
 
 export default function TopicsPage() {
@@ -30,11 +25,33 @@ export default function TopicsPage() {
   const [searchValue, setSearchValue] = useState('');
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoryDetails, setCategoryDetails] = useState<any>(null);
+  const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
   const { topicData } = useTopicData();
 
-  const handleTopicClick = (topicId: string) => {
+  const handleTopicClick = async (topicId: string) => {
     setSelectedTopic(topicId);
     setSelectedCategory(null); // Reset category selection when topic changes
+    
+    // Load categories for this topic
+    if (selectedTopic !== topicId) {
+      await loadTopicCategories(topicId);
+    }
+  };
+
+  const loadTopicCategories = async (topicId: string) => {
+    setLoadingCategories(true);
+    try {
+      const categories = await TopicDataService.getTopicCategories(topicId);
+      setTopicCategories(categories);
+    } catch (error) {
+      console.error(`Error loading categories for ${topicId}:`, error);
+      setTopicCategories([]);
+    } finally {
+      setLoadingCategories(false);
+    }
   };
 
   const handleCloseTopicTree = () => {
@@ -42,8 +59,39 @@ export default function TopicsPage() {
     setSelectedCategory(null);
   };
 
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+  const handleCategorySelect = async (categoryId: string) => {
+    if (categoryId === selectedCategory) {
+      setSelectedCategory(null);
+      setCategoryDetails(null);
+      return;
+    }
+    
+    setSelectedCategory(categoryId);
+    await loadCategoryDetails(categoryId);
+  };
+
+  const loadCategoryDetails = async (categoryId: string) => {
+    if (!selectedTopic) return;
+    
+    setLoadingCategoryDetails(true);
+    try {
+      console.log(`Loading details for category ${categoryId} in topic ${selectedTopic}`);
+      const data = await TopicDataService.getCategoryDetails(selectedTopic, categoryId);
+      
+      if (!data) {
+        console.warn(`No details available for category ${categoryId}`);
+        // Set a null value but in a controlled way
+        setCategoryDetails(null);
+      } else {
+        console.log(`Successfully loaded details for category ${categoryId}`);
+        setCategoryDetails(data);
+      }
+    } catch (error) {
+      console.error(`Error loading details for category ${categoryId}:`, error);
+      setCategoryDetails(null);
+    } finally {
+      setLoadingCategoryDetails(false);
+    }
   };
 
   const handleBackToMainCategories = () => {
@@ -58,117 +106,235 @@ export default function TopicsPage() {
     setShowSearchModal(false);
   };
 
-  // Expand some initial topics when the selected topic changes
+  // Load categories when selected topic changes
   useEffect(() => {
-    if (selectedTopic && topicData && topicData[selectedTopic]?.subtopics) {
-      const initialExpanded = new Set(Object.keys(topicData[selectedTopic].subtopics).slice(0, 3));
-      setExpandedTopics(initialExpanded);
+    if (selectedTopic) {
+      loadTopicCategories(selectedTopic);
     }
-  }, [selectedTopic, topicData]);
+  }, [selectedTopic]);
 
-  const toggleTopic = (subtopicId: string) => {
-    setExpandedTopics(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(subtopicId)) {
-        newSet.delete(subtopicId);
-      } else {
-        newSet.add(subtopicId);
+  // Renders a category and its content in the structured format
+  const renderCategoryContent = (categoryId: string) => {
+    if (!selectedTopic) {
+      return null;
+    }
+    
+    if (loadingCategoryDetails) {
+      return (
+        <div className="w-full space-y-3 animate-fadeIn flex justify-center items-center py-12">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500 mr-3"></div>
+          <p className="text-sm text-gray-500">Loading content...</p>
+        </div>
+      );
+    }
+    
+    // Use the categoryDetails if available, otherwise fallback to topicData
+    if (categoryDetails && categoryDetails.subtopics) {
+      // Count the actual subtopics
+      const hasRealSubtopics = Object.keys(categoryDetails.subtopics).length > 0;
+      
+      // If the category has subtopics, render them
+      if (hasRealSubtopics) {
+        const listItems = Object.entries(categoryDetails.subtopics);
+        
+        return (
+          <div className="w-full space-y-3 animate-fadeIn">
+            <div className="ml-2">
+              {listItems.map(([listId, listItem], listIndex) => {
+                const typedListItem = listItem as TopicItem;
+                if (!typedListItem.subtopics || Object.keys(typedListItem.subtopics).length === 0) {
+                  return (
+                    <div key={listId} className="mb-4 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
+                      <div className="flex items-center">
+                        <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
+                        <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={listId} className="mb-6 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
+                    <div className="flex items-center">
+                      <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
+                      <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
+                    </div>
+                    <div className="ml-6 mt-2">
+                      {Object.entries(typedListItem.subtopics).map(([subListId, subListItem], subIndex) => (
+                        <div key={subListId} className="flex items-baseline my-1.5">
+                          <span className="text-xs uppercase tracking-wider mr-1">{listIndex + 1}-{subIndex + 1}</span>
+                          <span className="text-xs uppercase tracking-wider">{(subListItem as TopicItem).label.toUpperCase()}</span>
+                          <span className="flex-grow text-right text-xs mr-1">{String(subIndex * 10 + 1).padStart(2, '0')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      } else if (categoryDetails.label) {
+        // No subtopics but we have a category label - show the empty state
+        return (
+          <div className="w-full space-y-3 animate-fadeIn">
+            <div className="ml-2">
+              <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+                <div className="flex items-center">
+                  <span className="text-xs uppercase tracking-wider">
+                    NO CONTENT AVAILABLE FOR {categoryDetails.label.toUpperCase()}
+                  </span>
+                </div>
+                <div className="mt-4 flex space-x-3">
+                  <button
+                    onClick={handleBackToMainCategories}
+                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  >
+                    Try another category
+                  </button>
+                  <button
+                    onClick={() => loadCategoryDetails(categoryId)}
+                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  >
+                    Retry loading
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       }
-      return newSet;
-    });
-  };
-
-  // Renders a topic and its children recursively for the inline tree view
-  const renderTopicNode = (topic: any, topicId: string, depth: number = 0) => {
-    const hasChildren = topic.subtopics && Object.keys(topic.subtopics).length > 0;
-    const isExpanded = expandedTopics.has(topicId);
+    }
+    
+    // Get category from topicData as fallback
+    if (topicData && topicData[selectedTopic]?.subtopics) {
+      // First look for the exact categoryId
+      let category = topicData[selectedTopic].subtopics[categoryId];
+      
+      // If not found, try to match based on substring
+      if (!category) {
+        const subtopics = topicData[selectedTopic].subtopics;
+        for (const key in subtopics) {
+          if (key.includes(categoryId) || categoryId.includes(key)) {
+            category = subtopics[key];
+            break;
+          }
+        }
+      }
+      
+      // If not found by category ID, try by label
+      if (!category) {
+        const categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label;
+        if (categoryLabel) {
+          const subtopics = topicData[selectedTopic].subtopics;
+          for (const key in subtopics) {
+            if (subtopics[key].label.toLowerCase().includes(categoryLabel.toLowerCase()) ||
+                categoryLabel.toLowerCase().includes(subtopics[key].label.toLowerCase())) {
+              category = subtopics[key];
+              break;
+            }
+          }
+        }
+      }
+      
+      if (!category || !category.subtopics) {
+        // Get the category label if possible
+        const categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label || categoryId;
+        
+        return (
+          <div className="w-full space-y-3 animate-fadeIn">
+            <div className="ml-2">
+              <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+                <div className="flex items-center">
+                  <span className="text-xs uppercase tracking-wider">
+                    CONTENT FOR {categoryLabel.toUpperCase()} 
+                    IS BEING PREPARED
+                  </span>
+                </div>
+                <div className="mt-4 flex space-x-3">
+                  <button
+                    onClick={handleBackToMainCategories}
+                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  >
+                    Try another category
+                  </button>
+                  <button
+                    onClick={() => loadCategoryDetails(categoryId)}
+                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  >
+                    Retry loading
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      
+      // Get list items under this category
+      const listItems = Object.entries(category.subtopics);
+      
+      return (
+        <div className="w-full space-y-3 animate-fadeIn">
+          <div className="ml-2">
+            {listItems.map(([listId, listItem], listIndex) => {
+              const typedListItem = listItem as TopicItem;
+              if (!typedListItem.subtopics || Object.keys(typedListItem.subtopics).length === 0) {
+                return (
+                  <div key={listId} className="mb-4 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
+                    <div className="flex items-center">
+                      <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
+                      <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
+                    </div>
+                  </div>
+                );
+              }
+              
+              return (
+                <div key={listId} className="mb-6 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
+                  <div className="flex items-center">
+                    <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
+                    <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
+                  </div>
+                  <div className="ml-6 mt-2">
+                    {Object.entries(typedListItem.subtopics).map(([subListId, subListItem], subIndex) => (
+                      <div key={subListId} className="flex items-baseline my-1.5">
+                        <span className="text-xs uppercase tracking-wider mr-1">{listIndex + 1}-{subIndex + 1}</span>
+                        <span className="text-xs uppercase tracking-wider">{(subListItem as TopicItem).label.toUpperCase()}</span>
+                        <span className="flex-grow text-right text-xs mr-1">{String(subIndex * 10 + 1).padStart(2, '0')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
     
     return (
-      <div key={topicId} className="mb-1.5">
-        <div 
-          className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded transition-colors"
-          onClick={() => hasChildren ? toggleTopic(topicId) : null}
-        >
-          {hasChildren && (
-            <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">
-              {isExpanded ? '[-]' : '[+]'}
-            </span>
-          )}
-          {!hasChildren && <span className="mr-2 w-4 inline-block font-mono text-sm">[·]</span>}
-          <span className="font-mono text-sm">{topic.label}</span>
+      <div className="w-full space-y-3 animate-fadeIn">
+        <div className="ml-2">
+          <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center">
+              <span className="text-xs uppercase tracking-wider">
+                COULD NOT LOAD CONTENT FOR THIS CATEGORY
+              </span>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={handleBackToMainCategories}
+                className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              >
+                Go back to categories
+              </button>
         </div>
-        
-        {hasChildren && isExpanded && (
-          <div className="pl-6 border-l border-gray-200 ml-2 mt-1">
-            {Object.entries(topic.subtopics).map(([childId, childTopic]: [string, any]) => 
-              renderTopicNode(childTopic, childId, depth + 1)
-            )}
           </div>
-        )}
+        </div>
       </div>
     );
   };
-
-  // Get all main categories for the current topic
-  const getMainCategories = () => {
-    if (!selectedTopic || !topicData || !topicData[selectedTopic]?.subtopics) return [];
-    return Object.entries(topicData[selectedTopic].subtopics);
-  };
-
-  // Get all subtopics for a specific category
-  const getCategorySubtopics = (categoryId: string) => {
-    if (!selectedTopic || !topicData || !topicData[selectedTopic]?.subtopics || 
-        !topicData[selectedTopic].subtopics[categoryId]?.subtopics) return [];
-    
-    return Object.entries(topicData[selectedTopic].subtopics[categoryId].subtopics);
-  };
-
-  const mainCategories = getMainCategories();
-
-  // Main ML categories
-  const mlCategories = [
-    { id: 'foundations', label: 'Foundations of Machine Learning' },
-    { id: 'supervised', label: 'Supervised Learning' },
-    { id: 'unsupervised', label: 'Unsupervised Learning' },
-    { id: 'neural-networks', label: 'Neural Networks' },
-    { id: 'model-evaluation', label: 'Model Evaluation' },
-    { id: 'math-foundations', label: 'Mathematical Foundations' },
-    { id: 'data-preprocessing', label: 'Data Preprocessing and Exploration' }
-  ];
-
-  // Mid column topics
-  const midColumnTopics = [
-    { id: 'advanced-regression', label: 'Advanced Regression Techniques' },
-    { id: 'classification', label: 'Classification Techniques' },
-    { id: 'decision-trees', label: 'Decision Trees and Random Forests' },
-    { id: 'naive-bayes', label: 'Naive Bayes' },
-    { id: 'ensemble-methods', label: 'Ensemble Methods' },
-    { id: 'validation', label: 'Validation Techniques' },
-    { id: 'clustering-algorithms', label: 'Clustering Algorithms', 
-      subtopics: [
-        { id: 'kmeans', label: 'K-Means' },
-        { id: 'hierarchical', label: 'Hierarchical Clustering' },
-        { id: 'dbscan', label: 'DBSCAN' },
-        { id: 'gmm', label: 'Gaussian Mixture Models (GMM)' }
-      ] 
-    }
-  ];
-
-  // Right column topics
-  const rightColumnTopics = [
-    { id: 'dimensionality-reduction', label: 'Dimensionality Reduction Techniques' },
-    { id: 'autoencoders', label: 'Autoencoders' },
-    { id: 'nn-architectures', label: 'Neural Network Architectures' },
-    { id: 'deep-learning', label: 'Advanced Deep Learning' },
-    { id: 'bayesian-methods', label: 'Bayesian Methods' },
-    { id: 'markov-models', label: 'Markov Models' },
-    { id: 'sampling-methods', label: 'Sampling Methods' },
-    { id: 'optimization', label: 'Optimization and Model Tuning' },
-    { id: 'feature-engineering', label: 'Feature Engineering' },
-    { id: 'time-series', label: 'Time Series Analysis' },
-    { id: 'practical-ml', label: 'Practical ML and Deployment' },
-    { id: 'emerging-trends', label: 'Emerging Trends' }
-  ];
 
   return (
     <div className="bg-white min-h-screen">
@@ -207,9 +373,6 @@ export default function TopicsPage() {
                 <div className="mb-12">
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
-                      <h2 className="text-2xl font-bold">
-                        {mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'} Topic Tree
-                      </h2>
                       {selectedCategory && (
                         <button
                           onClick={handleBackToMainCategories}
@@ -232,14 +395,19 @@ export default function TopicsPage() {
                   
                   {/* Main topic categories */}
                   <div className="flex flex-wrap">
-                    {selectedCategory === null ? (
+                    {loadingCategories ? (
+                      <div className="w-full text-center py-6">
+                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
+                        <p className="mt-2 text-sm text-gray-500">Loading categories...</p>
+                      </div>
+                    ) : selectedCategory === null ? (
                       // Show all main categories when no specific category is selected
                       <div className="w-full grid grid-cols-3 gap-4 animate-fadeIn">
-                        {mlCategories.map((category, index) => (
+                        {topicCategories.map((category, index) => (
                           <div 
-                            key={category.id}
+                            key={`${selectedTopic}-${category.id}-${index}`}
                             className="transform transition-all duration-300 ease-in-out animate-slideRight"
-                            style={{ animationDelay: `${index * 0.05}s` }}
+                            style={{ animationDelay: `${index * 0.03}s` }}
                           >
                             <div 
                               className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider cursor-pointer hover:bg-gray-200 transition-colors rounded"
@@ -253,95 +421,17 @@ export default function TopicsPage() {
                     ) : (
                       // Show detailed view for the selected category
                       <div className="w-full animate-fadeIn">
-                        {/* Left column - Selected main category and its direct subtopics */}
+                        {/* Selected category view */}
                         <div className="flex flex-wrap">
-                          <div className="w-3/12 pr-4 space-y-3 animate-slideRight">
-                            <div className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider rounded">
-                              {mlCategories.find(cat => cat.id === selectedCategory)?.label || 'Selected Category'}
-                            </div>
-                            <div className="ml-2 pl-4 border-l border-gray-200">
-                              {selectedCategory === 'supervised' && (
-                                <>
-                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
-                                      <span className="font-mono text-sm">Regression Methods</span>
-                                    </div>
-                                  </div>
-                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
-                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
-                                      <span className="font-mono text-sm">Classification Techniques</span>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                              {selectedCategory === 'unsupervised' && (
-                                <>
-                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
-                                      <span className="font-mono text-sm">Clustering</span>
-                                    </div>
-                                  </div>
-                                  <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
-                                    <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-                                      <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
-                                      <span className="font-mono text-sm">Dimensionality Reduction</span>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                              {selectedCategory === 'foundations' && (
-                                <div className="mb-1.5 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-                                  <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-                                    <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
-                                    <span className="font-mono text-sm">Core Concepts</span>
-                                  </div>
-                                </div>
-                              )}
+                          {/* Category header */}
+                          <div className="w-full mb-4">
+                            <div className="bg-gray-100 px-4 py-3 uppercase text-sm tracking-wider rounded font-medium">
+                              {topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Selected Category'}
                             </div>
                           </div>
-
-                          {/* Middle column - Related topics */}
-                          <div className="w-5/12 px-4 space-y-3 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
-                            {midColumnTopics.map((topic, index) => (
-                              <div key={topic.id} className="animate-fadeIn" style={{ animationDelay: `${0.2 + index * 0.05}s` }}>
-                                <div className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider rounded">
-                                  {topic.label}
-                                </div>
-                                {topic.subtopics && (
-                                  <div className="ml-2 pl-4 border-l border-gray-200">
-                                    {topic.subtopics.map((subtopic, subIndex) => (
-                                      <div 
-                                        key={subtopic.id} 
-                                        className="mb-1.5 animate-fadeIn" 
-                                        style={{ animationDelay: `${0.3 + subIndex * 0.05}s` }}
-                                      >
-                                        <div className="flex items-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-                                          <span className="mr-2 text-gray-500 w-4 inline-block font-mono text-sm">[+]</span>
-                                          <span className="font-mono text-sm">{subtopic.label}</span>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Right column */}
-                          <div className="w-4/12 pl-4 space-y-3 animate-slideLeft">
-                            {rightColumnTopics.map((topic, index) => (
-                              <div 
-                                key={topic.id} 
-                                className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider rounded animate-fadeIn" 
-                                style={{ animationDelay: `${0.2 + index * 0.03}s` }}
-                              >
-                                {topic.label}
-                              </div>
-                            ))}
-                          </div>
+                          
+                          {/* Content based on selected category */}
+                          {renderCategoryContent(selectedCategory)}
                         </div>
                       </div>
                     )}
@@ -392,11 +482,11 @@ export default function TopicsPage() {
               
               {/* Topic list */}
               <div className="space-y-3 mt-8 border-t border-gray-200 pt-8">
-                <h1 className="text-4xl font-bold mb-8">
-                  {selectedTopic 
-                    ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
-                    : 'All Topics'}
-                </h1>
+              <h1 className="text-4xl font-bold mb-8">
+                {selectedTopic 
+                  ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
+                  : 'All Topics'}
+              </h1>
                 {mainTopics.map((topic, index) => (
                   <div 
                     key={topic.id}
