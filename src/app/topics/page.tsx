@@ -5,6 +5,7 @@ import { useTopicData } from '../components/TopicDataProvider';
 import TopicDataService from '@/services/TopicDataService';
 import { TopicItem } from '@/utils/markdownParser';
 import ActivityProgress from '../components/ActivityProgress';
+import ProgressChart from '../components/ProgressChart';
 
 // Main topics with their corresponding colors
 const mainTopics = [
@@ -483,10 +484,10 @@ export default function TopicsPage() {
 
               {/* Q&A Content Section */}
               <div className="space-y-3 mt-8 pt-8">
-                <h1 className="text-4xl font-bold mb-8 font-mono">
+                <h1 className="text-4xl font-normal tracking-tight mb-8">
                   {selectedTopic
                     ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
-                    : 'Dashboard'}
+                    : 'Status'}
                 </h1>
 
                 {/* Display Q&A content based on selected topic/category */}
@@ -516,15 +517,22 @@ export default function TopicsPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-8">
-                    {/* Activity Progress Chart */}
-                    <ActivityProgress
-                      questionsCompleted={24}
-                      totalQuestions={120}
-                      timeSpent={8.5}
-                      domainsSolved={3}
-                      totalDomains={5}
-                    />
+                  <div>
+                    {/* Activity Progress and Chart in the same row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      <div>
+                        <ActivityProgress
+                          questionsCompleted={24}
+                          totalQuestions={120}
+                          timeSpent={8.5}
+                          domainsSolved={3}
+                          totalDomains={5}
+                        />
+                      </div>
+                      <div>
+                        <ProgressChart />
+                      </div>
+                    </div>
 
                     {/* No topics displayed here as requested */}
                   </div>
