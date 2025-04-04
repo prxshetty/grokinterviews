@@ -26,9 +26,9 @@ export default async function Home() {
       </div>
 
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-center mt-16 md:mt-8">
+      <div className="hero-section relative z-10 flex flex-col md:flex-row justify-between items-center mt-16 md:mt-8">
         <div className="w-full md:w-7/12 mb-8 md:mb-0">
-          <h1 className="text-3xl md:text-4xl mb-6">Grok Interviews</h1>
+          <h1 className="text-3xl md:text-4xl mb-6 font-normal tracking-tight">Grok Interviews</h1>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
             Browse interview questions by topic and find relevant questions for specific job roles.
           </p>
