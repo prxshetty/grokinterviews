@@ -19,32 +19,40 @@ interface TopicCardProps {
 export default function TopicCard({ topic, isActive, isMobile, style, onClick }: TopicCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Calculate the transform style with hover effect
+  const transformStyle = isHovered
+    ? `${style.transform?.toString() || ''} scale(1.05)`
+    : style.transform;
+
   return (
     <div
       key={topic.id}
       className={`
-        group relative flex-shrink-0 w-[120px] md:w-[180px] h-[180px] md:h-[240px] rounded-xl overflow-hidden shadow-lg
+        group relative flex-shrink-0 w-[120px] md:w-[180px] h-[180px] md:h-[240px] rounded-xl overflow-hidden
         transition-all duration-300 ease-out cursor-pointer
-        ${isActive ? 'z-10 shadow-lg' : 'z-0'}
+        ${isActive ? 'z-10 shadow-xl' : 'z-0 shadow-lg'}
         hover:z-20 hover:shadow-xl
       `}
       style={{
         ...style,
-        transform: `${style.transform} ${isHovered ? 'scale(1.05)' : ''}`
+        transform: transformStyle,
       }}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Card background with gradient */}
-      <div className={`absolute inset-0 ${topic.shade} transition-opacity duration-300`}></div>
+      <div className={`absolute inset-0 ${topic.shade} transition-all duration-300`}></div>
 
       {/* Hover overlay */}
       <div
         className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-          isHovered || isActive ? 'opacity-20' : 'opacity-0'
+          isHovered ? 'opacity-30' : isActive ? 'opacity-20' : 'opacity-0'
         }`}
       ></div>
+
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/0 opacity-60"></div>
 
       {/* Card content */}
       <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between text-white">
@@ -68,18 +76,27 @@ export default function TopicCard({ topic, isActive, isMobile, style, onClick }:
       </div>
 
       {/* Reveal on hover - additional info */}
-      <div className="absolute inset-0 bg-black/30 dark:bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center pointer-events-none">
-        <div className="transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 text-center">
-          <div className="text-sm font-bold mb-2 text-white dark:text-white">Explore {topic.title}</div>
-          <div className="inline-block px-4 py-1.5 rounded-full bg-white/20 dark:bg-white/30 text-xs font-medium border border-white/10 dark:border-white/20 shadow-lg">View Details</div>
+      <div
+        className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent
+        opacity-0 ${isHovered ? 'opacity-100' : ''} transition-all duration-300
+        flex items-end justify-center pb-6 pointer-events-none`}
+      >
+        <div className={`transform ${isHovered ? 'translate-y-0' : 'translate-y-4'} transition-all duration-300 text-center`}>
+          <div className="text-sm font-bold mb-2 text-white">Explore {topic.title}</div>
+          <div className="inline-block px-4 py-1.5 rounded-full bg-white/20 text-xs font-medium border border-white/10 shadow-lg">
+            View Details
+          </div>
         </div>
       </div>
 
       {/* Subtle effects for active card */}
       {isActive && (
         <>
-          <div className="absolute inset-0 bg-white/5 dark:bg-white/10 animate-pulse pointer-events-none"></div>
-          <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-white/40 dark:bg-white/60 animate-pulse"></div>
+          <div className="absolute inset-0 bg-white/5 animate-pulse pointer-events-none"></div>
+          <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-white/60 animate-pulse"></div>
+          <div className="absolute top-3 left-3 text-[8px] font-mono text-white/70 tracking-wide">
+            <div>active</div>
+          </div>
         </>
       )}
     </div>

@@ -3,7 +3,7 @@ import "./globals.css";
 import ConditionalNavWrapper from './components/ConditionalNavWrapper';
 import TopicDataProvider from './components/TopicDataProvider';
 import Footer from './components/Footer';
-import { vogueSerif } from './fonts';
+import { janelotus, playfairDisplay } from './fonts';
 
 
 export const metadata: Metadata = {
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${vogueSerif.variable}`}>
+    <html lang="en" className={`${janelotus.variable} ${playfairDisplay.variable}`}>
 
       <body className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex flex-col transition-colors duration-300 relative">
         {/* Dark mode background */}

@@ -17,7 +17,8 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        serif: ['var(--font-vogue-serif)', 'Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
+        serif: ['var(--font-playfair)', 'Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
+        janelotus: ['var(--font-janelotus)', 'var(--font-playfair)', 'Georgia', 'serif'],
         mono: ['Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
       },
       boxShadow: {
@@ -26,14 +27,10 @@ module.exports = {
       animation: {
         'spin-slow': 'spin 60s linear infinite',
         'scroll-up': 'scroll-up 30s linear infinite',
-        'scroll-smooth': 'scroll-smooth 60s linear infinite',
         'fadeIn': 'fadeIn 0.3s ease-out forwards',
         'fadeOut': 'fadeOut 0.3s ease-out forwards',
         'slideRight': 'slideRight 0.3s ease-out forwards',
         'slideLeft': 'slideLeft 0.3s ease-out forwards',
-        'scroll': 'scroll 20s linear infinite',
-        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'float': 'float 3s ease-in-out infinite',
       },
       keyframes: {
          spin: {
@@ -43,10 +40,6 @@ module.exports = {
          'scroll-up': {
            '0%': { transform: 'translateY(0)' },
            '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
-         },
-         'scroll-smooth': {
-           '0%': { transform: 'translateX(0)' },
-           '100%': { transform: 'translateX(calc(-50%))' },
          },
          fadeIn: {
            '0%': { opacity: '0', transform: 'translateY(10px)' },
@@ -64,22 +57,6 @@ module.exports = {
            '0%': { transform: 'translateX(20px)', opacity: '0' },
            '100%': { transform: 'translateX(0)', opacity: '1' },
          },
-         scroll: {
-           '0%': { transform: 'translateX(0)' },
-           '100%': { transform: 'translateX(-50%)' },
-         },
-         'scroll-smooth': {
-           '0%': { transform: 'translateX(0)' },
-           '100%': { transform: 'translateX(-50%)' },
-         },
-         'pulse': {
-           '0%, 100%': { opacity: 0.2 },
-           '50%': { opacity: 0.1 },
-         },
-         'float': {
-           '0%, 100%': { transform: 'translateY(0)' },
-           '50%': { transform: 'translateY(-10px)' },
-         }
       },
       typography: (theme) => ({
         DEFAULT: {

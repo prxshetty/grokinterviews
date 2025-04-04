@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-const topics = ['Artifical  Intelligence', 'Data  Structures  &  Algorithms', 'Machine  Learning', 'Web  Developement', 'System  Design'];
+const topics = ['Artificial  Intelligence', 'Data  Structures  &  Algorithms', 'Machine  Learning', 'Web  Development', 'System  Design'];
 
 export default function RotatingText() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,7 +45,7 @@ export default function RotatingText() {
     <div className="block mt-6 mb-4 relative">
       <div
         className={`
-          text-4xl md:text-6xl lg:text-7xl tracking-tight leading-none font-serif italic
+          text-4xl md:text-6xl lg:text-7xl tracking-tight leading-none font-janelotus
           transition-opacity duration-500 ease-in-out
           ${isVisible ? 'opacity-100' : 'opacity-0'}
         `}
