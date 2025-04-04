@@ -23,7 +23,6 @@ export default function TopicsPage() {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState('');
-  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -343,7 +342,7 @@ export default function TopicsPage() {
         <div className={`transition-opacity duration-300 ${showSearchModal ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="p-0">
             {/* Navigation tabs */}
-            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800">
+            <div className="flex justify-between items-center">
               <div className="flex flex-1">
                 {mainTopics.map(topic => (
                   <button
@@ -408,6 +407,7 @@ export default function TopicsPage() {
                             key={`${selectedTopic}-${category.id}-${index}`}
                             className="transform transition-all duration-300 ease-in-out animate-slideRight"
                             style={{ animationDelay: `${index * 0.03}s` }}
+                            id={`topic-${category.id}`}
                           >
                             <div
                               className="bg-gray-100 dark:bg-gray-800 px-3 py-2 uppercase text-sm tracking-wider cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded"
@@ -481,59 +481,83 @@ export default function TopicsPage() {
               )}
 
               {/* Topic list */}
-              <div className="space-y-3 mt-8 border-t border-gray-200 dark:border-gray-800 pt-8">
+              <div className="space-y-3 mt-8 pt-8">
               <h1 className="text-4xl font-bold mb-8">
                 {selectedTopic
                   ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
                   : 'All Topics'}
               </h1>
-                {mainTopics.map((topic, index) => (
-                  <div
-                    key={topic.id}
-                    onClick={() => handleTopicClick(topic.id)}
-                    className="flex items-center py-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition"
-                  >
-                    <div className="w-12 text-xl font-medium">{String(index + 1).padStart(2, '0')}</div>
-                    <div className={`w-4 h-4 ${topic.color} mr-6`}></div>
-                    <div className="flex-grow font-medium">{topic.label}</div>
-                    <div className="flex space-x-2">
-                      {topic.id === 'ml' && (
-                        <>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Algorithms</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Deep Learning</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Statistics</span>
-                        </>
-                      )}
-                      {topic.id === 'ai' && (
-                        <>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">NLP</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Computer Vision</span>
-                        </>
-                      )}
-                      {topic.id === 'webdev' && (
-                        <>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Frontend</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Backend</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">React</span>
-                        </>
-                      )}
-                      {topic.id === 'system-design' && (
-                        <>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Scaling</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Databases</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Microservices</span>
-                        </>
-                      )}
-                      {topic.id === 'dsa' && (
-                        <>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Arrays</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Graphs</span>
-                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Dynamic Programming</span>
-                        </>
+                {mainTopics.map((topic, index) => {
+                  const isSelected = selectedTopic === topic.id;
+                  return (
+                    <div key={topic.id} id={`topic-${topic.id}`}>
+                      <div
+                        onClick={() => handleTopicClick(topic.id)}
+                        className="flex items-center py-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition"
+                      >
+                        <div className="w-12 text-xl font-medium">{String(index + 1).padStart(2, '0')}</div>
+                        <div className={`w-4 h-4 ${topic.color} mr-6`}></div>
+                        <div className="flex-grow font-medium">{topic.label}</div>
+                        <div className="flex space-x-2">
+                          {topic.id === 'ml' && (
+                            <>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Algorithms</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Deep Learning</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Statistics</span>
+                            </>
+                          )}
+                          {topic.id === 'ai' && (
+                            <>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">NLP</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Computer Vision</span>
+                            </>
+                          )}
+                          {topic.id === 'webdev' && (
+                            <>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Frontend</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Backend</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">React</span>
+                            </>
+                          )}
+                          {topic.id === 'system-design' && (
+                            <>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Scaling</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Databases</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Microservices</span>
+                            </>
+                          )}
+                          {topic.id === 'dsa' && (
+                            <>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Arrays</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Graphs</span>
+                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Dynamic Programming</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Subtopics section - shown when topic is selected */}
+                      {isSelected && topicCategories.length > 0 && (
+                        <div className="mt-4 mb-8 pl-12">
+                          <div className="grid grid-cols-3 gap-4">
+                            {topicCategories.map((category) => (
+                              <div
+                                key={`${topic.id}-${category.id}`}
+                                id={`topic-${category.id}`}
+                                className="bg-gray-100 dark:bg-gray-800 px-3 py-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded"
+                                onClick={() => handleCategorySelect(category.id)}
+                              >
+                                <div className="font-medium text-sm uppercase tracking-wider">
+                                  {category.label}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -13,6 +13,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   // Check if we're on a topic detail page
   const isTopicDetailPage = pathname.startsWith('/topics/') && pathname !== '/topics';
+  // Check if we're on the topics page
+  const isTopicsPage = pathname === '/topics';
 
   // Handle initial setup after mount
   useEffect(() => {
@@ -22,6 +24,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
     // Add scroll event listener to show/hide nav title
     const handleScroll = () => {
+      // Always show title on topics page
+      if (isTopicsPage) {
+        setShowNavTitle(true);
+        return;
+      }
+
       // Get the hero section element
       const heroSection = document.querySelector('.hero-section');
       if (heroSection) {
