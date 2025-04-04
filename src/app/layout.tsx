@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ConditionalNavWrapper from './components/ConditionalNavWrapper';
 import TopicDataProvider from './components/TopicDataProvider';
 import Footer from './components/Footer';
 import { janelotus, playfairDisplay } from './fonts';
+import MainNavigation from './components/MainNavigation';
 
 
 export const metadata: Metadata = {
@@ -30,9 +30,9 @@ export default function RootLayout({
         </div>
         <TopicDataProvider>
           <div className="flex-grow">
-            <ConditionalNavWrapper>
+            <MainNavigation>
               {children}
-            </ConditionalNavWrapper>
+            </MainNavigation>
           </div>
           <Footer />
         </TopicDataProvider>

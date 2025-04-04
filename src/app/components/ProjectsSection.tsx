@@ -31,8 +31,11 @@ export default function ProjectsSection() {
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Navigation</div>
               <h3 className="text-lg font-medium mb-2">Hierarchical<br />Topic Trees</h3>
               <div className="relative bg-gray-100 dark:bg-gray-800 mb-4 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                <div className="absolute inset-0 flex items-center justify-center text-gray-300 dark:text-gray-700">
-                </div>
+                <img
+                  src="/images/model.webp"
+                  alt="Hierarchical Topic Trees"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400">
                 <p>Browse questions by main topics (ML, DSA, WebDev, etc.) and dive deep with intuitive subtopic trees.</p>
@@ -41,14 +44,17 @@ export default function ProjectsSection() {
 
             {/* Feature 2 */}
             <div className="flex flex-col">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Content</div>
-              <h3 className="text-lg font-medium mb-2">Comprehensive<br />Coverage</h3>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">AI Powered Answers</div>
+              <h3 className="text-lg font-medium mb-2">Custom<br />Concierge</h3>
               <div className="relative bg-gray-100 dark:bg-gray-800 mb-4 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                <div className="absolute inset-0 flex items-center justify-center text-gray-300 dark:text-gray-700">
-                </div>
+                <img
+                  src="/images/agents.webp"
+                  alt="Comprehensive Coverage"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400">
-                <p>Access expertly curated content across multiple domains including AI, System Design, and core CS fundamentals.</p>
+                <p>Access expertly curated content across multiple domains with AI-powered answers from GPT-4, Claude, or Gemini for AI, System Design, and core CS fundamentals.</p>
               </div>
             </div>
 
@@ -57,8 +63,11 @@ export default function ProjectsSection() {
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Experience</div>
               <h3 className="text-lg font-medium mb-2">Modern<br />Learning UI</h3>
               <div className="relative bg-gray-100 dark:bg-gray-800 mb-4 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                <div className="absolute inset-0 flex items-center justify-center text-gray-300 dark:text-gray-700">
-                </div>
+                <img
+                  src="/images/llm.webp"
+                  alt="Modern Learning UI"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
               </div>
               <div className="text-xs text-gray-600 dark:text-gray-400">
                 <p>Enjoy a seamless, responsive interface with dark mode support for focused preparation.</p>

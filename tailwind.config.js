@@ -27,6 +27,7 @@ module.exports = {
       animation: {
         'spin-slow': 'spin 60s linear infinite',
         'scroll-up': 'scroll-up 30s linear infinite',
+        'scroll-smooth': 'scroll-smooth 30s linear infinite',
         'fadeIn': 'fadeIn 0.3s ease-out forwards',
         'fadeOut': 'fadeOut 0.3s ease-out forwards',
         'slideRight': 'slideRight 0.3s ease-out forwards',
@@ -40,6 +41,10 @@ module.exports = {
          'scroll-up': {
            '0%': { transform: 'translateY(0)' },
            '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
+         },
+         'scroll-smooth': {
+           '0%': { transform: 'translateX(0)' },
+           '100%': { transform: 'translateX(calc(-50%))' },
          },
          fadeIn: {
            '0%': { opacity: '0', transform: 'translateY(10px)' },

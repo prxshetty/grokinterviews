@@ -44,6 +44,9 @@ export default function TopicCard({ topic, isActive, isMobile, style, onClick }:
       {/* Card background with gradient */}
       <div className={`absolute inset-0 ${topic.shade} transition-all duration-300`}></div>
 
+      {/* Colorful gradient overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-br from-${topic.shade.replace('bg-', '')}/80 via-${topic.shade.replace('bg-', '')}/90 to-${topic.shade.replace('bg-', '')}/70 opacity-90`}></div>
+
       {/* Hover overlay */}
       <div
         className={`absolute inset-0 bg-black transition-opacity duration-300 ${
@@ -52,7 +55,11 @@ export default function TopicCard({ topic, isActive, isMobile, style, onClick }:
       ></div>
 
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/0 opacity-60"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/0 opacity-70"></div>
+
+      {/* Subtle pattern overlay */}
+      <div className="absolute inset-0 opacity-10 mix-blend-overlay"
+           style={{ backgroundImage: 'url("/patterns/dot-pattern.png")' }}></div>
 
       {/* Card content */}
       <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between text-white">

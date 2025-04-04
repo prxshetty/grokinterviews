@@ -16,12 +16,11 @@ export default function CompanyList() {
 
           {/* Main carousel with animation */}
           <div className="flex animate-scroll-smooth">
-            {/* Create a shuffled version of companies to avoid duplicates appearing close to each other */}
+            {/* Display companies in a fixed order to avoid hydration errors */}
             {(() => {
-              // Create a shuffled copy of companies
-              const shuffled = [...companies].sort(() => Math.random() - 0.5);
-              // Combine original and shuffled for smooth looping without adjacent duplicates
-              return [...companies, ...shuffled].map((company, index) => (
+              // Use a fixed order for server-side rendering compatibility
+              // We'll duplicate the array for the scrolling effect
+              return [...companies, ...companies].map((company, index) => (
               <div
                 key={`${company.name}-${index}`}
                 className="flex flex-col items-center justify-center mx-10 w-32 opacity-80 hover:opacity-100 transition-opacity"
