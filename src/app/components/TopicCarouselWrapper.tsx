@@ -9,7 +9,7 @@ const ProjectsSection = dynamic(() => import('./ProjectsSection'), { ssr: false 
 
 export default function TopicCarouselWrapper() {
   return (
-    <div className="py-16">
+    <div className="mt-32 md:mt-48 pt-8 pb-16">
       <TopicCarousel />
       <CompanyList />
       <ProjectsSection />

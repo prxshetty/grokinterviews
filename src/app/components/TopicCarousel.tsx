@@ -28,7 +28,7 @@ export default function TopicCarousel() {
   return (
     <div className="relative">
       {/* Card container with slight arc - no scrolling */}
-      <div className="flex justify-center items-center py-16 relative overflow-hidden">
+      <div className="flex justify-center items-center pt-8 pb-16 relative overflow-hidden">
         {/* Enhanced arc background indicator */}
         <div className="absolute bottom-0 left-1/2 w-[95%] h-[300px] border-t-2 border-gray-200 dark:border-gray-700 rounded-t-full transform -translate-x-1/2 opacity-30 dark:opacity-20"></div>
         <div className="absolute bottom-0 left-1/2 w-[85%] h-[280px] border-t border-gray-300 dark:border-gray-600 rounded-t-full transform -translate-x-1/2 opacity-20 dark:opacity-15"></div>

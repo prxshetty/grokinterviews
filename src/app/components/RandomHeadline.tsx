@@ -52,19 +52,35 @@ export default function RandomHeadline() {
     setHeadline(headlines[randomIndex]);
   }, []);
 
+  // Use a default headline for initial server-side rendering to avoid hydration mismatch
+  if (headline.before === "" && headline.after === "") {
+    return (
+      <div className="flex justify-end">
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] text-right font-sans">
+          <div className="mb-2">
+            IT'S ABOUT DAMN TIME TO CONQUER
+          </div>
+          <RotatingText />
+        </h1>
+      </div>
+    );
+  }
+
   return (
-    <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] text-right font-sans">
-      {headline.before && (
-        <div className="mb-2">
-          {headline.before}
-        </div>
-      )}
-      <RotatingText />
-      {headline.after && (
-        <div className="mt-2">
-          {headline.after}
-        </div>
-      )}
-    </h1>
+    <div className="flex justify-end">
+      <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] text-right font-sans">
+        {headline.before && (
+          <div className="mb-2">
+            {headline.before}
+          </div>
+        )}
+        <RotatingText />
+        {headline.after && (
+          <div className="mt-2">
+            {headline.after}
+          </div>
+        )}
+      </h1>
+    </div>
   );
 }

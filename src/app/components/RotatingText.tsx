@@ -7,8 +7,14 @@ const topics = ['Artificial  Intelligence', 'Data  Structures  &  Algorithms', '
 export default function RotatingText() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
   const currentTopic = topics[currentIndex];
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Set mounted state to true after component mounts
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     // Simple fade in/out animation
@@ -47,7 +53,7 @@ export default function RotatingText() {
         className={`
           text-4xl md:text-6xl lg:text-7xl tracking-tight leading-none font-janelotus
           transition-opacity duration-500 ease-in-out
-          ${isVisible ? 'opacity-100' : 'opacity-0'}
+          ${isMounted ? (isVisible ? 'opacity-100' : 'opacity-0') : 'opacity-100'}
         `}
       >
         {currentTopic}

@@ -34,7 +34,7 @@ export default function TopicsPage() {
   const handleTopicClick = async (topicId: string) => {
     setSelectedTopic(topicId);
     setSelectedCategory(null); // Reset category selection when topic changes
-    
+
     // Load categories for this topic
     if (selectedTopic !== topicId) {
       await loadTopicCategories(topicId);
@@ -65,19 +65,19 @@ export default function TopicsPage() {
       setCategoryDetails(null);
       return;
     }
-    
+
     setSelectedCategory(categoryId);
     await loadCategoryDetails(categoryId);
   };
 
   const loadCategoryDetails = async (categoryId: string) => {
     if (!selectedTopic) return;
-    
+
     setLoadingCategoryDetails(true);
     try {
       console.log(`Loading details for category ${categoryId} in topic ${selectedTopic}`);
       const data = await TopicDataService.getCategoryDetails(selectedTopic, categoryId);
-      
+
       if (!data) {
         console.warn(`No details available for category ${categoryId}`);
         // Set a null value but in a controlled way
@@ -118,7 +118,7 @@ export default function TopicsPage() {
     if (!selectedTopic) {
       return null;
     }
-    
+
     if (loadingCategoryDetails) {
       return (
         <div className="w-full space-y-3 animate-fadeIn flex justify-center items-center py-12">
@@ -127,16 +127,16 @@ export default function TopicsPage() {
         </div>
       );
     }
-    
+
     // Use the categoryDetails if available, otherwise fallback to topicData
     if (categoryDetails && categoryDetails.subtopics) {
       // Count the actual subtopics
       const hasRealSubtopics = Object.keys(categoryDetails.subtopics).length > 0;
-      
+
       // If the category has subtopics, render them
       if (hasRealSubtopics) {
         const listItems = Object.entries(categoryDetails.subtopics);
-        
+
         return (
           <div className="w-full space-y-3 animate-fadeIn">
             <div className="ml-2">
@@ -152,7 +152,7 @@ export default function TopicsPage() {
                     </div>
                   );
                 }
-                
+
                 return (
                   <div key={listId} className="mb-6 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
                     <div className="flex items-center">
@@ -205,12 +205,12 @@ export default function TopicsPage() {
         );
       }
     }
-    
+
     // Get category from topicData as fallback
     if (topicData && topicData[selectedTopic]?.subtopics) {
       // First look for the exact categoryId
       let category = topicData[selectedTopic].subtopics[categoryId];
-      
+
       // If not found, try to match based on substring
       if (!category) {
         const subtopics = topicData[selectedTopic].subtopics;
@@ -221,7 +221,7 @@ export default function TopicsPage() {
           }
         }
       }
-      
+
       // If not found by category ID, try by label
       if (!category) {
         const categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label;
@@ -236,18 +236,18 @@ export default function TopicsPage() {
           }
         }
       }
-      
+
       if (!category || !category.subtopics) {
         // Get the category label if possible
         const categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label || categoryId;
-        
+
         return (
           <div className="w-full space-y-3 animate-fadeIn">
             <div className="ml-2">
               <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center">
                   <span className="text-xs uppercase tracking-wider">
-                    CONTENT FOR {categoryLabel.toUpperCase()} 
+                    CONTENT FOR {categoryLabel.toUpperCase()}
                     IS BEING PREPARED
                   </span>
                 </div>
@@ -270,10 +270,10 @@ export default function TopicsPage() {
           </div>
         );
       }
-      
+
       // Get list items under this category
       const listItems = Object.entries(category.subtopics);
-      
+
       return (
         <div className="w-full space-y-3 animate-fadeIn">
           <div className="ml-2">
@@ -289,7 +289,7 @@ export default function TopicsPage() {
                   </div>
                 );
               }
-              
+
               return (
                 <div key={listId} className="mb-6 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
                   <div className="flex items-center">
@@ -312,7 +312,7 @@ export default function TopicsPage() {
         </div>
       );
     }
-    
+
     return (
       <div className="w-full space-y-3 animate-fadeIn">
         <div className="ml-2">
@@ -337,35 +337,35 @@ export default function TopicsPage() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
-      <div className="w-full">
+    <div className="bg-white dark:bg-black min-h-screen">
+      <div className="w-full"> {/* Padding is handled by the spacer in MainNavigation */}
         {/* Main content area */}
         <div className={`transition-opacity duration-300 ${showSearchModal ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="p-0">
             {/* Navigation tabs */}
-            <div className="flex justify-between items-center border-b border-gray-200">
+            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800">
               <div className="flex flex-1">
                 {mainTopics.map(topic => (
-                  <button 
+                  <button
                     key={topic.id}
                     onClick={() => handleTopicClick(topic.id)}
-                    className={`px-4 py-3 font-small text-bold uppercase hover:bg-gray-100 transition ${selectedTopic === topic.id ? 'bg-gray-100' : ''}`}
+                    className={`px-4 py-3 font-small text-bold uppercase hover:bg-gray-100 dark:hover:bg-gray-800 transition ${selectedTopic === topic.id ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
                   >
                     {topic.label}
                   </button>
                 ))}
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleSearchIconClick}
-                className="px-4 py-3 hover:bg-gray-100"
+                className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
               </button>
             </div>
-            
+
             {/* Content area */}
             <div className="p-6">
               {selectedTopic ? (
@@ -392,7 +392,7 @@ export default function TopicsPage() {
                       Close
                     </button>
                   </div>
-                  
+
                   {/* Main topic categories */}
                   <div className="flex flex-wrap">
                     {loadingCategories ? (
@@ -404,13 +404,13 @@ export default function TopicsPage() {
                       // Show all main categories when no specific category is selected
                       <div className="w-full grid grid-cols-3 gap-4 animate-fadeIn">
                         {topicCategories.map((category, index) => (
-                          <div 
+                          <div
                             key={`${selectedTopic}-${category.id}-${index}`}
                             className="transform transition-all duration-300 ease-in-out animate-slideRight"
                             style={{ animationDelay: `${index * 0.03}s` }}
                           >
-                            <div 
-                              className="bg-gray-100 px-3 py-2 uppercase text-sm tracking-wider cursor-pointer hover:bg-gray-200 transition-colors rounded"
+                            <div
+                              className="bg-gray-100 dark:bg-gray-800 px-3 py-2 uppercase text-sm tracking-wider cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded"
                               onClick={() => handleCategorySelect(category.id)}
                             >
                               {category.label}
@@ -425,11 +425,11 @@ export default function TopicsPage() {
                         <div className="flex flex-wrap">
                           {/* Category header */}
                           <div className="w-full mb-4">
-                            <div className="bg-gray-100 px-4 py-3 uppercase text-sm tracking-wider rounded font-medium">
+                            <div className="bg-gray-100 dark:bg-gray-800 px-4 py-3 uppercase text-sm tracking-wider rounded font-medium">
                               {topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Selected Category'}
                             </div>
                           </div>
-                          
+
                           {/* Content based on selected category */}
                           {renderCategoryContent(selectedCategory)}
                         </div>
@@ -439,9 +439,9 @@ export default function TopicsPage() {
                 </div>
               ) : (
                 // Show metadata grid when no topic is selected
-                <div className="grid grid-cols-4 gap-10 mb-12 pb-8 border-b border-gray-200">
+                <div className="grid grid-cols-4 gap-10 mb-12 pb-8 border-b border-gray-200 dark:border-gray-800">
                   <div>
-                    <h3 className="text-xs uppercase text-gray-500 mb-2">TYPE</h3>
+                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">TYPE</h3>
                     <div className="space-y-1">
                       <p>Technical</p>
                       <p>Behavioral</p>
@@ -449,18 +449,18 @@ export default function TopicsPage() {
                       <p>Coding</p>
                     </div>
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-xs uppercase text-gray-500 mb-2">DIFFICULTY</h3>
+                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">DIFFICULTY</h3>
                     <div className="space-y-1">
                       <p>Easy</p>
                       <p>Medium</p>
                       <p>Hard</p>
                     </div>
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-xs uppercase text-gray-500 mb-2">FORMAT</h3>
+                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">FORMAT</h3>
                     <div className="space-y-1">
                       <p>Written</p>
                       <p>Live Coding</p>
@@ -468,9 +468,9 @@ export default function TopicsPage() {
                       <p>Take-Home</p>
                     </div>
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-xs uppercase text-gray-500 mb-2">COMPANIES</h3>
+                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">COMPANIES</h3>
                     <div className="space-y-1">
                       <p>FAANG</p>
                       <p>Startups</p>
@@ -479,19 +479,19 @@ export default function TopicsPage() {
                   </div>
                 </div>
               )}
-              
+
               {/* Topic list */}
-              <div className="space-y-3 mt-8 border-t border-gray-200 pt-8">
+              <div className="space-y-3 mt-8 border-t border-gray-200 dark:border-gray-800 pt-8">
               <h1 className="text-4xl font-bold mb-8">
-                {selectedTopic 
+                {selectedTopic
                   ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
                   : 'All Topics'}
               </h1>
                 {mainTopics.map((topic, index) => (
-                  <div 
+                  <div
                     key={topic.id}
                     onClick={() => handleTopicClick(topic.id)}
-                    className="flex items-center py-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition"
+                    className="flex items-center py-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition"
                   >
                     <div className="w-12 text-xl font-medium">{String(index + 1).padStart(2, '0')}</div>
                     <div className={`w-4 h-4 ${topic.color} mr-6`}></div>
@@ -499,36 +499,36 @@ export default function TopicsPage() {
                     <div className="flex space-x-2">
                       {topic.id === 'ml' && (
                         <>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Algorithms</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Deep Learning</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Statistics</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Algorithms</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Deep Learning</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Statistics</span>
                         </>
                       )}
                       {topic.id === 'ai' && (
                         <>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">NLP</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Computer Vision</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">NLP</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Computer Vision</span>
                         </>
                       )}
                       {topic.id === 'webdev' && (
                         <>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Frontend</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Backend</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">React</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Frontend</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Backend</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">React</span>
                         </>
                       )}
                       {topic.id === 'system-design' && (
                         <>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Scaling</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Databases</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Microservices</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Scaling</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Databases</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Microservices</span>
                         </>
                       )}
                       {topic.id === 'dsa' && (
                         <>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Arrays</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Graphs</span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full uppercase">Dynamic Programming</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Arrays</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Graphs</span>
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Dynamic Programming</span>
                         </>
                       )}
                     </div>
@@ -538,30 +538,30 @@ export default function TopicsPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Search modal - now only covers the navigation area */}
         {showSearchModal && (
-          <div className="fixed top-0 left-0 right-0 bg-white z-50 border-b border-gray-200">
+          <div className="fixed top-0 left-0 right-0 bg-white dark:bg-black z-50 border-b border-gray-200 dark:border-gray-800">
             {/* Search header */}
-            <div className="flex border-b border-gray-200">
-              <div className="p-4 flex items-center text-gray-700">
+            <div className="flex border-b border-gray-200 dark:border-gray-800">
+              <div className="p-4 flex items-center text-gray-700 dark:text-gray-300">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <input 
-                type="text" 
-                className="flex-1 py-4 px-2 text-lg text-gray-700 placeholder-gray-400 focus:outline-none"
-                placeholder={selectedTopic 
-                  ? `search in ${mainTopics.find(topic => topic.id === selectedTopic)?.label || 'selected topic'}...` 
+              <input
+                type="text"
+                className="flex-1 py-4 px-2 text-lg text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 bg-white dark:bg-black focus:outline-none"
+                placeholder={selectedTopic
+                  ? `search in ${mainTopics.find(topic => topic.id === selectedTopic)?.label || 'selected topic'}...`
                   : "search topics..."}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 autoFocus
               />
-              <button 
+              <button
                 onClick={closeSearchModal}
-                className="p-4 flex items-center text-gray-700 hover:bg-gray-100"
+                className="p-4 flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -570,7 +570,7 @@ export default function TopicsPage() {
             </div>
 
             {/* Recent searches */}
-            <div className="grid grid-cols-5 gap-2 p-4 bg-gray-100">
+            <div className="grid grid-cols-5 gap-2 p-4 bg-gray-100 dark:bg-gray-900">
               {[
                 { term: 'sparkling water', time: '27min ago', location: 'London' },
                 { term: 'meat golden', time: '28min ago', location: 'London' },
@@ -579,38 +579,38 @@ export default function TopicsPage() {
                 { term: 'steamed buns', time: '11min ago', location: 'London' }
               ].map((search, index) => (
                 <div key={index} className="p-2">
-                  <div className="text-xs text-gray-500">{search.time}</div>
-                  <div className="text-xs text-gray-500">in {search.location}</div>
-                  <div className="mt-2 text-sm font-medium">{search.term}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{search.time}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">in {search.location}</div>
+                  <div className="mt-2 text-sm font-medium dark:text-gray-300">{search.term}</div>
                 </div>
               ))}
             </div>
 
             {/* Categories section */}
             <div className="p-4">
-              <div className="text-xs text-gray-500 mb-2">categories</div>
-              
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">categories</div>
+
               {/* Popular categories */}
               <div className="mb-4">
-                <div className="text-xs text-gray-500 mb-2">popular</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">popular</div>
                 <div className="flex flex-wrap gap-2">
                   {['turkish', 'meat', 'european', 'asian', 'chinese', 'mediterranean', 'thai', 'german', 'south american', 'argentinian', 'filipino', 'italian'].map((tag, index) => (
-                    <span 
-                      key={index} 
-                      className="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded-full cursor-pointer hover:bg-gray-400"
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-600"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
               </div>
-              
+
               {/* Other categories */}
               <div className="flex flex-wrap gap-2">
                 {['coffee and tea', 'alcohol', 'dairy', 'baked goods', 'general', 'specialty', 'seafood', 'produce', 'beverages', 'meat', 'supplies', 'french'].map((tag, index) => (
-                  <span 
-                    key={index} 
-                    className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-full cursor-pointer hover:bg-gray-300"
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
                   >
                     {tag}
                   </span>
@@ -622,4 +622,4 @@ export default function TopicsPage() {
       </div>
     </div>
   );
-} 
+}
