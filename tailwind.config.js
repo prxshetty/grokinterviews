@@ -26,12 +26,12 @@ module.exports = {
       animation: {
         'spin-slow': 'spin 60s linear infinite',
         'scroll-up': 'scroll-up 30s linear infinite',
+        'scroll-smooth': 'scroll-smooth 60s linear infinite',
         'fadeIn': 'fadeIn 0.3s ease-out forwards',
         'fadeOut': 'fadeOut 0.3s ease-out forwards',
         'slideRight': 'slideRight 0.3s ease-out forwards',
         'slideLeft': 'slideLeft 0.3s ease-out forwards',
         'scroll': 'scroll 20s linear infinite',
-        'scroll-smooth': 'scroll-smooth 40s linear infinite',
         'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float': 'float 3s ease-in-out infinite',
       },
@@ -43,6 +43,10 @@ module.exports = {
          'scroll-up': {
            '0%': { transform: 'translateY(0)' },
            '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
+         },
+         'scroll-smooth': {
+           '0%': { transform: 'translateX(0)' },
+           '100%': { transform: 'translateX(calc(-50%))' },
          },
          fadeIn: {
            '0%': { opacity: '0', transform: 'translateY(10px)' },
