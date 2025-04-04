@@ -7,6 +7,12 @@ import TopicCard from './TopicCard';
 export default function TopicCarousel() {
   const [activeIndex, setActiveIndex] = useState(4); // Start with a middle card active
   const [isMobile, setIsMobile] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set mounted state after component mounts
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Check if mobile on mount and window resize
   useEffect(() => {
@@ -24,6 +30,19 @@ export default function TopicCarousel() {
 
   // Calculate visible topics so it looks like more cards off-screen
   const visibleTopics = quizTopics;
+
+  // If not mounted yet, render a simplified version to avoid hydration issues
+  if (!isMounted) {
+    return (
+      <div className="relative">
+        <div className="flex justify-center items-center pt-8 pb-16 relative overflow-hidden">
+          <div className="h-[240px] flex justify-center items-center">
+            <div className="text-gray-400 dark:text-gray-600">Loading topics...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">

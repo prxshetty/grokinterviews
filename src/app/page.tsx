@@ -14,8 +14,15 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full pt-4 px-8 md:px-12 relative font-sans">
       {/* SVG Background for Hero Section */}
-      <div className="absolute inset-0 w-full h-screen overflow-hidden pointer-events-none z-0 opacity-10 dark:opacity-20">
-        <img src="/bg/d.svg" alt="Background Pattern" className="absolute top-0 right-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 w-full h-screen overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 bg-white dark:bg-black">
+          <div className="absolute inset-0 opacity-10 dark:opacity-20">
+            <img src="/bg/d.svg" alt="Background Pattern" className="absolute top-0 right-0 w-full h-full object-contain" />
+          </div>
+          <div className="absolute inset-0 opacity-0 dark:opacity-10">
+            <img src="/bg/dark.gif" alt="Dark Background" className="absolute top-0 right-0 w-full h-full object-cover" />
+          </div>
+        </div>
       </div>
 
       {/* Hero Section */}
