@@ -29,6 +29,10 @@ module.exports = {
         'fadeOut': 'fadeOut 0.3s ease-out forwards',
         'slideRight': 'slideRight 0.3s ease-out forwards',
         'slideLeft': 'slideLeft 0.3s ease-out forwards',
+        'scroll': 'scroll 20s linear infinite',
+        'scroll-smooth': 'scroll-smooth 40s linear infinite',
+        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 3s ease-in-out infinite',
       },
       keyframes: {
          spin: {
@@ -55,6 +59,22 @@ module.exports = {
            '0%': { transform: 'translateX(20px)', opacity: '0' },
            '100%': { transform: 'translateX(0)', opacity: '1' },
          },
+         scroll: {
+           '0%': { transform: 'translateX(0)' },
+           '100%': { transform: 'translateX(-50%)' },
+         },
+         'scroll-smooth': {
+           '0%': { transform: 'translateX(0)' },
+           '100%': { transform: 'translateX(-50%)' },
+         },
+         'pulse': {
+           '0%, 100%': { opacity: 0.2 },
+           '50%': { opacity: 0.1 },
+         },
+         'float': {
+           '0%, 100%': { transform: 'translateY(0)' },
+           '50%': { transform: 'translateY(-10px)' },
+         }
       },
       typography: (theme) => ({
         DEFAULT: {
@@ -183,4 +203,4 @@ module.exports = {
   plugins: [
     require('@tailwindcss/typography'),
   ],
-} 
+}
