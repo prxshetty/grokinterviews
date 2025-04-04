@@ -8,6 +8,7 @@ import TopicNavWrapper from './TopicNavWrapper';
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showNavTitle, setShowNavTitle] = useState(false);
   const pathname = usePathname();
 
   // Check if we're on a topic detail page
@@ -18,6 +19,25 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     setMounted(true);
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
+
+    // Add scroll event listener to show/hide nav title
+    const handleScroll = () => {
+      // Get the hero section element
+      const heroSection = document.querySelector('.hero-section');
+      if (heroSection) {
+        const heroRect = heroSection.getBoundingClientRect();
+        // Show nav title when hero section is scrolled out of view
+        setShowNavTitle(heroRect.bottom < 0);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Initial check
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const toggleDarkMode = () => {
@@ -54,7 +74,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
           {/* Left side - Logo */}
           <div className="flex items-center">
             <Link href="/" onClick={handleTitleClick} className="group">
-              <h1 className="text-xl font-normal tracking-tight text-black dark:text-white transition-all duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
+              <h1 className={`text-xl md:text-3xl font-normal tracking-tight text-black dark:text-white transition-all duration-500 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 group-hover:after:w-full ${showNavTitle ? 'opacity-100' : 'opacity-0'}`}>
                 Grok Interviews
               </h1>
             </Link>
