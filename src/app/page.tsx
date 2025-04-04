@@ -16,11 +16,29 @@ export default async function Home() {
       {/* SVG Background for Hero Section */}
       <div className="absolute inset-0 w-full h-screen overflow-hidden pointer-events-none z-0">
         <div className="absolute inset-0 bg-white dark:bg-black">
-          <div className="absolute inset-0 opacity-10 dark:opacity-20">
-            <img src="/bg/d.svg" alt="Background Pattern" className="absolute top-0 right-0 w-full h-full object-contain" />
+          {/* Light mode SVG background */}
+          <div className="absolute inset-0 block dark:hidden opacity-20">
+            <img
+              src="/bg/complete-bg.svg"
+              alt="Background Pattern"
+              className="absolute top-0 left-0 w-full h-full object-contain"
+            />
           </div>
-          <div className="absolute inset-0 opacity-0 dark:opacity-10">
-            <img src="/bg/dark.gif" alt="Dark Background" className="absolute top-0 right-0 w-full h-full object-cover" />
+          {/* Dark mode SVG background */}
+          <div className="absolute inset-0 hidden dark:block opacity-20">
+            <img
+              src="/bg/complete-bg-dark.svg"
+              alt="Background Pattern"
+              className="absolute top-0 left-0 w-full h-full object-contain"
+            />
+          </div>
+          {/* Dark mode animated background */}
+          <div className="absolute inset-0 hidden dark:block opacity-10">
+            <img
+              src="/bg/dark.gif"
+              alt="Dark Background"
+              className="absolute top-0 left-0 w-full h-full object-cover"
+            />
           </div>
         </div>
       </div>
