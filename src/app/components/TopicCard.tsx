@@ -11,17 +11,45 @@ interface TopicCardProps {
     subtitle: string;
   };
   isActive: boolean;
-  isMobile: boolean;
+  isMobile?: boolean; // Make this optional
   style: React.CSSProperties;
   onClick: () => void;
 }
 
-export default function TopicCard({ topic, isActive, isMobile, style, onClick }: TopicCardProps) {
+// Helper function to get color with opacity
+const getColorWithOpacity = (shade: string, opacity: number) => {
+  // Map of Tailwind color classes to their hex values
+  const colorMap: Record<string, string> = {
+    'bg-red-600': '#dc2626',
+    'bg-red-700': '#b91c1c',
+    'bg-yellow-500': '#eab308',
+    'bg-orange-500': '#f97316',
+    'bg-amber-600': '#d97706',
+    'bg-lime-600': '#65a30d',
+    'bg-green-600': '#16a34a',
+    'bg-emerald-600': '#059669',
+    'bg-teal-600': '#0d9488',
+    'bg-cyan-600': '#0891b2',
+    'bg-sky-600': '#0284c7',
+    'bg-blue-600': '#2563eb',
+    'bg-indigo-600': '#4f46e5',
+    'bg-violet-600': '#7c3aed',
+    'bg-purple-600': '#9333ea',
+    'bg-fuchsia-600': '#c026d3',
+    'bg-pink-600': '#db2777',
+    'bg-rose-600': '#e11d48',
+  };
+
+  const hexColor = colorMap[shade] || '#000000';
+  return `${hexColor}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
+};
+
+export default function TopicCard({ topic, isActive, style, onClick }: TopicCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   // Calculate the transform style with hover effect
   const transformStyle = isHovered
-    ? `${style.transform?.toString() || ''} scale(1.05)`
+    ? `${style.transform?.toString() || ''} scale(1.08) translateY(-5px)`
     : style.transform;
 
   return (
@@ -41,16 +69,26 @@ export default function TopicCard({ topic, isActive, isMobile, style, onClick }:
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Card background with gradient */}
+      {/* Card background with solid color */}
       <div className={`absolute inset-0 ${topic.shade} transition-all duration-300`}></div>
 
       {/* Colorful gradient overlay */}
-      <div className={`absolute inset-0 bg-gradient-to-br from-${topic.shade.replace('bg-', '')}/80 via-${topic.shade.replace('bg-', '')}/90 to-${topic.shade.replace('bg-', '')}/70 opacity-90`}></div>
+      <div
+        className="absolute inset-0 opacity-90"
+        style={{
+          background: `linear-gradient(135deg,
+                      ${getColorWithOpacity(topic.shade, 0.8)} 0%,
+                      ${getColorWithOpacity(topic.shade, 0.9)} 50%,
+                      ${getColorWithOpacity(topic.shade, 0.7)} 100%)`,
+          boxShadow: `0 4px 20px ${getColorWithOpacity(topic.shade, 0.5)}`,
+          border: `1px solid ${getColorWithOpacity(topic.shade, 0.3)}`
+        }}
+      ></div>
 
       {/* Hover overlay */}
       <div
-        className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-          isHovered ? 'opacity-30' : isActive ? 'opacity-20' : 'opacity-0'
+        className={`absolute inset-0 bg-black transition-all duration-300 ${
+          isHovered ? 'opacity-20 backdrop-blur-sm' : isActive ? 'opacity-10' : 'opacity-0'
         }`}
       ></div>
 
@@ -90,7 +128,15 @@ export default function TopicCard({ topic, isActive, isMobile, style, onClick }:
       >
         <div className={`transform ${isHovered ? 'translate-y-0' : 'translate-y-4'} transition-all duration-300 text-center`}>
           <div className="text-sm font-bold mb-2 text-white">Explore {topic.title}</div>
-          <div className="inline-block px-4 py-1.5 rounded-full bg-white/20 text-xs font-medium border border-white/10 shadow-lg">
+          <div
+            className="inline-block px-4 py-1.5 rounded-full text-xs font-medium shadow-lg"
+            style={{
+              background: `${getColorWithOpacity(topic.shade, 0.3)}`,
+              borderColor: `${getColorWithOpacity(topic.shade, 0.5)}`,
+              borderWidth: '1px',
+              boxShadow: `0 2px 10px ${getColorWithOpacity(topic.shade, 0.4)}`
+            }}
+          >
             View Details
           </div>
         </div>
@@ -100,8 +146,12 @@ export default function TopicCard({ topic, isActive, isMobile, style, onClick }:
       {isActive && (
         <>
           <div className="absolute inset-0 bg-white/5 animate-pulse pointer-events-none"></div>
-          <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-white/60 animate-pulse"></div>
-          <div className="absolute top-3 left-3 text-[8px] font-mono text-white/70 tracking-wide">
+          <div
+            className="absolute top-3 right-3 w-2 h-2 rounded-full animate-pulse"
+            style={{ backgroundColor: getColorWithOpacity(topic.shade, 0.8) }}
+          ></div>
+          <div className="absolute top-3 left-3 text-[8px] font-mono tracking-wide"
+               style={{ color: getColorWithOpacity(topic.shade, 0.9) }}>
             <div>active</div>
           </div>
         </>

@@ -7,6 +7,26 @@
   --background-color: #dfe3ec;
   --card-background: #f5f9fc;
   --text-color: #333333;
+
+  /* Topic card colors */
+  --tw-red-600: #dc2626;
+  --tw-red-700: #b91c1c;
+  --tw-yellow-500: #eab308;
+  --tw-orange-500: #f97316;
+  --tw-amber-600: #d97706;
+  --tw-lime-600: #65a30d;
+  --tw-green-600: #16a34a;
+  --tw-emerald-600: #059669;
+  --tw-teal-600: #0d9488;
+  --tw-cyan-600: #0891b2;
+  --tw-sky-600: #0284c7;
+  --tw-blue-600: #2563eb;
+  --tw-indigo-600: #4f46e5;
+  --tw-violet-600: #7c3aed;
+  --tw-purple-600: #9333ea;
+  --tw-fuchsia-600: #c026d3;
+  --tw-pink-600: #db2777;
+  --tw-rose-600: #e11d48;
 }
 
 body {

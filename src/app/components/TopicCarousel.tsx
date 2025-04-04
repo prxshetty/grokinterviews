@@ -84,7 +84,6 @@ export default function TopicCarousel() {
                 key={topic.id}
                 topic={topic}
                 isActive={isActive}
-                isMobile={isMobile}
                 style={cardStyle}
                 onClick={() => setActiveIndex(index)}
               />

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100">
+  <style>
+    .line {
+      stroke: white;
+      stroke-width: 0.3;
+      transform-origin: 0 0;
+      animation: line-animation 3s cubic-bezier(.5, 0, .5, 1) alternate infinite;
+    }
+    
+    @keyframes line-animation {
+      from { transform: scaleX(0.4); }
+      to { transform: scaleX(1); }
+    }
+  </style>
+  
+  <!-- Generate 36 lines with different rotations -->
+  <g>
+    <!-- Line 1 -->
+    <g transform="rotate(-90) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.1s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 2 -->
+    <g transform="rotate(-85) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.2s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 3 -->
+    <g transform="rotate(-80) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.3s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 4 -->
+    <g transform="rotate(-75) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.4s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 5 -->
+    <g transform="rotate(-70) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.5s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 6 -->
+    <g transform="rotate(-65) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.6s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 7 -->
+    <g transform="rotate(-60) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.7s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 8 -->
+    <g transform="rotate(-55) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.8s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 9 -->
+    <g transform="rotate(-50) translate(20, 0)">
+      <line class="line" style="animation-delay: -0.9s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 10 -->
+    <g transform="rotate(-45) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.0s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 11 -->
+    <g transform="rotate(-40) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.1s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 12 -->
+    <g transform="rotate(-35) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.2s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 13 -->
+    <g transform="rotate(-30) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.3s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 14 -->
+    <g transform="rotate(-25) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.4s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 15 -->
+    <g transform="rotate(-20) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.5s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 16 -->
+    <g transform="rotate(-15) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.6s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 17 -->
+    <g transform="rotate(-10) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.7s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 18 -->
+    <g transform="rotate(-5) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.8s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 19 -->
+    <g transform="rotate(0) translate(20, 0)">
+      <line class="line" style="animation-delay: -1.9s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 20 -->
+    <g transform="rotate(5) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.0s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 21 -->
+    <g transform="rotate(10) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.1s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 22 -->
+    <g transform="rotate(15) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.2s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 23 -->
+    <g transform="rotate(20) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.3s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 24 -->
+    <g transform="rotate(25) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.4s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 25 -->
+    <g transform="rotate(30) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.5s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 26 -->
+    <g transform="rotate(35) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.6s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 27 -->
+    <g transform="rotate(40) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.7s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 28 -->
+    <g transform="rotate(45) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.8s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 29 -->
+    <g transform="rotate(50) translate(20, 0)">
+      <line class="line" style="animation-delay: -2.9s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 30 -->
+    <g transform="rotate(55) translate(20, 0)">
+      <line class="line" style="animation-delay: -3.0s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 31 -->
+    <g transform="rotate(60) translate(20, 0)">
+      <line class="line" style="animation-delay: -3.1s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 32 -->
+    <g transform="rotate(65) translate(20, 0)">
+      <line class="line" style="animation-delay: -3.2s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 33 -->
+    <g transform="rotate(70) translate(20, 0)">
+      <line class="line" style="animation-delay: -3.3s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 34 -->
+    <g transform="rotate(75) translate(20, 0)">
+      <line class="line" style="animation-delay: -3.4s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 35 -->
+    <g transform="rotate(80) translate(20, 0)">
+      <line class="line" style="animation-delay: -3.5s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+    <!-- Line 36 -->
+    <g transform="rotate(85) translate(20, 0)">
+      <line class="line" style="animation-delay: -3.6s" x1="0" x2="20" y1="0" y2="0" />
+    </g>
+  </g>
+</svg>
