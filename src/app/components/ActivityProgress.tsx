@@ -1,7 +1,5 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-
 interface ActivityProgressProps {
   questionsCompleted?: number;
   totalQuestions?: number;
@@ -25,11 +23,11 @@ export default function ActivityProgress({
   const totalProgress = Math.round((questionsPercentage * 0.4) + (domainsPercentage * 0.6));
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 w-full max-w-4xl mx-auto">
+    <div className="bg-white dark:bg-black p-6 w-full">
       {/* Status header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-gray-800 dark:text-gray-200 font-medium">Status.</h2>
+          {/* <h2 className="text-gray-800 dark:text-gray-200 font-medium">Status.</h2> */}
           <p className="text-gray-400 dark:text-gray-500 text-sm">Your learning progress</p>
         </div>
         <div className="flex space-x-0.5">
@@ -44,7 +42,7 @@ export default function ActivityProgress({
         <div className="flex flex-col justify-between">
           <div className="flex justify-between items-center">
             <div className="text-8xl font-light text-gray-800 dark:text-gray-100">
-              {totalProgress}%
+              {totalProgress}<span className="text-6xl">%</span>
             </div>
             <div className="text-gray-800 dark:text-gray-200">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -65,7 +63,7 @@ export default function ActivityProgress({
           <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg">
             <h3 className="font-medium text-gray-800 dark:text-gray-200">Progress status</h3>
             <div className="text-3xl font-light text-gray-800 dark:text-gray-200 mt-1">
-              {questionsPercentage}%
+              {questionsPercentage}<span className="text-xl">%</span>
             </div>
           </div>
 
@@ -96,7 +94,7 @@ export default function ActivityProgress({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 <div className="text-3xl font-light text-gray-800 dark:text-gray-200">
-                  {domainsPercentage}%
+                  {domainsPercentage}<span className="text-xl">%</span>
                 </div>
               </div>
               <div className="self-end text-right">
@@ -104,34 +102,6 @@ export default function ActivityProgress({
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Bottom navigation */}
-      <div className="flex justify-between mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          Today
-        </div>
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          Progress
-        </div>
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Content
-        </div>
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          Profile
         </div>
       </div>
     </div>
