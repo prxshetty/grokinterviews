@@ -483,10 +483,10 @@ export default function TopicsPage() {
 
               {/* Q&A Content Section */}
               <div className="space-y-3 mt-8 pt-8">
-                <h1 className="text-4xl font-bold mb-8">
+                <h1 className="text-4xl font-bold mb-8 font-mono">
                   {selectedTopic
                     ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
-                    : 'All Topics'}
+                    : 'Dashboard'}
                 </h1>
 
                 {/* Display Q&A content based on selected topic/category */}
@@ -526,28 +526,7 @@ export default function TopicsPage() {
                       totalDomains={5}
                     />
 
-                    {/* Display list of main topics when nothing is selected */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                      {mainTopics.map((topic, index) => (
-                        <div
-                          key={topic.id}
-                          id={`topic-${topic.id}`}
-                          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 transition"
-                          onClick={() => handleTopicClick(topic.id)}
-                        >
-                          <div className="flex items-center">
-                            <div className="w-12 text-xl font-medium">{String(index + 1).padStart(2, '0')}</div>
-                            <div className={`w-4 h-4 ${topic.color} mr-6`}></div>
-                            <div className="flex-grow">
-                              <h3 className="text-lg font-medium">{topic.label}</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                Click to explore {topic.label} topics and questions
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    {/* No topics displayed here as requested */}
                   </div>
                 )}
               </div>
