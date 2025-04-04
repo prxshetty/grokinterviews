@@ -1,53 +1,36 @@
-const statsData = [
-  // First row stats
-  { labelLine1: "TOTAL QUESTIONS", labelLine2: "ACROSS ALL TOPICS", value: "620+", row: 1 },
-  { labelLine1: "UNIQUE TOPICS", labelLine2: "COVERED", value: "42", row: 1 },
-  { labelLine1: "QUESTIONS PER", labelLine2: "TOPIC (AVG)", value: "15", row: 1 },
-  { labelLine1: "TOPICS WITH", labelLine2: "ADVANCED CONTENT", value: "18", row: 1 },
-
-  // Second row stats
-  { labelLine1: "HARD QUESTIONS", labelLine2: "PERCENTAGE", value: "32%", row: 2 },
-  { labelLine1: "MONTHLY ACTIVE", labelLine2: "USERS", value: "2.4k", row: 2 },
-  { labelLine1: "INTERVIEW", labelLine2: "SUCCESS RATE", value: "78%", row: 2 },
-  { labelLine1: "AVERAGE TIME", labelLine2: "TO COMPLETION", value: "6h", row: 2 },
+// Selected key stats to highlight
+const highlightedStats = [
+  { value: "720", description: "total questions across all topics" },
+  { value: "16,545", description: "monthly active users and visitors" },
+  { value: "84", description: "educational resources and guides" },
+  { value: "95%", description: "user satisfaction rate" },
+  { value: "42", description: "industry expert contributors" },
+  { value: "1,200+", description: "hours of interview prep content" }
 ];
 
+// Note: We're using curated stats for the minimalist design
+// Original data is available but not currently displayed
+
 export default function StatsSection() {
-  // Split stats by row
-  const firstRowStats = statsData.filter(stat => stat.row === 1);
-  const secondRowStats = statsData.filter(stat => stat.row === 2);
-
   return (
-    <div className="max-w-screen-xl mx-auto">
-      <h3 className="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-8 tracking-wider">
-        Learning resources at a glance
-      </h3>
-
-      {/* First Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-16">
-        {firstRowStats.map((stat, index) => (
-          <div key={`row1-${index}`} className="border-t border-gray-200 dark:border-gray-800 pt-6 transition-colors duration-300">
-            <p className="text-xs uppercase text-gray-500 dark:text-gray-400 leading-tight mb-4">
-              {stat.labelLine1}<br/>
-              {stat.labelLine2 && <span>{stat.labelLine2}</span>}
-            </p>
-            <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-black dark:text-white transition-colors duration-300">
-              {stat.value}
-            </p>
-          </div>
-        ))}
+    <div className="max-w-screen-xl mx-auto py-24 px-8">
+      {/* About Section Header */}
+      <div className="text-center mb-20">
+        <h2 className="text-3xl md:text-4xl mb-6">Grok Interviews</h2>
+        <p className="text-base  font-serif italic text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          Curate by AI<br className="hidden md:block" /> Just for You. 
+        </p>
       </div>
 
-      {/* Second Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
-        {secondRowStats.map((stat, index) => (
-          <div key={`row2-${index}`} className="border-t border-gray-200 dark:border-gray-800 pt-6 transition-colors duration-300">
-            <p className="text-xs uppercase text-gray-500 dark:text-gray-400 leading-tight mb-4">
-              {stat.labelLine1}<br/>
-              {stat.labelLine2 && <span>{stat.labelLine2}</span>}
-            </p>
-            <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-black dark:text-white transition-colors duration-300">
+      {/* Stats Display */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-0 mb-24">
+        {highlightedStats.map((stat, index) => (
+          <div key={index} className="flex flex-col items-center text-center md:border-r md:last:border-r-0 border-gray-200 dark:border-gray-700 py-8 px-8">
+            <p className="text-5xl md:text-6xl lg:text-7xl font-normal mb-10 tracking-tight">
               {stat.value}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-[200px] mx-auto">
+              {stat.description}
             </p>
           </div>
         ))}

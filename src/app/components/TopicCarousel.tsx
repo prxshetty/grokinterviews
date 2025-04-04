@@ -282,62 +282,79 @@ export default function TopicCarousel() {
         </div>
       </div>
 
-      {/* AI Agents Curated Dataset Section */}
-      <div className="mt-24 mb-12">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-8 md:gap-16">
-          <div className="md:w-1/2">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 tracking-tight">AI Agents Curated Dataset</h2>
-            <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg mb-6">
-              Our resources are aggregated and organized from top industry sources, ensuring you get the most relevant and up-to-date information for your technical interview preparation.
-            </p>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-black/5 dark:bg-white/5 text-black dark:text-white mr-3 mt-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                <span>Topic-based organization for targeted study</span>
-              </li>
-              <li className="flex items-start">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-black/5 dark:bg-white/5 text-black dark:text-white mr-3 mt-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                <span>Role-specific content for various technical positions</span>
-              </li>
-              <li className="flex items-start">
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-black/5 dark:bg-white/5 text-black dark:text-white mr-3 mt-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                <span>Continuously updated with the latest industry questions</span>
-              </li>
-            </ul>
+      {/* AI Agents Curated Dataset Section - Redesigned */}
+      <div className="mt-32 mb-24 max-w-screen-xl mx-auto px-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-16">
+          {/* Left side with description */}
+          <div className="md:col-span-4 flex flex-col">
+            <div className="mb-6">
+              <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Forming design languages</div>
+              <h2 className="text-3xl md:text-4xl font-serif font-light tracking-tight leading-tight mb-6">for the<br />digital era.</h2>
+              <div className="w-8 h-px bg-gray-300 dark:bg-gray-700 mb-6"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Selected Projects
+              </p>
+            </div>
+            <div className="mt-auto">
+              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                <span>grokinterviews.co</span>
+                <span className="mx-4">•</span>
+                <span>+0046 837 7037</span>
+              </div>
+            </div>
           </div>
 
-          <div className="md:w-1/2 p-6 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900">
-            <h3 className="text-lg md:text-xl font-semibold mb-3">Core Features</h3>
-            <ul className="space-y-2 text-sm md:text-base">
-              <li className="flex items-start">
-                <span className="text-gray-500 dark:text-gray-400 mr-2">→</span>
-                <span><strong>Topic-based browsing:</strong> Browse interview questions by topic (e.g., Neural Networks, Deep Learning)</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-gray-500 dark:text-gray-400 mr-2">→</span>
-                <span><strong>Job role exploration:</strong> Find relevant questions for specific job roles</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-gray-500 dark:text-gray-400 mr-2">→</span>
-                <span><strong>Custom search:</strong> Search for specific keywords or concepts</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-gray-500 dark:text-gray-400 mr-2">→</span>
-                <span><strong>Direct links:</strong> Click through for complete answers and resources</span>
-              </li>
-            </ul>
+          {/* Right side with projects */}
+          <div className="md:col-span-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Project 1 */}
+              <div className="flex flex-col">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">December 22 — 2023</div>
+                <h3 className="text-lg font-medium mb-2">The Pop Up<br />Agency</h3>
+                <div className="relative bg-gray-100 dark:bg-gray-800 mb-4 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl font-bold text-gray-300 dark:text-gray-700">O</div>
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="mb-2"><strong>Studio news:</strong></p>
+                  <p>AI Agents explore our dataset to curate relevant information for your learning needs.</p>
+                </div>
+              </div>
+
+              {/* Project 2 */}
+              <div className="flex flex-col">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">December 22 — 2023</div>
+                <h3 className="text-lg font-medium mb-2">On Air<br />Radio24Syv</h3>
+                <div className="relative bg-gray-100 dark:bg-gray-800 mb-4 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl font-bold text-gray-300 dark:text-gray-700">11</div>
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="mb-2"><strong>Studio news:</strong></p>
+                  <p>Our dataset covers all major technical interview topics with expert-verified answers.</p>
+                </div>
+              </div>
+
+              {/* Project 3 */}
+              <div className="flex flex-col">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">September 15 — 2023</div>
+                <h3 className="text-lg font-medium mb-2">Secto°<br />Digital Identity</h3>
+                <div className="relative bg-gray-100 dark:bg-gray-800 mb-4 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl font-bold text-gray-300 dark:text-gray-700">10</div>
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="mb-2"><strong>Project:</strong></p>
+                  <p>Personalized learning paths that adapt to your skill level and career goals.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow indicator */}
+            <div className="mt-12 flex justify-end">
+              <div className="w-12 h-12 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>

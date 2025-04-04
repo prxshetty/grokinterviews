@@ -56,7 +56,12 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 mt-12 pt-12 px-8 md:px-12">
+      {/* Stats Section */}
+      <div className="bg-white dark:bg-black transition-colors duration-300 border-t border-gray-200 dark:border-gray-800 mt-12">
+        <StatsSection />
+      </div>
+
+      <div className="border-t border-gray-200 dark:border-gray-800 px-8 md:px-12 pt-12">
         <div className="max-w-screen-xl mx-auto">
           <h3 className="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-6 tracking-wider">Our Topics</h3>
           <div className="text-sm text-gray-600 dark:text-gray-300 max-w-2xl mb-12">
@@ -69,10 +74,6 @@ export default async function Home() {
       {/* Add the Topic Carousel for Q&A section */}
       <div className="bg-white dark:bg-black transition-colors duration-300">
         <TopicCarouselWrapper />
-      </div>
-
-      <div className="bg-white dark:bg-black py-12 px-8 md:px-12 transition-colors duration-300">
-        <StatsSection />
       </div>
 
     </div>
