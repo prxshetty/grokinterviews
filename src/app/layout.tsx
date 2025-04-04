@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import ConditionalNavWrapper from './components/ConditionalNavWrapper';
 import TopicDataProvider from './components/TopicDataProvider';
 import Footer from './components/Footer';
-import ThemeScript from './components/ThemeScript';
+import { vogueSerif } from './fonts';
 
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Grok Interviews",
@@ -19,11 +17,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <ThemeScript />
-      </head>
-      <body className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex flex-col transition-colors duration-300">
+    <html lang="en" className={`${vogueSerif.variable}`}>
+
+      <body className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex flex-col transition-colors duration-300 relative">
+        {/* Dark mode background */}
+        <div className="fixed inset-0 z-[-1] opacity-10 dark:opacity-20 pointer-events-none hidden dark:block">
+          <img
+            src="/bg/dark.gif"
+            alt="Background"
+            className="w-full h-full object-cover"
+          />
+        </div>
         <TopicDataProvider>
           <div className="flex-grow">
             <ConditionalNavWrapper>
