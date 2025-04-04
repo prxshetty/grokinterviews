@@ -20,14 +20,14 @@ export default function ActivityProgress({
   // Calculate percentages
   const questionsPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
   const domainsPercentage = Math.round((domainsSolved / totalDomains) * 100);
-  
+
   // For demo purposes, calculate a total progress percentage
-  const totalProgress = Math.round((questionsPercentage * 0.7) + (domainsPercentage * 0.3));
-  
+  const totalProgress = Math.round((questionsPercentage * 0.4) + (domainsPercentage * 0.6));
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 max-w-md mx-auto">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 w-full max-w-4xl mx-auto">
       {/* Status header */}
-      <div className="flex justify-between items-center mb-12">
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-gray-800 dark:text-gray-200 font-medium">Status.</h2>
           <p className="text-gray-400 dark:text-gray-500 text-sm">Your learning progress</p>
@@ -38,71 +38,75 @@ export default function ActivityProgress({
           ))}
         </div>
       </div>
-      
-      {/* Main percentage */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="text-8xl font-light text-gray-800 dark:text-gray-100">
-          {totalProgress}%
-        </div>
-        <div className="text-gray-800 dark:text-gray-200">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-          </svg>
-        </div>
-      </div>
-      
-      {/* Progress breakdown */}
-      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-        <span className="mr-4">{questionsPercentage}% Questions</span>
-        <span>{domainsPercentage}% Domains</span>
-      </div>
-      
-      {/* Questions status box */}
-      <div className="flex mb-4">
-        <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg w-1/3">
-          <h3 className="font-medium text-gray-800 dark:text-gray-200">Progress status</h3>
-          <div className="text-3xl font-light text-gray-800 dark:text-gray-200 mt-1">
-            {questionsPercentage}%
-          </div>
-        </div>
-        <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg ml-2 flex-grow flex items-center justify-end">
-          <div className="text-right">
-            <div className="text-gray-500 dark:text-gray-400 text-sm">{questionsCompleted} questions</div>
-            <div className="text-gray-800 dark:text-gray-200">{totalQuestions} total</div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Time and domains stats */}
-      <div className="flex">
-        <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg w-1/2">
-          <div className="flex items-center mb-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-800 dark:text-gray-200 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 className="font-medium text-gray-800 dark:text-gray-200">Time spent</h3>
-          </div>
-          <div className="text-3xl font-light text-gray-800 dark:text-gray-200">
-            {timeSpent}h
-          </div>
-        </div>
-        <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg ml-2 w-1/2">
-          <div className="flex justify-between">
-            <div>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-800 dark:text-gray-200 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Main percentage column */}
+        <div className="flex flex-col justify-between">
+          <div className="flex justify-between items-center">
+            <div className="text-8xl font-light text-gray-800 dark:text-gray-100">
+              {totalProgress}%
+            </div>
+            <div className="text-gray-800 dark:text-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
               </svg>
-              <div className="text-3xl font-light text-gray-800 dark:text-gray-200">
-                {domainsPercentage}%
+            </div>
+          </div>
+
+          {/* Progress breakdown */}
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <span className="mr-4">{questionsPercentage}% Questions</span>
+            <span>{domainsPercentage}% Domains</span>
+          </div>
+        </div>
+
+        {/* Middle column - Progress status and questions */}
+        <div className="flex flex-col space-y-4">
+          <div className="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg">
+            <h3 className="font-medium text-gray-800 dark:text-gray-200">Progress status</h3>
+            <div className="text-3xl font-light text-gray-800 dark:text-gray-200 mt-1">
+              {questionsPercentage}%
+            </div>
+          </div>
+
+          <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg flex items-center justify-between">
+            <div className="text-gray-800 dark:text-gray-200">{questionsCompleted} questions</div>
+            <div className="text-gray-500 dark:text-gray-400">{totalQuestions} total</div>
+          </div>
+        </div>
+
+        {/* Right column - Time and domains */}
+        <div className="flex flex-col space-y-4">
+          <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+            <div className="flex items-center mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-800 dark:text-gray-200 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="font-medium text-gray-800 dark:text-gray-200">Time spent</h3>
+            </div>
+            <div className="text-3xl font-light text-gray-800 dark:text-gray-200">
+              {timeSpent}h
+            </div>
+          </div>
+
+          <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+            <div className="flex justify-between">
+              <div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-800 dark:text-gray-200 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <div className="text-3xl font-light text-gray-800 dark:text-gray-200">
+                  {domainsPercentage}%
+                </div>
+              </div>
+              <div className="self-end text-right">
+                <div className="text-gray-500 dark:text-gray-400 text-sm">{domainsSolved} domains</div>
               </div>
             </div>
-            <div className="self-end text-right">
-              <div className="text-gray-500 dark:text-gray-400 text-sm">{domainsSolved} domains</div>
-            </div>
           </div>
         </div>
       </div>
-      
+
       {/* Bottom navigation */}
       <div className="flex justify-between mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="text-center text-xs text-gray-500 dark:text-gray-400">
