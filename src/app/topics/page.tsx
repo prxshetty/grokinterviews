@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTopicData } from '../components/TopicDataProvider';
 import TopicDataService from '@/services/TopicDataService';
 import { TopicItem } from '@/utils/markdownParser';
+import ActivityProgress from '../components/ActivityProgress';
 
 // Main topics with their corresponding colors
 const mainTopics = [
@@ -480,84 +481,75 @@ export default function TopicsPage() {
                 </div>
               )}
 
-              {/* Topic list */}
+              {/* Q&A Content Section */}
               <div className="space-y-3 mt-8 pt-8">
-              <h1 className="text-4xl font-bold mb-8">
-                {selectedTopic
-                  ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
-                  : 'All Topics'}
-              </h1>
-                {mainTopics.map((topic, index) => {
-                  const isSelected = selectedTopic === topic.id;
-                  return (
-                    <div key={topic.id} id={`topic-${topic.id}`}>
-                      <div
-                        onClick={() => handleTopicClick(topic.id)}
-                        className="flex items-center py-4 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition"
-                      >
-                        <div className="w-12 text-xl font-medium">{String(index + 1).padStart(2, '0')}</div>
-                        <div className={`w-4 h-4 ${topic.color} mr-6`}></div>
-                        <div className="flex-grow font-medium">{topic.label}</div>
-                        <div className="flex space-x-2">
-                          {topic.id === 'ml' && (
-                            <>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Algorithms</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Deep Learning</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Statistics</span>
-                            </>
-                          )}
-                          {topic.id === 'ai' && (
-                            <>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">NLP</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Computer Vision</span>
-                            </>
-                          )}
-                          {topic.id === 'webdev' && (
-                            <>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Frontend</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Backend</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">React</span>
-                            </>
-                          )}
-                          {topic.id === 'system-design' && (
-                            <>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Scaling</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Databases</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Microservices</span>
-                            </>
-                          )}
-                          {topic.id === 'dsa' && (
-                            <>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Arrays</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Graphs</span>
-                              <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full uppercase">Dynamic Programming</span>
-                            </>
-                          )}
+                <h1 className="text-4xl font-bold mb-8">
+                  {selectedTopic
+                    ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
+                    : 'All Topics'}
+                </h1>
+
+                {/* Display Q&A content based on selected topic/category */}
+                {selectedCategory && categoryDetails ? (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold mb-4">{categoryDetails.label}</h2>
+
+                    {/* Display Q&A items */}
+                    {categoryDetails.subtopics && Object.entries(categoryDetails.subtopics).map(([itemId, item]: [string, any], index) => (
+                      <div key={itemId} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-start justify-between">
+                          <h3 className="text-lg font-medium mb-4">{item.label}</h3>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Q{index + 1}</span>
+                        </div>
+                        <div className="prose dark:prose-invert max-w-none">
+                          <p className="text-gray-700 dark:text-gray-300">
+                            {item.content || "This question doesn't have content yet. Check back later for updates."}
+                          </p>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                ) : selectedTopic ? (
+                  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <p className="text-center text-gray-500 dark:text-gray-400">
+                      Please select a category from the navigation tree to view Q&A content.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Activity Progress Chart */}
+                    <ActivityProgress
+                      questionsCompleted={24}
+                      totalQuestions={120}
+                      timeSpent={8.5}
+                      domainsSolved={3}
+                      totalDomains={5}
+                    />
 
-                      {/* Subtopics section - shown when topic is selected */}
-                      {isSelected && topicCategories.length > 0 && (
-                        <div className="mt-4 mb-8 pl-12">
-                          <div className="grid grid-cols-3 gap-4">
-                            {topicCategories.map((category) => (
-                              <div
-                                key={`${topic.id}-${category.id}`}
-                                id={`topic-${category.id}`}
-                                className="bg-gray-100 dark:bg-gray-800 px-3 py-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded"
-                                onClick={() => handleCategorySelect(category.id)}
-                              >
-                                <div className="font-medium text-sm uppercase tracking-wider">
-                                  {category.label}
-                                </div>
-                              </div>
-                            ))}
+                    {/* Display list of main topics when nothing is selected */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                      {mainTopics.map((topic, index) => (
+                        <div
+                          key={topic.id}
+                          id={`topic-${topic.id}`}
+                          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 transition"
+                          onClick={() => handleTopicClick(topic.id)}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-12 text-xl font-medium">{String(index + 1).padStart(2, '0')}</div>
+                            <div className={`w-4 h-4 ${topic.color} mr-6`}></div>
+                            <div className="flex-grow">
+                              <h3 className="text-lg font-medium">{topic.label}</h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Click to explore {topic.label} topics and questions
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  );
-                })}
+                  </div>
+                )}
               </div>
             </div>
           </div>

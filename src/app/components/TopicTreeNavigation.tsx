@@ -10,9 +10,9 @@ interface TopicTreeNavigationProps {
   onSelectTopic: (topicId: string) => void;
 }
 
-export default function TopicTreeNavigation({ 
-  selectedMainTopic, 
-  onSelectTopic 
+export default function TopicTreeNavigation({
+  selectedMainTopic,
+  onSelectTopic
 }: TopicTreeNavigationProps) {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
@@ -39,37 +39,37 @@ export default function TopicTreeNavigation({
   useEffect(() => {
     const handleTopicDoubleClick = (event: CustomEvent<{ topicId: string, isExpanded: boolean }>) => {
       const { topicId, isExpanded } = event.detail;
-      
+
       // Get all top-level subtopics for this main topic
       if (selectedMainTopic && topics[selectedMainTopic as keyof typeof topics]) {
         const mainTopic = topics[selectedMainTopic as keyof typeof topics];
-        
+
         if (isExpanded) {
           // Expand all top-level subtopics
           const newExpandedTopics = new Set(expandedTopics);
-          
+
           // Add all top-level subtopics to expanded set
           Object.keys(mainTopic.subtopics).forEach(subtopicId => {
             newExpandedTopics.add(subtopicId);
           });
-          
+
           setExpandedTopics(newExpandedTopics);
         } else {
           // Collapse all top-level subtopics
           const newExpandedTopics = new Set(expandedTopics);
-          
+
           // Remove all top-level subtopics from expanded set
           Object.keys(mainTopic.subtopics).forEach(subtopicId => {
             newExpandedTopics.delete(subtopicId);
           });
-          
+
           setExpandedTopics(newExpandedTopics);
         }
       }
     };
 
     window.addEventListener('topicDoubleClicked', handleTopicDoubleClick as EventListener);
-    
+
     return () => {
       window.removeEventListener('topicDoubleClicked', handleTopicDoubleClick as EventListener);
     };
@@ -83,7 +83,7 @@ export default function TopicTreeNavigation({
 
   const toggleExpand = (topicId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    
+
     const newExpandedTopics = new Set(expandedTopics);
     if (newExpandedTopics.has(topicId)) {
       newExpandedTopics.delete(topicId);
@@ -96,104 +96,24 @@ export default function TopicTreeNavigation({
   // Handle double click on topic to toggle expansion
   const handleTopicDoubleClick = (topicId: string, hasChildren: boolean, event: React.MouseEvent) => {
     event.stopPropagation();
-    
+
     if (hasChildren) {
       toggleExpand(topicId, event);
     }
   };
 
-  // Render a topic node with the appropriate indicator
-  const renderTopicNode = (id: string, label: string, hasChildren: boolean, hasContent: boolean = true) => {
-    const isExpanded = expandedTopics.has(id);
+  // Simplified render topic node function - only for main headers
+  const renderTopicNode = (id: string, label: string) => {
     const isSelected = selectedTopic === id;
-    
-    // Use an SVG arrow for clickable items instead of text indicator
-    let indicator: React.ReactNode = '[ ]';
-    if (isSelected) {
-      indicator = '[·]';
-    } else if (hasChildren) {
-      indicator = isExpanded ? '[–]' : '[+]';
-    } else if (hasContent) {
-      // Use bracketed arrow for clickable leaf topics
-      indicator = (
-        <span className={styles.arrowContainer}>
-          <span className={styles.bracket}>[</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            className={styles.arrowIcon}
-            aria-hidden="true"
-          >
-            <path
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M7 17V7m0 0h10M7 7l10 10"
-            />
-          </svg>
-          <span className={styles.bracket}>]</span>
-        </span>
-      );
-    }
-    
+
     return (
-      <div 
-        className={`${styles.topicNode} ${isSelected ? styles.selected : ''} ${hasContent && !hasChildren ? styles.clickable : ''}`}
-        onClick={(e) => hasChildren ? toggleExpand(id, e) : handleTopicSelect(id, e)}
-        onDoubleClick={(e) => handleTopicDoubleClick(id, hasChildren, e)}
+      <div
+        className={`${styles.topicNode} ${isSelected ? styles.selected : ''} ${styles.clickable}`}
+        onClick={(e) => handleTopicSelect(id, e)}
       >
-        <span 
-          className={styles.indicator}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (hasChildren) toggleExpand(id, e);
-            else handleTopicSelect(id, e);
-          }}
-        >
-          {typeof indicator === 'string' ? indicator : indicator}
-        </span>
-        <span 
-          className={styles.topicLabel}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleTopicSelect(id, e);
-          }}
-        >
+        <span className={styles.topicLabel}>
           {label}
         </span>
-      </div>
-    );
-  };
-
-  // Render subtopics
-  const renderSubtopics = (subtopics: Record<string, any>, parentId: string | null = null) => {
-    if (!subtopics || Object.keys(subtopics).length === 0) {
-      return null;
-    }
-
-    return (
-      <div className={styles.subtopicList}>
-        {Object.entries(subtopics).map(([id, topic]: [string, any]) => {
-          const hasChildren = topic.subtopics && Object.keys(topic.subtopics).length > 0;
-          const isExpanded = expandedTopics.has(id);
-          
-          return (
-            <div key={id} className={styles.subtopicItem}>
-              {renderTopicNode(id, topic.label, hasChildren)}
-              
-              {/* Show children if expanded */}
-              {hasChildren && isExpanded && (
-                <div className={styles.nestedSubtopics}>
-                  {renderSubtopics(topic.subtopics, id)}
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
     );
   };
@@ -205,28 +125,28 @@ export default function TopicTreeNavigation({
     }
 
     const mainTopic = topics[selectedMainTopic as keyof typeof topics];
-    
+
     // Get all the section topics from ML
     const mainCategories = Object.entries(mainTopic.subtopics)
       .filter(([_, topic]: [string, any]) => topic.subtopics && Object.keys(topic.subtopics).length > 0);
-    
+
     // Set desired number of columns
-    const columnCount = 5; 
-    
+    const columnCount = 5;
+
     // Calculate how many items should be in each column for even distribution
     const totalCategories = mainCategories.length;
     const itemsPerColumn = Math.ceil(totalCategories / columnCount);
-    
+
     // Create balanced columns
     const columns: Array<Array<[string, any]>> = [];
-    
+
     // Evenly distribute items across columns
     for (let i = 0; i < totalCategories; i += itemsPerColumn) {
       // Get a slice of categories for this column, limited by itemsPerColumn or remaining items
       const columnItems = mainCategories.slice(i, Math.min(i + itemsPerColumn, totalCategories));
       columns.push(columnItems);
     }
-    
+
     return (
       <div className={styles.categoriesContainer}>
         {columns.map((column, colIndex) => (
@@ -234,13 +154,13 @@ export default function TopicTreeNavigation({
             {column.map(([categoryId, category]) => {
               const hasChildren = category.subtopics && Object.keys(category.subtopics).length > 0;
               const isExpanded = expandedTopics.has(categoryId);
-              
+
               return (
                 <div key={categoryId} className={styles.categoryGroup}>
                   <div className={styles.categoryHeader}>
                     {renderTopicNode(categoryId, category.label, hasChildren, false)}
                   </div>
-                  
+
                   {/* Show children if expanded */}
                   {hasChildren && isExpanded && (
                     <div className={styles.categoryTopics}>
@@ -272,8 +192,8 @@ export default function TopicTreeNavigation({
       <div className={styles.treeNavContainer}>
         <div className="text-center p-4 text-red-500">
           {error} Using fallback data.
-          <button 
-            onClick={() => refetchData()} 
+          <button
+            onClick={() => refetchData()}
             className="ml-2 text-blue-500 underline hover:text-blue-600"
           >
             Try again
@@ -290,4 +210,4 @@ export default function TopicTreeNavigation({
       </div>
     </div>
   );
-} 
+}

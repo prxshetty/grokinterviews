@@ -6,7 +6,7 @@ import TopicTreeNavigation from './TopicTreeNavigation';
 
 export default function TopicNavWrapper() {
   const [selectedMainTopic, setSelectedMainTopic] = useState<string | null>(null);
-  const [treeVisible, setTreeVisible] = useState<boolean>(true);
+  const [treeVisible, setTreeVisible] = useState<boolean>(false);
 
   // Listen for reset navigation events
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function TopicNavWrapper() {
     };
 
     window.addEventListener('resetNavigation', handleResetNavigation);
-    
+
     return () => {
       window.removeEventListener('resetNavigation', handleResetNavigation);
     };
@@ -31,7 +31,7 @@ export default function TopicNavWrapper() {
       setSelectedMainTopic(topicId);
       setTreeVisible(true);
     }
-    
+
     // Use a custom event to communicate with the page component
     window.dispatchEvent(new CustomEvent('topicChange', { detail: topicId }));
   };
@@ -45,11 +45,11 @@ export default function TopicNavWrapper() {
     <div className="topic-navigation">
       <TopicNav onTopicSelect={handleTopicSelect} selectedTopic={selectedMainTopic} />
       {treeVisible && (
-        <TopicTreeNavigation 
-          selectedMainTopic={selectedMainTopic} 
-          onSelectTopic={handleSubTopicSelect} 
+        <TopicTreeNavigation
+          selectedMainTopic={selectedMainTopic}
+          onSelectTopic={handleSubTopicSelect}
         />
       )}
     </div>
   );
-} 
+}

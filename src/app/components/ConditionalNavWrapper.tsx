@@ -10,12 +10,12 @@ export default function ConditionalNavWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isTopicDetailPage = pathname.startsWith('/topics/') && pathname !== '/topics';
+  const isTopicsPage = pathname.startsWith('/topics');
 
   return (
     <>
-      {/* Only render TopicNavWrapper on topic detail pages */}
-      {isTopicDetailPage ? (
+      {/* Render TopicNavWrapper on all topics pages */}
+      {isTopicsPage ? (
         <>
           <TopicNavWrapper />
           <main className="max-w-7xl mx-auto px-4 py-8">
