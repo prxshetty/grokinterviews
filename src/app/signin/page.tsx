@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import styles from './signin.module.css';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
 
   // Handle initial setup after mount
   useEffect(() => {
@@ -58,7 +57,37 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-gray-900 flex flex-col font-sans tracking-tight transition-colors duration-300">
+    <div className="min-h-screen w-full bg-white dark:bg-black flex flex-col font-sans tracking-tight transition-colors duration-300 relative">
+      {/* SVG Background */}
+      <div className="absolute inset-0 w-full h-screen overflow-hidden pointer-events-none z-0">
+        <div className="absolute inset-0 bg-white dark:bg-black">
+          {/* Light mode SVG background */}
+          <div className="absolute inset-0 block dark:hidden opacity-20">
+            <img
+              src="/bg/complete-bg.svg"
+              alt="Background Pattern"
+              className="absolute top-0 left-0 w-full h-full object-contain"
+            />
+          </div>
+          {/* Dark mode SVG background */}
+          <div className="absolute inset-0 hidden dark:block opacity-20">
+            <img
+              src="/bg/complete-bg-dark.svg"
+              alt="Background Pattern"
+              className="absolute top-0 left-0 w-full h-full object-contain"
+            />
+          </div>
+          {/* Dark mode animated background */}
+          <div className="absolute inset-0 hidden dark:block opacity-10">
+            <img
+              src="/bg/dark.gif"
+              alt="Dark Background"
+              className="absolute top-0 left-0 w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Navigation Bar - matches MainNavigation style */}
       <nav className="fixed top-0 left-0 right-0 z-50 py-4 px-8 bg-white/80 dark:bg-black/80 backdrop-blur-md transition-all duration-300 border-b border-transparent hover:border-gray-200 dark:hover:border-gray-800">
         <div className="max-w-screen-xl mx-auto flex items-center justify-between">
@@ -89,8 +118,9 @@ export default function SignIn() {
       <div className="h-16"></div>
 
       {/* Main Content - Centered */}
-      <div className="flex-grow flex items-center justify-center p-4">
-        <div className="w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-lg overflow-hidden text-black dark:text-white shadow-lg relative">
+      <div className="flex-grow flex items-center justify-center p-4 relative z-10">
+        <div className={`w-full max-w-md mx-auto bg-white/90 dark:bg-black/90 rounded-lg overflow-hidden text-black dark:text-white relative ${styles.signInCard}`}>
+
           {/* Close button (X) */}
           <Link
             href="/"
@@ -103,9 +133,9 @@ export default function SignIn() {
           </Link>
           <div className="p-8 flex flex-col items-center">
             {/* Logo/Icon */}
-            <div className="w-16 h-16 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
-              <div className="w-8 h-8 rounded-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
-                <div className="w-4 h-4 rounded-full bg-gray-600 dark:bg-gray-400"></div>
+            <div className="w-16 h-16 bg-gray-200 dark:bg-black rounded-full flex items-center justify-center mb-6 border border-transparent dark:border-gray-800">
+              <div className="w-8 h-8 rounded-full bg-gray-400 dark:bg-gray-800 flex items-center justify-center">
+                <div className="w-4 h-4 rounded-full bg-gray-600 dark:bg-gray-600"></div>
               </div>
             </div>
 
@@ -125,7 +155,7 @@ export default function SignIn() {
                   placeholder="Your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
                   required
                 />
               </div>
@@ -135,7 +165,7 @@ export default function SignIn() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
                   required
                 />
               </div>

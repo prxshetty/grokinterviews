@@ -1,4 +1,4 @@
-.treeNavContainer {
+.tableContainer {
   font-family: monospace;
   margin: 0;
   padding: 0;
@@ -9,23 +9,13 @@
   background-color: #000;
   color: #fff;
   position: relative;
+  z-index: 40;
 }
 
-.treeNavContent {
+.tableContent {
   display: flex;
   flex-direction: column;
   width: 100%;
-}
-
-/* Search header */
-.searchHeader {
-  margin-bottom: 1rem;
-}
-
-.searchLabel {
-  font-weight: normal;
-  letter-spacing: 0.05rem;
-  text-transform: uppercase;
 }
 
 /* Header row with Area and Project */
@@ -79,46 +69,6 @@
   color: #aaa;
 }
 
-.letterIndicator {
-  display: inline-block;
-  width: 2ch;
-  margin-right: 0.5rem;
-  font-family: monospace;
-}
-
-.categoryTopics {
-  display: flex;
-  flex-direction: column;
-  margin-left: 1rem;
-  padding-left: 1rem;
-  border-left: 1px solid #e5e7eb;
-}
-
-/* Topic styling */
-.topicNode {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s ease;
-  width: 100%;
-}
-
-.topicNode:hover {
-  background-color: #222;
-}
-
-.indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  width: 3ch;
-  font-family: monospace;
-  font-weight: normal;
-  letter-spacing: -0.02em;
-  opacity: 0.8;
-}
-
 /* Arrow indicator styling */
 .arrowContainer {
   display: inline-flex;
@@ -129,13 +79,6 @@
   margin-right: 0.5rem;
   width: 16px;
   height: 16px;
-}
-
-.arrowIcon {
-  width: 16px;
-  height: 16px;
-  opacity: 1;
-  transform: rotate(0deg);
 }
 
 .closeButton {
@@ -155,22 +98,6 @@
   color: #fff;
 }
 
-.clickable:hover .arrowContainer {
-  opacity: 1;
-}
-
-.clickable:hover .arrowIcon {
-  transform: rotate(-45deg) translateX(0.5px) translateY(-0.5px);
-}
-
-.topicNode.selected .arrowContainer {
-  opacity: 1;
-}
-
-.topicNode.selected .arrowIcon {
-  stroke-width: 1.75;
-}
-
 .topicLabel {
   font-family: monospace;
   font-weight: normal;
@@ -180,38 +107,6 @@
 }
 
 /* Selected state */
-.topicNode.selected {
+.categoryRow.selected {
   background-color: #333;
 }
-
-.topicNode.selected .indicator {
-  opacity: 1;
-}
-
-.topicNode.selected .topicLabel {
-  font-weight: normal;
-  opacity: 1;
-  color: #fff;
-}
-
-.topicNode:hover .topicLabel {
-  text-decoration: none;
-}
-
-/* Subtopic list styling */
-.subtopicList {
-  display: flex;
-  flex-direction: column;
-}
-
-.subtopicItem {
-  margin: 0.1rem 0;
-}
-
-.nestedSubtopics {
-  margin-left: 1rem;
-  padding-left: 1rem;
-  border-left: 1px solid #e5e7eb;
-}
-
-/* We're focusing on dark mode only for this component to match the reference image */
