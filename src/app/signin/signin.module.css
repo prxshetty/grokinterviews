@@ -1,0 +1,40 @@
+/* Custom styles for the sign-in page */
+
+.svgBackground {
+  position: absolute;
+  inset: 0;
+  background-image: url('/bg/b.svg');
+  background-size: 600px 600px;
+  background-repeat: repeat;
+  opacity: 0.2;
+  animation: rotateSlow 120s linear infinite;
+  transform-origin: center center;
+}
+
+/* Dark mode styles */
+:global(.dark) .svgBackground {
+  filter: invert(1);
+}
+
+/* Animation for subtle background rotation */
+@keyframes rotateSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Card styles */
+.signInCard {
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+:global(.dark) .signInCard {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}

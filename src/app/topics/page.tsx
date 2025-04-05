@@ -6,6 +6,7 @@ import TopicDataService from '@/services/TopicDataService';
 import { TopicItem } from '@/utils/markdownParser';
 import ActivityProgress from '../components/ActivityProgress';
 import ProgressChart from '../components/ProgressChart';
+import TopicCategoryGrid from '../components/TopicCategoryGrid';
 
 // Main topics with their corresponding colors
 const mainTopics = [
@@ -55,7 +56,8 @@ export default function TopicsPage() {
     }
   };
 
-  const handleCloseTopicTree = () => {
+  // Function to close the topic tree and reset selections
+  const resetSelections = () => {
     setSelectedTopic(null);
     setSelectedCategory(null);
   };
@@ -129,45 +131,37 @@ export default function TopicsPage() {
       );
     }
 
+    // Get the selected category label
+    const categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label || 'Selected Category';
+
     // Use the categoryDetails if available, otherwise fallback to topicData
     if (categoryDetails && categoryDetails.subtopics) {
       // Count the actual subtopics
       const hasRealSubtopics = Object.keys(categoryDetails.subtopics).length > 0;
 
-      // If the category has subtopics, render them
+      // If the category has subtopics, render them in the new format
       if (hasRealSubtopics) {
         const listItems = Object.entries(categoryDetails.subtopics);
 
         return (
-          <div className="w-full space-y-3 animate-fadeIn">
-            <div className="ml-2">
+          <div className="w-full animate-fadeIn">
+            <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
+
+            {/* Render subtopics in the new format */}
+            <div className="border-t border-gray-200 dark:border-gray-700">
               {listItems.map(([listId, listItem], listIndex) => {
                 const typedListItem = listItem as TopicItem;
-                if (!typedListItem.subtopics || Object.keys(typedListItem.subtopics).length === 0) {
-                  return (
-                    <div key={listId} className="mb-4 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
-                      <div className="flex items-center">
-                        <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
-                        <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
-                      </div>
-                    </div>
-                  );
-                }
+                const itemNumber = listIndex + 1;
+                const formattedNumber = String(itemNumber).padStart(2, '0');
 
                 return (
-                  <div key={listId} className="mb-6 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
-                    <div className="flex items-center">
-                      <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
-                      <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
-                    </div>
-                    <div className="ml-6 mt-2">
-                      {Object.entries(typedListItem.subtopics).map(([subListId, subListItem], subIndex) => (
-                        <div key={subListId} className="flex items-baseline my-1.5">
-                          <span className="text-xs uppercase tracking-wider mr-1">{listIndex + 1}-{subIndex + 1}</span>
-                          <span className="text-xs uppercase tracking-wider">{(subListItem as TopicItem).label.toUpperCase()}</span>
-                          <span className="flex-grow text-right text-xs mr-1">{String(subIndex * 10 + 1).padStart(2, '0')}</span>
-                        </div>
-                      ))}
+                  <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center py-4">
+                      <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
+                      <div className="flex-grow">
+                        <h3 className="font-medium">{typedListItem.label}</h3>
+                      </div>
+                      <div className="w-8 text-center text-gray-400">+</div>
                     </div>
                   </div>
                 );
@@ -175,31 +169,22 @@ export default function TopicsPage() {
             </div>
           </div>
         );
-      } else if (categoryDetails.label) {
+      } else {
         // No subtopics but we have a category label - show the empty state
         return (
-          <div className="w-full space-y-3 animate-fadeIn">
-            <div className="ml-2">
-              <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center">
-                  <span className="text-xs uppercase tracking-wider">
-                    NO CONTENT AVAILABLE FOR {categoryDetails.label.toUpperCase()}
-                  </span>
-                </div>
-                <div className="mt-4 flex space-x-3">
-                  <button
-                    onClick={handleBackToMainCategories}
-                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                  >
-                    Try another category
-                  </button>
-                  <button
-                    onClick={() => loadCategoryDetails(categoryId)}
-                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                  >
-                    Retry loading
-                  </button>
-                </div>
+          <div className="w-full animate-fadeIn">
+            <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
+            <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded">
+              <p className="text-center text-gray-500 dark:text-gray-400">
+                No content available for this category yet.
+              </p>
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={handleBackToMainCategories}
+                  className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Back to Categories
+                </button>
               </div>
             </div>
           </div>
@@ -240,32 +225,20 @@ export default function TopicsPage() {
 
       if (!category || !category.subtopics) {
         // Get the category label if possible
-        const categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label || categoryId;
-
         return (
-          <div className="w-full space-y-3 animate-fadeIn">
-            <div className="ml-2">
-              <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center">
-                  <span className="text-xs uppercase tracking-wider">
-                    CONTENT FOR {categoryLabel.toUpperCase()}
-                    IS BEING PREPARED
-                  </span>
-                </div>
-                <div className="mt-4 flex space-x-3">
-                  <button
-                    onClick={handleBackToMainCategories}
-                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                  >
-                    Try another category
-                  </button>
-                  <button
-                    onClick={() => loadCategoryDetails(categoryId)}
-                    className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                  >
-                    Retry loading
-                  </button>
-                </div>
+          <div className="w-full animate-fadeIn">
+            <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
+            <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded">
+              <p className="text-center text-gray-500 dark:text-gray-400">
+                Content for this category is being prepared.
+              </p>
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={handleBackToMainCategories}
+                  className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Back to Categories
+                </button>
               </div>
             </div>
           </div>
@@ -276,35 +249,24 @@ export default function TopicsPage() {
       const listItems = Object.entries(category.subtopics);
 
       return (
-        <div className="w-full space-y-3 animate-fadeIn">
-          <div className="ml-2">
+        <div className="w-full animate-fadeIn">
+          <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
+
+          {/* Render subtopics in the new format */}
+          <div className="border-t border-gray-200 dark:border-gray-700">
             {listItems.map(([listId, listItem], listIndex) => {
               const typedListItem = listItem as TopicItem;
-              if (!typedListItem.subtopics || Object.keys(typedListItem.subtopics).length === 0) {
-                return (
-                  <div key={listId} className="mb-4 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
-                    <div className="flex items-center">
-                      <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
-                      <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
-                    </div>
-                  </div>
-                );
-              }
+              const itemNumber = listIndex + 1;
+              const formattedNumber = String(itemNumber).padStart(2, '0');
 
               return (
-                <div key={listId} className="mb-6 animate-fadeIn" style={{ animationDelay: `${listIndex * 0.05}s` }}>
-                  <div className="flex items-center">
-                    <span className="font-semibold text-sm uppercase tracking-wider">{listIndex + 1}</span>
-                    <span className="ml-2 font-semibold text-sm uppercase tracking-wider">{typedListItem.label.toUpperCase()}</span>
-                  </div>
-                  <div className="ml-6 mt-2">
-                    {Object.entries(typedListItem.subtopics).map(([subListId, subListItem], subIndex) => (
-                      <div key={subListId} className="flex items-baseline my-1.5">
-                        <span className="text-xs uppercase tracking-wider mr-1">{listIndex + 1}-{subIndex + 1}</span>
-                        <span className="text-xs uppercase tracking-wider">{(subListItem as TopicItem).label.toUpperCase()}</span>
-                        <span className="flex-grow text-right text-xs mr-1">{String(subIndex * 10 + 1).padStart(2, '0')}</span>
-                      </div>
-                    ))}
+                <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center py-4">
+                    <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
+                    <div className="flex-grow">
+                      <h3 className="font-medium">{typedListItem.label}</h3>
+                    </div>
+                    <div className="w-8 text-center text-gray-400">+</div>
                   </div>
                 </div>
               );
@@ -315,22 +277,19 @@ export default function TopicsPage() {
     }
 
     return (
-      <div className="w-full space-y-3 animate-fadeIn">
-        <div className="ml-2">
-          <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-            <div className="flex items-center">
-              <span className="text-xs uppercase tracking-wider">
-                COULD NOT LOAD CONTENT FOR THIS CATEGORY
-              </span>
-            </div>
-            <div className="mt-4">
-              <button
-                onClick={handleBackToMainCategories}
-                className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-              >
-                Go back to categories
-              </button>
-        </div>
+      <div className="w-full animate-fadeIn">
+        <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
+        <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded">
+          <p className="text-center text-gray-500 dark:text-gray-400">
+            Could not load content for this category.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={handleBackToMainCategories}
+              className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Back to Categories
+            </button>
           </div>
         </div>
       </div>
@@ -372,27 +331,19 @@ export default function TopicsPage() {
               {selectedTopic ? (
                 // Show improved topic tree when a topic is selected
                 <div className="mb-12">
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                      {selectedCategory && (
-                        <button
-                          onClick={handleBackToMainCategories}
-                          className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                          </svg>
-                          Back to Categories
-                        </button>
-                      )}
+                  {selectedCategory && (
+                    <div className="flex items-center gap-4 mb-6">
+                      <button
+                        onClick={handleBackToMainCategories}
+                        className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Categories
+                      </button>
                     </div>
-                    <button
-                      onClick={handleCloseTopicTree}
-                      className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-                    >
-                      Close
-                    </button>
-                  </div>
+                  )}
 
                   {/* Main topic categories */}
                   <div className="flex flex-wrap">
@@ -403,38 +354,15 @@ export default function TopicsPage() {
                       </div>
                     ) : selectedCategory === null ? (
                       // Show all main categories when no specific category is selected
-                      <div className="w-full grid grid-cols-3 gap-4 animate-fadeIn">
-                        {topicCategories.map((category, index) => (
-                          <div
-                            key={`${selectedTopic}-${category.id}-${index}`}
-                            className="transform transition-all duration-300 ease-in-out animate-slideRight"
-                            style={{ animationDelay: `${index * 0.03}s` }}
-                            id={`topic-${category.id}`}
-                          >
-                            <div
-                              className="bg-gray-100 dark:bg-gray-800 px-3 py-2 uppercase text-sm tracking-wider cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded"
-                              onClick={() => handleCategorySelect(category.id)}
-                            >
-                              {category.label}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <TopicCategoryGrid
+                        categories={topicCategories}
+                        onSelectCategory={handleCategorySelect}
+                      />
                     ) : (
                       // Show detailed view for the selected category
                       <div className="w-full animate-fadeIn">
-                        {/* Selected category view */}
-                        <div className="flex flex-wrap">
-                          {/* Category header */}
-                          <div className="w-full mb-4">
-                            <div className="bg-gray-100 dark:bg-gray-800 px-4 py-3 uppercase text-sm tracking-wider rounded font-medium">
-                              {topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Selected Category'}
-                            </div>
-                          </div>
-
-                          {/* Content based on selected category */}
-                          {renderCategoryContent(selectedCategory)}
-                        </div>
+                        {/* Content based on selected category */}
+                        {renderCategoryContent(selectedCategory)}
                       </div>
                     )}
                   </div>

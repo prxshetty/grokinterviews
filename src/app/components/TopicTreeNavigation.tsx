@@ -4,6 +4,15 @@ import { useState, useEffect, useMemo } from 'react';
 import styles from './TopicTreeNavigation.module.css';
 import { useTopicData } from './TopicDataProvider';
 
+// Default empty topics structure in case data isn't loaded
+const defaultTopics = {
+  ml: { label: 'Machine Learning', subtopics: {} },
+  ai: { label: 'Artificial Intelligence', subtopics: {} },
+  webdev: { label: 'Web Development', subtopics: {} },
+  'system-design': { label: 'System Design', subtopics: {} },
+  dsa: { label: 'Data Structures & Algorithms', subtopics: {} }
+};
+
 
 interface TopicTreeNavigationProps {
   selectedMainTopic: string | null;
@@ -38,7 +47,7 @@ export default function TopicTreeNavigation({
   // Listen for double-click events from TopicNav
   useEffect(() => {
     const handleTopicDoubleClick = (event: CustomEvent<{ topicId: string, isExpanded: boolean }>) => {
-      const { topicId, isExpanded } = event.detail;
+      const { isExpanded } = event.detail;
 
       // Get all top-level subtopics for this main topic
       if (selectedMainTopic && topics[selectedMainTopic as keyof typeof topics]) {
@@ -49,7 +58,7 @@ export default function TopicTreeNavigation({
           const newExpandedTopics = new Set(expandedTopics);
 
           // Add all top-level subtopics to expanded set
-          Object.keys(mainTopic.subtopics).forEach(subtopicId => {
+          Object.keys(mainTopic.subtopics || {}).forEach(subtopicId => {
             newExpandedTopics.add(subtopicId);
           });
 
@@ -59,7 +68,7 @@ export default function TopicTreeNavigation({
           const newExpandedTopics = new Set(expandedTopics);
 
           // Remove all top-level subtopics from expanded set
-          Object.keys(mainTopic.subtopics).forEach(subtopicId => {
+          Object.keys(mainTopic.subtopics || {}).forEach(subtopicId => {
             newExpandedTopics.delete(subtopicId);
           });
 
@@ -79,8 +88,14 @@ export default function TopicTreeNavigation({
     event.stopPropagation();
     setSelectedTopic(topicId);
     onSelectTopic(topicId);
+
+    // Dispatch a custom event to hide the tree
+    window.dispatchEvent(new CustomEvent('hideTopicTree'));
   };
 
+  // We don't need this function anymore as we're not showing nested topics
+  // Keeping it commented for reference
+  /*
   const toggleExpand = (topicId: string, event: React.MouseEvent) => {
     event.stopPropagation();
 
@@ -92,8 +107,11 @@ export default function TopicTreeNavigation({
     }
     setExpandedTopics(newExpandedTopics);
   };
+  */
 
-  // Handle double click on topic to toggle expansion
+  // We don't need this function anymore as we're not showing nested topics
+  // Keeping it commented for reference
+  /*
   const handleTopicDoubleClick = (topicId: string, hasChildren: boolean, event: React.MouseEvent) => {
     event.stopPropagation();
 
@@ -101,75 +119,72 @@ export default function TopicTreeNavigation({
       toggleExpand(topicId, event);
     }
   };
+  */
 
-  // Simplified render topic node function - only for main headers
-  const renderTopicNode = (id: string, label: string) => {
+  // Render a topic row with area and project
+  const renderTopicRow = (id: string, areaLabel: string, projectLabel: string) => {
     const isSelected = selectedTopic === id;
 
     return (
       <div
-        className={`${styles.topicNode} ${isSelected ? styles.selected : ''} ${styles.clickable}`}
+        className={`${styles.categoryRow} ${isSelected ? styles.selected : ''}`}
         onClick={(e) => handleTopicSelect(id, e)}
       >
-        <span className={styles.topicLabel}>
-          {label}
-        </span>
+        <div className={styles.categoryArea}>
+          <div className={styles.arrowContainer}>
+            <span>→</span>
+          </div>
+          <span className={styles.topicLabel}>{areaLabel}</span>
+        </div>
+        <div className={styles.categoryProject}>
+          <span className={styles.topicLabel}>{projectLabel}</span>
+        </div>
       </div>
     );
   };
 
-  // Group topics for display in columns with letters
-  const renderMainCategories = () => {
+  // Handle close button click
+  const handleClose = () => {
+    window.dispatchEvent(new CustomEvent('hideTopicTree'));
+  };
+
+  // Render topics in a table-like layout
+  const renderTopicTable = () => {
     if (!selectedMainTopic || !topics[selectedMainTopic as keyof typeof topics]) {
       return null;
     }
 
-    const mainTopic = topics[selectedMainTopic as keyof typeof topics];
-
-    // Get all the section topics from ML
-    const mainCategories = Object.entries(mainTopic.subtopics)
-      .filter(([_, topic]: [string, any]) => topic.subtopics && Object.keys(topic.subtopics).length > 0);
-
-    // Set desired number of columns
-    const columnCount = 5;
-
-    // Calculate how many items should be in each column for even distribution
-    const totalCategories = mainCategories.length;
-    const itemsPerColumn = Math.ceil(totalCategories / columnCount);
-
-    // Create balanced columns
-    const columns: Array<Array<[string, any]>> = [];
-
-    // Evenly distribute items across columns
-    for (let i = 0; i < totalCategories; i += itemsPerColumn) {
-      // Get a slice of categories for this column, limited by itemsPerColumn or remaining items
-      const columnItems = mainCategories.slice(i, Math.min(i + itemsPerColumn, totalCategories));
-      columns.push(columnItems);
-    }
+    // Sample data to match the image
+    // In a real implementation, this would come from your topic data
+    const topicRows = [
+      { id: 'exposition', area: 'Exposition', project: 'Spanish Freak Show' },
+      { id: 'editorial-branding', area: 'Editorial / Branding', project: 'Azul Magazine' },
+      { id: 'branding', area: 'Branding', project: 'Velaz Music' },
+      { id: 'typography', area: 'Typography', project: 'Pysoni Numerology' },
+      { id: 'event-branding', area: 'Event / Branding', project: 'Oh Holy Festivals!' },
+      { id: 'editorial', area: 'Editorial', project: 'Oh Holy Festivals! - Informe' },
+      { id: 'exposition-illustration', area: 'Exposition / Illustration', project: 'FastExpo\'17' },
+      { id: 'illustration', area: 'Illustration', project: 'Kam_air_sutra' },
+      { id: 'art-direction', area: 'Art Direction', project: 'Europe Mode Catalogue' },
+      { id: 'inphographics', area: 'Inphographics', project: 'Infografías - Yorokobu Mag' },
+      { id: 'typography-illustration', area: 'Typography / Illustration', project: 'Numerografía 79- Yorokobu Mag' },
+      { id: 'illustration2', area: 'Illustration', project: 'Chamartin Station Map' },
+      { id: 'illustration3', area: 'Illustration', project: 'Plano Festival SOS4.8' },
+      { id: 'typography-illustration2', area: 'Typography / Illustration', project: 'Moustachetype - 36DaysofType' },
+    ];
 
     return (
       <div className={styles.categoriesContainer}>
-        {columns.map((column, colIndex) => (
-          <div key={colIndex} className={styles.categoryColumn}>
-            {column.map(([categoryId, category]) => {
-              const hasChildren = category.subtopics && Object.keys(category.subtopics).length > 0;
-              const isExpanded = expandedTopics.has(categoryId);
+        {/* Header row */}
+        <div className={styles.headerRow}>
+          <div className={styles.headerCell}>↓ Area</div>
+          <div className={styles.headerCell}>↓ Project</div>
+        </div>
 
-              return (
-                <div key={categoryId} className={styles.categoryGroup}>
-                  <div className={styles.categoryHeader}>
-                    {renderTopicNode(categoryId, category.label, hasChildren, false)}
-                  </div>
-
-                  {/* Show children if expanded */}
-                  {hasChildren && isExpanded && (
-                    <div className={styles.categoryTopics}>
-                      {renderSubtopics(category.subtopics, categoryId)}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {/* Topic rows */}
+        {topicRows.map((row) => (
+          <div key={row.id} onClick={(e) => handleTopicSelect(row.id, e)}>
+            {renderTopicRow(row.id, row.area, row.project)}
           </div>
         ))}
       </div>
@@ -205,8 +220,9 @@ export default function TopicTreeNavigation({
 
   return (
     <div className={styles.treeNavContainer}>
+      <button className={styles.closeButton} onClick={handleClose}>Close</button>
       <div className={styles.treeNavContent}>
-        {renderMainCategories()}
+        {renderTopicTable()}
       </div>
     </div>
   );

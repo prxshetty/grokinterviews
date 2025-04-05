@@ -2,23 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import TopicNav from './TopicNav';
-import TopicTreeNavigation from './TopicTreeNavigation';
+import TopicTableView from './TopicTableView';
 
 export default function TopicNavWrapper() {
   const [selectedMainTopic, setSelectedMainTopic] = useState<string | null>(null);
   const [treeVisible, setTreeVisible] = useState<boolean>(false);
 
-  // Listen for reset navigation events
+  // Listen for reset navigation events and hide tree events
   useEffect(() => {
     const handleResetNavigation = () => {
       setSelectedMainTopic(null);
       setTreeVisible(true);
     };
 
+    const handleHideTopicTree = () => {
+      setTreeVisible(false);
+    };
+
     window.addEventListener('resetNavigation', handleResetNavigation);
+    window.addEventListener('hideTopicTree', handleHideTopicTree);
 
     return () => {
       window.removeEventListener('resetNavigation', handleResetNavigation);
+      window.removeEventListener('hideTopicTree', handleHideTopicTree);
     };
   }, []);
 
@@ -34,18 +40,26 @@ export default function TopicNavWrapper() {
 
     // Use a custom event to communicate with the page component
     window.dispatchEvent(new CustomEvent('topicChange', { detail: topicId }));
+
+    // Force the tree to be visible when a topic is selected
+    if (topicId) {
+      setTreeVisible(true);
+    }
   };
 
   const handleSubTopicSelect = (topicId: string) => {
     // Pass the selected subtopic to the page
     window.dispatchEvent(new CustomEvent('topicChange', { detail: topicId }));
+
+    // Hide the tree when a topic is clicked
+    setTreeVisible(false);
   };
 
   return (
     <div className="topic-navigation">
       <TopicNav onTopicSelect={handleTopicSelect} selectedTopic={selectedMainTopic} />
       {treeVisible && (
-        <TopicTreeNavigation
+        <TopicTableView
           selectedMainTopic={selectedMainTopic}
           onSelectTopic={handleSubTopicSelect}
         />
