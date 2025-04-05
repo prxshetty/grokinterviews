@@ -19,13 +19,11 @@ const mainTopics = [
 
 type CategoryItem = {
   id: string;
-        label: string;
+  label: string;
 };
 
 export default function TopicsPage() {
-  const [showSearchModal, setShowSearchModal] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [searchValue, setSearchValue] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -75,7 +73,7 @@ export default function TopicsPage() {
 
   const loadCategoryDetails = async (categoryId: string) => {
     if (!selectedTopic) return;
-
+    
     setLoadingCategoryDetails(true);
     try {
       console.log(`Loading details for category ${categoryId} in topic ${selectedTopic}`);
@@ -99,14 +97,6 @@ export default function TopicsPage() {
 
   const handleBackToMainCategories = () => {
     setSelectedCategory(null);
-  };
-
-  const handleSearchIconClick = () => {
-    setShowSearchModal(true);
-  };
-
-  const closeSearchModal = () => {
-    setShowSearchModal(false);
   };
 
   // Load categories when selected topic changes
@@ -298,9 +288,8 @@ export default function TopicsPage() {
 
   return (
     <div className="bg-white dark:bg-black min-h-screen">
-      <div className="w-full"> {/* Padding is handled by the spacer in MainNavigation */}
-        {/* Main content area */}
-        <div className={`transition-opacity duration-300 ${showSearchModal ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className="w-full">
+        <div className="transition-opacity duration-300">
           <div className="p-0">
             {/* Navigation tabs */}
             <div className="flex justify-between items-center">
@@ -315,15 +304,31 @@ export default function TopicsPage() {
                   </button>
                 ))}
               </div>
+            </div>
 
-              <button
-                onClick={handleSearchIconClick}
-                className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                </svg>
-              </button>
+            {/* Popular Categories section */}
+            <div className="p-4 border-t border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">Popular Categories</h3>
+              <div className="flex flex-wrap gap-2">
+                {['JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Node.js', 'Next.js', 'API Design', 'System Design', 'Algorithms'].map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {['Frontend', 'Backend', 'Full Stack', 'Database', 'Cloud', 'DevOps', 'Testing', 'Security', 'Performance', 'UI/UX', 'Mobile', 'Accessibility'].map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Content area */}
@@ -368,43 +373,66 @@ export default function TopicsPage() {
                   </div>
                 </div>
               ) : (
-                // Show metadata grid when no topic is selected
-                <div className="grid grid-cols-4 gap-10 mb-12 pb-8 border-b border-gray-200 dark:border-gray-800">
-                  <div>
-                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">TYPE</h3>
-                    <div className="space-y-1">
-                      <p>Technical</p>
-                      <p>Behavioral</p>
-                      <p>System Design</p>
-                      <p>Coding</p>
+                // Show metadata grid with cards that match theme colors and appear as one row divided into 3 columns
+                <div className="grid grid-cols-3 mb-8">
+                  {/* Target Questions by Role Card */}
+                  <div className="relative bg-white dark:bg-black border border-gray-300 dark:border-gray-700 p-5 cursor-pointer">
+                    <div className="mb-4">
+                      <div className="w-8 h-8 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" fill="none" />
+                        </svg>
+                      </div>
+                    </div>
+                    <h3 className="text-base font-medium text-gray-900 dark:text-white uppercase mb-3">TARGET QUESTIONS BY ROLE</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs mb-6">
+                      Personalized question sets tailored to specific job roles and positions. Prepare for interviews with role-specific content.
+                    </p>
+                    <div className="absolute bottom-3 right-3">
+                      <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">DIFFICULTY</h3>
-                    <div className="space-y-1">
-                      <p>Easy</p>
-                      <p>Medium</p>
-                      <p>Hard</p>
+                  {/* Quizzes Card */}
+                  <div className="relative bg-white dark:bg-black border-t border-b border-gray-300 dark:border-gray-700 p-5 cursor-pointer">
+                    <div className="mb-4">
+                      <div className="w-8 h-8 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" fill="none" />
+                          <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1" fill="none" />
+                        </svg>
+                      </div>
+                    </div>
+                    <h3 className="text-base font-medium text-gray-900 dark:text-white uppercase mb-3">QUIZZES</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs mb-6">
+                      Test your knowledge with interactive quizzes across various technical domains. Track your progress and identify areas for improvement.
+                    </p>
+                    <div className="absolute bottom-3 right-3">
+                      <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">FORMAT</h3>
-                    <div className="space-y-1">
-                      <p>Written</p>
-                      <p>Live Coding</p>
-                      <p>Whiteboard</p>
-                      <p>Take-Home</p>
+                  {/* Activity Track Management Card */}
+                  <div className="relative bg-white dark:bg-black border border-gray-300 dark:border-gray-700 p-5 cursor-pointer">
+                    <div className="mb-4">
+                      <div className="w-8 h-8 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7 8h10M7 12h10M7 16h10" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                        </svg>
+                      </div>
                     </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">COMPANIES</h3>
-                    <div className="space-y-1">
-                      <p>FAANG</p>
-                      <p>Startups</p>
-                      <p>Finance</p>
+                    <h3 className="text-base font-medium text-gray-900 dark:text-white uppercase mb-3">ACTIVITY TRACK MANAGEMENT</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs mb-6">
+                      Organize and manage your learning journey with customizable activity tracks. Set goals, monitor progress, and stay on schedule.
+                    </p>
+                    <div className="absolute bottom-3 right-3">
+                      <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -469,87 +497,6 @@ export default function TopicsPage() {
             </div>
           </div>
         </div>
-
-        {/* Search modal - now only covers the navigation area */}
-        {showSearchModal && (
-          <div className="fixed top-0 left-0 right-0 bg-white dark:bg-black z-50 border-b border-gray-200 dark:border-gray-800">
-            {/* Search header */}
-            <div className="flex border-b border-gray-200 dark:border-gray-800">
-              <div className="p-4 flex items-center text-gray-700 dark:text-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                className="flex-1 py-4 px-2 text-lg text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 bg-white dark:bg-black focus:outline-none"
-                placeholder={selectedTopic
-                  ? `search in ${mainTopics.find(topic => topic.id === selectedTopic)?.label || 'selected topic'}...`
-                  : "search topics..."}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                autoFocus
-              />
-              <button
-                onClick={closeSearchModal}
-                className="p-4 flex items-center text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Recent searches */}
-            <div className="grid grid-cols-5 gap-2 p-4 bg-gray-100 dark:bg-gray-900">
-              {[
-                { term: 'sparkling water', time: '27min ago', location: 'London' },
-                { term: 'meat golden', time: '28min ago', location: 'London' },
-                { term: 'tapenade', time: '41min ago', location: 'London' },
-                { term: 'simply sauces', time: '31min ago', location: 'London' },
-                { term: 'steamed buns', time: '11min ago', location: 'London' }
-              ].map((search, index) => (
-                <div key={index} className="p-2">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{search.time}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">in {search.location}</div>
-                  <div className="mt-2 text-sm font-medium dark:text-gray-300">{search.term}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Categories section */}
-            <div className="p-4">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">categories</div>
-
-              {/* Popular categories */}
-              <div className="mb-4">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">popular</div>
-                <div className="flex flex-wrap gap-2">
-                  {['turkish', 'meat', 'european', 'asian', 'chinese', 'mediterranean', 'thai', 'german', 'south american', 'argentinian', 'filipino', 'italian'].map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-600"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Other categories */}
-              <div className="flex flex-wrap gap-2">
-                {['coffee and tea', 'alcohol', 'dairy', 'baked goods', 'general', 'specialty', 'seafood', 'produce', 'beverages', 'meat', 'supplies', 'french'].map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
