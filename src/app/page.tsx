@@ -78,8 +78,11 @@ export default async function Home() {
       </div>
 
       {/* Topic Carousel Section */}
-      <div className="mt-16 pt-8 pb-16">
-        <TopicCarousel />
+      <div className="mt-24 mb-24 overflow-hidden">
+        <h2 className="text-2xl md:text-3xl mb-8 text-center font-normal">Explore Topics</h2>
+        <div className="-mx-8 md:-mx-12 lg:-mx-16 -mt-4">
+          <TopicCarousel />
+        </div>
       </div>
 
       {/* Projects Section */}

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { quizTopics } from '@/data/quizTopics';
 import TopicCard from './TopicCard';
 
 export default function TopicCarousel() {
-  const [activeIndex, setActiveIndex] = useState(4); // Start with a middle card active
+  const [activeIndex, setActiveIndex] = useState(0); // Start with first card active
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -28,15 +28,17 @@ export default function TopicCarousel() {
     };
   }, []);
 
-  // Calculate visible topics so it looks like more cards off-screen
-  const visibleTopics = quizTopics;
+  // Handle navigation to next card
+  const handleNextCard = useCallback(() => {
+    setActiveIndex((prevIndex) => (prevIndex + 1) % quizTopics.length);
+  }, []);
 
   // If not mounted yet, render a simplified version to avoid hydration issues
   if (!isMounted) {
     return (
       <div className="relative">
-        <div className="flex justify-center items-center pt-8 pb-16 relative overflow-hidden">
-          <div className="h-[240px] flex justify-center items-center">
+        <div className="flex justify-center items-center py-16 relative overflow-hidden">
+          <div className="h-[400px] flex justify-center items-center">
             <div className="text-gray-400 dark:text-gray-600">Loading topics...</div>
           </div>
         </div>
@@ -44,51 +46,129 @@ export default function TopicCarousel() {
     );
   }
 
-  return (
-    <div className="relative">
-      {/* Card container with slight arc - no scrolling */}
-      <div className="flex justify-center items-center pt-8 pb-16 relative overflow-hidden">
-        {/* Enhanced arc background indicator */}
-        <div className="absolute bottom-0 left-1/2 w-[95%] h-[300px] border-t-2 border-gray-200 dark:border-gray-700 rounded-t-full transform -translate-x-1/2 opacity-30 dark:opacity-20"></div>
-        <div className="absolute bottom-0 left-1/2 w-[85%] h-[280px] border-t border-gray-300 dark:border-gray-600 rounded-t-full transform -translate-x-1/2 opacity-20 dark:opacity-15"></div>
+  // Calculate visible topics
+  const visibleTopics = quizTopics;
 
-        {/* All cards displayed at once in a gentle arc */}
-        <div className="flex justify-center items-end space-x-4 md:space-x-6 px-2 md:px-4 max-w-full overflow-visible">
+  return (
+    <div className="relative w-full h-[600px] md:h-[700px] bg-black dark:bg-black text-white dark:text-white overflow-hidden">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+        <div className="absolute inset-0 bg-[#111] dark:bg-[#111] bg-opacity-80"></div>
+      </div>
+
+      {/* Subtle star pattern */}
+      <div
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)`,
+          backgroundSize: '20px 20px'
+        }}
+      ></div>
+
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black dark:to-black opacity-40"></div>
+
+      {/* Horizontal card container */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pt-0 md:pt-0">
+        {/* Center content */}
+        <div className="absolute z-10 text-center bottom-0 mb-16 md:mb-20">
+          <h2 className="text-2xl md:text-3xl font-normal mb-2">Gather here</h2>
+          <p className="text-sm text-gray-300 max-w-xs mx-auto mb-4">
+            Our platform is currently in beta and invite-only.<br/>
+            Request an invite now to receive a link to<br/>
+            create your account.
+          </p>
+          <button className="mt-2 px-6 py-2 bg-white/10 text-white text-sm rounded-full hover:bg-white/20 transition-all duration-300 shadow-md border border-white/20">
+            Join Gather
+          </button>
+        </div>
+
+        {/* Cards in a perfect inverted arc */}
+        <div className="relative w-[800px] h-[300px] md:w-[1000px] md:h-[350px] mt-0 md:mt-0">
           {visibleTopics.map((topic, index) => {
-            // Calculate slight vertical and rotation offsets for gentle curve
+            // Calculate position in a perfect arc
             const totalCards = visibleTopics.length;
-            const midPoint = Math.floor(totalCards / 2);
-            const distanceFromMiddle = index - midPoint;
+            const visibleCards = Math.min(totalCards, 9); // Limit visible cards to avoid overcrowding
+
+            // Calculate the index relative to the active card
+            const relativeIndex = ((index - activeIndex) + totalCards) % totalCards;
+            const adjustedRelativeIndex = relativeIndex > totalCards / 2 ? relativeIndex - totalCards : relativeIndex;
+
+            // Only show cards that are within the visible range (reduced for more spacing)
+            const isVisible = Math.abs(adjustedRelativeIndex) <= Math.floor(visibleCards / 2);
+            if (!isVisible) return null;
+
+            // Add additional spacing between cards by adjusting the relative index
+            const spacingFactor = 1.15; // Increase this value for more space between cards
+            const spacedRelativeIndex = adjustedRelativeIndex * spacingFactor;
+
+            // Calculate position on a perfect arc
+            const maxCards = Math.floor(visibleCards / 2);
+
+            // Arc parameters
+            const arcWidth = isMobile ? 750 : 950; // Width of the arc (increased for more spacing)
+            const arcHeight = isMobile ? 120 : 150; // Height of the arc (increased for more curve)
+
+            // Calculate x position using linear distribution with increased spacing
+            const x = spacedRelativeIndex * (arcWidth / (maxCards * 2));
+
+            // Calculate y position using a parabola: y = a * x^2
+            // Where 'a' is calculated to make y = arcHeight when x = ±(arcWidth/2)
+            // Using positive arcHeight to inverse the curve (curve upward)
+            const a = arcHeight / Math.pow(arcWidth/2, 2);
+            const y = a * Math.pow(x, 2);
+
             const isActive = index === activeIndex;
 
-            // Subtle arc effect calculations
-            // Cards further from center are positioned lower with subtle rotation
-            const verticalOffset = Math.pow(Math.abs(distanceFromMiddle), 1.5) * (isMobile ? 10 : 12); // Adjusted curve calculation
-            const rotationDeg = (distanceFromMiddle * (isMobile ? 2.5 : 3)) * (1 - Math.abs(distanceFromMiddle) * 0.1); // Smoother rotation
-            const scale = 1 - Math.abs(distanceFromMiddle) * 0.04; // Base scale for non-active cards
-            // Using 1.05 as active scale directly in the transform style
+            // Calculate z-index and scale based on vertical position
+            const normalizedY = y / arcHeight; // Will be between 0 and 1
+            const zIndex = Math.round((1 - normalizedY) * 100); // Higher values for cards at the bottom of the arc
+            const scale = isActive ? 1.05 : 0.9 + ((1 - normalizedY) * 0.1); // Larger scale for cards at the bottom
 
-            // Card visibility logic - hide cards that would be way off screen
-            const isVisible = Math.abs(distanceFromMiddle) <= 5; // Show only cards close enough to center
-
-            if (!isVisible) return null;
+            // No rotation for better readability
+            const rotationDeg = 0;
 
             // Calculate card style for positioning
             const cardStyle = {
-              transform: `translateY(${verticalOffset}px) rotate(${rotationDeg}deg) scale(${isActive ? 1.05 : scale})`,
-              opacity: 1 - Math.abs(distanceFromMiddle) * 0.15, // Fade out cards further from center
+              transform: `translate(${x}px, ${y}px) rotate(${rotationDeg}deg) scale(${scale})`,
+              zIndex: zIndex,
+              opacity: 0.7 + ((1 - normalizedY) * 0.3), // More opaque for cards at the bottom of the arc
             };
 
             return (
-              <TopicCard
+              <div
                 key={topic.id}
-                topic={topic}
-                isActive={isActive}
-                style={cardStyle}
-                onClick={() => setActiveIndex(index)}
-              />
+                className="absolute top-0 left-1/2 -translate-x-1/2"
+              >
+                <TopicCard
+                  topic={topic}
+                  isActive={isActive}
+                  style={cardStyle}
+                  onClick={() => setActiveIndex(index)}
+                />
+              </div>
             );
           })}
+        </div>
+
+        {/* Navigation arrows */}
+        <div className="absolute bottom-0 w-full flex justify-between px-4 md:px-8 z-20 mb-32 md:mb-36">
+          <button
+            onClick={() => setActiveIndex((prevIndex) => (prevIndex - 1 + visibleTopics.length) % visibleTopics.length)}
+            className="w-10 h-10 md:w-12 md:h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/60 transition-all duration-300 shadow-lg border border-white/10"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={handleNextCard}
+            className="w-10 h-10 md:w-12 md:h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/60 transition-all duration-300 shadow-lg border border-white/10"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
