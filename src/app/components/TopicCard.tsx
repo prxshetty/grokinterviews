@@ -96,12 +96,12 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Dark background */}
-      <div className="absolute inset-0 bg-black dark:bg-black transition-all duration-300"></div>
+      {/* Base background - dark in both modes */}
+      <div className="absolute inset-0 bg-gray-900 dark:bg-black transition-all duration-300"></div>
 
       {/* Colored overlay with gradient */}
       <div
-        className="absolute inset-0 opacity-20 dark:opacity-30"
+        className="absolute inset-0 opacity-30 dark:opacity-40"
         style={{
           background: `radial-gradient(circle at center 40%,
                       ${getColorWithOpacity(topic.shade, 1)} 0%,
@@ -110,21 +110,29 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
       ></div>
 
       {/* Glass effect border */}
-      <div className="absolute inset-0 border border-white/10 dark:border-white/5 rounded-xl"></div>
+      <div className="absolute inset-0 border border-white/10 dark:border-white/10 rounded-xl"></div>
 
       {/* Subtle grid pattern */}
       <div
-        className="absolute inset-0 opacity-5"
+        className="absolute inset-0 opacity-10"
         style={{
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)`,
           backgroundSize: '8px 8px'
+        }}
+      ></div>
+
+      {/* Subtle glow effect */}
+      <div
+        className="absolute inset-0 opacity-20"
+        style={{
+          boxShadow: `inset 0 0 30px ${getColorWithOpacity(topic.shade, 0.5)}`
         }}
       ></div>
 
       {/* Hover state overlay */}
       <div
         className={`absolute inset-0 bg-white dark:bg-white transition-all duration-300 ${
-          isHovered ? 'opacity-5' : 'opacity-0'
+          isHovered ? 'opacity-10' : 'opacity-0'
         }`}
       ></div>
 
@@ -135,14 +143,14 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
           className={`
             w-16 h-16 mb-4 flex items-center justify-center rounded-full
             ${isActive ? 'scale-110' : 'scale-100'}
-            transition-all duration-300
+            transition-all duration-300 animate-pulse-slow
           `}
           style={{
             background: `radial-gradient(circle at center,
-                        ${getColorWithOpacity(topic.shade, 0.7)} 0%,
-                        ${getColorWithOpacity(topic.shade, 0.3)} 50%,
+                        ${getColorWithOpacity(topic.shade, 0.8)} 0%,
+                        ${getColorWithOpacity(topic.shade, 0.4)} 50%,
                         transparent 70%)`,
-            boxShadow: `0 0 20px ${getColorWithOpacity(topic.shade, 0.5)}`
+            boxShadow: `0 0 30px ${getColorWithOpacity(topic.shade, 0.6)}`
           }}
         >
           {/* Tech icon */}

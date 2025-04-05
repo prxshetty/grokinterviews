@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { quizTopics } from '@/data/quizTopics';
 import TopicCard from './TopicCard';
 
@@ -8,10 +8,38 @@ export default function TopicCarousel() {
   const [activeIndex, setActiveIndex] = useState(0); // Start with first card active
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Set mounted state after component mounts
+  // Set mounted state after component mounts and setup intersection observer
   useEffect(() => {
     setIsMounted(true);
+    setIsVisible(true); // Set visible immediately for now
+
+    // Setup intersection observer for animation on scroll
+    // Commented out for now to ensure visibility
+    /*
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When the section is 20% visible, trigger the animation
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.2 } // Trigger when 20% of the element is visible
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+    */
   }, []);
 
   // Check if mobile on mount and window resize
@@ -50,41 +78,55 @@ export default function TopicCarousel() {
   const visibleTopics = quizTopics;
 
   return (
-    <div className="relative w-full h-[600px] md:h-[700px] bg-black dark:bg-black text-white dark:text-white overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5 dark:opacity-10">
-        <div className="absolute inset-0 bg-[#111] dark:bg-[#111] bg-opacity-80"></div>
+    <div
+      ref={sectionRef}
+      className="relative w-full h-[600px] md:h-[700px] bg-white dark:bg-black text-gray-900 dark:text-white overflow-hidden
+        transition-all duration-1000"
+      >
+      {/* Background pattern - only visible in dark mode */}
+      <div className="absolute inset-0 opacity-0 dark:opacity-10">
+        <div className="absolute inset-0 dark:bg-[#111] bg-opacity-80"></div>
       </div>
 
-      {/* Subtle star pattern */}
+      {/* Subtle star pattern - lighter in light mode */}
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-5 dark:opacity-20"
         style={{
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px)`,
           backgroundSize: '20px 20px'
         }}
       ></div>
 
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black dark:to-black opacity-40"></div>
+      {/* Subtle gradient background - almost invisible in light mode */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 dark:to-black opacity-20 dark:opacity-40"></div>
 
       {/* Horizontal card container */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pt-0 md:pt-0">
         {/* Center content */}
-        <div className="absolute z-10 text-center bottom-0 mb-16 md:mb-20">
+        <div className="absolute z-10 text-center bottom-0 mb-16 md:mb-20 transition-all duration-1000"
+             style={{
+               transitionDelay: `${isVisible ? 600 : 0}ms`,
+               opacity: isVisible ? 1 : 0,
+               transform: isVisible ? 'translateY(0)' : 'translateY(30px)'
+             }}>
           <h2 className="text-2xl md:text-3xl font-normal mb-2">Gather here</h2>
-          <p className="text-sm text-gray-300 max-w-xs mx-auto mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300 max-w-xs mx-auto mb-4">
             Our platform is currently in beta and invite-only.<br/>
             Request an invite now to receive a link to<br/>
             create your account.
           </p>
-          <button className="mt-2 px-6 py-2 bg-white/10 text-white text-sm rounded-full hover:bg-white/20 transition-all duration-300 shadow-md border border-white/20">
+          <button className="mt-2 px-6 py-2 bg-gray-900 dark:bg-white/10 text-white text-sm rounded-full hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20">
             Join Gather
           </button>
         </div>
 
         {/* Cards in a perfect inverted arc */}
-        <div className="relative w-[800px] h-[300px] md:w-[1000px] md:h-[350px] mt-0 md:mt-0">
+        <div className="relative w-[800px] h-[300px] md:w-[1000px] md:h-[350px] mt-0 md:mt-0 transition-all duration-1000"
+             style={{
+               transitionDelay: `${isVisible ? 300 : 0}ms`,
+               opacity: isVisible ? 1 : 0,
+               transform: isVisible ? 'translateY(0)' : 'translateY(40px)'
+             }}>
           {visibleTopics.map((topic, index) => {
             // Calculate position in a perfect arc
             const totalCards = visibleTopics.length;
@@ -99,7 +141,7 @@ export default function TopicCarousel() {
             if (!isVisible) return null;
 
             // Add additional spacing between cards by adjusting the relative index
-            const spacingFactor = 1.15; // Increase this value for more space between cards
+            const spacingFactor = 1.25; // Increased for more space between cards
             const spacedRelativeIndex = adjustedRelativeIndex * spacingFactor;
 
             // Calculate position on a perfect arc
@@ -107,7 +149,7 @@ export default function TopicCarousel() {
 
             // Arc parameters
             const arcWidth = isMobile ? 750 : 950; // Width of the arc (increased for more spacing)
-            const arcHeight = isMobile ? 120 : 150; // Height of the arc (increased for more curve)
+            const arcHeight = isMobile ? 100 : 120; // Height of the arc (adjusted for flatter curve)
 
             // Calculate x position using linear distribution with increased spacing
             const x = spacedRelativeIndex * (arcWidth / (maxCards * 2));
@@ -152,10 +194,14 @@ export default function TopicCarousel() {
         </div>
 
         {/* Navigation arrows */}
-        <div className="absolute bottom-0 w-full flex justify-between px-4 md:px-8 z-20 mb-32 md:mb-36">
+        <div className="absolute bottom-0 w-full flex justify-between px-4 md:px-8 z-20 mb-32 md:mb-36 transition-all duration-1000"
+             style={{
+               transitionDelay: `${isVisible ? 900 : 0}ms`,
+               opacity: isVisible ? 1 : 0
+             }}>
           <button
             onClick={() => setActiveIndex((prevIndex) => (prevIndex - 1 + visibleTopics.length) % visibleTopics.length)}
-            className="w-10 h-10 md:w-12 md:h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/60 transition-all duration-300 shadow-lg border border-white/10"
+            className="w-10 h-10 md:w-12 md:h-12 bg-gray-900/90 dark:bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black dark:hover:bg-black/60 transition-all duration-300 shadow-lg border border-gray-700/50 dark:border-white/10"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -163,7 +209,7 @@ export default function TopicCarousel() {
           </button>
           <button
             onClick={handleNextCard}
-            className="w-10 h-10 md:w-12 md:h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/60 transition-all duration-300 shadow-lg border border-white/10"
+            className="w-10 h-10 md:w-12 md:h-12 bg-gray-900/90 dark:bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black dark:hover:bg-black/60 transition-all duration-300 shadow-lg border border-gray-700/50 dark:border-white/10"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
