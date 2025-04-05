@@ -32,11 +32,16 @@ module.exports = {
         'fadeOut': 'fadeOut 0.3s ease-out forwards',
         'slideRight': 'slideRight 0.3s ease-out forwards',
         'slideLeft': 'slideLeft 0.3s ease-out forwards',
+        'pulse-slow': 'pulse 3s ease-in-out infinite',
       },
       keyframes: {
          spin: {
            '0%': { transform: 'rotate(0deg)' },
            '100%': { transform: 'rotate(360deg)' },
+         },
+         pulse: {
+           '0%, 100%': { opacity: 1 },
+           '50%': { opacity: 0.7 },
          },
          'scroll-up': {
            '0%': { transform: 'translateY(0)' },
