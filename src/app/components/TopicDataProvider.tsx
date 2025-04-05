@@ -36,19 +36,23 @@ export default function TopicDataProvider({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
-  
+
   const fetchTopicData = async () => {
     // Prevent multiple simultaneous fetches
     if (isFetchingRef.current) return;
-    
+
     try {
       isFetchingRef.current = true;
       setIsLoading(true);
-      
+
+      console.log('TopicDataProvider - Fetching topic data...');
+
       // Use our service to fetch topic data
       const data = await TopicDataService.getAllTopicData();
+      console.log('TopicDataProvider - Fetched topic data:', data);
+
       setTopicData(data);
-      
+
       // Save to localStorage with timestamp for cache expiry
       const cacheData = {
         data,
@@ -72,19 +76,30 @@ export default function TopicDataProvider({
   };
 
   useEffect(() => {
+    console.log('TopicDataProvider - useEffect running...');
+
+    // Clear localStorage to force a fresh fetch (for debugging)
+    localStorage.removeItem(TOPIC_DATA_CACHE_KEY);
+
     // Try to load from cache first
     try {
       const cachedDataString = localStorage.getItem(TOPIC_DATA_CACHE_KEY);
       if (cachedDataString) {
+        console.log('TopicDataProvider - Found cached data');
         const cachedData = JSON.parse(cachedDataString);
         const cacheAge = Date.now() - cachedData.timestamp;
-        
+
         // Use cache if it's not expired
         if (cacheAge < CACHE_EXPIRY_MS) {
+          console.log('TopicDataProvider - Using cached data');
           setTopicData(cachedData.data);
           setIsLoading(false);
           return; // Skip the API call if we have valid cached data
+        } else {
+          console.log('TopicDataProvider - Cache expired, fetching fresh data');
         }
+      } else {
+        console.log('TopicDataProvider - No cached data found');
       }
     } catch (err) {
       console.error('Error reading from cache:', err);
@@ -93,12 +108,14 @@ export default function TopicDataProvider({
 
     // If we don't have initial data or valid cache, fetch it
     if (Object.keys(initialTopicData).length === 0) {
+      console.log('TopicDataProvider - No initial data, fetching from API');
       fetchTopicData();
     } else {
+      console.log('TopicDataProvider - Using initial data');
       // If we have initial data, just use it
       setIsLoading(false);
     }
-    
+
     // No cleanup or dependencies that would cause re-fetching
   }, []); // Empty dependency array means this only runs once on mount
 
@@ -107,4 +124,4 @@ export default function TopicDataProvider({
       {children}
     </TopicDataContext.Provider>
   );
-} 
+}

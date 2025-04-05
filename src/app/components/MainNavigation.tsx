@@ -77,9 +77,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   return (
     <>
       {/* Main Navigation Bar - minimalistic design */}
-      <nav className="fixed top-0 left-0 right-0 z-50 py-4 px-8 bg-white/80 dark:bg-black/80 backdrop-blur-md transition-all duration-300 border-b border-transparent hover:border-gray-200 dark:hover:border-gray-800">
-        <div className="max-w-screen-xl mx-auto flex items-center justify-between">
-          {/* Left side - Logo */}
+      <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md transition-all duration-300 border-b border-transparent hover:border-gray-200 dark:hover:border-gray-800">
+        <div className="w-full flex items-center justify-between px-8">
+          {/* Left side - Logo with proper left alignment */}
           <div className="flex items-center">
             <Link href="/" onClick={handleTitleClick} className="group">
               <h1 className={`text-xl md:text-3xl font-normal tracking-tight text-black dark:text-white transition-all duration-500 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 group-hover:after:w-full ${showNavTitle ? 'opacity-100' : 'opacity-0'}`}>
@@ -117,7 +117,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       {isTopicDetailPage && <TopicNavWrapper />}
 
       {/* Main Content */}
-      <main className={isTopicDetailPage ? "max-w-7xl mx-auto px-4 py-8" : ""}>
+      <main className={isTopicDetailPage ? "w-full px-8 py-8" : ""}>
         {children}
       </main>
     </>

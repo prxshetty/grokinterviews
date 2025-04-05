@@ -18,7 +18,7 @@ export default function ConditionalNavWrapper({
       {isTopicsPage ? (
         <>
           <TopicNavWrapper />
-          <main className="max-w-7xl mx-auto px-4 py-8">
+          <main className="w-full px-8 py-8">
             {children}
           </main>
         </>
