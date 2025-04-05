@@ -45,12 +45,9 @@ export default function Navbar() {
 
   return (
     <nav className="w-full py-4 px-6 border-b border-gray-200 dark:border-gray-800 font-mono">
-      <div className="max-w-7xl mx-auto flex items-center">
-        {/* Empty div for spacing */}
-        <div className="w-12"></div>
-        
-        {/* Centered Title */}
-        <div className="flex-grow flex justify-center">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* Left-aligned Title */}
+        <div>
           <Link href="/" onClick={handleTitleClick}>
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white cursor-pointer hover:underline">
               Grok Interviews

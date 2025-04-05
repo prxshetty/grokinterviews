@@ -7,6 +7,8 @@ import { TopicItem } from '@/utils/markdownParser';
 import ActivityProgress from '../components/ActivityProgress';
 import ProgressChart from '../components/ProgressChart';
 import TopicCategoryGrid from '../components/TopicCategoryGrid';
+import TopicTreeNavigation from '../components/TopicTreeNavigation';
+import SimpleTopicTree from '../components/SimpleTopicTree';
 
 // Main topics with their corresponding colors
 const mainTopics = [
@@ -72,8 +74,14 @@ export default function TopicsPage() {
   };
 
   const loadCategoryDetails = async (categoryId: string) => {
-    if (!selectedTopic) return;
-    
+    console.log('topics/page - loadCategoryDetails called with:', categoryId);
+    console.log('topics/page - Current selectedTopic:', selectedTopic);
+
+    if (!selectedTopic) {
+      console.log('topics/page - No topic selected, returning');
+      return;
+    }
+
     setLoadingCategoryDetails(true);
     try {
       console.log(`Loading details for category ${categoryId} in topic ${selectedTopic}`);
@@ -85,6 +93,7 @@ export default function TopicsPage() {
         setCategoryDetails(null);
       } else {
         console.log(`Successfully loaded details for category ${categoryId}`);
+        console.log('topics/page - Category details:', data);
         setCategoryDetails(data);
       }
     } catch (error) {
@@ -288,7 +297,7 @@ export default function TopicsPage() {
 
   return (
     <div className="bg-white dark:bg-black min-h-screen">
-      <div className="w-full">
+      <div className="w-full px-0">
         <div className="transition-opacity duration-300">
           <div className="p-0">
             {/* Navigation tabs */}
@@ -306,8 +315,8 @@ export default function TopicsPage() {
               </div>
             </div>
 
-            {/* Popular Categories section */}
-            <div className="p-4 border-t border-b border-gray-200 dark:border-gray-700">
+            {/* Popular Categories section - removed border-bottom */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">Popular Categories</h3>
               <div className="flex flex-wrap gap-2">
                 {['JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Node.js', 'Next.js', 'API Design', 'System Design', 'Algorithms'].map((tag, index) => (
@@ -331,11 +340,18 @@ export default function TopicsPage() {
               </div>
             </div>
 
-            {/* Content area */}
-            <div className="p-6">
+            {/* Content area - directly adjacent to Popular Categories without gap */}
+            <div className="pt-0 pb-6">
               {selectedTopic ? (
                 // Show improved topic tree when a topic is selected
                 <div className="mb-12">
+                  {/* Add SimpleTopicTree component */}
+                  <div className="mb-6">
+                    <SimpleTopicTree
+                      onSelectTopic={handleCategorySelect}
+                    />
+                  </div>
+
                   {selectedCategory && (
                     <div className="flex items-center gap-4 mb-6">
                       <button

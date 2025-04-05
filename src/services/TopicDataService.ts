@@ -521,9 +521,11 @@ class TopicDataService {
    * Gets all available topic data
    */
   async getAllTopicData(): Promise<TopicTree> {
+    console.log('TopicDataService.getAllTopicData - Called');
     try {
       // Try to get from cache first
       if (this.cache.topics) {
+        console.log('TopicDataService.getAllTopicData - Using cached data');
         return this.cache.topics;
       }
 
@@ -533,17 +535,23 @@ class TopicDataService {
 
       // 1. Try to get from database first
       try {
+        console.log('TopicDataService.getAllTopicData - Fetching topics from database');
         dbTopics = await DatabaseService.getTopics();
+        console.log('TopicDataService.getAllTopicData - Got topics from database:', dbTopics);
       } catch (dbError) {
         console.error('Error fetching all topics from database:', dbError);
       }
 
       // 2. Fetch from API to get markdown content
       try {
+        console.log('TopicDataService.getAllTopicData - Fetching topics from API');
         const response = await fetch('/api/topics');
 
         if (response.ok) {
           markdownTopicData = await response.json();
+          console.log('TopicDataService.getAllTopicData - Got topics from API:', markdownTopicData);
+        } else {
+          console.error('TopicDataService.getAllTopicData - API response not OK:', response.status, response.statusText);
         }
       } catch (apiError) {
         console.error('Error fetching all topics from API:', apiError);
@@ -551,10 +559,13 @@ class TopicDataService {
 
       // 3. Merge the data sources
       const mergedTopics: TopicTree = {};
+      console.log('TopicDataService.getAllTopicData - Merging data sources');
 
       // First, add all database topics with their categories
       if (dbTopics && dbTopics.length > 0) {
+        console.log('TopicDataService.getAllTopicData - Adding database topics');
         for (const topic of dbTopics) {
+          console.log(`TopicDataService.getAllTopicData - Processing topic: ${topic.slug}`);
           mergedTopics[topic.slug] = {
             label: topic.name,
             subtopics: {}
@@ -562,10 +573,13 @@ class TopicDataService {
 
           // Get categories for this topic
           try {
+            console.log(`TopicDataService.getAllTopicData - Fetching categories for topic: ${topic.slug}`);
             const categories = await DatabaseService.getCategoriesByTopic(topic.id);
+            console.log(`TopicDataService.getAllTopicData - Got ${categories.length} categories for topic: ${topic.slug}`);
 
             // Add categories as subtopics
             for (const category of categories) {
+              console.log(`TopicDataService.getAllTopicData - Adding category: ${category.slug}`);
               mergedTopics[topic.slug].subtopics[category.slug] = {
                 id: category.slug,
                 label: category.name,
@@ -576,20 +590,29 @@ class TopicDataService {
             console.error(`Error fetching categories for topic ${topic.slug}:`, categoryError);
           }
         }
+      } else {
+        console.log('TopicDataService.getAllTopicData - No database topics to add');
       }
 
       // Then, merge with markdown data
       if (Object.keys(markdownTopicData).length > 0) {
+        console.log('TopicDataService.getAllTopicData - Merging with markdown data');
         // For each topic in markdown data
         for (const topicSlug in markdownTopicData) {
+          console.log(`TopicDataService.getAllTopicData - Processing markdown topic: ${topicSlug}`);
           const markdownTopic = markdownTopicData[topicSlug];
 
           if (!mergedTopics[topicSlug]) {
             // Topic doesn't exist in database, add it from markdown
+            console.log(`TopicDataService.getAllTopicData - Topic ${topicSlug} not in database, adding from markdown`);
             mergedTopics[topicSlug] = markdownTopic;
           } else {
             // Topic exists in both sources, merge subtopics
+            console.log(`TopicDataService.getAllTopicData - Topic ${topicSlug} exists in both sources, merging subtopics`);
+            console.log(`TopicDataService.getAllTopicData - Markdown subtopics:`, Object.keys(markdownTopic.subtopics));
+
             for (const subtopicKey in markdownTopic.subtopics) {
+              console.log(`TopicDataService.getAllTopicData - Processing markdown subtopic: ${subtopicKey}`);
               const markdownSubtopic = markdownTopic.subtopics[subtopicKey];
 
               // Find matching category in database by label
@@ -601,6 +624,7 @@ class TopicDataService {
 
                 // Match by label (case insensitive)
                 if (dbCategory.label.toLowerCase() === markdownSubtopic.label.toLowerCase()) {
+                  console.log(`TopicDataService.getAllTopicData - Found matching category: ${categorySlug} for ${subtopicKey}`);
                   matchingCategorySlug = categorySlug;
                   foundMatch = true;
                   break;
@@ -609,25 +633,31 @@ class TopicDataService {
 
               if (foundMatch) {
                 // Found a match, merge the subtopics
+                console.log(`TopicDataService.getAllTopicData - Merging subtopics for ${matchingCategorySlug}`);
                 mergedTopics[topicSlug].subtopics[matchingCategorySlug].subtopics =
                   markdownSubtopic.subtopics || {};
 
                 // If markdown has content, add it
                 if (markdownSubtopic.content) {
+                  console.log(`TopicDataService.getAllTopicData - Adding content for ${matchingCategorySlug}`);
                   mergedTopics[topicSlug].subtopics[matchingCategorySlug].content =
                     markdownSubtopic.content;
                 }
               } else {
                 // No match found, add the markdown subtopic as is
+                console.log(`TopicDataService.getAllTopicData - No match found, adding markdown subtopic: ${subtopicKey}`);
                 mergedTopics[topicSlug].subtopics[subtopicKey] = markdownSubtopic;
               }
             }
           }
         }
+      } else {
+        console.log('TopicDataService.getAllTopicData - No markdown data to merge');
       }
 
       // If we have no data from either source, fall back to API
       if (Object.keys(mergedTopics).length === 0) {
+        console.log('TopicDataService.getAllTopicData - No data from either source, falling back to API');
         const response = await fetch('/api/topics');
 
         if (!response.ok) {
@@ -635,6 +665,7 @@ class TopicDataService {
         }
 
         const data = await response.json();
+        console.log('TopicDataService.getAllTopicData - Got fallback data from API:', data);
 
         // Update cache
         this.cache.topics = data;
@@ -643,6 +674,7 @@ class TopicDataService {
       }
 
       // Update cache
+      console.log('TopicDataService.getAllTopicData - Returning merged topics:', mergedTopics);
       this.cache.topics = mergedTopics;
 
       return mergedTopics;

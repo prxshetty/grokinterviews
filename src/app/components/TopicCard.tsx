@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface TopicCardProps {
   topic: {
@@ -56,7 +57,7 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
     <div
       key={topic.id}
       className={`
-        group relative flex-shrink-0 w-[120px] md:w-[180px] h-[180px] md:h-[240px] rounded-xl overflow-hidden
+        group relative flex-shrink-0 w-[120px] md:w-[180px] h-[180px] md:h-[240px] rounded-lg overflow-hidden
         transition-all duration-300 ease-out cursor-pointer
         ${isActive ? 'z-10 shadow-xl' : 'z-0 shadow-lg'}
         hover:z-20 hover:shadow-xl
@@ -77,11 +78,29 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
         className="absolute inset-0 opacity-90"
         style={{
           background: `linear-gradient(135deg,
-                      ${getColorWithOpacity(topic.shade, 0.8)} 0%,
+                      ${getColorWithOpacity(topic.shade, 0.7)} 0%,
                       ${getColorWithOpacity(topic.shade, 0.9)} 50%,
                       ${getColorWithOpacity(topic.shade, 0.7)} 100%)`,
           boxShadow: `0 4px 20px ${getColorWithOpacity(topic.shade, 0.5)}`,
           border: `1px solid ${getColorWithOpacity(topic.shade, 0.3)}`
+        }}
+      ></div>
+
+      {/* Radial gradient for depth */}
+      <div 
+        className="absolute inset-0 opacity-70"
+        style={{
+          background: `radial-gradient(circle at 70% 30%, 
+                     ${getColorWithOpacity(topic.shade, 0.5)} 0%, 
+                     ${getColorWithOpacity(topic.shade, 0.9)} 100%)`
+        }}
+      ></div>
+
+      {/* Subtle texture overlay */}
+      <div 
+        className="absolute inset-0 opacity-5 mix-blend-overlay"
+        style={{ 
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.2' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")` 
         }}
       ></div>
 
@@ -92,37 +111,57 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
         }`}
       ></div>
 
-      {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/0 opacity-70"></div>
-
       {/* Subtle pattern overlay */}
       <div className="absolute inset-0 opacity-10 mix-blend-overlay"
            style={{ backgroundImage: 'url("/patterns/dot-pattern.png")' }}></div>
 
+      {/* Top gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent opacity-80"></div>
+
+      {/* Bottom gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80"></div>
+
       {/* Card content */}
-      <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between text-white">
+      <div className="absolute inset-0 p-4 md:p-5 flex flex-col justify-between text-white">
         <div>
-          <div className="text-xs md:text-sm opacity-80 mb-1">Topic {topic.id}</div>
-          <h3 className="text-lg md:text-xl font-bold mb-1">{topic.title}</h3>
-          <p className="text-xs md:text-sm opacity-80">{topic.subtitle}</p>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs md:text-sm font-light tracking-wide opacity-80">{topic.id}</div>
+            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5v14" />
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-lg md:text-xl font-semibold mb-1 tracking-tight">{topic.title}</h3>
+          <p className="text-xs md:text-sm opacity-80 font-light">{topic.subtitle}</p>
         </div>
 
         {/* Bottom action area */}
         <div className="flex justify-between items-center">
-          <Link href={`/topics/${topic.id}`} className="text-xs md:text-sm underline opacity-80 hover:opacity-100">
-            Explore
-          </Link>
-          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {/* Horizontal line */}
+          <div className="w-full h-px bg-white/20 my-3"></div>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <Link href={`/topics/${topic.id}`} className="text-xs md:text-sm font-medium opacity-90 hover:opacity-100 flex items-center gap-1 group">
+            <span>View</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-3.5 md:w-3.5 transform transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </div>
+          </Link>
+          
+          {isActive && (
+            <div className="text-xs uppercase font-medium opacity-70 tracking-wider flex items-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-white mr-1 animate-pulse"></div>
+              Active
+            </div>
+          )}
         </div>
       </div>
 
       {/* Reveal on hover - additional info */}
       <div
-        className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent
+        className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent
         opacity-0 ${isHovered ? 'opacity-100' : ''} transition-all duration-300
         flex items-end justify-center pb-6 pointer-events-none`}
       >
@@ -142,19 +181,15 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
         </div>
       </div>
 
-      {/* Subtle effects for active card */}
+      {/* Glow effect for active card */}
       {isActive && (
-        <>
-          <div className="absolute inset-0 bg-white/5 animate-pulse pointer-events-none"></div>
-          <div
-            className="absolute top-3 right-3 w-2 h-2 rounded-full animate-pulse"
-            style={{ backgroundColor: getColorWithOpacity(topic.shade, 0.8) }}
-          ></div>
-          <div className="absolute top-3 left-3 text-[8px] font-mono tracking-wide"
-               style={{ color: getColorWithOpacity(topic.shade, 0.9) }}>
-            <div>active</div>
-          </div>
-        </>
+        <div 
+          className="absolute -inset-0.5 rounded-lg opacity-30 blur-sm pointer-events-none" 
+          style={{ 
+            background: `${getColorWithOpacity(topic.shade, 0.8)}`,
+            animation: 'pulse 2s infinite'
+          }}
+        ></div>
       )}
     </div>
   );

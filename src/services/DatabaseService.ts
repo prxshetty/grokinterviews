@@ -46,16 +46,21 @@ class DatabaseService {
    * @param domain Optional domain filter (e.g., 'ml' for Machine Learning)
    */
   async getTopics(domain?: string): Promise<Topic[]> {
+    console.log('DatabaseService.getTopics - Called with domain:', domain);
+
     // Check cache first if no domain filter is applied
     if (!domain && this.cache.topics && Date.now() - this.cache.lastFetched.topics < this.CACHE_EXPIRY) {
-      console.log('Using cached topics data');
+      console.log('DatabaseService.getTopics - Using cached topics data');
       return this.cache.topics;
     }
 
     // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
+      console.log('DatabaseService.getTopics - Running in browser, using API');
       try {
         const url = domain ? `/api/topics?domain=${domain}` : '/api/topics';
+        console.log('DatabaseService.getTopics - Fetching from URL:', url);
+
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -63,6 +68,7 @@ class DatabaseService {
         }
 
         const data = await response.json();
+        console.log('DatabaseService.getTopics - Received data from API:', data);
 
         // Convert from legacy format to Topic[] format
         const topics: Topic[] = Object.entries(data).map(([slug, details]: [string, any]) => ({
@@ -72,6 +78,8 @@ class DatabaseService {
           domain: domain || 'unknown',
           created_at: new Date().toISOString(),
         }));
+
+        console.log('DatabaseService.getTopics - Converted topics:', topics);
 
         // Update cache if no domain filter was applied
         if (!domain) {

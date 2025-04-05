@@ -29,8 +29,10 @@ export default function TopicTreeNavigation({
 
   // Get the topics data, using the dynamic data when available or fallback to default
   const topics = useMemo(() => {
+    console.log('TopicTreeNavigation - topicData:', topicData);
+    console.log('TopicTreeNavigation - selectedMainTopic:', selectedMainTopic);
     return Object.keys(topicData).length > 0 ? topicData : defaultTopics;
-  }, [topicData]);
+  }, [topicData, selectedMainTopic]);
 
   // Reset selection when main topic changes
   useEffect(() => {
@@ -87,7 +89,16 @@ export default function TopicTreeNavigation({
   const handleTopicSelect = (topicId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedTopic(topicId);
-    onSelectTopic(topicId);
+
+    console.log('TopicTreeNavigation - handleTopicSelect:', topicId);
+
+    // Notify parent component
+    if (onSelectTopic) {
+      console.log('TopicTreeNavigation - Calling onSelectTopic with:', topicId);
+      onSelectTopic(topicId);
+    } else {
+      console.log('TopicTreeNavigation - onSelectTopic prop is not provided');
+    }
 
     // Dispatch a custom event to hide the tree
     window.dispatchEvent(new CustomEvent('hideTopicTree'));
@@ -150,12 +161,21 @@ export default function TopicTreeNavigation({
 
   // Render topics in a table-like layout
   const renderTopicTable = () => {
-    if (!selectedMainTopic || !topics[selectedMainTopic as keyof typeof topics]) {
-      return null;
-    }
+    console.log('renderTopicTable - selectedMainTopic:', selectedMainTopic);
+    console.log('renderTopicTable - topics:', topics);
 
+    // Always show the sample data for now
+    // if (!selectedMainTopic || !topics[selectedMainTopic as keyof typeof topics]) {
+    //   console.log('renderTopicTable - No selected main topic or topic not found');
+    //   return null;
+    // }
+
+    // Get the selected main topic and its subtopics
+    // const mainTopic = topics[selectedMainTopic as keyof typeof topics];
+    // console.log('renderTopicTable - mainTopic:', mainTopic);
+
+    // Use sample data for now to get the tree showing
     // Sample data to match the image
-    // In a real implementation, this would come from your topic data
     const topicRows = [
       { id: 'exposition', area: 'Exposition', project: 'Spanish Freak Show' },
       { id: 'editorial-branding', area: 'Editorial / Branding', project: 'Azul Magazine' },
@@ -172,6 +192,17 @@ export default function TopicTreeNavigation({
       { id: 'illustration3', area: 'Illustration', project: 'Plano Festival SOS4.8' },
       { id: 'typography-illustration2', area: 'Typography / Illustration', project: 'Moustachetype - 36DaysofType' },
     ];
+
+    // If no subtopics, show a message
+    if (topicRows.length === 0) {
+      return (
+        <div className={styles.categoriesContainer}>
+          <div className="text-center p-4 text-gray-500 dark:text-gray-400">
+            No categories found for this topic.
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className={styles.categoriesContainer}>
@@ -222,6 +253,7 @@ export default function TopicTreeNavigation({
     <div className={styles.treeNavContainer}>
       <button className={styles.closeButton} onClick={handleClose}>Close</button>
       <div className={styles.treeNavContent}>
+        {/* Always show the topic table */}
         {renderTopicTable()}
       </div>
     </div>
