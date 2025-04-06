@@ -185,22 +185,48 @@ class DatabaseService {
       let query;
 
       // Check if topicId is a number or a slug
+      let topicIdValue: number | null = null;
+
       if (typeof topicId === 'number' || !isNaN(Number(topicId))) {
-        query = supabase.from('categories').select('*').eq('topic_id', topicId);
+        topicIdValue = Number(topicId);
       } else {
         // First get the topic by slug
-        const { data: topicData } = await supabase
-          .from('topics')
-          .select('id')
-          .eq('slug', topicId)
-          .single();
+        try {
+          const { data: topicData, error } = await supabase
+            .from('topics')
+            .select('id')
+            .eq('slug', topicId)
+            .single();
 
-        if (!topicData) {
-          throw new Error(`Topic with slug ${topicId} not found`);
+          if (!error && topicData) {
+            topicIdValue = topicData.id;
+          }
+        } catch (slugError) {
+          console.error(`Error finding topic by slug: ${slugError}`);
         }
 
-        query = supabase.from('categories').select('*').eq('topic_id', topicData.id);
+        // If not found by slug, try with name
+        if (!topicIdValue) {
+          try {
+            const { data, error } = await supabase
+              .from('topics')
+              .select('id')
+              .ilike('name', topicId.replace(/-/g, ' '));
+
+            if (!error && data && data.length > 0) {
+              topicIdValue = data[0].id;
+            }
+          } catch (nameError) {
+            console.error(`Error finding topic by name: ${nameError}`);
+          }
+        }
       }
+
+      if (!topicIdValue) {
+        throw new Error(`Topic with ID or slug ${topicId} not found`);
+      }
+
+      query = supabase.from('categories').select('*').eq('topic_id', topicIdValue);
 
       const { data, error } = await query.order('name');
 
@@ -269,15 +295,41 @@ class DatabaseService {
       if (typeof categoryId === 'number' || !isNaN(Number(categoryId))) {
         query = supabase.from('questions').select('*').eq('category_id', categoryId);
       } else {
-        // First get the category by slug
-        const { data: categoryData } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('slug', categoryId)
-          .single();
+        // Try different approaches to find the category
+        let categoryData = null;
+
+        // First try to get the category by name (assuming name is used instead of slug)
+        try {
+          const { data, error } = await supabase
+            .from('categories')
+            .select('id')
+            .ilike('name', categoryId.replace(/-/g, ' '));
+
+          if (!error && data && data.length > 0) {
+            categoryData = data[0];
+          }
+        } catch (nameError) {
+          console.error(`Error finding category by name: ${nameError}`);
+        }
+
+        // If not found, try a partial match
+        if (!categoryData) {
+          try {
+            const { data, error } = await supabase
+              .from('categories')
+              .select('id')
+              .ilike('name', `%${categoryId.replace(/-/g, ' ')}%`);
+
+            if (!error && data && data.length > 0) {
+              categoryData = data[0];
+            }
+          } catch (partialError) {
+            console.error(`Error finding category by partial name: ${partialError}`);
+          }
+        }
 
         if (!categoryData) {
-          throw new Error(`Category with slug ${categoryId} not found`);
+          throw new Error(`Category with ID or name ${categoryId} not found`);
         }
 
         query = supabase.from('questions').select('*').eq('category_id', categoryData.id);
@@ -392,6 +444,44 @@ class DatabaseService {
   }
 
   /**
+   * Helper method to create a CategoryWithQuestions object from markdown data
+   * @param data The markdown data
+   * @param categoryId The ID of the category
+   */
+  private createCategoryWithQuestionsFromMarkdown(data: any, categoryId: string | number): CategoryWithQuestions {
+    // Create a category object
+    const category: Category = {
+      id: typeof categoryId === 'number' ? categoryId : 0,
+      name: data.label || 'Unknown Category',
+      slug: typeof categoryId === 'string' ? categoryId : 'unknown',
+      topic_id: 0, // We don't know the topic ID from this API call
+      created_at: new Date().toISOString()
+    };
+
+    // Create questions from subtopics if available
+    const questions: Question[] = [];
+
+    if (data.subtopics) {
+      Object.entries(data.subtopics).forEach(([id, subtopic]: [string, any], index) => {
+        questions.push({
+          id: index + 1,
+          category_id: typeof categoryId === 'number' ? categoryId : 0,
+          question_text: subtopic.label || `Question ${index + 1}`,
+          answer_text: subtopic.content || '',
+          difficulty: 'medium',
+          keywords: [],
+          created_at: new Date().toISOString()
+        });
+      });
+    }
+
+    return {
+      ...category,
+      questions
+    };
+  }
+
+  /**
    * Get a category with all its questions
    * @param categoryId The ID or slug of the category
    */
@@ -399,35 +489,65 @@ class DatabaseService {
     // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
-        // Fetch category details from API
-        const response = await fetch(`/api/topics/categories?categoryId=${categoryId}&topicId=any`);
+        // Fetch category details from our new category-details API
+        const response = await fetch(`/api/topics/category-details?topicId=ml&categoryId=${categoryId}`);
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch category: ${response.statusText}`);
+          console.warn(`Failed to fetch from category-details API: ${response.statusText}`);
+          // Try with a different topic
+          const altResponse = await fetch(`/api/topics/category-details?topicId=ai&categoryId=${categoryId}`);
+
+          if (!altResponse.ok) {
+            console.warn(`Failed to fetch from category-details API with alt topic: ${altResponse.statusText}`);
+            // Try with another topic
+            const dsa = await fetch(`/api/topics/category-details?topicId=dsa&categoryId=${categoryId}`);
+
+            if (!dsa.ok) {
+              console.warn(`Failed to fetch from category-details API with dsa topic: ${dsa.statusText}`);
+              // Fall back to the original categories API
+              const categoriesResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&topicId=any`);
+
+              if (!categoriesResponse.ok) {
+                throw new Error(`Failed to fetch category: ${categoriesResponse.statusText}`);
+              }
+
+              const categoryData = await categoriesResponse.json();
+
+              if (!categoryData || categoryData.error) {
+                throw new Error(categoryData?.error || 'Failed to fetch category');
+              }
+
+              // Create a category object
+              const category: Category = {
+                id: typeof categoryId === 'number' ? categoryId : 0,
+                name: categoryData.label || 'Unknown Category',
+                slug: typeof categoryId === 'string' ? categoryId : 'unknown',
+                topic_id: 0, // We don't know the topic ID from this API call
+                created_at: new Date().toISOString()
+              };
+
+              // Get questions for this category
+              const questions = await this.getQuestionsByCategory(categoryId);
+
+              return {
+                ...category,
+                questions
+              };
+            }
+
+            // Use the DSA response
+            const dsaData = await dsa.json();
+            return this.createCategoryWithQuestionsFromMarkdown(dsaData, categoryId);
+          }
+
+          // Use the alt response
+          const altData = await altResponse.json();
+          return this.createCategoryWithQuestionsFromMarkdown(altData, categoryId);
         }
 
-        const categoryData = await response.json();
-
-        if (!categoryData || categoryData.error) {
-          throw new Error(categoryData?.error || 'Failed to fetch category');
-        }
-
-        // Create a category object
-        const category: Category = {
-          id: typeof categoryId === 'number' ? categoryId : 0,
-          name: categoryData.label || 'Unknown Category',
-          slug: typeof categoryId === 'string' ? categoryId : 'unknown',
-          topic_id: 0, // We don't know the topic ID from this API call
-          created_at: new Date().toISOString()
-        };
-
-        // Get questions for this category
-        const questions = await this.getQuestionsByCategory(categoryId);
-
-        return {
-          ...category,
-          questions
-        };
+        // Use the primary response
+        const data = await response.json();
+        return this.createCategoryWithQuestionsFromMarkdown(data, categoryId);
       } catch (error) {
         console.error(`Failed to fetch category with questions via API for ${categoryId}:`, error);
         return null;
@@ -440,23 +560,49 @@ class DatabaseService {
 
       // Get the category
       if (typeof categoryId === 'number' || !isNaN(Number(categoryId))) {
+        // Try to get by ID
         const { data, error } = await supabase
           .from('categories')
           .select('*')
           .eq('id', categoryId)
           .single();
 
-        if (error) throw error;
-        category = data;
-      } else {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .eq('slug', categoryId)
-          .single();
+        if (!error) {
+          category = data;
+        }
+      }
 
-        if (error) throw error;
-        category = data;
+      // If not found by ID, try with name
+      if (!category && typeof categoryId === 'string') {
+        // Try to match by name (case insensitive)
+        try {
+          const { data, error } = await supabase
+            .from('categories')
+            .select('*')
+            .ilike('name', categoryId.replace(/-/g, ' '));
+
+          if (!error && data && data.length > 0) {
+            category = data[0];
+          }
+        } catch (nameError) {
+          console.error(`Error finding category by name: ${nameError}`);
+        }
+
+        // If still not found, try a partial match
+        if (!category) {
+          try {
+            const { data, error } = await supabase
+              .from('categories')
+              .select('*')
+              .ilike('name', `%${categoryId.replace(/-/g, ' ')}%`);
+
+            if (!error && data && data.length > 0) {
+              category = data[0];
+            }
+          } catch (partialError) {
+            console.error(`Error finding category by partial name: ${partialError}`);
+          }
+        }
       }
 
       if (!category) return null;

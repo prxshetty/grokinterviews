@@ -7,8 +7,11 @@ import styles from './signin.module.css';
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   // Handle initial setup after mount
   useEffect(() => {
@@ -46,9 +49,28 @@ export default function SignIn() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // This would be replaced with actual authentication logic
-    console.log('Sign in attempt with:', { email, password });
+    if (isSignUp) {
+      console.log('Sign up attempt with:', { firstName, lastName, email, password });
+    } else {
+      console.log('Sign in attempt with:', { email, password });
+    }
     // For now, just redirect back to home
     // router.push('/');
+  };
+
+  const toggleSignUpMode = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    setIsSignUp(!isSignUp);
+    // Reset form fields when toggling
+    if (!isSignUp) {
+      setEmail('');
+      setPassword('');
+    } else {
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPassword('');
+    }
   };
 
   // Don't render until mounted to prevent hydration mismatch
@@ -119,12 +141,20 @@ export default function SignIn() {
 
       {/* Main Content - Centered */}
       <div className="flex-grow flex items-center justify-center p-4 relative z-10">
-        <div className={`w-full max-w-md mx-auto bg-white/90 dark:bg-black/90 rounded-lg overflow-hidden text-black dark:text-white relative ${styles.signInCard}`}>
-
+        <div 
+          className={`w-full max-w-md mx-auto rounded-2xl overflow-hidden text-black dark:text-white relative ${styles.signInCard} transition-all duration-500 ease-in-out backdrop-blur-lg bg-white/50 dark:bg-black/50 border border-white/20 dark:border-gray-800/30 shadow-xl`}
+          style={{ 
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            boxShadow: isDarkMode 
+              ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 25px rgba(255, 255, 255, 0.1) inset' 
+              : '0 25px 50px -12px rgba(0, 0, 0, 0.2), 0 0 25px rgba(255, 255, 255, 0.5) inset'
+          }}
+        >
           {/* Close button (X) */}
           <Link
             href="/"
-            className="absolute top-6 right-6 text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors z-10 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="absolute top-6 right-6 text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors z-10 p-1 rounded-full hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
             aria-label="Close"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -133,29 +163,67 @@ export default function SignIn() {
           </Link>
           <div className="p-8 flex flex-col items-center">
             {/* Logo/Icon */}
-            <div className="w-16 h-16 bg-gray-200 dark:bg-black rounded-full flex items-center justify-center mb-6 border border-transparent dark:border-gray-800">
-              <div className="w-8 h-8 rounded-full bg-gray-400 dark:bg-gray-800 flex items-center justify-center">
-                <div className="w-4 h-4 rounded-full bg-gray-600 dark:bg-gray-600"></div>
+            <div className="w-16 h-16 bg-gray-200/50 dark:bg-black/30 rounded-full flex items-center justify-center mb-6 border border-white/20 dark:border-gray-800/30 shadow-inner">
+              <div className="w-8 h-8 rounded-full bg-gray-400/50 dark:bg-gray-800/50 flex items-center justify-center backdrop-blur-sm">
+                <div className="w-4 h-4 rounded-full bg-gray-600/80 dark:bg-gray-600/80"></div>
               </div>
             </div>
 
-            {/* Welcome Text */}
-            <h1 className="text-2xl font-normal text-center text-black dark:text-white mb-2 tracking-tight">
-              Yooo, welcome back!
+            {/* Title that changes based on mode */}
+            <h1 className="text-2xl font-normal text-center text-black dark:text-white mb-2 tracking-tight transition-all duration-500">
+              {isSignUp ? 'Create your account' : 'Yooo, welcome back!'}
             </h1>
+            
+            {/* Toggle text that changes based on mode */}
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 text-center">
-              First time here? <Link href="/signup" className="text-black dark:text-white hover:underline">Sign up for free</Link>
+              {isSignUp ? (
+                <>Already have an account? <a href="#" onClick={toggleSignUpMode} className="text-black dark:text-white hover:underline">Sign in</a></>
+              ) : (
+                <>First time here? <a href="#" onClick={toggleSignUpMode} className="text-black dark:text-white hover:underline">Sign up for free</a></>
+              )}
             </p>
 
-            {/* Sign In Form */}
+            {/* Form that changes based on mode */}
             <form onSubmit={handleSubmit} className="w-full">
+              <div 
+                className={`transition-all duration-500 ease-in-out ${isSignUp ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}
+                style={{
+                  animation: isSignUp ? `${styles.slideIn} 0.5s ease forwards` : `${styles.slideOut} 0.3s ease forwards`
+                }}
+              >
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="First name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300/60 dark:border-gray-600/60 rounded-md bg-white/30 dark:bg-black/30 backdrop-blur-md text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+                      required={isSignUp}
+                      disabled={!isSignUp}
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Last name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300/60 dark:border-gray-600/60 rounded-md bg-white/30 dark:bg-black/30 backdrop-blur-md text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+                      required={isSignUp}
+                      disabled={!isSignUp}
+                    />
+                  </div>
+                </div>
+              </div>
+              
               <div className="mb-4">
                 <input
                   type="email"
                   placeholder="Your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                  className="w-full px-4 py-2 border border-gray-300/60 dark:border-gray-600/60 rounded-md bg-white/30 dark:bg-black/30 backdrop-blur-md text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
                   required
                 />
               </div>
@@ -165,33 +233,36 @@ export default function SignIn() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-black text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-600"
+                  className="w-full px-4 py-2 border border-gray-300/60 dark:border-gray-600/60 rounded-md bg-white/30 dark:bg-black/30 backdrop-blur-md text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
                   required
                 />
               </div>
+              
               <button
                 type="submit"
-                className="w-full bg-gray-900 dark:bg-white border border-transparent text-white dark:text-gray-900 rounded-md py-2 font-normal transition-colors hover:bg-gray-800 dark:hover:bg-gray-100"
+                className="w-full bg-black/80 dark:bg-white/80 border border-gray-300/60 dark:border-gray-600/60 text-white dark:text-gray-900 rounded-md py-2 font-normal transition-all duration-200 hover:bg-black/90 dark:hover:bg-white backdrop-blur-md hover:border-blue-400 dark:hover:border-blue-500"
               >
-                Sign in
+                {isSignUp ? 'Create account' : 'Sign in'}
               </button>
             </form>
 
-            {/* Divider */}
-            <div className="flex items-center w-full my-6">
-              <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
+            {/* Divider - show only in sign in mode */}
+            <div className={`flex items-center w-full my-6 transition-all duration-500 ${isSignUp ? 'opacity-0' : 'opacity-100'}`}>
+              <div className="flex-grow h-px bg-gray-300/50 dark:bg-gray-700/50"></div>
               <span className="px-3 text-sm text-gray-500 dark:text-gray-400">or</span>
-              <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700"></div>
+              <div className="flex-grow h-px bg-gray-300/50 dark:bg-gray-700/50"></div>
             </div>
 
-            {/* Alternative Sign In Methods */}
-            <button className="w-full mb-3 bg-transparent border border-gray-300 dark:border-gray-700 text-black dark:text-white rounded-md py-2 font-normal transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-sm">
-              Sign in using magic link
-            </button>
+            {/* Alternative Sign In Methods - show only in sign in mode */}
+            <div className={`transition-all duration-500 ease-in-out w-full ${isSignUp ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-96 opacity-100'}`}>
+              <button className="w-full mb-3 bg-transparent border border-gray-300/60 dark:border-gray-600/60 text-black dark:text-white rounded-md py-2 font-normal transition-colors hover:bg-white/20 dark:hover:bg-gray-800/50 text-sm backdrop-blur-sm">
+                Sign in using magic link
+              </button>
 
-            <button className="w-full bg-transparent border border-gray-300 dark:border-gray-700 text-black dark:text-white rounded-md py-2 font-normal transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-sm">
-              Single sign-on (SSO)
-            </button>
+              <button className="w-full bg-transparent border border-gray-300/60 dark:border-gray-600/60 text-black dark:text-white rounded-md py-2 font-normal transition-colors hover:bg-white/20 dark:hover:bg-gray-800/50 text-sm backdrop-blur-sm">
+                Single sign-on (SSO)
+              </button>
+            </div>
 
             {/* Terms of Service */}
             <p className="mt-8 text-xs text-gray-500 dark:text-gray-400 text-center">
