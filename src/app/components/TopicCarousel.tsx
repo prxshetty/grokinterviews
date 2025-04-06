@@ -109,14 +109,13 @@ export default function TopicCarousel() {
                opacity: isVisible ? 1 : 0,
                transform: isVisible ? 'translateY(0)' : 'translateY(30px)'
              }}>
-          <h2 className="text-2xl md:text-3xl font-normal mb-2">Gather here</h2>
+          <h2 className="text-2xl md:text-3xl font-normal mb-2">Maestro of Interviews</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 max-w-xs mx-auto mb-4">
-            Our platform is currently in beta and invite-only.<br/>
-            Request an invite now to receive a link to<br/>
-            create your account.
+            AI Agents at your service.<br/>
+            You decide your conceirge.<br/>
           </p>
           <button className="mt-2 px-6 py-2 bg-gray-900 dark:bg-white/10 text-white text-sm rounded-full hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20">
-            Join Gather
+            Browse Questions
           </button>
         </div>
 

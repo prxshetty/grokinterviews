@@ -124,25 +124,48 @@ export async function GET(request: NextRequest) {
           // First, get the category details
           let category: Category | null = null;
 
-          // Get the category
-          if (typeof categoryId === 'number' || !isNaN(Number(categoryId))) {
-            const { data, error } = await supabaseServer
-              .from('categories')
-              .select('*')
-              .eq('id', categoryId)
-              .single();
+          // Get the category - adapt to the actual schema
+          try {
+            // First try with id
+            if (typeof categoryId === 'number' || !isNaN(Number(categoryId))) {
+              const { data, error } = await supabaseServer
+                .from('categories')
+                .select('*')
+                .eq('id', categoryId)
+                .single();
 
-            if (error) throw error;
-            category = data;
-          } else {
-            const { data, error } = await supabaseServer
-              .from('categories')
-              .select('*')
-              .eq('slug', categoryId)
-              .single();
+              if (!error) {
+                category = data;
+              }
+            }
 
-            if (error) throw error;
-            category = data;
+            // If not found by id, try with name (assuming name is used instead of slug)
+            if (!category) {
+              // Try to match by name (case insensitive)
+              const { data, error } = await supabaseServer
+                .from('categories')
+                .select('*')
+                .ilike('name', categoryId.replace(/-/g, ' '));
+
+              if (!error && data && data.length > 0) {
+                category = data[0];
+              }
+            }
+
+            // If still not found, try with topic_id and a partial match on name
+            if (!category && topicId && topicId !== 'any') {
+              const { data, error } = await supabaseServer
+                .from('categories')
+                .select('*')
+                .eq('topic_id', topicId)
+                .ilike('name', `%${categoryId.replace(/-/g, ' ')}%`);
+
+              if (!error && data && data.length > 0) {
+                category = data[0];
+              }
+            }
+          } catch (dbError) {
+            console.error(`Error fetching category from database for ${topicId}/${categoryId}:`, dbError);
           }
 
           if (category) {

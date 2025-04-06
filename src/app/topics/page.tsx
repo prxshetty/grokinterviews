@@ -7,7 +7,6 @@ import { TopicItem } from '@/utils/markdownParser';
 import ActivityProgress from '../components/ActivityProgress';
 import ProgressChart from '../components/ProgressChart';
 import TopicCategoryGrid from '../components/TopicCategoryGrid';
-import TopicTreeNavigation from '../components/TopicTreeNavigation';
 import SimpleTopicTree from '../components/SimpleTopicTree';
 
 // Main topics with their corresponding colors
@@ -56,20 +55,32 @@ export default function TopicsPage() {
     }
   };
 
-  // Function to close the topic tree and reset selections
-  const resetSelections = () => {
+  // Function to reset selections (used in the UI)
+  const handleResetSelections = () => {
     setSelectedTopic(null);
     setSelectedCategory(null);
+    setCategoryDetails(null);
   };
 
   const handleCategorySelect = async (categoryId: string) => {
+    console.log('topics/page - handleCategorySelect called with:', categoryId);
+
     if (categoryId === selectedCategory) {
+      console.log('topics/page - Same category selected, clearing selection');
       setSelectedCategory(null);
       setCategoryDetails(null);
       return;
     }
 
+    console.log('topics/page - Setting selectedCategory to:', categoryId);
     setSelectedCategory(categoryId);
+
+    // For ML topics, we need to set the selectedTopic to 'ml'
+    if (!selectedTopic) {
+      console.log('topics/page - Setting selectedTopic to ml for ML topics');
+      setSelectedTopic('ml');
+    }
+
     await loadCategoryDetails(categoryId);
   };
 
@@ -78,14 +89,16 @@ export default function TopicsPage() {
     console.log('topics/page - Current selectedTopic:', selectedTopic);
 
     if (!selectedTopic) {
-      console.log('topics/page - No topic selected, returning');
-      return;
+      console.log('topics/page - No topic selected, setting to ml');
+      setSelectedTopic('ml');
     }
 
     setLoadingCategoryDetails(true);
     try {
-      console.log(`Loading details for category ${categoryId} in topic ${selectedTopic}`);
-      const data = await TopicDataService.getCategoryDetails(selectedTopic, categoryId);
+      // Ensure selectedTopic is not null
+      const topicId = selectedTopic || 'ml';
+      console.log(`Loading details for category ${categoryId} in topic ${topicId}`);
+      const data = await TopicDataService.getCategoryDetails(topicId, categoryId);
 
       if (!data) {
         console.warn(`No details available for category ${categoryId}`);
@@ -352,8 +365,8 @@ export default function TopicsPage() {
                     />
                   </div>
 
-                  {selectedCategory && (
-                    <div className="flex items-center gap-4 mb-6">
+                  <div className="flex items-center gap-4 mb-6">
+                    {selectedCategory && (
                       <button
                         onClick={handleBackToMainCategories}
                         className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
@@ -363,8 +376,18 @@ export default function TopicsPage() {
                         </svg>
                         Back to Categories
                       </button>
-                    </div>
-                  )}
+                    )}
+
+                    <button
+                      onClick={handleResetSelections}
+                      className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Reset
+                    </button>
+                  </div>
 
                   {/* Main topic categories */}
                   <div className="flex flex-wrap">
