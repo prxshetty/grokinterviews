@@ -1,0 +1,119 @@
+.gridContainer {
+  width: 100%;
+  font-family: sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  position: relative;
+  margin-top: 0;
+  border-top: none;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.darkMode {
+  background-color: #111;
+  color: #f5f5f5;
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+}
+
+.gridContent {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.categoryRow {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  width: 100%;
+  border-bottom: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  align-items: center;
+  position: relative;
+}
+
+.darkMode .categoryRow {
+  border-bottom: 1px solid #333;
+}
+
+.categoryRow:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.darkMode .categoryRow:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.categoryNumber {
+  font-size: 2.5rem;
+  font-weight: 200;
+  color: #aaa;
+  padding: 1rem;
+  opacity: 0.7;
+  text-align: center;
+  font-family: serif;
+  width: 80px;
+}
+
+.darkMode .categoryNumber {
+  color: #444;
+}
+
+.categoryLabel {
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 1.5rem 0;
+  font-family: sans-serif;
+  color: #333;
+}
+
+.darkMode .categoryLabel {
+  color: #f5f5f5;
+}
+
+.expandIcon {
+  padding: 1.5rem;
+  font-size: 1.2rem;
+  opacity: 0.5;
+}
+
+/* Selected state */
+.categoryRow.selected {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.darkMode .categoryRow.selected {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Expanded state */
+.expandedContent {
+  padding: 1rem 1rem 1.5rem 6rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.darkMode .expandedContent {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Two-column layout for larger screens */
+@media (min-width: 768px) {
+  .gridContainer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+  }
+
+  .gridContainer > div:nth-child(odd) {
+    border-right: 1px solid #e0e0e0;
+  }
+
+  .darkMode .gridContainer > div:nth-child(odd) {
+    border-right: 1px solid #333;
+  }
+}
+
+
