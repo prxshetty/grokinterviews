@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './TopicTableView.module.css';
 
 interface TopicTableViewProps {
@@ -8,17 +8,58 @@ interface TopicTableViewProps {
   onSelectTopic: (topicId: string) => void;
 }
 
+interface SectionHeader {
+  id: number;
+  name: string;
+}
+
 export default function TopicTableView({
   selectedMainTopic,
   onSelectTopic
 }: TopicTableViewProps) {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [sectionHeaders, setSectionHeaders] = useState<SectionHeader[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchValue, setSearchValue] = useState('');
+
+  // Fetch section headers from the database when the selected main topic changes
+  useEffect(() => {
+    const fetchSectionHeaders = async () => {
+      if (!selectedMainTopic) return;
+
+      console.log(`TopicTableView - Fetching section headers for domain: ${selectedMainTopic}`);
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch section headers for the domain (e.g., 'ml')
+        const response = await fetch(`/api/section-headers?domain=${selectedMainTopic}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch section headers: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log(`TopicTableView - Received ${data.headers?.length || 0} section headers:`, data.headers);
+        setSectionHeaders(data.headers || []);
+      } catch (err) {
+        console.error('Error fetching section headers:', err);
+        setError('Failed to load section headers');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSectionHeaders();
+  }, [selectedMainTopic]);
 
   // Handle topic selection
-  const handleTopicSelect = (topicId: string, event: React.MouseEvent) => {
+  const handleTopicSelect = (headerId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setSelectedTopic(topicId);
-    onSelectTopic(topicId);
+    setSelectedTopic(headerId);
+    onSelectTopic(headerId);
 
     // Dispatch a custom event to hide the tree
     window.dispatchEvent(new CustomEvent('hideTopicTree'));
@@ -29,63 +70,85 @@ export default function TopicTableView({
     window.dispatchEvent(new CustomEvent('hideTopicTree'));
   };
 
-  // Render a topic row with area and project
-  const renderTopicRow = (id: string, areaLabel: string, projectLabel: string) => {
-    const isSelected = selectedTopic === id;
+  // Filter section headers based on search value
+  const filteredHeaders = searchValue.trim() === ''
+    ? sectionHeaders
+    : sectionHeaders.filter(header =>
+        header.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+
+  // Render a section header row
+  const renderHeaderRow = (header: SectionHeader) => {
+    const isSelected = selectedTopic === `header-${header.id}`;
 
     return (
       <div
         className={`${styles.categoryRow} ${isSelected ? styles.selected : ''}`}
-        onClick={(e) => handleTopicSelect(id, e)}
+        onClick={(e) => handleTopicSelect(`header-${header.id}`, e)}
       >
         <div className={styles.categoryArea}>
           <div className={styles.arrowContainer}>
             <span>→</span>
           </div>
-          <span className={styles.topicLabel}>{areaLabel}</span>
+          <span className={styles.topicLabel}>{header.name}</span>
         </div>
         <div className={styles.categoryProject}>
-          <span className={styles.topicLabel}>{projectLabel}</span>
+          <span className={styles.topicLabel}>View Content</span>
         </div>
       </div>
     );
   };
 
-  // Sample data to match the image
-  const topicRows = [
-    { id: 'exposition', area: 'Exposition', project: 'Spanish Freak Show' },
-    { id: 'editorial-branding', area: 'Editorial / Branding', project: 'Azul Magazine' },
-    { id: 'branding', area: 'Branding', project: 'Velaz Music' },
-    { id: 'typography', area: 'Typography', project: 'Pysoni Numerology' },
-    { id: 'event-branding', area: 'Event / Branding', project: 'Oh Holy Festivals!' },
-    { id: 'editorial', area: 'Editorial', project: 'Oh Holy Festivals! - Informe' },
-    { id: 'exposition-illustration', area: 'Exposition / Illustration', project: 'FastExpo\'17' },
-    { id: 'illustration', area: 'Illustration', project: 'Kam_air_sutra' },
-    { id: 'art-direction', area: 'Art Direction', project: 'Europe Mode Catalogue' },
-    { id: 'inphographics', area: 'Inphographics', project: 'Infografías - Yorokobu Mag' },
-    { id: 'typography-illustration', area: 'Typography / Illustration', project: 'Numerografía 79- Yorokobu Mag' },
-    { id: 'illustration2', area: 'Illustration', project: 'Chamartin Station Map' },
-    { id: 'illustration3', area: 'Illustration', project: 'Plano Festival SOS4.8' },
-    { id: 'typography-illustration2', area: 'Typography / Illustration', project: 'Moustachetype - 36DaysofType' },
-  ];
+  // Log when the component renders
+  console.log(`TopicTableView - Rendering with selectedMainTopic: ${selectedMainTopic}`);
 
   return (
     <div className={styles.tableContainer}>
       <button className={styles.closeButton} onClick={handleClose}>Close</button>
       <div className={styles.tableContent}>
+        {/* Search input */}
+        <div className={styles.searchContainer}>
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder="Search section headers..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
+        </div>
+
         <div className={styles.categoriesContainer}>
           {/* Header row */}
           <div className={styles.headerRow}>
-            <div className={styles.headerCell}>↓ Area</div>
-            <div className={styles.headerCell}>↓ Project</div>
+            <div className={styles.headerCell}>↓ Topic</div>
+            <div className={styles.headerCell}>↓ Action</div>
           </div>
-          
-          {/* Topic rows */}
-          {topicRows.map((row) => (
-            <div key={row.id}>
-              {renderTopicRow(row.id, row.area, row.project)}
+
+          {/* Loading state */}
+          {isLoading ? (
+            <div className={styles.messageContainer}>
+              <p>Loading section headers...</p>
             </div>
-          ))}
+          ) : error ? (
+            <div className={styles.messageContainer}>
+              <p className={styles.errorText}>{error}</p>
+            </div>
+          ) : filteredHeaders.length === 0 ? (
+            <div className={styles.messageContainer}>
+              <p>
+                {searchValue.trim() !== ''
+                  ? 'No matching section headers found.'
+                  : 'No section headers available for this topic.'}
+              </p>
+            </div>
+          ) : (
+            /* Section header rows */
+            filteredHeaders.map((header) => (
+              <div key={header.id}>
+                {renderHeaderRow(header)}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

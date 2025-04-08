@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { parseMarkdown } from '@/utils/markdownParser';
 
 // Cache the results for better performance
 const CACHE_DURATION = 3600 * 1000; // 1 hour in milliseconds
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Check if we have cached data and it's still valid
     const now = Date.now();
     if (!forceRefresh && cachedData[topicId] && (now - (lastFetchTime[topicId] || 0) < CACHE_DURATION)) {
-      console.log(`Returning cached markdown tree data for ${topicId}`);
+      console.log(`Returning cached markdown headers for ${topicId}`);
       return NextResponse.json(cachedData[topicId], {
         headers: {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
@@ -45,34 +44,32 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Read and parse the markdown file
+    // Read the markdown file
     try {
       const content = fs.readFileSync(filePath, 'utf8');
-      console.log(`Parsing markdown for topic ${topicId}`);
+      console.log(`Reading markdown headers for topic ${topicId}`);
       
-      // Parse the markdown content
-      const parsedData = parseMarkdown(content);
+      // Extract all H2 headers (lines starting with ##)
+      const lines = content.split('\n');
+      const headers = lines
+        .filter(line => line.trim().startsWith('## '))
+        .map(line => {
+          const label = line.substring(3).trim();
+          // Convert to kebab-case for ID
+          const id = label.toLowerCase()
+            .replace(/[^\w\s-]/g, '') // Remove special characters
+            .replace(/\s+/g, '-')     // Replace spaces with hyphens
+            .replace(/--+/g, '-');    // Replace multiple hyphens with single hyphen
+          
+          return { id, label };
+        });
       
-      // Extract the top-level sections as topics
-      const result: Record<string, any> = {
-        [topicId]: {
-          label: topicId.charAt(0).toUpperCase() + topicId.slice(1).replace(/-/g, ' '),
-          subtopics: {}
-        }
+      console.log(`Found ${headers.length} headers for topic ${topicId}`);
+      
+      const result = {
+        topicId,
+        headers
       };
-      
-      // Add each parsed section as a subtopic
-      for (const key in parsedData) {
-        if (key !== 'h1-0') { // Skip the title
-          const section = parsedData[key];
-          result[topicId].subtopics[key] = {
-            id: key,
-            label: section.label,
-            content: section.content || '',
-            subtopics: section.subtopics || {}
-          };
-        }
-      }
       
       // Cache the results
       cachedData[topicId] = result;
@@ -84,14 +81,14 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (parseError) {
-      console.error(`Error parsing markdown for topic ${topicId}:`, parseError);
+      console.error(`Error reading markdown for topic ${topicId}:`, parseError);
       return NextResponse.json(
-        { error: 'Failed to parse markdown content', details: parseError.message },
+        { error: 'Failed to read markdown content', details: parseError.message },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error in markdown tree API route:', error);
+    console.error('Error in markdown headers API route:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }

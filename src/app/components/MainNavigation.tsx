@@ -69,9 +69,28 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     window.dispatchEvent(new CustomEvent('topicChange', { detail: null }));
   };
 
-  // Don't render anything until component is mounted to prevent hydration mismatch
+  // Render a skeleton version until component is mounted to prevent hydration mismatch
   if (!mounted) {
-    return <>{children}</>;
+    return (
+      <>
+        {/* Skeleton Navigation Bar */}
+        <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md transition-all duration-300 border-b border-transparent">
+          <div className="w-full flex items-center justify-between px-8">
+            <div className="flex items-center">
+              <div className="text-xl md:text-3xl font-normal tracking-tight opacity-0">
+                Grok Interviews
+              </div>
+            </div>
+            <div className="flex items-center space-x-6">
+              <div className="text-sm opacity-0">Sign In</div>
+              <div className="text-sm opacity-0">Dark</div>
+            </div>
+          </div>
+        </nav>
+        <div className="h-16"></div>
+        {children}
+      </>
+    );
   }
 
   return (

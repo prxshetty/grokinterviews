@@ -17,30 +17,48 @@ const highlightedStats = [
 
 export default function StatsSection() {
   const [isVisible, setIsVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When the section is 20% visible, trigger the animation
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.2 } // Trigger when 20% of the element is visible
-    );
+    // Mark component as mounted
+    setMounted(true);
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
+    // Use a small delay to ensure the component is fully rendered
+    const timer = setTimeout(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          // When the section is 20% visible, trigger the animation
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.2 } // Trigger when 20% of the element is visible
+      );
 
-    return () => {
       if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+        observer.observe(sectionRef.current);
       }
-    };
+
+      return () => {
+        if (sectionRef.current) {
+          observer.unobserve(sectionRef.current);
+        }
+      };
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
   }, []);
+
+  // Don't animate if not mounted yet to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="max-w-screen-xl mx-auto py-24 px-8 opacity-0">
+        {/* Skeleton content */}
+      </div>
+    );
+  }
 
   return (
     <div

@@ -18,7 +18,33 @@
   width: 100%;
 }
 
-/* Header row with Area and Project */
+/* Search container */
+.searchContainer {
+  padding: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.searchInput {
+  width: 100%;
+  background-color: #111;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-family: monospace;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.searchInput:focus {
+  border-color: #555;
+}
+
+.searchInput::placeholder {
+  color: #555;
+}
+
+/* Header row with Topic and Action */
 .headerRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -109,4 +135,16 @@
 /* Selected state */
 .categoryRow.selected {
   background-color: #333;
+}
+
+/* Message container for loading, error, and empty states */
+.messageContainer {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #aaa;
+  font-style: italic;
+}
+
+.errorText {
+  color: #ff6b6b;
 }

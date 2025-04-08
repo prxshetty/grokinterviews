@@ -25,6 +25,7 @@ type ParsedTopicData = {
  * @returns A structured topic hierarchy
  */
 export function parseMarkdown(content: string): ParsedTopicData {
+  console.log('parseMarkdown - Starting to parse markdown content');
   const lines = content.split('\n').filter(line => line.trim() !== '');
 
   // Initialize result
@@ -46,6 +47,8 @@ export function parseMarkdown(content: string): ParsedTopicData {
 
   // Process each line
   for (const line of lines) {
+    console.log(`parseMarkdown - Processing line: ${line.substring(0, 50)}${line.length > 50 ? '...' : ''}`);
+
     // H1 header (# Header)
     if (line.startsWith('# ')) {
       const label = line.substring(2).trim();
@@ -73,6 +76,8 @@ export function parseMarkdown(content: string): ParsedTopicData {
       // Generate a proper kebab-case ID for direct access
       const id = kebabCase(label);
       h2Counter++;
+
+      console.log(`parseMarkdown - Found H2 header: ${label} with ID: ${id}`);
 
       currentH2 = {
         id,
@@ -594,6 +599,9 @@ export function extractStructuredTopicMap(parsedData: ParsedTopicData): Record<s
       }
     }
   }
+
+  // Log the generated top-level keys
+  console.log('parseMarkdown generated these top-level keys:', Object.keys(result).join(', '));
 
   return result;
 }

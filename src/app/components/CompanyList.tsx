@@ -1,11 +1,56 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { companies } from '@/data/companies';
 
 export default function CompanyList() {
+  const [mounted, setMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Use a small delay to ensure the component is fully rendered
+    const timer = setTimeout(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          // When the section is 20% visible, trigger the animation
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.2 } // Trigger when 20% of the element is visible
+      );
+
+      if (sectionRef.current) {
+        observer.observe(sectionRef.current);
+      }
+
+      return () => {
+        if (sectionRef.current) {
+          observer.unobserve(sectionRef.current);
+        }
+      };
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
+  }, []);
+  // Don't animate if not mounted yet to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="mt-20 mb-16 opacity-0">
+        {/* Skeleton content */}
+      </div>
+    );
+  }
+
   return (
-    <div className="mt-20 mb-16">
+    <div
+      ref={sectionRef}
+      className={`mt-20 mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+    >
       <h2 className="text-lg md:text-xl font-semibold mb-8 text-center tracking-tight">Companies You Can Join With These Skills</h2>
       <div className="w-full overflow-hidden">
         {/* Container with padding to ensure smooth transition */}

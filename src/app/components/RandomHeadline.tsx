@@ -45,15 +45,23 @@ const headlines = [
 
 export default function RandomHeadline() {
   const [headline, setHeadline] = useState({ before: "", after: "" });
+  const [mounted, setMounted] = useState(false);
 
   // Select a random headline on component mount (client-side only)
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * headlines.length);
-    setHeadline(headlines[randomIndex]);
+    setMounted(true);
+
+    // Use a small delay to ensure proper hydration
+    const timer = setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * headlines.length);
+      setHeadline(headlines[randomIndex]);
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Use a default headline for initial server-side rendering to avoid hydration mismatch
-  if (headline.before === "" && headline.after === "") {
+  if (!mounted) {
     return (
       <div className="flex justify-end">
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] text-right font-sans">
