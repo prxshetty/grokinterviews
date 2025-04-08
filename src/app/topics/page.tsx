@@ -6,7 +6,7 @@ import TopicDataService from '@/services/TopicDataService';
 import { TopicItem } from '@/utils/markdownParser';
 import ActivityProgress from '../components/ActivityProgress';
 import ProgressChart from '../components/ProgressChart';
-import TopicCategoryGrid from '../components/TopicCategoryGrid';
+import TopicCategoryGrid from '../components/topic/TopicCategoryGrid';
 
 // Main topics with their corresponding colors
 const mainTopics = [

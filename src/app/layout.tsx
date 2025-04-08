@@ -3,7 +3,7 @@ import "./globals.css";
 import TopicDataProvider from './components/TopicDataProvider';
 import Footer from './components/Footer';
 import { janelotus, playfairDisplay } from './fonts';
-import MainNavigation from './components/MainNavigation';
+import MainNavigation from './components/navigation/MainNavigation';
 
 
 export const metadata: Metadata = {
