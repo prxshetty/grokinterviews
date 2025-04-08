@@ -1,10 +1,55 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function ProjectsSection() {
+  const [mounted, setMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Use a small delay to ensure the component is fully rendered
+    const timer = setTimeout(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          // When the section is 20% visible, trigger the animation
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.2 } // Trigger when 20% of the element is visible
+      );
+
+      if (sectionRef.current) {
+        observer.observe(sectionRef.current);
+      }
+
+      return () => {
+        if (sectionRef.current) {
+          observer.unobserve(sectionRef.current);
+        }
+      };
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
+  }, []);
+  // Don't animate if not mounted yet to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="mt-32 mb-24 max-w-screen-xl mx-auto px-8 opacity-0">
+        {/* Skeleton content */}
+      </div>
+    );
+  }
+
   return (
-    <div className="mt-32 mb-24 max-w-screen-xl mx-auto px-8">
+    <div
+      ref={sectionRef}
+      className={`mt-32 mb-24 max-w-screen-xl mx-auto px-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+    >
       <div className="grid grid-cols-1 md:grid-cols-12 gap-16">
         {/* Left side with description */}
         <div className="md:col-span-4 flex flex-col">

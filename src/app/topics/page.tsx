@@ -401,6 +401,7 @@ export default function TopicsPage() {
                       <TopicCategoryGrid
                         categories={topicCategories}
                         onSelectCategory={handleCategorySelect}
+                        topicId={selectedTopic} // Pass the selected topic ID
                       />
                     ) : (
                       // Show detailed view for the selected category

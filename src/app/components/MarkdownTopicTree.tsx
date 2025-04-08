@@ -12,7 +12,7 @@ interface MarkdownTopicTreeProps {
   defaultTopic?: string;
 }
 
-const MarkdownTopicTree: React.FC<MarkdownTopicTreeProps> = ({
+const MarkdownTopicTree: React.FC<MarkdownTopicTreeProps> = ({ 
   onSelectTopic,
   defaultTopic = 'ml'
 }) => {
@@ -35,37 +35,34 @@ const MarkdownTopicTree: React.FC<MarkdownTopicTreeProps> = ({
 
         // Use our new markdown-tree API endpoint
         const response = await fetch(`/api/topics/markdown-tree?topicId=${currentTopicId}`);
-
+        
         if (!response.ok) {
           throw new Error(`Failed to fetch topics: ${response.statusText}`);
         }
-
+        
         const topicData = await response.json();
         console.log('MarkdownTopicTree - Got topic data:', topicData);
-
+        
         if (!topicData || !topicData[currentTopicId] || !topicData[currentTopicId].subtopics) {
           setError(`No topics found for ${currentTopicId}`);
           setTopics([]);
           return;
         }
-
+        
         // Convert the topics to the format we need
-        const formattedTopics = Object.entries(topicData[currentTopicId].subtopics)
-          .map(([id, details]: [string, any]) => ({
-            id,
-            label: details.label,
-            content: details.content || 'No content available',
-            hasSubtopics: details.subtopics && Object.keys(details.subtopics).length > 0
-          }))
-          .sort((a, b) => a.label.localeCompare(b.label)); // Sort alphabetically
-
+        const formattedTopics = Object.entries(topicData[currentTopicId].subtopics).map(([id, details]: [string, any]) => ({
+          id,
+          label: details.label,
+          content: details.content || 'No content available'
+        }));
+        
         console.log('MarkdownTopicTree - Formatted topics:', formattedTopics);
         setTopics(formattedTopics);
         setError(null);
       } catch (err) {
         console.error(`Error fetching topics for ${currentTopicId}:`, err);
         setError(`Failed to load topics for ${currentTopicId}`);
-
+        
         // Fallback to sample data if there's an error
         setTopics([
           { id: 'section-1', label: 'Section 1', content: 'Content for section 1' },
@@ -78,7 +75,7 @@ const MarkdownTopicTree: React.FC<MarkdownTopicTreeProps> = ({
         setLoading(false);
       }
     };
-
+    
     fetchTopics();
   }, [currentTopicId]); // Re-run when the topic changes
 
@@ -93,7 +90,7 @@ const MarkdownTopicTree: React.FC<MarkdownTopicTreeProps> = ({
       <h3 className="text-lg font-semibold mb-4">
         {currentTopicId.charAt(0).toUpperCase() + currentTopicId.slice(1).replace(/-/g, ' ')} Topics
       </h3>
-
+      
       {loading ? (
         <div className="text-center p-4">
           <div className="animate-pulse">Loading topics...</div>
@@ -109,11 +106,11 @@ const MarkdownTopicTree: React.FC<MarkdownTopicTreeProps> = ({
       ) : (
         <div className="grid grid-cols-1 gap-2">
           {topics.map((topic) => (
-            <div
+            <div 
               key={topic.id}
               className={`p-2 rounded cursor-pointer ${
-                selectedTopic === topic.id
-                  ? 'bg-blue-100 dark:bg-blue-900'
+                selectedTopic === topic.id 
+                  ? 'bg-blue-100 dark:bg-blue-900' 
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
               onClick={() => handleTopicClick(topic.id)}

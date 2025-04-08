@@ -14,32 +14,32 @@ export default function TopicCarousel() {
   // Set mounted state after component mounts and setup intersection observer
   useEffect(() => {
     setIsMounted(true);
-    setIsVisible(true); // Set visible immediately for now
 
-    // Setup intersection observer for animation on scroll
-    // Commented out for now to ensure visibility
-    /*
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When the section is 20% visible, trigger the animation
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.2 } // Trigger when 20% of the element is visible
-    );
+    // Use a small delay to ensure the component is fully rendered
+    const timer = setTimeout(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          // When the section is 20% visible, trigger the animation
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.2 } // Trigger when 20% of the element is visible
+      );
 
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => {
       if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+        observer.observe(sectionRef.current);
       }
-    };
-    */
+
+      return () => {
+        if (sectionRef.current) {
+          observer.unobserve(sectionRef.current);
+        }
+      };
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Check if mobile on mount and window resize

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTopicData } from './TopicDataProvider';
 
 interface TopicTreeViewProps {
@@ -8,28 +8,72 @@ interface TopicTreeViewProps {
   onClose: () => void;
 }
 
+interface SectionHeader {
+  id: number;
+  name: string;
+}
+
 export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) {
   const { topicData } = useTopicData();
   const [searchValue, setSearchValue] = useState('');
+  const [sectionHeaders, setSectionHeaders] = useState<SectionHeader[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Get the selected topic data
   const selectedTopic = topicData[topicId] || null;
 
+  // Fetch section headers from the database
+  useEffect(() => {
+    const fetchSectionHeaders = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch section headers for the domain (e.g., 'ml')
+        const response = await fetch(`/api/section-headers?domain=${topicId}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch section headers: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setSectionHeaders(data.headers || []);
+      } catch (err) {
+        console.error('Error fetching section headers:', err);
+        setError('Failed to load section headers');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (topicId) {
+      fetchSectionHeaders();
+    }
+  }, [topicId]);
+
   // Function to handle clicking on a topic header
-  const handleTopicClick = (subtopicId: string) => {
+  const handleTopicClick = (headerId: string) => {
     // Close the tree view
     onClose();
 
     // Scroll to the selected topic's questions section
     setTimeout(() => {
-      const element = document.getElementById(`topic-${subtopicId}`);
+      const element = document.getElementById(`topic-${headerId}`);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
   };
 
-  if (!selectedTopic) {
+  // Filter section headers based on search value
+  const filteredHeaders = searchValue.trim() === ''
+    ? sectionHeaders
+    : sectionHeaders.filter(header =>
+        header.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+
+  if (!selectedTopic && !topicId) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-start justify-center pt-12">
         <div className="w-full max-w-4xl bg-white text-black rounded-lg p-8">
@@ -48,10 +92,6 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
       </div>
     );
   }
-
-
-
-
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-start justify-center pt-12">
@@ -84,8 +124,8 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
         {/* Title and info */}
         <div className="px-6 py-5 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold">{selectedTopic.label}</h2>
-            <p className="text-gray-500 text-sm mt-1">SEARCH BY TAGS</p>
+            <h2 className="text-2xl font-bold">{selectedTopic?.label || topicId.toUpperCase()}</h2>
+            <p className="text-gray-500 text-sm mt-1">SECTION HEADERS</p>
           </div>
           <div className="flex space-x-2">
             <span className="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded-full uppercase cursor-pointer hover:bg-gray-400 transition-colors">Beginner</span>
@@ -94,23 +134,39 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
           </div>
         </div>
 
-        {/* Topic tree - grid layout matching the first image */}
+        {/* Topic tree - grid layout with section headers */}
         <div className="p-6">
-          <div className="grid grid-cols-3 gap-4">
-            {Object.entries(selectedTopic.subtopics || {}).map(([subtopicId, subtopic]: [string, any]) => {
-              return (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Loading section headers...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-red-500">{error}</p>
+            </div>
+          ) : filteredHeaders.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">
+                {searchValue.trim() !== ''
+                  ? 'No matching section headers found.'
+                  : 'No section headers available for this topic.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              {filteredHeaders.map((header) => (
                 <div
-                  key={subtopicId}
+                  key={header.id}
                   className="bg-gray-100 dark:bg-gray-800 px-3 py-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded"
-                  onClick={() => handleTopicClick(subtopicId)}
+                  onClick={() => handleTopicClick(`header-${header.id}`)}
                 >
                   <div className="font-medium text-sm uppercase tracking-wider">
-                    {subtopic.label}
+                    {header.name}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Back to Categories and Close buttons */}
           <div className="flex justify-between mt-6">

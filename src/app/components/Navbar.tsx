@@ -2,41 +2,75 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   // Handle initial setup after mount
   useEffect(() => {
     setMounted(true);
     const storedDarkMode = localStorage.getItem('darkMode') === 'true';
     setIsDarkMode(storedDarkMode);
-    
+
     if (storedDarkMode) {
       document.documentElement.classList.add('dark');
     }
+
+    // Mock user authentication status
+    // For demo purposes, let's check if there's a mock auth token in localStorage
+    const hasAuthToken = localStorage.getItem('mockAuthToken') === 'true';
+    setUser(hasAuthToken ? { id: '123', email: 'user@example.com' } : null);
+
+    // Listen for auth changes (mock implementation)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'mockAuthToken') {
+        setUser(e.newValue === 'true' ? { id: '123', email: 'user@example.com' } : null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
-    
+
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    
+
     localStorage.setItem('darkMode', String(newDarkMode));
   };
 
   const handleTitleClick = () => {
     // Reset all topic selections
     window.dispatchEvent(new CustomEvent('resetNavigation'));
-    
+
     // For safety, also reset the topicChange event with null
     window.dispatchEvent(new CustomEvent('topicChange', { detail: null }));
+  };
+
+  const handleSignOut = () => {
+    // Mock sign-out by removing the token
+    localStorage.setItem('mockAuthToken', 'false');
+    setUser(null);
+    router.refresh();
+
+    // Dispatch storage event to notify other components
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'mockAuthToken',
+      newValue: 'false'
+    }));
   };
 
   if (!mounted) {
@@ -57,13 +91,29 @@ export default function Navbar() {
 
         {/* Right Side Controls */}
         <div className="flex items-center space-x-2">
-          {/* Sign In Button */}
-          <button
-            className="px-4 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            Sign In
-          </button>
-          
+          {/* Sign In/Out Button */}
+          {user ? (
+            <div className="flex items-center space-x-2">
+              <Link href="/dashboard" className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                Dashboard
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <Link href="/signin">
+              <button
+                className="px-4 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign In
+              </button>
+            </Link>
+          )}
+
           {/* Dark Mode Toggle */}
           <button
             onClick={toggleDarkMode}
@@ -104,4 +154,4 @@ export default function Navbar() {
       </div>
     </nav>
   );
-} 
+}

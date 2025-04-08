@@ -29,11 +29,16 @@ export default function TopicNavWrapper() {
   }, []);
 
   const handleTopicSelect = (topicId: string) => {
+    console.log(`TopicNavWrapper - handleTopicSelect called with topicId: ${topicId}`);
+    console.log(`TopicNavWrapper - Current state: selectedMainTopic=${selectedMainTopic}, treeVisible=${treeVisible}`);
+
     if (selectedMainTopic === topicId) {
       // If the same main topic is clicked again, toggle tree visibility
+      console.log(`TopicNavWrapper - Same topic clicked, toggling tree visibility from ${treeVisible} to ${!treeVisible}`);
       setTreeVisible(!treeVisible);
     } else {
       // If a new main topic is selected, show the tree and set the new topic
+      console.log(`TopicNavWrapper - New topic selected: ${topicId}, showing tree`);
       setSelectedMainTopic(topicId);
       setTreeVisible(true);
     }
@@ -48,10 +53,13 @@ export default function TopicNavWrapper() {
   };
 
   const handleSubTopicSelect = (topicId: string) => {
+    console.log(`TopicNavWrapper - handleSubTopicSelect called with topicId: ${topicId}`);
+
     // Pass the selected subtopic to the page
     window.dispatchEvent(new CustomEvent('topicChange', { detail: topicId }));
 
     // Hide the tree when a topic is clicked
+    console.log(`TopicNavWrapper - Hiding tree after subtopic selection`);
     setTreeVisible(false);
   };
 

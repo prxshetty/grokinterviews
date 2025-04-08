@@ -14,33 +14,35 @@ export default function RotatingText() {
   // Set mounted state to true after component mounts
   useEffect(() => {
     setIsMounted(true);
-  }, []);
 
-  useEffect(() => {
-    // Simple fade in/out animation
-    const animationCycle = () => {
-      // Fade out
-      setIsVisible(false);
+    // Use a small delay to ensure proper hydration
+    const initialTimer = setTimeout(() => {
+      // Simple fade in/out animation
+      const animationCycle = () => {
+        // Fade out
+        setIsVisible(false);
 
-      // Wait for fade out, then change text and fade in
-      timeoutRef.current = setTimeout(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % topics.length);
-
-        // Fade in with new text
+        // Wait for fade out, then change text and fade in
         timeoutRef.current = setTimeout(() => {
-          setIsVisible(true);
+          setCurrentIndex((prevIndex) => (prevIndex + 1) % topics.length);
 
-          // Schedule next cycle
-          timeoutRef.current = setTimeout(animationCycle, 4000); // Show text for 4 seconds
-        }, 400); // Wait 400ms after changing text
-      }, 600); // Fade out duration
-    };
+          // Fade in with new text
+          timeoutRef.current = setTimeout(() => {
+            setIsVisible(true);
 
-    // Start the animation cycle
-    timeoutRef.current = setTimeout(animationCycle, 4000); // Initial display time
+            // Schedule next cycle
+            timeoutRef.current = setTimeout(animationCycle, 4000); // Show text for 4 seconds
+          }, 400); // Wait 400ms after changing text
+        }, 600); // Fade out duration
+      };
+
+      // Start the animation cycle
+      timeoutRef.current = setTimeout(animationCycle, 4000); // Initial display time
+    }, 100); // Small delay to ensure DOM is ready
 
     // Cleanup
     return () => {
+      clearTimeout(initialTimer);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
