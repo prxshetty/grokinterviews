@@ -7,7 +7,6 @@ import { TopicItem } from '@/utils/markdownParser';
 import ActivityProgress from '../components/ActivityProgress';
 import ProgressChart from '../components/ProgressChart';
 import TopicCategoryGrid from '../components/TopicCategoryGrid';
-import SimpleTopicTree from '../components/SimpleTopicTree';
 
 // Main topics with their corresponding colors
 const mainTopics = [
@@ -55,12 +54,7 @@ export default function TopicsPage() {
     }
   };
 
-  // Function to reset selections (used in the UI)
-  const handleResetSelections = () => {
-    setSelectedTopic(null);
-    setSelectedCategory(null);
-    setCategoryDetails(null);
-  };
+  // Function to reset selections has been removed
 
   const handleCategorySelect = async (categoryId: string) => {
     console.log('topics/page - handleCategorySelect called with:', categoryId);
@@ -95,6 +89,18 @@ export default function TopicsPage() {
 
     setLoadingCategoryDetails(true);
     try {
+      // Check if this is a section header ID (format: header-123)
+      if (categoryId.startsWith('header-')) {
+        console.log(`This is a section header: ${categoryId}`);
+
+        // For section headers, we'll display a placeholder message
+        setCategoryDetails({
+          label: 'Section Header',
+          content: 'Content for this category is being prepared.'
+        });
+        return;
+      }
+
       // Ensure selectedTopic is not null
       const topicId = selectedTopic || 'ml';
       console.log(`Loading details for category ${categoryId} in topic ${topicId}`);
@@ -144,7 +150,22 @@ export default function TopicsPage() {
     }
 
     // Get the selected category label
-    const categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label || 'Selected Category';
+    let categoryLabel = '';
+
+    // Check if this is a section header (format: header-123)
+    if (categoryId.startsWith('header-')) {
+      // For section headers, try to find the name from the section headers API
+      // If we have category details with a label, use that
+      if (categoryDetails && categoryDetails.label && categoryDetails.label !== 'Section Header') {
+        categoryLabel = categoryDetails.label;
+      } else {
+        // For now, use a generic label
+        categoryLabel = 'Section Header';
+      }
+    } else {
+      // For regular categories, get the label from the categories list
+      categoryLabel = topicCategories.find(cat => cat.id === categoryId)?.label || 'Selected Category';
+    }
 
     // Use the categoryDetails if available, otherwise fallback to topicData
     if (categoryDetails && categoryDetails.subtopics) {
@@ -188,7 +209,7 @@ export default function TopicsPage() {
             <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
             <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded">
               <p className="text-center text-gray-500 dark:text-gray-400">
-                No content available for this category yet.
+                {categoryId.startsWith('header-') ? 'Content for this category is being prepared.' : 'No content available for this category yet.'}
               </p>
               <div className="mt-4 flex justify-center">
                 <button
@@ -358,12 +379,7 @@ export default function TopicsPage() {
               {selectedTopic ? (
                 // Show improved topic tree when a topic is selected
                 <div className="mb-12">
-                  {/* Add SimpleTopicTree component */}
-                  <div className="mb-6">
-                    <SimpleTopicTree
-                      onSelectTopic={handleCategorySelect}
-                    />
-                  </div>
+                  {/* SimpleTopicTree component removed */}
 
                   <div className="flex items-center gap-4 mb-6">
                     {selectedCategory && (
@@ -378,15 +394,7 @@ export default function TopicsPage() {
                       </button>
                     )}
 
-                    <button
-                      onClick={handleResetSelections}
-                      className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Reset
-                    </button>
+
                   </div>
 
                   {/* Main topic categories */}
