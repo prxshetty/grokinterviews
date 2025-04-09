@@ -15,14 +15,15 @@ export async function GET(request: NextRequest) {
 
     console.log(`API - Fetching section headers for domain: ${domain}`);
 
-    // Query the section_headers table for the specified domain
-    const { data: headers, error } = await supabaseServer
-      .from('section_headers')
-      .select('id, name')
+    // Query for distinct section_name values for the given domain
+    const { data: sectionData, error } = await supabaseServer
+      .from('topics')
+      .select('section_name')
       .eq('domain', domain)
-      .order('id');
+      .order('section_name');
 
-    console.log(`API - Found ${headers?.length || 0} section headers for domain: ${domain}`);
+    // Log the number of results found
+    console.log(`API - Found ${sectionData?.length || 0} section names for domain: ${domain}`);
 
     if (error) {
       console.error('Error fetching section headers:', error);
@@ -32,8 +33,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get distinct section names to avoid duplicates
+    const distinctSections = [];
+    const sectionNames = new Set();
+
+    sectionData?.forEach(item => {
+      if (item.section_name && !sectionNames.has(item.section_name)) {
+        sectionNames.add(item.section_name);
+        distinctSections.push({
+          id: distinctSections.length + 1, // Generate sequential IDs
+          name: item.section_name
+        });
+      }
+    });
+
+    console.log(`API - Returning ${distinctSections.length} distinct section names for domain: ${domain}`);
+
     return NextResponse.json(
-      { headers: headers || [] },
+      distinctSections,
       {
         headers: {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache

@@ -38,7 +38,8 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
         }
 
         const data = await response.json();
-        setSectionHeaders(data.headers || []);
+        console.log('TopicTreeView - Received section headers:', data);
+        setSectionHeaders(data || []);
       } catch (err) {
         console.error('Error fetching section headers:', err);
         setError('Failed to load section headers');
