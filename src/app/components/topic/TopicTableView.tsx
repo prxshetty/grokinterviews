@@ -10,7 +10,7 @@ interface TopicTableViewProps {
 
 interface SectionHeader {
   id: number;
-  name: string;
+  name: string; // This is mapped from section_name in the API
 }
 
 export default function TopicTableView({
@@ -34,7 +34,7 @@ export default function TopicTableView({
         setIsLoading(true);
         setError(null);
 
-        // Fetch section headers for the domain (e.g., 'ml')
+        // Fetch section headers from topics table for the domain (e.g., 'ml')
         const response = await fetch(`/api/section-headers?domain=${selectedMainTopic}`);
 
         if (!response.ok) {

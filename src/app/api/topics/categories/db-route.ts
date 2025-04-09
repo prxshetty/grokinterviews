@@ -115,6 +115,7 @@ export async function GET(request: NextRequest) {
     // If categoryId and topicId are provided, return detailed questions for that category
     if (categoryId && topicId) {
       try {
+        console.time('category-query');
         // We need both the database questions and the markdown content
         let dbQuestions: any = null;
         let markdownCategory: any = null;
@@ -123,70 +124,62 @@ export async function GET(request: NextRequest) {
         try {
           // First, get the category details
           let category: Category | null = null;
+          let topicIdValue: string | number = topicId;
 
-          // Get the category - adapt to the actual schema
-          try {
-            // First try with id
-            if (typeof categoryId === 'number' || !isNaN(Number(categoryId))) {
-              const { data, error } = await supabaseServer
-                .from('categories')
-                .select('*')
-                .eq('id', categoryId)
-                .single();
+          // If topicId is not a number, try to get the numeric ID
+          if (topicId !== 'any' && isNaN(Number(topicId))) {
+            // Check if it's a domain
+            const { data: topicData, error: topicError } = await supabaseServer
+              .from('topics')
+              .select('id')
+              .eq('domain', topicId)
+              .limit(1);
 
-              if (!error) {
-                category = data;
+            if (!topicError && topicData && topicData.length > 0) {
+              topicIdValue = topicData[0].id;
+              console.log(`Resolved domain ${topicId} to topic ID ${topicIdValue}`);
+            } else {
+              // Try as a slug
+              const { data: slugData, error: slugError } = await supabaseServer
+                .from('topics')
+                .select('id')
+                .eq('slug', topicId)
+                .limit(1);
+
+              if (!slugError && slugData && slugData.length > 0) {
+                topicIdValue = slugData[0].id;
+                console.log(`Resolved slug ${topicId} to topic ID ${topicIdValue}`);
               }
             }
-
-            // If not found by id, try with name (assuming name is used instead of slug)
-            if (!category) {
-              // Try to match by name (case insensitive)
-              const { data, error } = await supabaseServer
-                .from('categories')
-                .select('*')
-                .ilike('name', categoryId.replace(/-/g, ' '));
-
-              if (!error && data && data.length > 0) {
-                category = data[0];
-              }
-            }
-
-            // If still not found, try with topic_id and a partial match on name
-            if (!category && topicId && topicId !== 'any') {
-              const { data, error } = await supabaseServer
-                .from('categories')
-                .select('*')
-                .eq('topic_id', topicId)
-                .ilike('name', `%${categoryId.replace(/-/g, ' ')}%`);
-
-              if (!error && data && data.length > 0) {
-                category = data[0];
-              }
-            }
-          } catch (dbError) {
-            console.error(`Error fetching category from database for ${topicId}/${categoryId}:`, dbError);
           }
 
-          if (category) {
-            // Get the questions for this category
-            const { data: questions, error: questionsError } = await supabaseServer
-              .from('questions')
-              .select('*')
-              .eq('category_id', category.id)
-              .order('difficulty');
+          // Use a more efficient query to get the category and its questions in one go
+          const { data: categoryWithQuestions, error: categoryError } = await supabaseServer
+            .from('categories')
+            .select(`
+              *,
+              questions:questions(*)
+            `)
+            .eq('topic_id', topicIdValue)
+            .or(`id.eq.${!isNaN(Number(categoryId)) ? categoryId : -1},name.ilike.%${categoryId.replace(/-/g, ' ')}%`)
+            .limit(1);
 
-            if (questionsError) throw questionsError;
+          if (!categoryError && categoryWithQuestions && categoryWithQuestions.length > 0) {
+            category = categoryWithQuestions[0];
+            console.log(`Found category: ${category.name} with ${category.questions?.length || 0} questions`);
 
             // Convert to the legacy format expected by the frontend
             dbQuestions = convertQuestionsToLegacyFormat(
-              questions || [],
+              category.questions || [],
               category.name
             );
+          } else {
+            console.log(`No category found for ${topicId}/${categoryId} with error:`, categoryError);
           }
         } catch (dbError) {
           console.error(`Error fetching category from database for ${topicId}/${categoryId}:`, dbError);
         }
+        console.timeEnd('category-query');
 
         // 2. Get category details from markdown
         try {
@@ -245,30 +238,100 @@ export async function GET(request: NextRequest) {
 
     // If only topicId is provided or no parameters, return all categories
     try {
-      // Get all topics from the database
-      const { data: topics, error: topicsError } = await supabaseServer
-        .from('topics')
-        .select('*')
-        .order('name');
+      console.time('categories-query');
 
-      if (topicsError) throw topicsError;
+      // If topicId is provided, only get categories for that topic
+      if (topicId && topicId !== 'any') {
+        console.log(`Fetching categories for specific topic: ${topicId}`);
 
-      // Create a map of topic slug to categories
-      const categoriesByTopic: Record<string, any[]> = {};
+        // Check if topicId is a number or a slug
+        let topicIdCondition;
+        if (!isNaN(Number(topicId))) {
+          // It's a number, use it directly
+          topicIdCondition = { topic_id: topicId };
+        } else {
+          // It's a slug, need to join with topics table
+          // First, get the topic ID from the slug
+          const { data: topic, error: topicError } = await supabaseServer
+            .from('topics')
+            .select('id')
+            .eq('slug', topicId)
+            .single();
 
-      // For each topic, get its categories
-      for (const topic of topics || []) {
+          if (topicError) {
+            console.error(`Error fetching topic ID for slug ${topicId}:`, topicError);
+            // Try with domain instead
+            const { data: topicByDomain, error: domainError } = await supabaseServer
+              .from('topics')
+              .select('id')
+              .eq('domain', topicId)
+              .limit(1);
+
+            if (domainError || !topicByDomain || topicByDomain.length === 0) {
+              console.error(`Error fetching topic ID for domain ${topicId}:`, domainError);
+              return NextResponse.json(
+                { error: `Topic not found: ${topicId}` },
+                { status: 404 }
+              );
+            }
+
+            topicIdCondition = { topic_id: topicByDomain[0].id };
+          } else {
+            topicIdCondition = { topic_id: topic.id };
+          }
+        }
+
+        // Get categories for this topic
         const { data: categories, error: categoriesError } = await supabaseServer
           .from('categories')
           .select('*')
-          .eq('topic_id', topic.id)
+          .eq('topic_id', topicIdCondition.topic_id)
           .order('name');
 
-        if (categoriesError) throw categoriesError;
+        if (categoriesError) {
+          console.error(`Error fetching categories for topic ${topicId}:`, categoriesError);
+          throw categoriesError;
+        }
 
-        categoriesByTopic[topic.slug] = convertCategoriesToLegacyFormat(categories || []);
+        // Return categories for this topic
+        const result = {};
+        result[topicId] = convertCategoriesToLegacyFormat(categories || []);
+
+        console.timeEnd('categories-query');
+        return NextResponse.json(result, {
+          headers: {
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
+          },
+        });
       }
 
+      // If no topicId, get all categories with a single efficient query
+      console.log('Fetching all categories with a join query');
+
+      // Use a join query to get all topics and their categories in one go
+      const { data: joinData, error: joinError } = await supabaseServer
+        .from('topics')
+        .select(`
+          id,
+          slug,
+          name,
+          categories:categories(*)
+        `)
+        .order('name');
+
+      if (joinError) {
+        console.error('Error fetching topics with categories:', joinError);
+        throw joinError;
+      }
+
+      // Process the joined data
+      const categoriesByTopic: Record<string, any[]> = {};
+
+      for (const topic of joinData || []) {
+        categoriesByTopic[topic.slug] = convertCategoriesToLegacyFormat(topic.categories || []);
+      }
+
+      console.timeEnd('categories-query');
       return NextResponse.json(categoriesByTopic, {
         headers: {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache

@@ -71,13 +71,24 @@ class DatabaseService {
         console.log('DatabaseService.getTopics - Received data from API:', data);
 
         // Convert from legacy format to Topic[] format
-        const topics: Topic[] = Object.entries(data).map(([slug, details]: [string, any]) => ({
-          id: parseInt(slug, 10) || 0, // Default to 0 if not a number
-          slug,
-          name: details.label,
-          domain: domain || 'unknown',
-          created_at: new Date().toISOString(),
-        }));
+        const topics: Topic[] = Object.entries(data).map(([slug, details]: [string, any]) => {
+          // Generate a unique ID based on the slug if it's not a number
+          let id: number;
+          if (!isNaN(parseInt(slug, 10))) {
+            id = parseInt(slug, 10);
+          } else {
+            // Use a hash function to generate a numeric ID from the slug
+            id = slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          }
+
+          return {
+            id,
+            slug,
+            name: details.label,
+            domain: domain || 'unknown',
+            created_at: new Date().toISOString(),
+          };
+        });
 
         console.log('DatabaseService.getTopics - Converted topics:', topics);
 

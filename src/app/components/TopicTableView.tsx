@@ -42,8 +42,8 @@ export default function TopicTableView({
         }
 
         const data = await response.json();
-        console.log(`TopicTableView - Received ${data.headers?.length || 0} section headers:`, data.headers);
-        setSectionHeaders(data.headers || []);
+        console.log(`TopicTableView - Received ${data?.length || 0} section headers:`, data);
+        setSectionHeaders(data || []);
       } catch (err) {
         console.error('Error fetching section headers:', err);
         setError('Failed to load section headers');
