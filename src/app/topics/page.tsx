@@ -55,10 +55,11 @@ export default function TopicsPage() {
   const loadTopicCategories = async (topicId: string) => {
     setLoadingCategories(true);
     try {
-      const categories = await TopicDataService.getTopicCategories(topicId);
-      setTopicCategories(categories);
+      // For the first level, we want to show section headers
+      const sectionHeaders = await TopicDataService.getSectionHeaders(topicId);
+      setTopicCategories(sectionHeaders);
     } catch (error) {
-      console.error(`Error loading categories for ${topicId}:`, error);
+      console.error(`Error loading section headers for ${topicId}:`, error);
       setTopicCategories([]);
     } finally {
       setLoadingCategories(false);
@@ -100,20 +101,78 @@ export default function TopicsPage() {
 
     setLoadingCategoryDetails(true);
     try {
+      // Ensure selectedTopic is not null
+      const topicId = selectedTopic || 'ml';
+
       // Check if this is a section header ID (format: header-123)
       if (categoryId.startsWith('header-')) {
         console.log(`This is a section header: ${categoryId}`);
 
-        // For section headers, we'll display a placeholder message
-        setCategoryDetails({
-          label: 'Section Header',
-          content: 'Content for this category is being prepared.'
-        });
+        // Extract the header number and get the section name
+        const headerNumber = parseInt(categoryId.replace('header-', ''), 10);
+        const response = await fetch(`/api/section-headers?domain=${topicId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch section headers: ${response.statusText}`);
+        }
+
+        const sectionHeaders = await response.json();
+        const sectionHeader = sectionHeaders.find((header: any) => header.id === headerNumber);
+
+        if (sectionHeader) {
+          console.log(`Found section header: ${sectionHeader.name}`);
+
+          // Get topics for this section
+          const topics = await TopicDataService.getTopicsBySection(topicId, sectionHeader.name);
+
+          // Create a category details object with the topics as subtopics
+          setCategoryDetails({
+            id: categoryId,
+            label: sectionHeader.name,
+            content: `Topics related to ${sectionHeader.name}`,
+            subtopics: topics.reduce((acc: Record<string, any>, topic: CategoryItem, index: number) => {
+              acc[`topic-${index}`] = {
+                id: topic.id,
+                label: topic.label,
+                content: ''
+              };
+              return acc;
+            }, {})
+          });
+        } else {
+          console.warn(`Section header not found for ID ${headerNumber}`);
+          setCategoryDetails({
+            label: 'Section Header',
+            content: 'Section header not found.'
+          });
+        }
+
+        setLoadingCategoryDetails(false);
         return;
       }
 
-      // Ensure selectedTopic is not null
-      const topicId = selectedTopic || 'ml';
+      // Check if this is a topic ID (format: topic-123)
+      if (categoryId.startsWith('topic-')) {
+        console.log(`This is a topic: ${categoryId}`);
+
+        // Get topic details
+        const topicDetails = await TopicDataService.getTopicDetails(categoryId);
+
+        if (topicDetails) {
+          console.log(`Successfully loaded details for topic ${categoryId}`);
+          setCategoryDetails(topicDetails);
+        } else {
+          console.warn(`No details available for topic ${categoryId}`);
+          setCategoryDetails({
+            label: 'Topic',
+            content: 'Topic details not found.'
+          });
+        }
+
+        setLoadingCategoryDetails(false);
+        return;
+      }
+
+      // For other category IDs, use the existing method
       console.log(`Loading details for category ${categoryId} in topic ${topicId}`);
       const data = await TopicDataService.getCategoryDetails(topicId, categoryId);
 

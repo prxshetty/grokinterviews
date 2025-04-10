@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { parseMarkdown } from '@/utils/markdownParser';
+import supabaseServer from '@/utils/supabase-server';
 
 // Cache the results for better performance
 const CACHE_DURATION = 3600 * 1000; // 1 hour in milliseconds
@@ -57,8 +58,8 @@ export async function GET(request: NextRequest) {
       const parsedData = parseMarkdown(content);
 
       // Try to find the category in the parsed data
-      let categoryData = null;
-      let categoryKey = null;
+      let categoryData: any = null;
+      let categoryKey: string | null = null;
 
       // Check if this is a header ID (e.g., header-1)
       if (categoryId.startsWith('header-')) {
@@ -78,69 +79,99 @@ export async function GET(request: NextRequest) {
             if (sectionHeader) {
               console.log(`Found section header: ${sectionHeader.name}`);
 
-              // Now find the corresponding section in the markdown
-              for (const key in parsedData) {
-                if (key === 'h1-0') continue; // Skip the title
+              // Create a section object with the section header name
+              const sectionName = sectionHeader.name;
 
-                const section = parsedData[key];
-                if (section.label.toLowerCase() === sectionHeader.name.toLowerCase()) {
-                  categoryData = section;
-                  categoryKey = key;
-                  console.log(`Found matching section in markdown: ${key}`);
+              // Fetch topics for this section from Supabase
+              const supabase = supabaseServer;
+              const { data: topics, error: topicsError } = await supabase
+                .from('topics')
+                .select('*')
+                .eq('section_name', sectionName)
+                .eq('domain', topicId)
+                .order('created_at', { ascending: false });
 
-                  // If this section doesn't have subtopics, create them from the markdown content
-                  if (!section.subtopics || Object.keys(section.subtopics).length === 0) {
-                    console.log(`Section ${key} doesn't have subtopics, creating them from markdown content`);
+              if (topicsError) {
+                console.error(`Error fetching topics for section ${sectionName}:`, topicsError);
+                return NextResponse.json({ error: 'Failed to fetch topics' }, { status: 500 });
+              }
 
-                    // Create subtopics from the section content
-                    const subtopics = {};
+              console.log(`Found ${topics?.length || 0} topics for section ${sectionName}`);
 
-                    // Split the content by lines and create subtopics
-                    const lines = section.content?.split('\n') || [];
-                    let currentSubtopic = null;
+              // Create a section object with subtopics
+              categoryData = {
+                label: sectionName,
+                content: `Topics related to ${sectionName}`,
+                subtopics: {} as Record<string, any>
+              };
+              categoryKey = `section-${headerNumber}`;
 
-                    for (let i = 0; i < lines.length; i++) {
-                      const line = lines[i].trim();
+              // Add each topic as a subtopic
+              if (topics && topics.length > 0) {
+                for (let i = 0; i < topics.length; i++) {
+                  const topic = topics[i];
+                  const subtopicId = `subtopic-${i}`;
 
-                      // Skip empty lines
-                      if (!line) continue;
+                  // Fetch categories for this topic
+                  const { data: categories, error: categoriesError } = await supabase
+                    .from('categories')
+                    .select('*')
+                    .eq('topic_id', topic.id)
+                    .order('created_at', { ascending: false });
 
-                      // Check if this is a subtopic header (starts with - or *)
-                      if (line.startsWith('- ') || line.startsWith('* ')) {
-                        const subtopicLabel = line.substring(2).trim();
-                        const subtopicId = `subtopic-${i}`;
-
-                        // Create a new subtopic
-                        subtopics[subtopicId] = {
-                          label: subtopicLabel,
-                          content: '',
-                          subtopics: {}
-                        };
-
-                        currentSubtopic = subtopicId;
-                      } else if (currentSubtopic && (line.startsWith('  - ') || line.startsWith('  * '))) {
-                        // This is a nested item under the current subtopic
-                        const nestedContent = line.substring(4).trim();
-
-                        // Add to the current subtopic's content
-                        subtopics[currentSubtopic].content += `\n- ${nestedContent}`;
-                      }
-                    }
-
-                    // If we found any subtopics, add them to the section
-                    if (Object.keys(subtopics).length > 0) {
-                      section.subtopics = subtopics;
-                      console.log(`Created ${Object.keys(subtopics).length} subtopics for section ${key}`);
-                    }
+                  if (categoriesError) {
+                    console.error(`Error fetching categories for topic ${topic.name}:`, categoriesError);
+                    continue;
                   }
 
-                  break;
+                  console.log(`Found ${categories?.length || 0} categories for topic ${topic.name}`);
+
+                  // Create a subtopic for this topic
+                  categoryData.subtopics[subtopicId] = {
+                    label: topic.name,
+                    content: '',
+                    topicId: topic.id,
+                    categories: categories || [],
+                    subtopics: {}
+                  };
+
+                  // Add categories as nested subtopics
+                  if (categories && categories.length > 0) {
+                    for (let j = 0; j < categories.length; j++) {
+                      const category = categories[j];
+                      const categorySubtopicId = `category-${j}`;
+
+                      // Fetch questions for this category
+                      const { data: questions, error: questionsError } = await supabase
+                        .from('questions')
+                        .select('*')
+                        .eq('category_id', category.id)
+                        .order('difficulty');
+
+                      if (questionsError) {
+                        console.error(`Error fetching questions for category ${category.name}:`, questionsError);
+                        continue;
+                      }
+
+                      console.log(`Found ${questions?.length || 0} questions for category ${category.name}`);
+
+                      // Add this category as a nested subtopic
+                      categoryData.subtopics[subtopicId].subtopics[categorySubtopicId] = {
+                        label: category.name,
+                        content: category.description || '',
+                        categoryId: category.id,
+                        questions: questions || []
+                      };
+                    }
+                  }
                 }
+
+                console.log(`Created ${Object.keys(categoryData.subtopics).length} subtopics for section ${sectionName}`);
               }
             }
           }
         } catch (error) {
-          console.error('Error fetching section headers:', error);
+          console.error('Error fetching section headers or related data:', error);
         }
       }
 
@@ -181,11 +212,11 @@ export async function GET(request: NextRequest) {
       }
 
       // Format the category data
-      const result = {
+      const result: any = {
         id: categoryKey,
         label: categoryData.label,
         content: categoryData.content || '',
-        subtopics: {}
+        subtopics: {} as Record<string, any>
       };
 
       // Add subtopics if available
@@ -209,14 +240,14 @@ export async function GET(request: NextRequest) {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
         },
       });
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error(`Error parsing markdown for topic ${topicId}:`, parseError);
       return NextResponse.json(
         { error: 'Failed to parse markdown content', details: parseError.message },
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in category details API route:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
