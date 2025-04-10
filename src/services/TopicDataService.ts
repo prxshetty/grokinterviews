@@ -33,6 +33,138 @@ class TopicDataService {
   };
 
   /**
+   * Gets all section headers for a specific domain
+   * @param domain The domain to get section headers for (e.g., 'ml', 'ai')
+   */
+  async getSectionHeaders(domain: string): Promise<CategoryItem[]> {
+    try {
+      // Check cache first
+      const cacheKey = `section-headers-${domain}`;
+      if (this.cache.categories && this.cache.categories[cacheKey]) {
+        return this.cache.categories[cacheKey];
+      }
+
+      // Fetch section headers from the API
+      const response = await fetch(`/api/section-headers?domain=${domain}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch section headers: ${response.statusText}`);
+      }
+
+      const sectionHeaders = await response.json();
+
+      // Convert to CategoryItem format
+      const result = sectionHeaders.map((header: any) => ({
+        id: `header-${header.id}`,
+        label: header.name
+      }));
+
+      // Cache the result
+      if (!this.cache.categories) {
+        this.cache.categories = {};
+      }
+      this.cache.categories[cacheKey] = result;
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching section headers:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Gets all topics for a specific section
+   * @param domain The domain (e.g., 'ml', 'ai')
+   * @param sectionName The name of the section to get topics for
+   */
+  async getTopicsBySection(domain: string, sectionName: string): Promise<CategoryItem[]> {
+    try {
+      // Check cache first
+      const cacheKey = `topics-${domain}-${sectionName}`;
+      if (this.cache.categories && this.cache.categories[cacheKey]) {
+        return this.cache.categories[cacheKey];
+      }
+
+      // Fetch topics from the API
+      const response = await fetch(`/api/topics/by-section?domain=${domain}&sectionName=${encodeURIComponent(sectionName)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch topics: ${response.statusText}`);
+      }
+
+      const topics = await response.json();
+
+      // Convert to CategoryItem format
+      const result = topics.map((topic: any) => ({
+        id: `topic-${topic.id}`,
+        label: topic.name
+      }));
+
+      // Cache the result
+      if (!this.cache.categories) {
+        this.cache.categories = {};
+      }
+      this.cache.categories[cacheKey] = result;
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching topics by section:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Gets details for a specific topic, including categories and questions
+   * @param topicId The ID of the topic to get details for
+   */
+  async getTopicDetails(topicId: string): Promise<any> {
+    try {
+      // Extract the numeric ID from the topic-{id} format
+      const numericId = topicId.startsWith('topic-') ? topicId.replace('topic-', '') : topicId;
+
+      // Check cache first
+      const cacheKey = `topic-details-${numericId}`;
+      if (this.cache.categoryDetails[cacheKey]) {
+        return this.cache.categoryDetails[cacheKey];
+      }
+
+      // Fetch topic details from the API
+      const response = await fetch(`/api/topics/topic-details?topicId=${numericId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch topic details: ${response.statusText}`);
+      }
+
+      const details = await response.json();
+
+      // Format the result for the UI
+      const result = {
+        id: topicId,
+        label: details.topic.name,
+        content: `Details for ${details.topic.name}`,
+        subtopics: {}
+      };
+
+      // Add each category as a subtopic
+      details.categories.forEach((category: any, index: number) => {
+        const subtopicId = `category-${index}`;
+        result.subtopics[subtopicId] = {
+          id: subtopicId,
+          label: category.name,
+          content: category.description || '',
+          categoryId: category.id,
+          questions: category.questions || []
+        };
+      });
+
+      // Cache the result
+      this.cache.categoryDetails[cacheKey] = result;
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching topic details:', error);
+      return null;
+    }
+  }
+
+  /**
    * Gets all main categories from a specific topic file
    * @param topicId The ID of the topic to get categories from
    */
