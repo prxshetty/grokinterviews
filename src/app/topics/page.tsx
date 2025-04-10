@@ -253,59 +253,140 @@ export default function TopicsPage() {
       if (hasRealSubtopics) {
         const listItems = Object.entries(categoryDetails.subtopics);
 
+        // Check if this is a section header (format: header-123)
+        const isSectionHeader = categoryId.startsWith('header-');
+
         return (
           <div className="w-full animate-fadeIn">
             <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
 
             {/* Render subtopics in the new format */}
-            <div className="border-t border-gray-200 dark:border-gray-700">
-              {listItems.map(([listId, listItem], listIndex) => {
-                const typedListItem = listItem as TopicItem;
-                const itemNumber = listIndex + 1;
-                const formattedNumber = String(itemNumber).padStart(2, '0');
+            {isSectionHeader ? (
+              // Two-column layout for section headers
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left column - even indexed items (0, 2, 4, ...) */}
+                <div className="border-t border-gray-200 dark:border-gray-700">
+                  {listItems
+                    .filter((_, index) => index % 2 === 0)
+                    .map(([listId, listItem], filteredIndex) => {
+                      const typedListItem = listItem as TopicItem;
+                      const itemNumber = filteredIndex * 2 + 1;
+                      const formattedNumber = String(itemNumber).padStart(2, '0');
 
-                // Check if this subtopic has questions
-                const hasQuestions = typedListItem.questions && typedListItem.questions.length > 0;
+                      // Check if this is a topic that should be clickable
+                      const isTopic = listId.startsWith('topic-');
 
-                return (
-                  <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
-                      <div className="flex-grow">
-                        <h3 className="font-medium">{typedListItem.label}</h3>
-                        {hasQuestions && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            {typedListItem.questions?.length} question{typedListItem.questions?.length !== 1 ? 's' : ''}
-                          </p>
-                        )}
-                      </div>
-                      <div className="w-8 text-center text-gray-400">
-                        {hasQuestions ? '+' : '•'}
-                      </div>
-                    </div>
-
-                    {/* Display questions for this subtopic if available */}
-                    {hasQuestions && (
-                      <div className="pl-16 pr-8 pb-4">
-                        {typedListItem.questions?.map((question: Question, qIndex: number) => (
-                          <div key={qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="font-medium text-gray-900 dark:text-white">{question.question_text}</h4>
-                              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
+                      return (
+                        <div
+                          key={listId}
+                          className="border-b border-gray-200 dark:border-gray-700"
+                          onClick={() => isTopic && handleCategorySelect(typedListItem.id || '')}
+                        >
+                          <div className={`flex items-center py-4 ${isTopic ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}>
+                            <div className="w-12 text-gray-400 text-xl font-light">{formattedNumber}</div>
+                            <div className="flex-grow">
+                              <h3 className="font-medium">{typedListItem.label}</h3>
                             </div>
-                            {question.answer_text && (
-                              <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
-                                <p>{question.answer_text}</p>
+                            {isTopic && (
+                              <div className="w-8 text-center text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
                               </div>
                             )}
                           </div>
-                        ))}
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Right column - odd indexed items (1, 3, 5, ...) */}
+                <div className="border-t border-gray-200 dark:border-gray-700">
+                  {listItems
+                    .filter((_, index) => index % 2 === 1)
+                    .map(([listId, listItem], filteredIndex) => {
+                      const typedListItem = listItem as TopicItem;
+                      const itemNumber = filteredIndex * 2 + 2;
+                      const formattedNumber = String(itemNumber).padStart(2, '0');
+
+                      // Check if this is a topic that should be clickable
+                      const isTopic = listId.startsWith('topic-');
+
+                      return (
+                        <div
+                          key={listId}
+                          className="border-b border-gray-200 dark:border-gray-700"
+                          onClick={() => isTopic && handleCategorySelect(typedListItem.id || '')}
+                        >
+                          <div className={`flex items-center py-4 ${isTopic ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}>
+                            <div className="w-12 text-gray-400 text-xl font-light">{formattedNumber}</div>
+                            <div className="flex-grow">
+                              <h3 className="font-medium">{typedListItem.label}</h3>
+                            </div>
+                            {isTopic && (
+                              <div className="w-8 text-center text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ) : (
+              // Single column layout for regular categories
+              <div className="border-t border-gray-200 dark:border-gray-700">
+                {listItems.map(([listId, listItem], listIndex) => {
+                  const typedListItem = listItem as TopicItem;
+                  const itemNumber = listIndex + 1;
+                  const formattedNumber = String(itemNumber).padStart(2, '0');
+
+                  // Check if this subtopic has questions
+                  const hasQuestions = typedListItem.questions && typedListItem.questions.length > 0;
+
+                  return (
+                    <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
+                        <div className="flex-grow">
+                          <h3 className="font-medium">{typedListItem.label}</h3>
+                          {hasQuestions && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              {typedListItem.questions?.length} question{typedListItem.questions?.length !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                        </div>
+                        <div className="w-8 text-center text-gray-400">
+                          {hasQuestions ? '+' : '•'}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+
+                      {/* Display questions for this subtopic if available */}
+                      {hasQuestions && (
+                        <div className="pl-16 pr-8 pb-4">
+                          {typedListItem.questions?.map((question: Question, qIndex: number) => (
+                            <div key={qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                              <div className="flex items-start justify-between mb-2">
+                                <h4 className="font-medium text-gray-900 dark:text-white">{question.question_text}</h4>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
+                              </div>
+                              {question.answer_text && (
+                                <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
+                                  <p>{question.answer_text}</p>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       } else {
