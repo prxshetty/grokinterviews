@@ -148,3 +148,17 @@
 .errorText {
   color: #ff6b6b;
 }
+
+/* Two-column grid layout */
+.twoColumnGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+  gap: 0;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}

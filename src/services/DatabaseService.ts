@@ -459,7 +459,7 @@ class DatabaseService {
    * @param data The markdown data
    * @param categoryId The ID of the category
    */
-  private createCategoryWithQuestionsFromMarkdown(data: any, categoryId: string | number): CategoryWithQuestions {
+  private createCategoryWithQuestionsFromMarkdown(data: any, categoryId: string | number): CategoryWithQuestions & { subtopics?: Record<string, any> } {
     // Create a category object
     const category: Category = {
       id: typeof categoryId === 'number' ? categoryId : 0,
@@ -472,24 +472,39 @@ class DatabaseService {
     // Create questions from subtopics if available
     const questions: Question[] = [];
 
+    // Create the result object with both questions and subtopics
+    const result: CategoryWithQuestions & { subtopics?: Record<string, any> } = {
+      ...category,
+      questions,
+      subtopics: {}
+    };
+
+    // If the data has subtopics, preserve them in the result
     if (data.subtopics) {
+      // First, copy the subtopics directly
+      result.subtopics = data.subtopics;
+
+      // Then, also create questions from them for backward compatibility
       Object.entries(data.subtopics).forEach(([id, subtopic]: [string, any], index) => {
-        questions.push({
-          id: index + 1,
-          category_id: typeof categoryId === 'number' ? categoryId : 0,
-          question_text: subtopic.label || `Question ${index + 1}`,
-          answer_text: subtopic.content || '',
-          difficulty: 'medium',
-          keywords: [],
-          created_at: new Date().toISOString()
-        });
+        // If the subtopic already has questions, use those
+        if (subtopic.questions && Array.isArray(subtopic.questions) && subtopic.questions.length > 0) {
+          questions.push(...subtopic.questions);
+        } else {
+          // Otherwise create a question from the subtopic content
+          questions.push({
+            id: index + 1,
+            category_id: typeof categoryId === 'number' ? categoryId : 0,
+            question_text: subtopic.label || `Question ${index + 1}`,
+            answer_text: subtopic.content || '',
+            difficulty: 'medium',
+            keywords: [],
+            created_at: new Date().toISOString()
+          });
+        }
       });
     }
 
-    return {
-      ...category,
-      questions
-    };
+    return result;
   }
 
   /**
@@ -565,7 +580,105 @@ class DatabaseService {
       }
     }
 
-    // Server-side direct database access
+    // Check if categoryId is a header ID (e.g., 'header-123')
+    if (typeof categoryId === 'string' && categoryId.startsWith('header-')) {
+      console.log(`Category ID ${categoryId} is a section header ID`);
+
+      // Extract the header ID number
+      const headerId = categoryId.replace('header-', '');
+
+      try {
+        // Get all topics with this section header ID
+        const { data: topics, error: topicsError } = await supabase
+          .from('topics')
+          .select('section_name')
+          .eq('id', headerId);
+
+        if (topicsError || !topics || topics.length === 0) {
+          console.error(`Error fetching section name for header ID ${headerId}:`, topicsError);
+          return null;
+        }
+
+        const sectionName = topics[0].section_name;
+        console.log(`Found section name: ${sectionName} for header ID ${headerId}`);
+
+        // Get all categories that belong to this section
+        const { data: categories, error: categoriesError } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('section_name', sectionName)
+          .order('created_at', { ascending: false });
+
+        if (categoriesError) {
+          console.error(`Error fetching categories for section ${sectionName}:`, categoriesError);
+          return null;
+        }
+
+        if (!categories || categories.length === 0) {
+          console.log(`No categories found for section ${sectionName}`);
+
+          // Create a fake category with the section name
+          const fakeCategory: CategoryWithQuestions = {
+            id: parseInt(headerId, 10),
+            name: sectionName,
+            slug: `section-${headerId}`,
+            topic_id: 0,
+            created_at: new Date().toISOString(),
+            questions: []
+          };
+
+          return fakeCategory;
+        }
+
+        console.log(`Found ${categories.length} categories for section ${sectionName}`);
+
+        // Create a result object with the section name
+        const result: CategoryWithQuestions & { subtopics?: Record<string, any> } = {
+          id: parseInt(headerId, 10),
+          name: sectionName,
+          slug: `section-${headerId}`,
+          topic_id: 0,
+          created_at: new Date().toISOString(),
+          questions: [],
+          subtopics: {}
+        };
+
+        // Add each category as a subtopic
+        for (let i = 0; i < categories.length; i++) {
+          const category = categories[i];
+          const subtopicId = `subtopic-${i}`;
+
+          // Get questions for this category
+          const { data: questions, error: questionsError } = await supabase
+            .from('questions')
+            .select('*')
+            .eq('category_id', category.id)
+            .order('difficulty');
+
+          // Add this category as a subtopic
+          result.subtopics[subtopicId] = {
+            id: subtopicId,
+            label: category.name,
+            categoryId: category.id, // Store the actual category ID for reference
+            questions: questions || []
+          };
+
+          if (!questionsError && questions && questions.length > 0) {
+            console.log(`Found ${questions.length} questions for category ${category.name}`);
+            // Also add these questions to the main result for backward compatibility
+            result.questions.push(...questions);
+          }
+        }
+
+        console.log(`Created ${Object.keys(result.subtopics).length} subtopics for section ${sectionName}`);
+        return result;
+      } catch (error) {
+        console.error(`Error processing section header ${categoryId}:`, error);
+        return null;
+      }
+    }
+
+    // Server-side direct database access for regular categories
     try {
       let category: Category | null = null;
 

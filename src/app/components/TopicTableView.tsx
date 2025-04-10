@@ -11,6 +11,7 @@ interface TopicTableViewProps {
 interface SectionHeader {
   id: number;
   name: string;
+  created_at?: string; // Optional created_at timestamp
 }
 
 export default function TopicTableView({
@@ -77,9 +78,35 @@ export default function TopicTableView({
         header.name.toLowerCase().includes(searchValue.toLowerCase())
       );
 
+  // Format date to a readable string
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Unknown date';
+
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'Unknown date';
+
+      // Format as relative time if recent (within last 30 days)
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 1) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+
+      // Otherwise format as date
+      return date.toLocaleDateString();
+    } catch (e) {
+      return 'Unknown date';
+    }
+  };
+
   // Render a section header row
   const renderHeaderRow = (header: SectionHeader) => {
     const isSelected = selectedTopic === `header-${header.id}`;
+    const dateAdded = formatDate(header.created_at);
 
     return (
       <div
@@ -91,6 +118,9 @@ export default function TopicTableView({
             <span>→</span>
           </div>
           <span className={styles.topicLabel}>{header.name}</span>
+          {header.created_at && (
+            <span className={styles.dateLabel}>Added: {dateAdded}</span>
+          )}
         </div>
         <div className={styles.categoryProject}>
           <span className={styles.topicLabel}>View Content</span>
@@ -142,12 +172,26 @@ export default function TopicTableView({
               </p>
             </div>
           ) : (
-            /* Section header rows */
-            filteredHeaders.map((header) => (
-              <div key={header.id}>
-                {renderHeaderRow(header)}
+            /* Section header rows in a two-column layout with interleaved items */
+            <div className={styles.twoColumnGrid}>
+              {/* Left column - even indexed items (0, 2, 4, ...) */}
+              <div className={styles.column}>
+                {filteredHeaders.filter((_, index) => index % 2 === 0).map((header) => (
+                  <div key={header.id}>
+                    {renderHeaderRow(header)}
+                  </div>
+                ))}
               </div>
-            ))
+
+              {/* Right column - odd indexed items (1, 3, 5, ...) */}
+              <div className={styles.column}>
+                {filteredHeaders.filter((_, index) => index % 2 === 1).map((header) => (
+                  <div key={header.id}>
+                    {renderHeaderRow(header)}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

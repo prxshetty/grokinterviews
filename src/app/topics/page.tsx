@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useTopicData } from '../components/TopicDataProvider';
 import TopicDataService from '@/services/TopicDataService';
-import { TopicItem } from '@/utils/markdownParser';
+// Define our own types for the topics page
+import { Question } from '@/types/database';
 import ActivityProgress from '../components/ActivityProgress';
 import ProgressChart from '../components/ProgressChart';
 import TopicCategoryGrid from '../components/topic/TopicCategoryGrid';
@@ -20,6 +21,16 @@ const mainTopics = [
 type CategoryItem = {
   id: string;
   label: string;
+};
+
+// Define a type for topic items that includes questions
+type TopicItem = {
+  id?: string;
+  label: string;
+  content?: string;
+  questions?: Question[];
+  categoryId?: number;
+  subtopics?: Record<string, TopicItem>;
 };
 
 export default function TopicsPage() {
@@ -168,9 +179,16 @@ export default function TopicsPage() {
     }
 
     // Use the categoryDetails if available, otherwise fallback to topicData
-    if (categoryDetails && categoryDetails.subtopics) {
+    if (categoryDetails) {
+      // Check if this is a section header (used in the message below)
+
       // Count the actual subtopics
-      const hasRealSubtopics = Object.keys(categoryDetails.subtopics).length > 0;
+      const hasRealSubtopics = categoryDetails.subtopics && Object.keys(categoryDetails.subtopics).length > 0;
+
+      console.log(`Category ${categoryId} has subtopics: ${hasRealSubtopics}`);
+      if (categoryDetails.subtopics) {
+        console.log(`Subtopics: ${Object.keys(categoryDetails.subtopics).join(', ')}`);
+      }
 
       // If the category has subtopics, render them in the new format
       if (hasRealSubtopics) {
@@ -187,15 +205,44 @@ export default function TopicsPage() {
                 const itemNumber = listIndex + 1;
                 const formattedNumber = String(itemNumber).padStart(2, '0');
 
+                // Check if this subtopic has questions
+                const hasQuestions = typedListItem.questions && typedListItem.questions.length > 0;
+
                 return (
                   <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center py-4">
+                    <div className="flex items-center py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                       <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
                       <div className="flex-grow">
                         <h3 className="font-medium">{typedListItem.label}</h3>
+                        {hasQuestions && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            {typedListItem.questions?.length} question{typedListItem.questions?.length !== 1 ? 's' : ''}
+                          </p>
+                        )}
                       </div>
-                      <div className="w-8 text-center text-gray-400">+</div>
+                      <div className="w-8 text-center text-gray-400">
+                        {hasQuestions ? '+' : '•'}
+                      </div>
                     </div>
+
+                    {/* Display questions for this subtopic if available */}
+                    {hasQuestions && (
+                      <div className="pl-16 pr-8 pb-4">
+                        {typedListItem.questions?.map((question: Question, qIndex: number) => (
+                          <div key={qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-medium text-gray-900 dark:text-white">{question.question_text}</h4>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
+                            </div>
+                            {question.answer_text && (
+                              <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
+                                <p>{question.answer_text}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -209,7 +256,7 @@ export default function TopicsPage() {
             <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
             <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded">
               <p className="text-center text-gray-500 dark:text-gray-400">
-                {categoryId.startsWith('header-') ? 'Content for this category is being prepared.' : 'No content available for this category yet.'}
+                {categoryId.startsWith('header-') ? 'Content for this section is being prepared. Please check back later.' : 'No content available for this category yet.'}
               </p>
               <div className="mt-4 flex justify-center">
                 <button

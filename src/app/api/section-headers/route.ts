@@ -16,11 +16,12 @@ export async function GET(request: NextRequest) {
     console.log(`API - Fetching section headers for domain: ${domain}`);
 
     // Query for distinct section_name values for the given domain
+    // Include created_at for sorting
     const { data: sectionData, error } = await supabaseServer
       .from('topics')
-      .select('section_name')
+      .select('section_name, created_at')
       .eq('domain', domain)
-      .order('section_name');
+      .order('created_at', { ascending: false }); // Sort by created_at in descending order (newest first)
 
     // Log the number of results found
     console.log(`API - Found ${sectionData?.length || 0} section names for domain: ${domain}`);
@@ -33,18 +34,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get distinct section names to avoid duplicates
+    // Get distinct section names to avoid duplicates while preserving order
     const distinctSections = [];
     const sectionNames = new Set();
 
+    // Create a map to track the first occurrence of each section name with its created_at timestamp
+    const sectionMap = new Map();
+
+    // First pass: collect all section names with their created_at timestamps
     sectionData?.forEach(item => {
       if (item.section_name && !sectionNames.has(item.section_name)) {
         sectionNames.add(item.section_name);
-        distinctSections.push({
-          id: distinctSections.length + 1, // Generate sequential IDs
-          name: item.section_name
+        sectionMap.set(item.section_name, {
+          name: item.section_name,
+          created_at: item.created_at
         });
       }
+    });
+
+    // Convert the map to an array and sort by created_at (newest first)
+    const sortedSections = Array.from(sectionMap.values())
+      .sort((a, b) => {
+        // If created_at is null, treat it as oldest
+        if (!a.created_at) return 1;
+        if (!b.created_at) return -1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+    // Create the final array with sequential IDs
+    sortedSections.forEach((section, index) => {
+      distinctSections.push({
+        id: index + 1, // Generate sequential IDs
+        name: section.name,
+        created_at: section.created_at // Include created_at in the response for debugging
+      });
     });
 
     console.log(`API - Returning ${distinctSections.length} distinct section names for domain: ${domain}`);
