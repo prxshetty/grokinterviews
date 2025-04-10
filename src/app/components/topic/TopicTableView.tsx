@@ -142,12 +142,26 @@ export default function TopicTableView({
               </p>
             </div>
           ) : (
-            /* Section header rows */
-            filteredHeaders.map((header) => (
-              <div key={header.id}>
-                {renderHeaderRow(header)}
+            /* Section header rows in a two-column layout with interleaved items */
+            <div className={styles.twoColumnGrid}>
+              {/* Left column - even indexed items (0, 2, 4, ...) */}
+              <div className={styles.column}>
+                {filteredHeaders.filter((_, index) => index % 2 === 0).map((header) => (
+                  <div key={header.id}>
+                    {renderHeaderRow(header)}
+                  </div>
+                ))}
               </div>
-            ))
+
+              {/* Right column - odd indexed items (1, 3, 5, ...) */}
+              <div className={styles.column}>
+                {filteredHeaders.filter((_, index) => index % 2 === 1).map((header) => (
+                  <div key={header.id}>
+                    {renderHeaderRow(header)}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>
