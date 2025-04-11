@@ -78,19 +78,24 @@ class TopicDataService {
    */
   async getTopicsBySection(domain: string, sectionName: string): Promise<CategoryItem[]> {
     try {
+      console.log(`TopicDataService.getTopicsBySection - Called with domain: ${domain}, sectionName: ${sectionName}`);
+
       // Check cache first
       const cacheKey = `topics-${domain}-${sectionName}`;
       if (this.cache.categories && this.cache.categories[cacheKey]) {
+        console.log(`TopicDataService.getTopicsBySection - Using cached data for ${cacheKey}`);
         return this.cache.categories[cacheKey];
       }
 
       // Fetch topics from the API
+      console.log(`TopicDataService.getTopicsBySection - Fetching from API: /api/topics/by-section?domain=${domain}&sectionName=${encodeURIComponent(sectionName)}`);
       const response = await fetch(`/api/topics/by-section?domain=${domain}&sectionName=${encodeURIComponent(sectionName)}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch topics: ${response.statusText}`);
       }
 
       const topics = await response.json();
+      console.log(`TopicDataService.getTopicsBySection - Received ${topics.length} topics:`, topics);
 
       // Convert to CategoryItem format
       const result = topics.map((topic: any) => ({
@@ -103,6 +108,7 @@ class TopicDataService {
         this.cache.categories = {};
       }
       this.cache.categories[cacheKey] = result;
+      console.log(`TopicDataService.getTopicsBySection - Cached ${result.length} topics for ${cacheKey}`);
 
       return result;
     } catch (error) {
@@ -117,22 +123,41 @@ class TopicDataService {
    */
   async getTopicDetails(topicId: string): Promise<any> {
     try {
+      console.log(`TopicDataService.getTopicDetails - Called with topicId: ${topicId}`);
+
       // Extract the numeric ID from the topic-{id} format
-      const numericId = topicId.startsWith('topic-') ? topicId.replace('topic-', '') : topicId;
+      let numericId = topicId;
+      if (topicId.startsWith('topic-')) {
+        numericId = topicId.replace('topic-', '');
+      } else if (topicId.startsWith('header-')) {
+        // If it's a header ID, we need to find the corresponding topic ID
+        const headerNumber = parseInt(topicId.replace('header-', ''), 10);
+        console.log(`TopicDataService.getTopicDetails - This is a header ID: ${headerNumber}`);
+
+        // We need to find the topic ID for this header
+        // For now, let's just use the header ID as is and let the API handle it
+        numericId = topicId;
+        return null; // Headers should be handled by a different method
+      }
+
+      console.log(`TopicDataService.getTopicDetails - Using numericId: ${numericId}`);
 
       // Check cache first
       const cacheKey = `topic-details-${numericId}`;
       if (this.cache.categoryDetails[cacheKey]) {
+        console.log(`TopicDataService.getTopicDetails - Using cached data for ${cacheKey}`);
         return this.cache.categoryDetails[cacheKey];
       }
 
       // Fetch topic details from the API
+      console.log(`TopicDataService.getTopicDetails - Fetching from API: /api/topics/topic-details?topicId=${numericId}`);
       const response = await fetch(`/api/topics/topic-details?topicId=${numericId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch topic details: ${response.statusText}`);
       }
 
       const details = await response.json();
+      console.log(`TopicDataService.getTopicDetails - Received details:`, details);
 
       // Format the result for the UI
       const result = {
@@ -156,6 +181,7 @@ class TopicDataService {
 
       // Cache the result
       this.cache.categoryDetails[cacheKey] = result;
+      console.log(`TopicDataService.getTopicDetails - Cached result for ${cacheKey}`);
 
       return result;
     } catch (error) {

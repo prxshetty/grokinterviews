@@ -3,11 +3,21 @@
 import { useState, useEffect } from 'react';
 import { useTopicData } from '../components/TopicDataProvider';
 import TopicDataService from '@/services/TopicDataService';
-// Define our own types for the topics page
-import { Question } from '@/types/database';
+// Import types from database
 import ActivityProgress from '../components/ActivityProgress';
 import ProgressChart from '../components/ProgressChart';
 import TopicCategoryGrid from '../components/topic/TopicCategoryGrid';
+
+// Define Question interface if not already defined
+interface QuestionType {
+  id: number;
+  category_id: number;
+  question_text: string;
+  answer_text?: string;
+  keywords?: string[];
+  difficulty?: string;
+  created_at?: string;
+}
 
 // Main topics with their corresponding colors
 const mainTopics = [
@@ -28,7 +38,7 @@ type TopicItem = {
   id?: string;
   label: string;
   content?: string;
-  questions?: Question[];
+  questions?: QuestionType[];
   categoryId?: number;
   subtopics?: Record<string, TopicItem>;
 };
@@ -154,14 +164,70 @@ export default function TopicsPage() {
       if (categoryId.startsWith('topic-')) {
         console.log(`This is a topic: ${categoryId}`);
 
-        // Get topic details
-        const topicDetails = await TopicDataService.getTopicDetails(categoryId);
+        // Extract the numeric ID from the topic-{id} format
+        const numericId = categoryId.replace('topic-', '');
+        console.log(`Extracted numeric ID: ${numericId}`);
 
-        if (topicDetails) {
-          console.log(`Successfully loaded details for topic ${categoryId}`);
-          setCategoryDetails(topicDetails);
-        } else {
-          console.warn(`No details available for topic ${categoryId}`);
+        try {
+          // Fetch topic details directly from the API
+          console.log(`Fetching topic details from API: /api/topics/topic-details?topicId=${numericId}`);
+          const response = await fetch(`/api/topics/topic-details?topicId=${numericId}`);
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch topic details: ${response.statusText}`);
+          }
+
+          const details = await response.json();
+          console.log(`Successfully loaded details for topic ${numericId}:`, details);
+          console.log(`Topic has ${details.categories?.length || 0} categories`);
+
+          // Format the result for the UI
+          const formattedDetails: TopicItem = {
+            id: categoryId,
+            label: details.topic.name,
+            content: `Details for ${details.topic.name}`,
+            subtopics: {} as Record<string, TopicItem>
+          };
+
+          // Add each category as a subtopic
+          if (formattedDetails.subtopics && details.categories) {
+            if (details.categories.length === 0) {
+              console.log(`No categories found for topic ${details.topic.name}`);
+
+              // Add a placeholder subtopic for topics with no categories
+              formattedDetails.subtopics['no-categories'] = {
+                id: 'no-categories',
+                label: 'Content Coming Soon',
+                content: 'We are working on adding content for this topic. Please check back later.',
+                questions: []
+              };
+            } else {
+              details.categories.forEach((category: any, index: number) => {
+                const subtopicId = `category-${index}`;
+                if (formattedDetails.subtopics) {
+                  // Log the questions for debugging
+                  console.log(`Category ${category.name} (ID: ${category.id}) has ${category.questions?.length || 0} questions`);
+
+                  // Log the first question if available
+                  if (category.questions && category.questions.length > 0) {
+                    console.log(`First question: ${category.questions[0].question_text}`);
+                  }
+
+                  formattedDetails.subtopics[subtopicId] = {
+                    id: subtopicId,
+                    label: category.name,
+                    content: category.description || '',
+                    categoryId: category.id,
+                    questions: category.questions || []
+                  };
+                }
+              });
+            }
+          }
+
+          setCategoryDetails(formattedDetails);
+        } catch (error) {
+          console.error(`Error fetching topic details for ${numericId}:`, error);
           setCategoryDetails({
             label: 'Topic',
             content: 'Topic details not found.'
@@ -346,10 +412,36 @@ export default function TopicsPage() {
 
                   // Check if this subtopic has questions
                   const hasQuestions = typedListItem.questions && typedListItem.questions.length > 0;
+                  console.log(`Subtopic ${typedListItem.label} has questions: ${hasQuestions}`);
+                  if (hasQuestions) {
+                    console.log(`Number of questions: ${typedListItem.questions?.length}`);
+                  }
 
                   return (
                     <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      <div
+                        className="flex items-center py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        onClick={() => {
+                          // Toggle showing questions for this category
+                          const element = document.getElementById(`questions-${listId}`);
+                          if (element) {
+                            const isHidden = element.classList.contains('hidden');
+                            if (isHidden) {
+                              element.classList.remove('hidden');
+                              console.log(`Showing questions for ${typedListItem.label}`);
+                              // Log the questions for debugging
+                              if (typedListItem.questions) {
+                                console.log(`Questions for ${typedListItem.label}:`, typedListItem.questions);
+                              }
+                            } else {
+                              element.classList.add('hidden');
+                              console.log(`Hiding questions for ${typedListItem.label}`);
+                            }
+                          } else {
+                            console.error(`Could not find element with ID questions-${listId}`);
+                          }
+                        }}
+                      >
                         <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
                         <div className="flex-grow">
                           <h3 className="font-medium">{typedListItem.label}</h3>
@@ -366,20 +458,39 @@ export default function TopicsPage() {
 
                       {/* Display questions for this subtopic if available */}
                       {hasQuestions && (
-                        <div className="pl-16 pr-8 pb-4">
-                          {typedListItem.questions?.map((question: Question, qIndex: number) => (
-                            <div key={qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                              <div className="flex items-start justify-between mb-2">
-                                <h4 className="font-medium text-gray-900 dark:text-white">{question.question_text}</h4>
-                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
-                              </div>
-                              {question.answer_text && (
-                                <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
-                                  <p>{question.answer_text}</p>
+                        <div id={`questions-${listId}`} className="pl-16 pr-8 pb-4">
+                          {typedListItem.questions && typedListItem.questions.length > 0 ? (
+                            typedListItem.questions.map((question: QuestionType, qIndex: number) => {
+                              console.log(`Rendering question ${qIndex + 1}:`, question);
+                              return (
+                                <div key={qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <h4 className="font-medium text-gray-900 dark:text-white">
+                                      {question.question_text || 'Question text not available'}
+                                    </h4>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
+                                  </div>
+                                  <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
+                                    <p>{question.answer_text || 'No answer available yet.'}</p>
+                                  </div>
+                                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <span className="inline-block bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 mr-2">
+                                      {question.difficulty || 'unspecified'} difficulty
+                                    </span>
+                                    {question.keywords && question.keywords.length > 0 && (
+                                      <span className="inline-block">
+                                        Keywords: {question.keywords.join(', ')}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
+                              );
+                            })
+                          ) : (
+                            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                              <p>No questions available for this category yet.</p>
                             </div>
-                          ))}
+                          )}
                         </div>
                       )}
                     </div>
