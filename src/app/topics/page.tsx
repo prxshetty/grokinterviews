@@ -213,12 +213,21 @@ export default function TopicsPage() {
                     console.log(`First question: ${category.questions[0].question_text}`);
                   }
 
+                  // Ensure questions are in the expected format
+                  const processedQuestions = (category.questions || []).map((q: any) => ({
+                    ...q,
+                    question_text: q.question_text || 'Question text not available',
+                    answer_text: q.answer_text || '',
+                    difficulty: q.difficulty || 'beginner',
+                    keywords: q.keywords || []
+                  }));
+
                   formattedDetails.subtopics[subtopicId] = {
                     id: subtopicId,
                     label: category.name,
                     content: category.description || '',
                     categoryId: category.id,
-                    questions: category.questions || []
+                    questions: processedQuestions
                   };
                 }
               });
@@ -421,9 +430,12 @@ export default function TopicsPage() {
                     <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
                       <div
                         className="flex items-center py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                        onClick={() => {
+                        onClick={(event) => {
                           // Toggle showing questions for this category
-                          const element = document.getElementById(`questions-${listId}`);
+                          // Create a unique ID for the questions container
+                          const questionsId = `questions-${listId}`;
+                          const element = document.getElementById(questionsId);
+
                           if (element) {
                             const isHidden = element.classList.contains('hidden');
                             if (isHidden) {
@@ -438,7 +450,50 @@ export default function TopicsPage() {
                               console.log(`Hiding questions for ${typedListItem.label}`);
                             }
                           } else {
-                            console.error(`Could not find element with ID questions-${listId}`);
+                            // If the element doesn't exist yet, create it
+                            console.log(`Creating questions container for ${typedListItem.label}`);
+
+                            // Create a new div for the questions
+                            const questionsContainer = document.createElement('div');
+                            questionsContainer.id = questionsId;
+                            questionsContainer.className = 'pl-16 pr-8 pb-4';
+
+                            // Insert it after the current div
+                            const currentDiv = (event.target as HTMLElement).closest('.border-b');
+                            if (currentDiv && currentDiv.parentNode) {
+                              currentDiv.parentNode.insertBefore(questionsContainer, currentDiv.nextSibling);
+
+                              // Render the questions
+                              if (typedListItem.questions && typedListItem.questions.length > 0) {
+                                // We'll use a simple approach to render the questions
+                                typedListItem.questions.forEach((question, qIndex) => {
+                                  const questionDiv = document.createElement('div');
+                                  questionDiv.className = 'mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700';
+
+                                  const questionHeader = document.createElement('div');
+                                  questionHeader.className = 'flex items-start justify-between mb-2';
+
+                                  const questionTitle = document.createElement('h4');
+                                  questionTitle.className = 'font-medium text-gray-900 dark:text-white';
+                                  questionTitle.textContent = question.question_text || 'Question text not available';
+
+                                  const questionNumber = document.createElement('span');
+                                  questionNumber.className = 'text-xs text-gray-500 dark:text-gray-400 ml-2';
+                                  questionNumber.textContent = `Q${qIndex + 1}`;
+
+                                  questionHeader.appendChild(questionTitle);
+                                  questionHeader.appendChild(questionNumber);
+                                  questionDiv.appendChild(questionHeader);
+
+                                  questionsContainer.appendChild(questionDiv);
+                                });
+                              } else {
+                                const noQuestionsDiv = document.createElement('div');
+                                noQuestionsDiv.className = 'text-gray-500 dark:text-gray-400 text-sm';
+                                noQuestionsDiv.textContent = 'No questions available for this category.';
+                                questionsContainer.appendChild(noQuestionsDiv);
+                              }
+                            }
                           }
                         }}
                       >
@@ -458,7 +513,7 @@ export default function TopicsPage() {
 
                       {/* Display questions for this subtopic if available */}
                       {hasQuestions && (
-                        <div id={`questions-${listId}`} className="pl-16 pr-8 pb-4">
+                        <div id={`questions-${listId}`} className="pl-16 pr-8 pb-4 hidden">
                           {typedListItem.questions && typedListItem.questions.length > 0 ? (
                             typedListItem.questions.map((question: QuestionType, qIndex: number) => {
                               console.log(`Rendering question ${qIndex + 1}:`, question);
