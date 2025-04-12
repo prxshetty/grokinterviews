@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('domain', domain)
       .eq('section_name', sectionName)
-      .order('created_at', { ascending: false }); // Sort by created_at in descending order (newest first)
+      .order('created_at', { ascending: true }); // Sort by created_at in ascending order (oldest first)
 
     // Log the number of results found
     console.log(`API - Found ${topics?.length || 0} topics for section: ${sectionName}`);
