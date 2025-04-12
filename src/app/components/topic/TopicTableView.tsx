@@ -151,7 +151,8 @@ export default function TopicTableView({
           {/* Header row */}
           <div className={styles.headerRow}>
             <div className={styles.headerCell}>↓ Topic</div>
-            <div className={styles.headerCell}>↓ Action</div>
+            <div className={styles.headerCell}>↓ Topic</div>
+            <div className={styles.headerCell}>↓ Topic</div>
           </div>
 
           {/* Loading state */}
@@ -172,20 +173,29 @@ export default function TopicTableView({
               </p>
             </div>
           ) : (
-            /* Section header rows in a two-column layout with interleaved items */
-            <div className={styles.twoColumnGrid}>
-              {/* Left column - even indexed items (0, 2, 4, ...) */}
+            /* Section header rows in a three-column layout with interleaved items */
+            <div className={styles.threeColumnGrid}>
+              {/* First column - items with index % 3 === 0 (0, 3, 6, ...) */}
               <div className={styles.column}>
-                {filteredHeaders.filter((_, index) => index % 2 === 0).map((header) => (
+                {filteredHeaders.filter((_, index) => index % 3 === 0).map((header) => (
                   <div key={header.id}>
                     {renderHeaderRow(header)}
                   </div>
                 ))}
               </div>
 
-              {/* Right column - odd indexed items (1, 3, 5, ...) */}
+              {/* Second column - items with index % 3 === 1 (1, 4, 7, ...) */}
               <div className={styles.column}>
-                {filteredHeaders.filter((_, index) => index % 2 === 1).map((header) => (
+                {filteredHeaders.filter((_, index) => index % 3 === 1).map((header) => (
+                  <div key={header.id}>
+                    {renderHeaderRow(header)}
+                  </div>
+                ))}
+              </div>
+
+              {/* Third column - items with index % 3 === 2 (2, 5, 8, ...) */}
+              <div className={styles.column}>
+                {filteredHeaders.filter((_, index) => index % 3 === 2).map((header) => (
                   <div key={header.id}>
                     {renderHeaderRow(header)}
                   </div>
