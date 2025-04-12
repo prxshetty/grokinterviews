@@ -1,12 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useTopicData } from '../components/TopicDataProvider';
+import { useTopicData, TopicCategoryGrid, ActivityProgress, ProgressChart } from '../components';
 import TopicDataService from '@/services/TopicDataService';
 // Import types from database
-import ActivityProgress from '../components/ActivityProgress';
-import ProgressChart from '../components/ProgressChart';
-import TopicCategoryGrid from '../components/topic/TopicCategoryGrid';
 
 // Define Question interface if not already defined
 interface QuestionType {

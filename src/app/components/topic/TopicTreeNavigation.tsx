@@ -2,7 +2,7 @@
 
 import React from 'react';
 import styles from './TopicTreeNavigation.module.css';
-import MarkdownHeaderTree from './MarkdownHeaderTree';
+import { MarkdownHeaderTree } from '../content';
 
 interface TopicTreeNavigationProps {
   selectedMainTopic: string | null;

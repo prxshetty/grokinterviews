@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic';
 
 // Import components with no SSR since they use client-side features
 const TopicCarousel = dynamic(() => import('./TopicCarousel'), { ssr: false });
-const CompanyList = dynamic(() => import('./CompanyList'), { ssr: false });
-const ProjectsSection = dynamic(() => import('./ProjectsSection'), { ssr: false });
+const CompanyList = dynamic(() => import('../marketing/CompanyList'), { ssr: false });
+const ProjectsSection = dynamic(() => import('../marketing/ProjectsSection'), { ssr: false });
 
 export default function TopicCarouselWrapper() {
   return (

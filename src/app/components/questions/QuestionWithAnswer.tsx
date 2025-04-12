@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { logQuestionView } from '../utils/activity';
+import { logQuestionView } from '../../utils/activity';
 
 // Define mapping from our topic IDs to numeric database IDs
 const TOPIC_ID_MAP: Record<string, number> = {
@@ -12,7 +12,7 @@ const TOPIC_ID_MAP: Record<string, number> = {
   "webdev": 3,
   "system-design": 4,
   "dsa": 5,
-  
+
   // ML Topics
   "ml-foundations": 1,
   "ml-core-concepts": 1,
@@ -33,30 +33,30 @@ const TOPIC_ID_MAP: Record<string, number> = {
   "ml-decision-trees": 12,
   "ml-naive-bayes": 13,
   "ml-ensemble": 14,
-  
+
   "ml-model-evaluation": 15,
   "ml-validation": 15,
   "ml-metrics": 15,
-  
+
   "ml-deep-learning": 16,
   "ml-transfer-learning": 16,
   "ml-gans": 16,
-  
+
   "ml-nlp": 17,
   "ml-word-embeddings": 17,
   "ml-llm": 17,
-  
+
   "ml-reinforcement": 5, // Map to supervised learning as fallback
   "ml-time-series": 18,
   "ml-practical": 20,
-  
+
   // AI Topics (will map to related ML topics where applicable)
   "ai-foundations": 1,
   "ai-nlp": 17,
   "ai-cv": 16,
   "ai-rl": 5,
   "ai-ethics": 15,
-  
+
   // Other topics will fall back to ML foundations if no specific mapping
 };
 
@@ -98,25 +98,25 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
   }, []);
 
   // Convert string topic ID to numeric ID if needed
-  const numericTopicId = typeof topicId === 'string' 
+  const numericTopicId = typeof topicId === 'string'
     ? TOPIC_ID_MAP[topicId] || 1
     : topicId;
 
   // Fetch questions for the selected topic
   useEffect(() => {
     if (!mounted) return;
-    
+
     const fetchQuestions = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/questions?topicId=${numericTopicId}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch questions');
         }
-        
+
         const data = await response.json();
         setQuestions(data);
         setExpandedQuestionId(null);
@@ -136,20 +136,20 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
   const fetchContentForQuestion = async (questionId: number) => {
     // If we already have the content, no need to fetch again
     if (contentMap[questionId]) return;
-    
+
     try {
       setLoadingContentId(questionId);
       const response = await fetch(`/api/content?questionId=${questionId}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch content');
       }
-      
+
       const data = await response.json();
 
       // Process the content to remove "Related Questions" and format properly
       const processedData = processContent(data);
-      
+
       setContentMap(prevMap => ({
         ...prevMap,
         [questionId]: processedData
@@ -167,7 +167,7 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
       if (item.content_type === 'text' && item.content) {
         // Remove "Related Questions" section if present
         let content = item.content;
-        
+
         // Check for variations of "Related Questions"
         const relatedQuestionsPatterns = [
           /^Related Questions:[\s\S]*?\n\n/i,
@@ -178,7 +178,7 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
           /^Additional Questions:[\s\S]*?\n\n/i,
           /^Other questions:[\s\S]*?\n\n/i
         ];
-        
+
         for (const pattern of relatedQuestionsPatterns) {
           content = content.replace(pattern, '');
         }
@@ -194,10 +194,10 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
         for (const pattern of midTextPatterns) {
           content = content.replace(pattern, '\n\n');
         }
-        
+
         // Enhance text with proper heading formatting and SVG handling
         content = enhanceTextFormatting(content);
-        
+
         return { ...item, content };
       } else if (item.content_type === 'image' && item.content && item.content.includes('<svg')) {
         // Handle SVG content properly
@@ -237,7 +237,7 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
   const toggleQuestion = async (questionId: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (expandedQuestionId === questionId) {
       setExpandedQuestionId(null);
     } else {
@@ -289,15 +289,15 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
   return (
     <div className="mt-8 font-mono">
       <h2 className="text-xl mb-4 text-gray-800 dark:text-white">Questions ({questions.length})</h2>
-      
+
       <div className="space-y-4">
         {questions.map((question) => (
           <div key={`question-${question.question_id}`} className="border-b border-gray-200 dark:border-gray-700 pb-2">
-            <div 
+            <div
               onClick={(e) => toggleQuestion(question.question_id, e)}
               className={`cursor-pointer py-2 ${
-                expandedQuestionId === question.question_id 
-                  ? 'text-gray-900 dark:text-white font-bold' 
+                expandedQuestionId === question.question_id
+                  ? 'text-gray-900 dark:text-white font-bold'
                   : 'text-gray-800 dark:text-gray-200'
               }`}
             >
@@ -310,7 +310,7 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
               )}
               {question.title}
             </div>
-            
+
             {expandedQuestionId === question.question_id && (
               <div className="py-4 pl-6 text-gray-800 dark:text-gray-200">
                 {contentMap[question.question_id] ? (
@@ -324,12 +324,12 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
                             </ReactMarkdown>
                           </div>
                         )}
-                        
+
                         {item.content_type === 'image' && item.media_url && (
                           <div className="my-4">
-                            <img 
-                              src={item.media_url} 
-                              alt={item.caption || 'Image'} 
+                            <img
+                              src={item.media_url}
+                              alt={item.caption || 'Image'}
                               className="max-w-full"
                               loading="lazy"
                             />
@@ -341,8 +341,8 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
 
                         {item.content_type === 'svg' && (item as any).svg_content && (
                           <div className="my-4 flex justify-center">
-                            <div 
-                              className="max-w-full" 
+                            <div
+                              className="max-w-full"
                               dangerouslySetInnerHTML={{ __html: (item as any).svg_content }}
                             />
                           </div>
@@ -379,4 +379,4 @@ export default function QuestionWithAnswer({ topicId }: QuestionWithAnswerProps)
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import RotatingText from './ui/RotatingText';
+import RotatingText from './RotatingText';
 
 // Array of possible headlines
 const headlines = [

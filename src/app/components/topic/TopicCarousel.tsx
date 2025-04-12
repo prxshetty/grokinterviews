@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { quizTopics } from '@/data/quizTopics';
-import TopicCard from './topic/TopicCard';
+import TopicCard from './TopicCard';
 
 export default function TopicCarousel() {
   const [activeIndex, setActiveIndex] = useState(0); // Start with first card active
