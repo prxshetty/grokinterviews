@@ -130,16 +130,17 @@ export default function TopicCategoryGrid({
   console.log(`TopicCategoryGrid - Using ${useHeaders ? 'section headers' : 'categories'} for display`);
   console.log(`TopicCategoryGrid - Display items:`, displayItems);
 
-  // Split items into two columns for better layout
-  const halfLength = Math.ceil(displayItems.length / 2);
-  const firstColumn = displayItems.slice(0, halfLength);
-  const secondColumn = displayItems.slice(halfLength);
+  // Split items into three columns for better layout
+  const itemsPerColumn = Math.ceil(displayItems.length / 3);
+  const firstColumn = displayItems.slice(0, itemsPerColumn);
+  const secondColumn = displayItems.slice(itemsPerColumn, itemsPerColumn * 2);
+  const thirdColumn = displayItems.slice(itemsPerColumn * 2);
 
   // Show loading state
   if (isLoadingHeaders) {
     return (
       <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
-        <div className="col-span-2 text-center py-4">
+        <div className="col-span-3 text-center py-4">
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
           <p className="mt-2 text-sm text-gray-500">Loading topics...</p>
         </div>
@@ -151,7 +152,7 @@ export default function TopicCategoryGrid({
   if (headerError && useHeaders) {
     return (
       <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
-        <div className="col-span-2 text-center py-4 text-red-500">
+        <div className="col-span-3 text-center py-4 text-red-500">
           {headerError}
         </div>
       </div>
@@ -192,7 +193,28 @@ export default function TopicCategoryGrid({
                 handleCategorySelect(item.id)
               }
             >
-              <div className={styles.categoryNumber}>{formatIndex(index + halfLength)}</div>
+              <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn)}</div>
+              <div className={styles.categoryLabel}>{item.label}</div>
+              <div className={styles.expandIcon}>
+                {expandedCategory === item.id ? '×' : '+'}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Third column */}
+      <div>
+        {thirdColumn.map((item, index) => (
+          <div key={item.id}>
+            <div
+              className={`${styles.categoryRow} ${selectedCategory === item.id ? styles.selected : ''}`}
+              onClick={() => useHeaders ?
+                handleHeaderSelect(parseInt(item.id.replace('header-', ''))) :
+                handleCategorySelect(item.id)
+              }
+            >
+              <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn * 2)}</div>
               <div className={styles.categoryLabel}>{item.label}</div>
               <div className={styles.expandIcon}>
                 {expandedCategory === item.id ? '×' : '+'}
