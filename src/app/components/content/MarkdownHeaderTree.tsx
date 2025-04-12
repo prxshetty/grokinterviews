@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import styles from './TopicTreeNavigation.module.css';
+import styles from '../topic/TopicTreeNavigation.module.css';
 
 // Create a Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';

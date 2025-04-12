@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import TopicNavWrapper from '../topic/TopicNavWrapper';
+import { TopicNavWrapper } from '../topic';
 
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);

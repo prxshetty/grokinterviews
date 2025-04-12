@@ -10,7 +10,8 @@ interface TopicTableViewProps {
 
 interface SectionHeader {
   id: number;
-  name: string; // This is mapped from section_name in the API
+  name: string;
+  created_at?: string; // Optional created_at timestamp
 }
 
 export default function TopicTableView({
@@ -34,7 +35,7 @@ export default function TopicTableView({
         setIsLoading(true);
         setError(null);
 
-        // Fetch section headers from topics table for the domain (e.g., 'ml')
+        // Fetch section headers for the domain (e.g., 'ml')
         const response = await fetch(`/api/section-headers?domain=${selectedMainTopic}`);
 
         if (!response.ok) {
@@ -42,8 +43,8 @@ export default function TopicTableView({
         }
 
         const data = await response.json();
-        console.log(`TopicTableView - Received ${data.headers?.length || 0} section headers:`, data.headers);
-        setSectionHeaders(data.headers || []);
+        console.log(`TopicTableView - Received ${data?.length || 0} section headers:`, data);
+        setSectionHeaders(data || []);
       } catch (err) {
         console.error('Error fetching section headers:', err);
         setError('Failed to load section headers');
@@ -77,9 +78,35 @@ export default function TopicTableView({
         header.name.toLowerCase().includes(searchValue.toLowerCase())
       );
 
+  // Format date to a readable string
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Unknown date';
+
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'Unknown date';
+
+      // Format as relative time if recent (within last 30 days)
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 1) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+
+      // Otherwise format as date
+      return date.toLocaleDateString();
+    } catch (e) {
+      return 'Unknown date';
+    }
+  };
+
   // Render a section header row
   const renderHeaderRow = (header: SectionHeader) => {
     const isSelected = selectedTopic === `header-${header.id}`;
+    const dateAdded = formatDate(header.created_at);
 
     return (
       <div
@@ -91,6 +118,9 @@ export default function TopicTableView({
             <span>→</span>
           </div>
           <span className={styles.topicLabel}>{header.name}</span>
+          {header.created_at && (
+            <span className={styles.dateLabel}>Added: {dateAdded}</span>
+          )}
         </div>
         <div className={styles.categoryProject}>
           <span className={styles.topicLabel}>View Content</span>

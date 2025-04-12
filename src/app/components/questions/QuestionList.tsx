@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 
 interface Question {
@@ -11,10 +13,10 @@ interface QuestionListProps {
   selectedQuestionId: number | null;
 }
 
-export default function QuestionList({ 
-  topicId, 
-  onSelectQuestion, 
-  selectedQuestionId 
+export default function QuestionList({
+  topicId,
+  onSelectQuestion,
+  selectedQuestionId
 }: QuestionListProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,17 +25,17 @@ export default function QuestionList({
   useEffect(() => {
     const fetchQuestions = async () => {
       if (!topicId) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/questions?topicId=${topicId}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch questions');
         }
-        
+
         const data = await response.json();
         setQuestions(data);
       } catch (err) {
@@ -104,4 +106,4 @@ export default function QuestionList({
       </div>
     </div>
   );
-} 
+}

@@ -1,10 +1,6 @@
 import { loadAllTopicTrees } from '@/utils/markdownParser';
 import Link from 'next/link';
-import StatsSection from './components/StatsSection';
-import TopicCarousel from './components/TopicCarousel';
-import CompanyList from './components/CompanyList';
-import ProjectsSection from './components/ProjectsSection';
-import RandomHeadline from './components/RandomHeadline';
+import { StatsSection, TopicCarousel, CompanyList, ProjectsSection, RandomHeadline } from './components';
 
 export default async function Home() {
   // Load topic data for future use

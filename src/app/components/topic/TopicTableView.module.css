@@ -132,6 +132,14 @@
   font-size: 0.9rem;
 }
 
+.dateLabel {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #888;
+  margin-left: 1rem;
+  font-style: italic;
+}
+
 /* Selected state */
 .categoryRow.selected {
   background-color: #333;

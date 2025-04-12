@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import TopicDataProvider from './components/TopicDataProvider';
-import Footer from './components/Footer';
+import { TopicDataProvider, Footer, MainNavigation } from './components';
 import { janelotus, playfairDisplay } from './fonts';
-import MainNavigation from './components/navigation/MainNavigation';
 
 
 export const metadata: Metadata = {

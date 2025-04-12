@@ -69,10 +69,10 @@ export default function TopicCategoryGrid({
         }
 
         const data = await response.json();
-        console.log(`TopicCategoryGrid - Received ${data?.length || 0} section headers:`, data);
+        console.log(`TopicCategoryGrid - Received ${data.headers?.length || 0} section headers:`, data.headers);
 
-        if (data && data.length > 0) {
-          setSectionHeaders(data);
+        if (data.headers && data.headers.length > 0) {
+          setSectionHeaders(data.headers);
           setUseHeaders(true);
         } else {
           // If no section headers, fall back to categories
