@@ -34,14 +34,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get distinct section names to avoid duplicates while preserving order
-    const distinctSections = [];
+    // Get distinct section names and create a map to track them with their created_at timestamps
+    const sectionMap = new Map();
     const sectionNames = new Set();
 
-    // Create a map to track the first occurrence of each section name with its created_at timestamp
-    const sectionMap = new Map();
-
-    // First pass: collect all section names with their created_at timestamps
+    // Collect all unique section names with their created_at timestamps
     sectionData?.forEach(item => {
       if (item.section_name && !sectionNames.has(item.section_name)) {
         sectionNames.add(item.section_name);
@@ -52,39 +49,35 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Convert the map to an array and sort by created_at (oldest first)
-    const sortedSections = Array.from(sectionMap.values())
+    // Convert the map to an array, sort by created_at (oldest first), and add sequential IDs
+    const formattedSections = Array.from(sectionMap.values())
       .sort((a, b) => {
         // If created_at is null, treat it as newest
         if (!a.created_at) return -1;
         if (!b.created_at) return 1;
         // Sort by created_at in ascending order (oldest first)
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      });
-
-    // Create the final array with sequential IDs
-    sortedSections.forEach((section, index) => {
-      distinctSections.push({
+      })
+      .map((section, index) => ({
         id: index + 1, // Generate sequential IDs
         name: section.name,
         created_at: section.created_at // Include created_at in the response for debugging
-      });
-    });
+      }));
 
-    console.log(`API - Returning ${distinctSections.length} distinct section names for domain: ${domain}`);
+    console.log(`API - Returning ${formattedSections.length} distinct section names for domain: ${domain}`);
 
     return NextResponse.json(
-      distinctSections,
+      formattedSections,
       {
         headers: {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
         },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in section headers API route:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', details: error?.message || 'Unknown error' },
       { status: 500 }
     );
   }
