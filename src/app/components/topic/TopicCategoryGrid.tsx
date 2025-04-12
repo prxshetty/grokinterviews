@@ -123,12 +123,17 @@ export default function TopicCategoryGrid({
   };
 
   // Determine which data to use
-  const displayItems = useHeaders ?
+  let displayItems = useHeaders ?
     sectionHeaders.map(header => ({ id: `header-${header.id}`, label: header.name })) :
     categories;
 
+  // Reverse the order of the items to show Foundations first and Emerging Trends last
+  if (useHeaders) {
+    displayItems = [...displayItems].reverse();
+  }
+
   console.log(`TopicCategoryGrid - Using ${useHeaders ? 'section headers' : 'categories'} for display`);
-  console.log(`TopicCategoryGrid - Display items:`, displayItems);
+  console.log(`TopicCategoryGrid - Display items after reordering:`, displayItems);
 
   // Split items into three columns for better layout
   const itemsPerColumn = Math.ceil(displayItems.length / 3);
