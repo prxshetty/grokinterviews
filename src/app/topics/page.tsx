@@ -323,10 +323,16 @@ export default function TopicsPage() {
 
       // If the category has subtopics, render them in the new format
       if (hasRealSubtopics) {
-        const listItems = Object.entries(categoryDetails.subtopics);
+        // Get the subtopics as an array of entries
+        let listItems = Object.entries(categoryDetails.subtopics);
 
         // Check if this is a section header (format: header-123)
         const isSectionHeader = categoryId.startsWith('header-');
+
+        // Reverse the order of subtopics for section headers to show them in the correct order
+        if (isSectionHeader) {
+          listItems = listItems.reverse();
+        }
 
         return (
           <div className="w-full animate-fadeIn">
