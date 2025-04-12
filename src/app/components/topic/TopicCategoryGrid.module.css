@@ -99,19 +99,19 @@
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-/* Two-column layout for larger screens */
+/* Three-column layout for larger screens */
 @media (min-width: 768px) {
   .gridContainer {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1px;
   }
 
-  .gridContainer > div:nth-child(odd) {
+  .gridContainer > div:not(:last-child) {
     border-right: 1px solid #e0e0e0;
   }
 
-  .darkMode .gridContainer > div:nth-child(odd) {
+  .darkMode .gridContainer > div:not(:last-child) {
     border-right: 1px solid #333;
   }
 }

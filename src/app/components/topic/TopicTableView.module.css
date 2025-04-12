@@ -44,10 +44,10 @@
   color: #555;
 }
 
-/* Header row with Topic and Action */
+/* Header row with Topics */
 .headerRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   width: 100%;
   border-bottom: 1px solid #333;
   border-top: 1px solid #333;
@@ -157,10 +157,10 @@
   color: #ff6b6b;
 }
 
-/* Two-column grid layout */
-.twoColumnGrid {
+/* Three-column grid layout */
+.threeColumnGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   width: 100%;
   gap: 0;
 }
