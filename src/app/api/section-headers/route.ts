@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .from('topics')
       .select('section_name, created_at')
       .eq('domain', domain)
-      .order('created_at', { ascending: false }); // Sort by created_at in descending order (newest first)
+      .order('created_at', { ascending: true }); // Sort by created_at in ascending order (oldest first)
 
     // Log the number of results found
     console.log(`API - Found ${sectionData?.length || 0} section names for domain: ${domain}`);
@@ -52,13 +52,14 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Convert the map to an array and sort by created_at (newest first)
+    // Convert the map to an array and sort by created_at (oldest first)
     const sortedSections = Array.from(sectionMap.values())
       .sort((a, b) => {
-        // If created_at is null, treat it as oldest
-        if (!a.created_at) return 1;
-        if (!b.created_at) return -1;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        // If created_at is null, treat it as newest
+        if (!a.created_at) return -1;
+        if (!b.created_at) return 1;
+        // Sort by created_at in ascending order (oldest first)
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
 
     // Create the final array with sequential IDs
