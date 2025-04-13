@@ -38,6 +38,7 @@ type TopicItem = {
   questions?: QuestionType[];
   categoryId?: number;
   subtopics?: Record<string, TopicItem>;
+  isGenerated?: boolean;
 };
 
 export default function TopicsPage() {
@@ -47,6 +48,7 @@ export default function TopicsPage() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryDetails, setCategoryDetails] = useState<any>(null);
   const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
+
   const { topicData } = useTopicData();
 
   const handleTopicClick = async (topicId: string) => {
@@ -199,8 +201,9 @@ export default function TopicsPage() {
                 questions: []
               };
             } else {
-              details.categories.forEach((category: any, index: number) => {
-                const subtopicId = `category-${index}`;
+              details.categories.forEach((category: any) => {
+                // Use the actual category ID from the API response
+                const subtopicId = `category-${category.id}`;
                 if (formattedDetails.subtopics) {
                   // Log the questions for debugging
                   console.log(`Category ${category.name} (ID: ${category.id}) has ${category.questions?.length || 0} questions`);
@@ -224,8 +227,11 @@ export default function TopicsPage() {
                     label: category.name,
                     content: category.description || '',
                     categoryId: category.id,
-                    questions: processedQuestions
+                    questions: processedQuestions,
+                    isGenerated: false // Don't mark any categories as generated
                   };
+
+                  console.log(`Added category ${category.name} with ID ${category.id} and ${processedQuestions.length} questions`);
                 }
               });
             }
@@ -286,7 +292,7 @@ export default function TopicsPage() {
       return (
         <div className="w-full space-y-3 animate-fadeIn flex justify-center items-center py-12">
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500 mr-3"></div>
-          <p className="text-sm text-gray-500">Loading content...</p>
+          <p className="text-sm text-gray-500">Loading questions...</p>
         </div>
       );
     }
@@ -321,18 +327,13 @@ export default function TopicsPage() {
         console.log(`Subtopics: ${Object.keys(categoryDetails.subtopics).join(', ')}`);
       }
 
-      // If the category has subtopics, render them in the new format
+      // If the category has subtopics, render them as questions
       if (hasRealSubtopics) {
         // Get the subtopics as an array of entries
         let listItems = Object.entries(categoryDetails.subtopics);
 
         // Check if this is a section header (format: header-123)
         const isSectionHeader = categoryId.startsWith('header-');
-
-        // Reverse the order of subtopics for section headers to show them in the correct order
-        if (isSectionHeader) {
-          listItems = listItems.reverse();
-        }
 
         return (
           <div className="w-full animate-fadeIn">
@@ -422,135 +423,52 @@ export default function TopicsPage() {
                   const itemNumber = listIndex + 1;
                   const formattedNumber = String(itemNumber).padStart(2, '0');
 
-                  // Check if this subtopic has questions
-                  const hasQuestions = typedListItem.questions && typedListItem.questions.length > 0;
-                  console.log(`Subtopic ${typedListItem.label} has questions: ${hasQuestions}`);
-                  if (hasQuestions) {
-                    console.log(`Number of questions: ${typedListItem.questions?.length}`);
-                  }
+                  // Display questions for this category
 
                   return (
-                    <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
-                      <div
-                        className="flex items-center py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                        onClick={(event) => {
-                          // Toggle showing questions for this category
-                          // Create a unique ID for the questions container
-                          const questionsId = `questions-${listId}`;
-                          const element = document.getElementById(questionsId);
-
-                          if (element) {
-                            const isHidden = element.classList.contains('hidden');
-                            if (isHidden) {
-                              element.classList.remove('hidden');
-                              console.log(`Showing questions for ${typedListItem.label}`);
-                              // Log the questions for debugging
-                              if (typedListItem.questions) {
-                                console.log(`Questions for ${typedListItem.label}:`, typedListItem.questions);
-                              }
-                            } else {
-                              element.classList.add('hidden');
-                              console.log(`Hiding questions for ${typedListItem.label}`);
-                            }
-                          } else {
-                            // If the element doesn't exist yet, create it
-                            console.log(`Creating questions container for ${typedListItem.label}`);
-
-                            // Create a new div for the questions
-                            const questionsContainer = document.createElement('div');
-                            questionsContainer.id = questionsId;
-                            questionsContainer.className = 'pl-16 pr-8 pb-4';
-
-                            // Insert it after the current div
-                            const currentDiv = (event.target as HTMLElement).closest('.border-b');
-                            if (currentDiv && currentDiv.parentNode) {
-                              currentDiv.parentNode.insertBefore(questionsContainer, currentDiv.nextSibling);
-
-                              // Render the questions
-                              if (typedListItem.questions && typedListItem.questions.length > 0) {
-                                // We'll use a simple approach to render the questions
-                                typedListItem.questions.forEach((question, qIndex) => {
-                                  const questionDiv = document.createElement('div');
-                                  questionDiv.className = 'mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700';
-
-                                  const questionHeader = document.createElement('div');
-                                  questionHeader.className = 'flex items-start justify-between mb-2';
-
-                                  const questionTitle = document.createElement('h4');
-                                  questionTitle.className = 'font-medium text-gray-900 dark:text-white';
-                                  questionTitle.textContent = question.question_text || 'Question text not available';
-
-                                  const questionNumber = document.createElement('span');
-                                  questionNumber.className = 'text-xs text-gray-500 dark:text-gray-400 ml-2';
-                                  questionNumber.textContent = `Q${qIndex + 1}`;
-
-                                  questionHeader.appendChild(questionTitle);
-                                  questionHeader.appendChild(questionNumber);
-                                  questionDiv.appendChild(questionHeader);
-
-                                  questionsContainer.appendChild(questionDiv);
-                                });
-                              } else {
-                                const noQuestionsDiv = document.createElement('div');
-                                noQuestionsDiv.className = 'text-gray-500 dark:text-gray-400 text-sm';
-                                noQuestionsDiv.textContent = 'No questions available for this category.';
-                                questionsContainer.appendChild(noQuestionsDiv);
-                              }
-                            }
-                          }
-                        }}
-                      >
-                        <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
+                    <div key={listId} className="mb-8">
+                      <div className="flex items-center py-4 bg-gray-50 dark:bg-gray-800 mb-4 rounded-t-lg">
+                        <div className="w-16 text-gray-400 text-2xl font-light pl-4">{formattedNumber}</div>
                         <div className="flex-grow">
                           <h3 className="font-medium">{typedListItem.label}</h3>
-                          {hasQuestions && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              {typedListItem.questions?.length} question{typedListItem.questions?.length !== 1 ? 's' : ''}
-                            </p>
-                          )}
-                        </div>
-                        <div className="w-8 text-center text-gray-400">
-                          {hasQuestions ? '+' : '•'}
                         </div>
                       </div>
 
-                      {/* Display questions for this subtopic if available */}
-                      {hasQuestions && (
-                        <div id={`questions-${listId}`} className="pl-16 pr-8 pb-4 hidden">
-                          {typedListItem.questions && typedListItem.questions.length > 0 ? (
-                            typedListItem.questions.map((question: QuestionType, qIndex: number) => {
-                              console.log(`Rendering question ${qIndex + 1}:`, question);
-                              return (
-                                <div key={qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <h4 className="font-medium text-gray-900 dark:text-white">
-                                      {question.question_text || 'Question text not available'}
-                                    </h4>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
-                                  </div>
-                                  <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
-                                    <p>{question.answer_text || 'No answer available yet.'}</p>
-                                  </div>
-                                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                    <span className="inline-block bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 mr-2">
-                                      {question.difficulty || 'unspecified'} difficulty
-                                    </span>
-                                    {question.keywords && question.keywords.length > 0 && (
-                                      <span className="inline-block">
-                                        Keywords: {question.keywords.join(', ')}
-                                      </span>
-                                    )}
-                                  </div>
+                      {/* Display questions directly without hiding them */}
+                      <div className="pl-8 pr-8 pb-4">
+                        {typedListItem.questions && typedListItem.questions.length > 0 ? (
+                          typedListItem.questions.map((question: QuestionType, qIndex: number) => {
+                            console.log(`Rendering question ${qIndex + 1}:`, question);
+                            return (
+                              <div key={question.id || qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="font-medium text-gray-900 dark:text-white">
+                                    {question.question_text || 'Question text not available'}
+                                  </h4>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
                                 </div>
-                              );
-                            })
-                          ) : (
-                            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                              <p>No questions available for this category yet.</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                                <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
+                                  <p>{question.answer_text || 'No answer available yet.'}</p>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <span className="inline-block bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 mr-2">
+                                    {question.difficulty || 'unspecified'} difficulty
+                                  </span>
+                                  {question.keywords && question.keywords.length > 0 && (
+                                    <span className="inline-block">
+                                      Keywords: {Array.isArray(question.keywords) ? question.keywords.join(', ') : question.keywords}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                            <p>No questions available for this category yet.</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -760,21 +678,41 @@ export default function TopicsPage() {
                         <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
                         <p className="mt-2 text-sm text-gray-500">Loading categories...</p>
                       </div>
-                    ) : selectedCategory === null ? (
-                      // Show all main categories when no specific category is selected
-                      <TopicCategoryGrid
-                        categories={topicCategories}
-                        onSelectCategory={handleCategorySelect}
-                        topicId={selectedTopic} // Pass the selected topic ID
-                      />
                     ) : (
-                      // Show detailed view for the selected category
-                      <div className="w-full animate-fadeIn">
-                        {/* Content based on selected category */}
-                        {renderCategoryContent(selectedCategory)}
+                      // Always show the category grid for selection, but collapse it when a category is selected
+                      <div className={`w-full ${selectedCategory ? 'mb-8' : ''}`}>
+                        {selectedCategory === null ? (
+                          // Show full grid when no category is selected
+                          <TopicCategoryGrid
+                            categories={topicCategories}
+                            onSelectCategory={handleCategorySelect}
+                            topicId={selectedTopic} // Pass the selected topic ID
+                          />
+                        ) : (
+                          // Show a collapsed version when a category is selected
+                          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6 flex justify-between items-center">
+                            <div>
+                              <h3 className="font-medium">Selected Category: {topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Category'}</h3>
+                            </div>
+                            <button
+                              onClick={handleBackToMainCategories}
+                              className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1"
+                            >
+                              Change Category
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
+
+                  {/* Display questions below the category grid when a category is selected */}
+                  {selectedCategory && !loadingCategories && (
+                    <div className="w-full animate-fadeIn mt-4">
+                      {/* Content based on selected category */}
+                      {renderCategoryContent(selectedCategory)}
+                    </div>
+                  )}
                 </div>
               ) : (
                 // Show metadata grid with cards that match theme colors and appear as one row divided into 3 columns
@@ -850,33 +788,8 @@ export default function TopicsPage() {
                     : 'Status'}
                 </h1>
 
-                {/* Display Q&A content based on selected topic/category */}
-                {selectedCategory && categoryDetails ? (
-                  <div className="space-y-6">
-                    <h2 className="text-2xl font-semibold mb-4">{categoryDetails.label}</h2>
-
-                    {/* Display Q&A items */}
-                    {categoryDetails.subtopics && Object.entries(categoryDetails.subtopics).map(([itemId, item]: [string, any], index) => (
-                      <div key={itemId} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-start justify-between">
-                          <h3 className="text-lg font-medium mb-4">{item.label}</h3>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Q{index + 1}</span>
-                        </div>
-                        <div className="prose dark:prose-invert max-w-none">
-                          <p className="text-gray-700 dark:text-gray-300">
-                            {item.content || "This question doesn't have content yet. Check back later for updates."}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : selectedTopic ? (
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <p className="text-center text-gray-500 dark:text-gray-400">
-                      Please select a category from the navigation tree to view Q&A content.
-                    </p>
-                  </div>
-                ) : (
+                {/* Only show the status section when no topic or category is selected */}
+                {!selectedTopic && !selectedCategory && (
                   <div>
                     {/* Activity Progress and Chart in the same row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -893,8 +806,6 @@ export default function TopicsPage() {
                         <ProgressChart />
                       </div>
                     </div>
-
-                    {/* No topics displayed here as requested */}
                   </div>
                 )}
               </div>

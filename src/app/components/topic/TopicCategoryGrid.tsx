@@ -3,40 +3,46 @@
 import { useState, useEffect } from 'react';
 import styles from './TopicCategoryGrid.module.css';
 
-interface TopicCategoryGridProps {
-  categories: Array<{ id: string; label: string }>;
-  onSelectCategory: (categoryId: string) => void;
-  topicId?: string; // Add topicId prop to fetch section headers
+// Define the structure for items to be displayed
+interface DisplayItem {
+  id: string;
+  label: string;
 }
 
-interface SectionHeader {
-  id: number;
-  name: string;
+// Define the possible levels this grid can represent
+type HierarchyLevel = 'section' | 'topic' | 'category';
+
+interface TopicCategoryGridProps {
+  items?: DisplayItem[];
+  categories?: DisplayItem[];
+  level?: HierarchyLevel; // Indicates what level of the hierarchy the items represent
+  onSelectItem?: (itemId: string, level: HierarchyLevel) => void; // Callback when an item is selected
+  onSelectCategory?: (categoryId: string) => void; // Alternative callback for backward compatibility
+  topicId?: string; // Optional topic ID for context
+  isLoading?: boolean; // Optional loading state controlled by parent
+  error?: string | null; // Optional error state controlled by parent
 }
 
 export default function TopicCategoryGrid({
+  items,
   categories,
+  level = 'category',
+  onSelectItem,
   onSelectCategory,
-  topicId
+  topicId,
+  isLoading = false, // Default to not loading
+  error = null      // Default to no error
 }: TopicCategoryGridProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [sectionHeaders, setSectionHeaders] = useState<SectionHeader[]>([]);
-  const [isLoadingHeaders, setIsLoadingHeaders] = useState(false);
-  const [headerError, setHeaderError] = useState<string | null>(null);
-  const [useHeaders, setUseHeaders] = useState(false);
 
   // Check for dark mode on mount and when theme changes
   useEffect(() => {
     const checkDarkMode = () => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
     };
-
-    // Check on mount
-    checkDarkMode();
-
-    // Set up a MutationObserver to watch for class changes on the html element
+    checkDarkMode(); // Initial check
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
@@ -44,76 +50,26 @@ export default function TopicCategoryGrid({
         }
       });
     });
-
     observer.observe(document.documentElement, { attributes: true });
-
     return () => observer.disconnect();
   }, []);
 
-  // Fetch section headers when topicId changes
-  useEffect(() => {
-    const fetchSectionHeaders = async () => {
-      if (!topicId) return;
+  // Handle item selection
+  const handleItemSelect = (itemId: string) => {
+    setSelectedItemId(itemId);
 
-      try {
-        setIsLoadingHeaders(true);
-        setHeaderError(null);
-
-        console.log(`TopicCategoryGrid - Fetching section headers for domain: ${topicId}`);
-
-        // Fetch section headers for the domain (e.g., 'ml')
-        const response = await fetch(`/api/section-headers?domain=${topicId}`);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch section headers: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log(`TopicCategoryGrid - Received ${data.headers?.length || 0} section headers:`, data.headers);
-
-        if (data.headers && data.headers.length > 0) {
-          setSectionHeaders(data.headers);
-          setUseHeaders(true);
-        } else {
-          // If no section headers, fall back to categories
-          setUseHeaders(false);
-        }
-      } catch (err) {
-        console.error('Error fetching section headers:', err);
-        setHeaderError('Failed to load section headers');
-        setUseHeaders(false);
-      } finally {
-        setIsLoadingHeaders(false);
-      }
-    };
-
-    fetchSectionHeaders();
-  }, [topicId]);
-
-  // Handle category selection
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    onSelectCategory(categoryId);
-
-    // Toggle expanded state
-    if (expandedCategory === categoryId) {
-      setExpandedCategory(null);
-    } else {
-      setExpandedCategory(categoryId);
+    // Call the appropriate callback based on what was provided
+    if (onSelectItem) {
+      onSelectItem(itemId, level); // Pass the selected item ID and the current level
+    } else if (onSelectCategory) {
+      onSelectCategory(itemId); // For backward compatibility
     }
-  };
-
-  // Handle section header selection
-  const handleHeaderSelect = (headerId: number) => {
-    const headerIdStr = `header-${headerId}`;
-    setSelectedCategory(headerIdStr);
-    onSelectCategory(headerIdStr);
 
     // Toggle expanded state
-    if (expandedCategory === headerIdStr) {
-      setExpandedCategory(null);
+    if (expandedItemId === itemId) {
+      setExpandedItemId(null);
     } else {
-      setExpandedCategory(headerIdStr);
+      setExpandedItemId(itemId);
     }
   };
 
@@ -122,18 +78,24 @@ export default function TopicCategoryGrid({
     return `${String(index + 1).padStart(2, '0')}`;
   };
 
-  // Determine which data to use
-  let displayItems = useHeaders ?
-    sectionHeaders.map(header => ({ id: `header-${header.id}`, label: header.name })) :
-    categories;
+  // Use the items passed via props, with fallback to categories for backward compatibility
+  let displayItems = items || categories || [];
 
-  // Reverse the order of the items to show Foundations first and Emerging Trends last
-  if (useHeaders) {
-    displayItems = [...displayItems].reverse();
+  // Optional: Reverse order if needed (e.g., for sections) - parent should handle this if necessary
+  // Example (could be controlled by a prop):
+  // if (level === 'section') {
+  //   displayItems = [...displayItems].reverse();
+  // }
+
+  console.log(`TopicCategoryGrid - Rendering level: ${level}`);
+  console.log(`TopicCategoryGrid - Display items:`, displayItems);
+  console.log(`TopicCategoryGrid - Topic ID:`, topicId);
+
+  // Check if displayItems is defined and has a length property before using it
+  if (!displayItems || !Array.isArray(displayItems)) {
+    console.error('TopicCategoryGrid - displayItems is not an array:', displayItems);
+    displayItems = [];
   }
-
-  console.log(`TopicCategoryGrid - Using ${useHeaders ? 'section headers' : 'categories'} for display`);
-  console.log(`TopicCategoryGrid - Display items after reordering:`, displayItems);
 
   // Split items into three columns for better layout
   const itemsPerColumn = Math.ceil(displayItems.length / 3);
@@ -141,28 +103,40 @@ export default function TopicCategoryGrid({
   const secondColumn = displayItems.slice(itemsPerColumn, itemsPerColumn * 2);
   const thirdColumn = displayItems.slice(itemsPerColumn * 2);
 
-  // Show loading state
-  if (isLoadingHeaders) {
+  // Show loading state (controlled by parent)
+  if (isLoading) {
     return (
       <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
         <div className="col-span-3 text-center py-4">
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
-          <p className="mt-2 text-sm text-gray-500">Loading topics...</p>
+          <p className="mt-2 text-sm text-gray-500">Loading {level}s...</p>
         </div>
       </div>
     );
   }
 
-  // Show error state
-  if (headerError && useHeaders) {
+  // Show error state (controlled by parent)
+  if (error) {
     return (
       <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
         <div className="col-span-3 text-center py-4 text-red-500">
-          {headerError}
+          {error}
         </div>
       </div>
     );
   }
+
+  // Show message if no items are available
+  if (!displayItems || displayItems.length === 0) {
+     return (
+      <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
+        <div className="col-span-3 text-center py-4 text-gray-500">
+          No {level}s found.
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
@@ -171,16 +145,13 @@ export default function TopicCategoryGrid({
         {firstColumn.map((item, index) => (
           <div key={item.id}>
             <div
-              className={`${styles.categoryRow} ${selectedCategory === item.id ? styles.selected : ''}`}
-              onClick={() => useHeaders ?
-                handleHeaderSelect(parseInt(item.id.replace('header-', ''))) :
-                handleCategorySelect(item.id)
-              }
+              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
+              onClick={() => handleItemSelect(item.id)}
             >
               <div className={styles.categoryNumber}>{formatIndex(index)}</div>
               <div className={styles.categoryLabel}>{item.label}</div>
               <div className={styles.expandIcon}>
-                {expandedCategory === item.id ? '×' : '+'}
+                {expandedItemId === item.id ? '×' : '+'}
               </div>
             </div>
           </div>
@@ -192,16 +163,13 @@ export default function TopicCategoryGrid({
         {secondColumn.map((item, index) => (
           <div key={item.id}>
             <div
-              className={`${styles.categoryRow} ${selectedCategory === item.id ? styles.selected : ''}`}
-              onClick={() => useHeaders ?
-                handleHeaderSelect(parseInt(item.id.replace('header-', ''))) :
-                handleCategorySelect(item.id)
-              }
+              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
+              onClick={() => handleItemSelect(item.id)}
             >
               <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn)}</div>
               <div className={styles.categoryLabel}>{item.label}</div>
               <div className={styles.expandIcon}>
-                {expandedCategory === item.id ? '×' : '+'}
+                {expandedItemId === item.id ? '×' : '+'}
               </div>
             </div>
           </div>
@@ -213,16 +181,13 @@ export default function TopicCategoryGrid({
         {thirdColumn.map((item, index) => (
           <div key={item.id}>
             <div
-              className={`${styles.categoryRow} ${selectedCategory === item.id ? styles.selected : ''}`}
-              onClick={() => useHeaders ?
-                handleHeaderSelect(parseInt(item.id.replace('header-', ''))) :
-                handleCategorySelect(item.id)
-              }
+              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
+              onClick={() => handleItemSelect(item.id)}
             >
               <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn * 2)}</div>
               <div className={styles.categoryLabel}>{item.label}</div>
               <div className={styles.expandIcon}>
-                {expandedCategory === item.id ? '×' : '+'}
+                {expandedItemId === item.id ? '×' : '+'}
               </div>
             </div>
           </div>
