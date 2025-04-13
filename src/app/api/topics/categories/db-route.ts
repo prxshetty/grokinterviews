@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabaseServer from '@/utils/supabase-server';
 import { Category, Question } from '@/types/database';
-import fs from 'fs';
-import path from 'path';
-import { parseMarkdown, extractStructuredTopicMap } from '@/utils/markdownParser';
 
 // Helper function to convert database categories to the legacy format
 function convertCategoriesToLegacyFormat(categories: Category[]) {
@@ -16,13 +13,16 @@ function convertCategoriesToLegacyFormat(categories: Category[]) {
 // Helper function to convert database questions to the legacy format
 function convertQuestionsToLegacyFormat(questions: Question[], categoryName: string) {
   // Create a structure similar to the one expected by the frontend
-  const result = {
+  const result: {
+    label: string;
+    subtopics: Record<string, any>;
+  } = {
     label: categoryName,
     subtopics: {}
   };
 
   // Add each question as a subtopic
-  questions.forEach((question, index) => {
+  questions.forEach((question) => {
     const questionId = `question-${question.id}`;
     result.subtopics[questionId] = {
       id: questionId,
@@ -36,73 +36,9 @@ function convertQuestionsToLegacyFormat(questions: Question[], categoryName: str
   return result;
 }
 
-// Helper function to get category details from markdown file
-async function getCategoryFromMarkdown(topicId: string, categoryId: string) {
-  try {
-    const topicsDirectory = path.join(process.cwd(), 'topics');
-    const filePath = path.join(topicsDirectory, `${topicId}.md`);
+// This function has been removed as we're now using the database exclusively
 
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
-
-    const content = fs.readFileSync(filePath, 'utf8');
-    const parsedData = parseMarkdown(content);
-    const contentMap = extractStructuredTopicMap(parsedData);
-
-    // Try to find the category in the content map
-    for (const key in contentMap) {
-      const item = contentMap[key];
-      const itemId = key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-      // Check if this is the category we're looking for
-      if (itemId === categoryId || item.label.toLowerCase() === categoryId.toLowerCase()) {
-        return {
-          label: item.label,
-          subtopics: item.subtopics || {},
-          content: item.content || ''
-        };
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error(`Error getting category from markdown for ${topicId}/${categoryId}:`, error);
-    return null;
-  }
-}
-
-// Helper function to merge database questions with markdown content
-async function mergeQuestionsWithMarkdown(dbQuestions: any, topicId: string, categoryId: string) {
-  try {
-    // Get category details from markdown
-    const markdownCategory = await getCategoryFromMarkdown(topicId, categoryId);
-
-    if (!markdownCategory) {
-      return dbQuestions;
-    }
-
-    // Create a merged result
-    const mergedResult = {
-      label: dbQuestions.label,
-      subtopics: { ...dbQuestions.subtopics },
-      content: markdownCategory.content || ''
-    };
-
-    // Add subtopics from markdown that aren't questions
-    for (const key in markdownCategory.subtopics) {
-      // Skip if it's already a question from the database
-      if (!key.startsWith('question-')) {
-        mergedResult.subtopics[key] = markdownCategory.subtopics[key];
-      }
-    }
-
-    return mergedResult;
-  } catch (error) {
-    console.error(`Error merging questions with markdown for ${topicId}/${categoryId}:`, error);
-    return dbQuestions;
-  }
-}
+// This function has been removed as we're now using the database exclusively
 
 export async function GET(request: NextRequest) {
   try {
@@ -116,9 +52,8 @@ export async function GET(request: NextRequest) {
     if (categoryId && topicId) {
       try {
         console.time('category-query');
-        // We need both the database questions and the markdown content
+        // Get the database questions
         let dbQuestions: any = null;
-        let markdownCategory: any = null;
 
         // 1. Try to get category with questions from the database
         try {
@@ -166,13 +101,17 @@ export async function GET(request: NextRequest) {
 
           if (!categoryError && categoryWithQuestions && categoryWithQuestions.length > 0) {
             category = categoryWithQuestions[0];
-            console.log(`Found category: ${category.name} with ${category.questions?.length || 0} questions`);
+            if (category) {
+              console.log(`Found category: ${category.name} with questions`);
 
             // Convert to the legacy format expected by the frontend
+            // Cast to any to handle the questions property
+            const categoryData = category as any;
             dbQuestions = convertQuestionsToLegacyFormat(
-              category.questions || [],
-              category.name
+              categoryData.questions || [],
+              categoryData.name
             );
+            }
           } else {
             console.log(`No category found for ${topicId}/${categoryId} with error:`, categoryError);
           }
@@ -181,33 +120,9 @@ export async function GET(request: NextRequest) {
         }
         console.timeEnd('category-query');
 
-        // 2. Get category details from markdown
-        try {
-          markdownCategory = await getCategoryFromMarkdown(topicId, categoryId);
-        } catch (markdownError) {
-          console.error(`Error fetching category from markdown for ${topicId}/${categoryId}:`, markdownError);
-        }
-
-        // 3. Merge the data sources
-        if (dbQuestions && markdownCategory) {
-          // We have both data sources, merge them
-          const mergedResult = await mergeQuestionsWithMarkdown(dbQuestions, topicId, categoryId);
-
-          return NextResponse.json(mergedResult, {
-            headers: {
-              'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
-            },
-          });
-        } else if (dbQuestions) {
-          // Only have database data
+        // Return database data only
+        if (dbQuestions) {
           return NextResponse.json(dbQuestions, {
-            headers: {
-              'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
-            },
-          });
-        } else if (markdownCategory) {
-          // Only have markdown data
-          return NextResponse.json(markdownCategory, {
             headers: {
               'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
             },
@@ -294,7 +209,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Return categories for this topic
-        const result = {};
+        const result: Record<string, any> = {};
         result[topicId] = convertCategoriesToLegacyFormat(categories || []);
 
         console.timeEnd('categories-query');
