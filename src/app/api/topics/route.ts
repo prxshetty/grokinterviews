@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabaseServer from '@/utils/supabase-server';
 import { Topic } from '@/types/database';
-import fs from 'fs';
-import path from 'path';
-import { parseMarkdown } from '@/utils/markdownParser';
 
 // Define types for topic data (for backward compatibility)
 type TopicItem = {
@@ -18,42 +15,7 @@ type TopicData = {
   };
 };
 
-// Helper function to format the parsed markdown into the structure needed for the UI
-// Kept for backward compatibility
-function formatTopicData(content: string, topicId: string) {
-  const parsedData = parseMarkdown(content);
-
-  // Extract the main topic node (H1)
-  const mainTopicKey = Object.keys(parsedData).find(key =>
-    parsedData[key].level === 1
-  );
-
-  if (!mainTopicKey) {
-    return { label: topicId, subtopics: {} };
-  }
-
-  const mainTopic = parsedData[mainTopicKey];
-
-  return {
-    label: mainTopic.label,
-    subtopics: mainTopic.subtopics || {}
-  };
-}
-
-// Helper function to get all available topic files
-// Kept for backward compatibility
-function getAvailableTopics(): string[] {
-  const topicsDirectory = path.join(process.cwd(), 'topics');
-  try {
-    const files = fs.readdirSync(topicsDirectory);
-    return files
-      .filter(file => file.endsWith('.md'))
-      .map(file => file.replace('.md', ''));
-  } catch (error) {
-    console.error('Error reading topics directory:', error);
-    return [];
-  }
-}
+// These helper functions have been removed as we're now using the database exclusively
 
 // Helper function to convert database topics to the legacy format
 // This ensures backward compatibility with existing components
@@ -147,36 +109,12 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching topic data:', error);
 
-    // Fallback to file-based approach if database fails
-    try {
-      // Get all topics
-      const topicsDirectory = path.join(process.cwd(), 'topics');
-      const topics = getAvailableTopics();
-      const allData: TopicData = {};
-
-      // Load and parse each topic file
-      for (const topic of topics) {
-        const filePath = path.join(topicsDirectory, `${topic}.md`);
-        try {
-          const content = fs.readFileSync(filePath, 'utf8');
-          allData[topic] = formatTopicData(content, topic);
-        } catch (fileError) {
-          console.error(`Error loading topic ${topic}:`, fileError);
-        }
-      }
-
-      return NextResponse.json(allData, {
-        headers: {
-          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
-        },
-      });
-    } catch (fallbackError) {
-      console.error('Fallback also failed:', fallbackError);
-      return NextResponse.json(
-        { error: 'Failed to load topic data' },
-        { status: 500 }
-      );
-    }
+    // No fallback to file-based approach anymore
+    console.error('Database query failed:', error);
+    return NextResponse.json(
+      { error: 'Failed to load topic data' },
+      { status: 500 }
+    );
   }
 }
 
@@ -192,11 +130,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // We need both the database structure and the markdown content
-    let dbTopicData: any = null;
-    let markdownTopicData: any = null;
-
-    // 1. Fetch the topic with its categories from the database
+    // Fetch the topic with its categories from the database
+    let topicData: any = null;
     try {
       let topic: Topic | null = null;
 
@@ -232,7 +167,7 @@ export async function POST(request: NextRequest) {
         if (categoriesError) throw categoriesError;
 
         // Convert to legacy format for backward compatibility
-        dbTopicData = {
+        topicData = {
           [topic.slug]: {
             label: topic.name,
             subtopics: {}
@@ -242,7 +177,7 @@ export async function POST(request: NextRequest) {
         // Add categories as subtopics
         if (categories) {
           for (const category of categories) {
-            dbTopicData[topic.slug].subtopics[category.slug] = {
+            topicData[topic.slug].subtopics[category.slug] = {
               id: category.slug,
               label: category.name,
               subtopics: {}
@@ -254,70 +189,9 @@ export async function POST(request: NextRequest) {
       console.error('Error fetching topic from database:', dbError);
     }
 
-    // 2. Fetch from markdown file
-    try {
-      const topicsDirectory = path.join(process.cwd(), 'topics');
-      const filePath = path.join(topicsDirectory, `${topicId}.md`);
-
-      if (fs.existsSync(filePath)) {
-        const content = fs.readFileSync(filePath, 'utf8');
-        markdownTopicData = { [topicId]: formatTopicData(content, topicId) };
-      }
-    } catch (fileError) {
-      console.error(`Error loading topic ${topicId} from file:`, fileError);
-    }
-
-    // 3. Merge the data sources
-    if (dbTopicData && markdownTopicData) {
-      // We have both data sources, merge them
-      const mergedData = { ...dbTopicData };
-      const topicSlug = Object.keys(dbTopicData)[0];
-      const markdownSlug = Object.keys(markdownTopicData)[0];
-
-      // Add subtopics from markdown
-      if (markdownTopicData[markdownSlug] && markdownTopicData[markdownSlug].subtopics) {
-        for (const subtopicKey in markdownTopicData[markdownSlug].subtopics) {
-          const markdownSubtopic = markdownTopicData[markdownSlug].subtopics[subtopicKey];
-
-          // Find matching category in database by label
-          let matchingCategorySlug = subtopicKey;
-          let foundMatch = false;
-
-          for (const categorySlug in mergedData[topicSlug].subtopics) {
-            const dbCategory = mergedData[topicSlug].subtopics[categorySlug];
-
-            // Match by label (case insensitive)
-            if (dbCategory.label.toLowerCase() === markdownSubtopic.label.toLowerCase()) {
-              matchingCategorySlug = categorySlug;
-              foundMatch = true;
-              break;
-            }
-          }
-
-          if (foundMatch) {
-            // Found a match, merge the subtopics
-            mergedData[topicSlug].subtopics[matchingCategorySlug].subtopics =
-              markdownSubtopic.subtopics || {};
-
-            // If markdown has content, add it
-            if (markdownSubtopic.content) {
-              mergedData[topicSlug].subtopics[matchingCategorySlug].content =
-                markdownSubtopic.content;
-            }
-          } else {
-            // No match found, add the markdown subtopic as is
-            mergedData[topicSlug].subtopics[subtopicKey] = markdownSubtopic;
-          }
-        }
-      }
-
-      return NextResponse.json(mergedData);
-    } else if (dbTopicData) {
-      // Only have database data
-      return NextResponse.json(dbTopicData);
-    } else if (markdownTopicData) {
-      // Only have markdown data
-      return NextResponse.json(markdownTopicData);
+    // Return the topic data from the database
+    if (topicData) {
+      return NextResponse.json(topicData);
     }
 
     // If we get here, we couldn't find the topic in either source
