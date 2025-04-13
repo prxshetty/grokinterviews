@@ -342,7 +342,6 @@ export default function TopicsPage() {
 
         return (
           <div className="w-full animate-fadeIn">
-            <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
 
             {/* Render subtopics in the new format */}
             {isSectionHeader ? (
@@ -524,7 +523,6 @@ export default function TopicsPage() {
         // No subtopics but we have a category label - show the empty state
         return (
           <div className="w-full animate-fadeIn">
-            <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
             <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded">
               <p className="text-center text-gray-500 dark:text-gray-400">
                 {categoryId.startsWith('header-') ? 'Content for this section is being prepared. Please check back later.' : 'No content available for this category yet.'}
@@ -534,7 +532,7 @@ export default function TopicsPage() {
                   onClick={handleBackToMainCategories}
                   className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
-                  Back to Categories
+                  Back
                 </button>
               </div>
             </div>
@@ -588,7 +586,7 @@ export default function TopicsPage() {
                   onClick={handleBackToMainCategories}
                   className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
-                  Back to Categories
+                  Back
                 </button>
               </div>
             </div>
@@ -601,7 +599,6 @@ export default function TopicsPage() {
 
       return (
         <div className="w-full animate-fadeIn">
-          <h2 className="text-xl font-bold uppercase mb-6">{categoryLabel}</h2>
 
           {/* Render subtopics in the new format */}
           <div className="border-t border-gray-200 dark:border-gray-700">
@@ -721,7 +718,7 @@ export default function TopicsPage() {
                         ) : (
                           // Show only a minimalistic back button when a category is selected
                           <div className="mb-6">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center">
                               <button
                                 onClick={handleBackToMainCategories}
                                 className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
@@ -729,10 +726,8 @@ export default function TopicsPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
                                 </svg>
+                                Back
                               </button>
-                              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Selected Category: {categoryDetails?.label || topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Category'}
-                              </div>
                             </div>
                           </div>
                         )}
@@ -818,7 +813,7 @@ export default function TopicsPage() {
               <div className="space-y-3 mt-8 pt-8">
                 <h1 className="text-4xl font-normal tracking-tight mb-8">
                   {selectedCategory && categoryDetails
-                    ? categoryDetails.label || topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Selected Category'
+                    ? categoryDetails.label || topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Category'
                     : selectedTopic
                       ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
                       : 'Status'}
