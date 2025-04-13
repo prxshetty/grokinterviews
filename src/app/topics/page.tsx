@@ -655,21 +655,7 @@ export default function TopicsPage() {
                 <div className="mb-12">
                   {/* SimpleTopicTree component removed */}
 
-                  <div className="flex items-center gap-4 mb-6">
-                    {selectedCategory && (
-                      <button
-                        onClick={handleBackToMainCategories}
-                        className="px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back to Categories
-                      </button>
-                    )}
-
-
-                  </div>
+                  {/* Removed duplicate back button */}
 
                   {/* Main topic categories */}
                   <div className="flex flex-wrap">
@@ -689,16 +675,16 @@ export default function TopicsPage() {
                             topicId={selectedTopic} // Pass the selected topic ID
                           />
                         ) : (
-                          // Show a collapsed version when a category is selected
-                          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6 flex justify-between items-center">
-                            <div>
-                              <h3 className="font-medium">Selected Category: {topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Category'}</h3>
-                            </div>
+                          // Show only a minimalistic back button when a category is selected
+                          <div className="mb-6">
                             <button
                               onClick={handleBackToMainCategories}
-                              className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1"
+                              className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
                             >
-                              Change Category
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                              </svg>
+                              Back to Categories
                             </button>
                           </div>
                         )}

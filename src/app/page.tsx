@@ -1,11 +1,7 @@
-import { loadAllTopicTrees } from '@/utils/markdownParser';
 import Link from 'next/link';
 import { StatsSection, TopicCarousel, CompanyList, ProjectsSection, RandomHeadline } from './components';
 
 export default async function Home() {
-  // Load topic data for future use
-  const topicIds = ['ml', 'sdesign', 'webdev', 'dsa', 'ai'];
-  await loadAllTopicTrees(topicIds);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full pt-4 px-8 md:px-12 relative font-sans">
