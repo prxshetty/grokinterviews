@@ -33,45 +33,10 @@ function convertToLegacyFormat(topics: Topic[]): TopicData {
 }
 
 // Helper function to merge database topics with markdown content
+// This function now simply returns the database topics as we no longer use markdown
 async function mergeWithMarkdownContent(dbTopics: TopicData): Promise<TopicData> {
-  try {
-    // Get all topics from markdown files
-    const topicsDirectory = path.join(process.cwd(), 'topics');
-    const markdownTopics = getAvailableTopics();
-    const markdownData: TopicData = {};
-
-    // Load and parse each topic file
-    for (const topic of markdownTopics) {
-      const filePath = path.join(topicsDirectory, `${topic}.md`);
-      try {
-        const content = fs.readFileSync(filePath, 'utf8');
-        markdownData[topic] = formatTopicData(content, topic);
-      } catch (fileError) {
-        console.error(`Error loading topic ${topic}:`, fileError);
-      }
-    }
-
-    // Merge the two data sources
-    const mergedData: TopicData = { ...dbTopics };
-
-    // For each topic in markdown data
-    for (const topicSlug in markdownData) {
-      if (!mergedData[topicSlug]) {
-        // Topic doesn't exist in database, add it from markdown
-        mergedData[topicSlug] = markdownData[topicSlug];
-      } else {
-        // Topic exists in both sources, merge subtopics
-        for (const subtopicKey in markdownData[topicSlug].subtopics) {
-          mergedData[topicSlug].subtopics[subtopicKey] = markdownData[topicSlug].subtopics[subtopicKey];
-        }
-      }
-    }
-
-    return mergedData;
-  } catch (error) {
-    console.error('Error merging with markdown content:', error);
-    return dbTopics;
-  }
+  // Simply return the database topics without any markdown processing
+  return dbTopics;
 }
 
 export async function GET(request: NextRequest) {
