@@ -116,80 +116,7 @@ class TopicDataService {
       return [];
     }
   }
-
-  /**
-   * Gets details for a specific topic, including categories and questions
-   * @param topicId The ID of the topic to get details for
-   */
-  async getTopicDetails(topicId: string): Promise<any> {
-    try {
-      console.log(`TopicDataService.getTopicDetails - Called with topicId: ${topicId}`);
-
-      // Extract the numeric ID from the topic-{id} format
-      let numericId = topicId;
-      if (topicId.startsWith('topic-')) {
-        numericId = topicId.replace('topic-', '');
-      } else if (topicId.startsWith('header-')) {
-        // If it's a header ID, we need to find the corresponding topic ID
-        const headerNumber = parseInt(topicId.replace('header-', ''), 10);
-        console.log(`TopicDataService.getTopicDetails - This is a header ID: ${headerNumber}`);
-
-        // We need to find the topic ID for this header
-        // For now, let's just use the header ID as is and let the API handle it
-        numericId = topicId;
-        return null; // Headers should be handled by a different method
-      }
-
-      console.log(`TopicDataService.getTopicDetails - Using numericId: ${numericId}`);
-
-      // Check cache first
-      const cacheKey = `topic-details-${numericId}`;
-      if (this.cache.categoryDetails[cacheKey]) {
-        console.log(`TopicDataService.getTopicDetails - Using cached data for ${cacheKey}`);
-        return this.cache.categoryDetails[cacheKey];
-      }
-
-      // Fetch topic details from the API
-      console.log(`TopicDataService.getTopicDetails - Fetching from API: /api/topics/topic-details?topicId=${numericId}`);
-      const response = await fetch(`/api/topics/topic-details?topicId=${numericId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch topic details: ${response.statusText}`);
-      }
-
-      const details = await response.json();
-      console.log(`TopicDataService.getTopicDetails - Received details:`, details);
-
-      // Format the result for the UI
-      const result = {
-        id: topicId,
-        label: details.topic.name,
-        content: `Details for ${details.topic.name}`,
-        subtopics: {}
-      };
-
-      // Add each category as a subtopic
-      details.categories.forEach((category: any, index: number) => {
-        const subtopicId = `category-${index}`;
-        result.subtopics[subtopicId] = {
-          id: subtopicId,
-          label: category.name,
-          content: category.description || '',
-          categoryId: category.id,
-          questions: category.questions || []
-        };
-      });
-
-      // Cache the result
-      this.cache.categoryDetails[cacheKey] = result;
-      console.log(`TopicDataService.getTopicDetails - Cached result for ${cacheKey}`);
-
-      return result;
-    } catch (error) {
-      console.error('Error fetching topic details:', error);
-      return null;
-    }
-  }
-
+  
   /**
    * Gets all main categories from a specific topic file
    * @param topicId The ID of the topic to get categories from
@@ -902,6 +829,8 @@ class TopicDataService {
     }
   }
 
+
+
   /**
    * Clears the cache
    */
@@ -909,7 +838,8 @@ class TopicDataService {
     this.cache = {
       topics: null,
       categories: null,
-      categoryDetails: {}
+      categoryDetails: {},
+      mlTopics: null
     };
   }
 }
