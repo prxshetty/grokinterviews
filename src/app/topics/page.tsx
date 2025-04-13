@@ -48,6 +48,7 @@ export default function TopicsPage() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryDetails, setCategoryDetails] = useState<any>(null);
   const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
+  const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
 
   const { topicData } = useTopicData();
 
@@ -89,6 +90,9 @@ export default function TopicsPage() {
 
     console.log('topics/page - Setting selectedCategory to:', categoryId);
     setSelectedCategory(categoryId);
+
+    // Reset expanded questions state when changing categories
+    setExpandedQuestions({});
 
     // For ML topics, we need to set the selectedTopic to 'ml'
     if (!selectedTopic) {
@@ -273,6 +277,7 @@ export default function TopicsPage() {
 
   const handleBackToMainCategories = () => {
     setSelectedCategory(null);
+    setExpandedQuestions({});
   };
 
   // Load categories when selected topic changes
@@ -434,35 +439,74 @@ export default function TopicsPage() {
                         </div>
                       </div>
 
-                      {/* Display questions directly without hiding them */}
+                      {/* Display questions sorted by difficulty with dropdown for answers */}
                       <div className="pl-8 pr-8 pb-4">
                         {typedListItem.questions && typedListItem.questions.length > 0 ? (
-                          typedListItem.questions.map((question: QuestionType, qIndex: number) => {
-                            console.log(`Rendering question ${qIndex + 1}:`, question);
-                            return (
-                              <div key={question.id || qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-start justify-between mb-2">
-                                  <h4 className="font-medium text-gray-900 dark:text-white">
-                                    {question.question_text || 'Question text not available'}
-                                  </h4>
-                                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">Q{qIndex + 1}</span>
-                                </div>
-                                <div className="mt-2 text-gray-700 dark:text-gray-300 text-sm">
-                                  <p>{question.answer_text || 'No answer available yet.'}</p>
-                                </div>
-                                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                  <span className="inline-block bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 mr-2">
-                                    {question.difficulty || 'unspecified'} difficulty
-                                  </span>
-                                  {question.keywords && question.keywords.length > 0 && (
-                                    <span className="inline-block">
-                                      Keywords: {Array.isArray(question.keywords) ? question.keywords.join(', ') : question.keywords}
+                          // Sort questions by difficulty: beginner first, then intermediate, then advanced
+                          [...typedListItem.questions]
+                            .sort((a, b) => {
+                              const difficultyOrder = { 'beginner': 1, 'intermediate': 2, 'advanced': 3 };
+                              const aDifficulty = a.difficulty?.toLowerCase() || 'unspecified';
+                              const bDifficulty = b.difficulty?.toLowerCase() || 'unspecified';
+                              return (difficultyOrder[aDifficulty as keyof typeof difficultyOrder] || 4) -
+                                     (difficultyOrder[bDifficulty as keyof typeof difficultyOrder] || 4);
+                            })
+                            .map((question: QuestionType, qIndex: number) => {
+                              // Create a unique ID for the dropdown state
+                              const questionId = `question-${question.id || qIndex}`;
+                              return (
+                                <div key={question.id || qIndex} className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <h4 className="font-medium text-gray-900 dark:text-white">
+                                      {question.question_text || 'Question text not available'}
+                                    </h4>
+                                    <div className="flex items-center">
+                                      <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">Q{qIndex + 1}</span>
+                                      <button
+                                        onClick={() => {
+                                          // Toggle the expanded state for this question
+                                          setExpandedQuestions(prev => ({
+                                            ...prev,
+                                            [questionId]: !prev[questionId]
+                                          }));
+                                        }}
+                                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                          {expandedQuestions[questionId] ? (
+                                            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                          ) : (
+                                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                          )}
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Difficulty and keywords */}
+                                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <span className="inline-block bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 mr-2">
+                                      {question.difficulty || 'unspecified'} difficulty
                                     </span>
+                                    {question.keywords && question.keywords.length > 0 && (
+                                      <span className="inline-block">
+                                        Keywords: {Array.isArray(question.keywords) ? question.keywords.join(', ') : question.keywords}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Collapsible answer section */}
+                                  {expandedQuestions[questionId] && (
+                                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                      <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Answer:</h5>
+                                      <div className="text-gray-700 dark:text-gray-300 text-sm">
+                                        <p>{question.answer_text || 'This answer will be generated by AI when you select a model in your account settings.'}</p>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
-                              </div>
-                            );
-                          })
+                              );
+                            })
                         ) : (
                           <div className="text-center py-4 text-gray-500 dark:text-gray-400">
                             <p>No questions available for this category yet.</p>
@@ -677,15 +721,19 @@ export default function TopicsPage() {
                         ) : (
                           // Show only a minimalistic back button when a category is selected
                           <div className="mb-6">
-                            <button
-                              onClick={handleBackToMainCategories}
-                              className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                              </svg>
-                              Back to Categories
-                            </button>
+                            <div className="flex items-center justify-between">
+                              <button
+                                onClick={handleBackToMainCategories}
+                                className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Selected Category: {categoryDetails?.label || topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Category'}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -769,9 +817,11 @@ export default function TopicsPage() {
               {/* Q&A Content Section */}
               <div className="space-y-3 mt-8 pt-8">
                 <h1 className="text-4xl font-normal tracking-tight mb-8">
-                  {selectedTopic
-                    ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
-                    : 'Status'}
+                  {selectedCategory && categoryDetails
+                    ? categoryDetails.label || topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Selected Category'
+                    : selectedTopic
+                      ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
+                      : 'Status'}
                 </h1>
 
                 {/* Only show the status section when no topic or category is selected */}
