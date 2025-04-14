@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './signin.module.css';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -36,6 +37,14 @@ export default function SignIn() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+
+    // Check if we should show sign-up mode based on URL parameter
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'signup') {
+        setIsSignUp(true);
+      }
+    }
   }, []);
 
   const toggleDarkMode = () => {
@@ -51,6 +60,8 @@ export default function SignIn() {
     }
   };
 
+  const supabase = createClientComponentClient();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -59,29 +70,109 @@ export default function SignIn() {
 
     try {
       if (isSignUp) {
-        // Mock sign-up
-        console.log('Sign up with:', { firstName, lastName, email, password });
+        // Real sign-up with Supabase
+        console.log('Signing up with:', { firstName, lastName, email, password });
 
-        // Simulate processing delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const fullName = `${firstName} ${lastName}`.trim();
+        const username = email.split('@')[0];
 
-        setMessage('Account created successfully! You can now sign in.');
-        setIsSignUp(false);
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              username,
+              full_name: fullName,
+              email,
+            },
+          },
+        });
+
+        if (error) {
+          console.error('Sign up error:', error);
+          throw error;
+        }
+
+        console.log('Sign up response:', data);
+
+        // Check if the user was created
+        if (!data?.user) {
+          throw new Error('No user returned from sign up');
+        }
+
+        // Check if email confirmation is required
+        if (!data.user.confirmed_at) {
+          console.log('Email confirmation required for user:', data.user.id);
+          setMessage('Check your email for the confirmation link. You need to confirm your email before you can sign in.');
+        } else {
+          // If email confirmation is not required, sign in the user
+          console.log('Email confirmation not required, signing in user:', data.user.id);
+          setMessage('Account created successfully! You can now sign in.');
+          setIsSignUp(false);
+        }
       } else {
-        // Mock sign-in
-        console.log('Sign in with:', { email, password });
+        // Real sign-in with Supabase
+        console.log('Signing in with:', { email, password });
 
-        // Simulate processing delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        // Set mock auth token
-        localStorage.setItem('mockAuthToken', 'true');
+        if (error) {
+          // Special handling for email not confirmed error
+          if (error.message.includes('Email not confirmed')) {
+            console.log('Email not confirmed error');
+            setError('Your email has not been confirmed. Please check your email for the confirmation link.');
+            return;
+          }
 
-        // Dispatch storage event to notify other components
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'mockAuthToken',
-          newValue: 'true'
-        }));
+          // Handle invalid credentials more gracefully
+          if (error.message.includes('Invalid login credentials')) {
+            console.log('Invalid login credentials');
+            setError('Invalid email or password. Please try again.');
+            return;
+          }
+
+          throw error;
+        }
+
+        if (!data.user) {
+          throw new Error('No user returned from sign in');
+        }
+
+        console.log('User signed in successfully:', data.user.id);
+
+        // Check if the user has a profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is the error code for no rows returned
+          console.error('Error checking profile:', profileError);
+        }
+
+        // If no profile exists, create one
+        if (!profileData) {
+          console.log('Creating profile for user:', data.user.id);
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                username: data.user.user_metadata?.username || email.split('@')[0],
+                full_name: data.user.user_metadata?.full_name || '',
+                email: data.user.email,
+              },
+            ]);
+
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+          }
+        }
 
         // Redirect to dashboard on successful sign in
         router.push('/dashboard');
@@ -119,23 +210,27 @@ export default function SignIn() {
     setMessage(null);
 
     try {
-      // Mock Google sign-in
-      console.log('Sign in with Google');
+      console.log('Signing in with Google');
 
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
 
-      // Set mock auth token
-      localStorage.setItem('mockAuthToken', 'true');
+      if (error) {
+        console.error('Google sign in error:', error);
+        throw error;
+      }
 
-      // Dispatch storage event to notify other components
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'mockAuthToken',
-        newValue: 'true'
-      }));
-
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // The user will be redirected to Google for authentication
+      // After successful authentication, they will be redirected back to the callback URL
+      // The callback handler will exchange the code for a session and redirect to the dashboard
     } catch (error: any) {
       setError(error.message || 'An error occurred during sign in with Google');
       console.error('Google sign in error:', error);

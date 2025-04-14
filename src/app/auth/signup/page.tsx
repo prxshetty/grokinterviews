@@ -1,11 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function SignUp() {
+  const router = useRouter();
+
+  // Redirect to the main signin page with signup mode active
+  useEffect(() => {
+    router.replace('/signin?mode=signup');
+  }, [router]);
+
+  // Return a loading state while redirecting
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-white dark:bg-black">
+      <div className="text-center">
+        <p className="text-gray-600 dark:text-gray-400">Redirecting to sign up page...</p>
+      </div>
+    </div>
+  );
+}
+
+// The code below is kept for reference but will not be executed due to the redirect
+function OldSignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -23,7 +42,10 @@ export default function SignUp() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log('Signing up with:', { email, password, username, fullName });
+
+      // Sign up the user
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -31,16 +53,46 @@ export default function SignUp() {
           data: {
             username,
             full_name: fullName,
+            email, // Include email in metadata for profile creation
           },
         },
       });
 
+      console.log('Sign up response:', data);
+
       if (error) {
+        console.error('Sign up error:', error);
         throw error;
       }
 
-      setMessage('Check your email for the confirmation link.');
+      // Check if the user was created
+      if (!data?.user) {
+        throw new Error('No user returned from sign up');
+      }
+
+      // Check if email confirmation is required
+      if (!data.user.confirmed_at) {
+        console.log('Email confirmation required for user:', data.user.id);
+        setMessage('Check your email for the confirmation link. You need to confirm your email before you can sign in.');
+      } else {
+        // If email confirmation is not required, sign in the user
+        console.log('Email confirmation not required, signing in user:', data.user.id);
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) {
+          console.error('Sign in error after sign up:', signInError);
+          throw signInError;
+        }
+
+        // Redirect to dashboard
+        router.push('/dashboard');
+        router.refresh();
+      }
     } catch (error: any) {
+      console.error('Sign up process error:', error);
       setError(error.message || 'An error occurred during sign up');
     } finally {
       setLoading(false);
@@ -71,7 +123,7 @@ export default function SignUp() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-black">
       <div className="absolute top-4 right-4">
-        <Link 
+        <Link
           href="/"
           className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
         >
@@ -80,7 +132,7 @@ export default function SignUp() {
           </svg>
         </Link>
       </div>
-      
+
       <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-900 rounded-lg shadow-md">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create your account</h1>
@@ -88,19 +140,19 @@ export default function SignUp() {
             Start your interview preparation journey
           </p>
         </div>
-        
+
         {error && (
           <div className="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 p-3 rounded-md text-sm">
             {error}
           </div>
         )}
-        
+
         {message && (
           <div className="bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 p-3 rounded-md text-sm">
             {message}
           </div>
         )}
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
           <div className="space-y-4">
             <div>

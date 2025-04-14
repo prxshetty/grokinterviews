@@ -1,11 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function SignIn() {
+  const router = useRouter();
+
+  // Redirect to the main signin page
+  useEffect(() => {
+    router.replace('/signin');
+  }, [router]);
+
+  // Return a loading state while redirecting
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-white dark:bg-black">
+      <div className="text-center">
+        <p className="text-gray-600 dark:text-gray-400">Redirecting to sign in page...</p>
+      </div>
+    </div>
+  );
+}
+
+// The code below is kept for reference but will not be executed due to the redirect
+function OldSignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -19,18 +38,71 @@ export default function SignIn() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Signing in with:', { email, password });
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        // Special handling for email not confirmed error
+        if (error.message.includes('Email not confirmed')) {
+          console.log('Email not confirmed error');
+          setError('Your email has not been confirmed. Please check your email for the confirmation link.');
+          return;
+        }
+
+        // Handle invalid credentials more gracefully
+        if (error.message.includes('Invalid login credentials')) {
+          console.log('Invalid login credentials');
+          setError('Invalid email or password. Please try again.');
+          return;
+        }
+
         throw error;
+      }
+
+      if (!data.user) {
+        throw new Error('No user returned from sign in');
+      }
+
+      console.log('User signed in successfully:', data.user.id);
+
+      // Check if the user has a profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is the error code for no rows returned
+        console.error('Error checking profile:', profileError);
+      }
+
+      // If no profile exists, create one
+      if (!profileData) {
+        console.log('Creating profile for user:', data.user.id);
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              username: data.user.user_metadata?.username || email.split('@')[0],
+              full_name: data.user.user_metadata?.full_name || '',
+              email: data.user.email,
+            },
+          ]);
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+        }
       }
 
       router.push('/dashboard');
       router.refresh();
     } catch (error: any) {
+      console.error('Sign in error:', error);
       setError(error.message || 'An error occurred during sign in');
     } finally {
       setLoading(false);
@@ -46,13 +118,21 @@ export default function SignIn() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
       if (error) {
         throw error;
       }
+      // The user will be redirected to Google for authentication
+      // After successful authentication, they will be redirected back to the callback URL
+      // The callback handler will exchange the code for a session and redirect to the dashboard
     } catch (error: any) {
+      console.error('Google sign in error:', error);
       setError(error.message || 'An error occurred during sign in with Google');
       setLoading(false);
     }
@@ -61,7 +141,7 @@ export default function SignIn() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-black">
       <div className="absolute top-4 right-4">
-        <Link 
+        <Link
           href="/"
           className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
         >
@@ -70,7 +150,7 @@ export default function SignIn() {
           </svg>
         </Link>
       </div>
-      
+
       <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-900 rounded-lg shadow-md">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sign in to Grok Interviews</h1>
@@ -78,13 +158,13 @@ export default function SignIn() {
             Continue your interview preparation journey
           </p>
         </div>
-        
+
         {error && (
           <div className="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 p-3 rounded-md text-sm">
             {error}
           </div>
         )}
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
           <div className="space-y-4">
             <div>
