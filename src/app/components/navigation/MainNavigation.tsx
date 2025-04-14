@@ -32,10 +32,13 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
       // Get the hero section element
       const heroSection = document.querySelector('.hero-section');
-      if (heroSection) {
+      if (heroSection && pathname === '/') { // Only apply scroll logic on homepage
         const heroRect = heroSection.getBoundingClientRect();
         // Show nav title when hero section is scrolled out of view
         setShowNavTitle(heroRect.bottom < 0);
+      } else {
+        // Always show title on other pages
+        setShowNavTitle(true);
       }
     };
 
