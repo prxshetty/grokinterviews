@@ -182,16 +182,16 @@ export default function DashboardPage() {
               <span className={`${getChangeColor(staticData.overviewChange)} text-sm font-medium`}>
                 +{staticData.overviewChange}%
               </span>
-            </div>
+              </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">This is current position overview</p>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div className="bg-purple-600 h-2 rounded-full" style={{ width: '72%' }}></div>
-            </div>
+              </div>
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
               <span>72%</span>
               <span>28%</span>
             </div>
-          </div>
+                </div>
 
           {/* Weekly Traffic Widget */}
           <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
@@ -232,22 +232,22 @@ export default function DashboardPage() {
                    <div className="w-full bg-purple-400 dark:bg-purple-600/30 rounded-t-sm h-1/3"></div>
                 </div>
               ))}
-            </div>
+                  </div>
             <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-4">
               <div >
                 <span className="flex items-center mb-1 text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-purple-500 rounded-full mr-1.5"></span>Total Revenue</span>
                 <span className="text-lg font-medium text-gray-900 dark:text-white">{formatCurrency(staticData.revenue)}</span>
-              </div>
+                  </div>
               <div >
                 <span className="flex items-center mb-1 text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-purple-500/50 rounded-full mr-1.5"></span>Taxes</span>
                 <span className="text-lg font-medium text-gray-900 dark:text-white">{formatCurrency(staticData.taxes)}</span>
-              </div>
+                  </div>
               <div >
                 <span className="flex items-center mb-1 text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-purple-500/30 rounded-full mr-1.5"></span>Opex</span>
                 <span className="text-lg font-medium text-gray-900 dark:text-white">{formatCurrency(staticData.opex)}</span>
               </div>
+              </div>
             </div>
-          </div>
 
           {/* Customer by Time Widget */}
           <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
@@ -259,21 +259,21 @@ export default function DashboardPage() {
                 <span>2,000+</span>
                 <span>3,000+</span>
               </div>
-            </div>
+                            </div>
             <div className="grid grid-cols-7 gap-1 aspect-square">
               {Array.from({ length: 49 }).map((_, i) => (
                 <div
                   key={i}
                   className="rounded-sm"
                   style={{ backgroundColor: `rgba(168, 85, 247, ${Math.random() * 0.6 + 0.1})`}}
-                ></div>
+                                ></div>
               ))}
-            </div>
+                              </div>
              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
               <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-            </div>
-          </div>
-        </div>
+                              </div>
+                            </div>
+                          </div>
 
         {/* Right Column (Metrics + Highest Campaign) */}
         <div className="lg:col-span-1 space-y-6">
@@ -281,7 +281,7 @@ export default function DashboardPage() {
           <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
              <div className="flex justify-end mb-4">
                 <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5" /></svg>
-             </div>
+                        </div>
             <div className="space-y-5">
               <div>
                 <div className="flex justify-between items-baseline">
@@ -289,9 +289,9 @@ export default function DashboardPage() {
                   <span className={`${getChangeColor(staticData.usersChange)} text-xs`}>
                      {staticData.usersChange > 0 ? '+' : ''}{staticData.usersChange}%
                   </span>
-                </div>
+                          </div>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white">{formatNumber(staticData.users)}</p>
-              </div>
+                        </div>
                <div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sessions</span>
@@ -307,19 +307,19 @@ export default function DashboardPage() {
                   <span className={`${getChangeColor(staticData.sessionDurationChange)} text-xs`}>
                      {staticData.sessionDurationChange > 0 ? '+' : ''}{staticData.sessionDurationChange}%
                   </span>
-                </div>
+            </div>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white">{staticData.sessionDuration}</p>
               </div>
-               <div>
+                              <div>
                 <div className="flex justify-between items-baseline">
                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Page Views</span>
                   <span className={`${getChangeColor(staticData.pageViewsChange)} text-xs`}>
                      {staticData.pageViewsChange > 0 ? '+' : ''}{staticData.pageViewsChange}%
-                  </span>
-                </div>
+                                </span>
+                              </div>
                 <p className="text-2xl font-semibold text-gray-900 dark:text-white">{formatNumber(staticData.pageViews)}</p>
-              </div>
-            </div>
+                                </div>
+                              </div>
           </div>
 
           {/* Highest Campaign Widget */}
@@ -329,15 +329,15 @@ export default function DashboardPage() {
               <div className="flex space-x-2 text-gray-400 dark:text-gray-500">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-              </div>
-            </div>
+                            </div>
+                          </div>
             <div className="space-y-3">
                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 uppercase px-2">
                 <span className="w-2/5">Campaign Provider</span>
                 <span className="w-1/5 text-right">Sales</span>
                 <span className="w-1/5 text-right">Goal</span>
                 <span className="w-1/5 text-right">Status</span>
-              </div>
+                  </div>
               {staticData.highestCampaigns.map((campaign, index) => (
                 <div key={index} className="flex items-center bg-gray-100 dark:bg-gray-800/50 p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/50">
                   <div className="w-2/5 flex items-center">

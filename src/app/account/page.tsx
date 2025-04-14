@@ -126,7 +126,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 dark:border-purple-400 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your account...</p>
@@ -136,21 +136,21 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="md:flex md:gap-10">
+        <div className="md:flex md:gap-10 lg:gap-16">
           {/* Sidebar Navigation */}
-          <div className="md:w-64 flex-shrink-0 mb-8 md:mb-0">
-            <nav className="flex flex-col bg-white dark:bg-gray-800 p-2 rounded-lg">
+          <div className="md:w-64 flex-shrink-0 mb-8 md:mb-0 md:pt-6">
+            <nav className="flex flex-col space-y-1">
                 <button
                   onClick={() => setActiveTab('personal')}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
+                  className={`flex items-center px-3 py-2 text-sm font-medium w-full text-left ${ 
                     activeTab === 'personal'
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-l-4 border-purple-600 dark:border-purple-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-l-4 border-purple-600 dark:border-purple-400' 
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-md'
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   Personal Information
@@ -158,13 +158,13 @@ export default function AccountPage() {
                 
                 <button
                   onClick={() => setActiveTab('model')}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
+                  className={`flex items-center px-3 py-2 text-sm font-medium w-full text-left ${ 
                     activeTab === 'model'
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-l-4 border-purple-600 dark:border-purple-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-l-4 border-purple-600 dark:border-purple-400' 
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-md'
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
                   Model Preferences
@@ -172,13 +172,13 @@ export default function AccountPage() {
                 
                 <button
                   onClick={() => setActiveTab('api')}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
+                  className={`flex items-center px-3 py-2 text-sm font-medium w-full text-left ${ 
                     activeTab === 'api'
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-l-4 border-purple-600 dark:border-purple-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-l-4 border-purple-600 dark:border-purple-400' 
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-md'
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                   </svg>
                   API Settings
@@ -186,28 +186,28 @@ export default function AccountPage() {
                 
                 <Link
                   href="/dashboard"
-                  className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
+                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-md"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
                   Back to Dashboard
                 </Link>
               </nav>
-            </div>
+          </div>
 
           {/* Main Content */}
           <div className="flex-1">
-            <div>
+            <div className="py-6">
               {/* Personal Information Tab */}
               {activeTab === 'personal' && (
-                <div className="p-6 bg-white dark:bg-gray-800 rounded-lg">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">Personal Information</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Personal Information</h2>
                   
                   {message.text && (
                     <div className={`mb-4 p-3 rounded-md ${
-                      message.type === 'success' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 
-                      'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+                      message.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' : 
+                      'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                     }`}>
                       {message.text}
                     </div>
@@ -224,7 +224,7 @@ export default function AccountPage() {
                         id="full_name"
                         value={formData.full_name}
                         onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
                       />
                     </div>
                     
@@ -238,7 +238,7 @@ export default function AccountPage() {
                         id="username"
                         value={formData.username}
                         onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
                       />
                     </div>
                     
@@ -252,7 +252,7 @@ export default function AccountPage() {
                         id="email"
                         value={formData.email}
                         disabled
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm sm:text-sm bg-gray-200 dark:bg-gray-600 dark:text-gray-400 cursor-not-allowed"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 sm:text-sm bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed shadow-sm"
                       />
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Email address cannot be changed. Contact support if you need to update your email.
@@ -264,13 +264,13 @@ export default function AccountPage() {
 
               {/* Model Preferences Tab */}
               {activeTab === 'model' && (
-                <div className="p-6 bg-white dark:bg-gray-800 rounded-lg">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">Model Preferences</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Model Preferences</h2>
                   
                   {message.text && (
                     <div className={`mb-4 p-3 rounded-md ${
-                      message.type === 'success' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 
-                      'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+                      message.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' : 
+                      'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                     }`}>
                       {message.text}
                     </div>
@@ -286,7 +286,7 @@ export default function AccountPage() {
                         name="preferred_model"
                         value={formData.preferred_model}
                         onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
                       >
                         <option value="claude">Claude (Anthropic)</option>
                         <option value="llama">Llama 3 (Meta)</option>
@@ -298,10 +298,10 @@ export default function AccountPage() {
                       </p>
                     </div>
                     
-                    <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md border border-gray-200 dark:border-gray-700">
                       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model Comparison</h3>
                       <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                           <thead>
                             <tr>
                               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Model</th>
@@ -309,7 +309,7 @@ export default function AccountPage() {
                               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Best For</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             <tr>
                               <td className="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">Claude</td>
                               <td className="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">Detailed explanations, nuanced responses</td>
@@ -340,13 +340,13 @@ export default function AccountPage() {
 
               {/* API Settings Tab */}
               {activeTab === 'api' && (
-                <div className="p-6 bg-white dark:bg-gray-800 rounded-lg">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">API Settings</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">API Settings</h2>
                   
                   {message.text && (
                     <div className={`mb-4 p-3 rounded-md ${
-                      message.type === 'success' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 
-                      'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+                      message.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' : 
+                      'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
                     }`}>
                       {message.text}
                     </div>
@@ -363,7 +363,7 @@ export default function AccountPage() {
                         id="custom_api_key"
                         value={formData.custom_api_key}
                         onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
                         placeholder="Enter your API key"
                       />
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -371,10 +371,10 @@ export default function AccountPage() {
                       </p>
                     </div>
                     
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-md">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-md border border-yellow-200 dark:border-yellow-700/50">
                       <div className="flex">
                         <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <svg className="h-5 w-5 text-yellow-400 dark:text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
                         </div>
@@ -392,14 +392,13 @@ export default function AccountPage() {
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         </div>
       </div>
 
-      {/* Placeholder Footer */}
-      <footer className="mt-16 py-8 border-t border-gray-200 dark:border-gray-700">
+      {/* Footer */}
+      <footer className="mt-16 py-8 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500 dark:text-gray-400">
           <div className="flex justify-center space-x-6 mb-4">
             <Link href="/" className="hover:text-gray-700 dark:hover:text-gray-300">Home</Link>
