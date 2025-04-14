@@ -3,27 +3,34 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
-  // Skip authentication check for now and just return the response
-  // This will allow the application to work without authentication
   const res = NextResponse.next();
 
-  // For demonstration purposes, let's assume the user is not authenticated
-  const session = null;
+  try {
+    // Create a Supabase client for the middleware
+    const supabase = createMiddlewareClient({ req, res });
 
-  // Check if the request is for a protected route
-  const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard');
-  const isAuthRoute = req.nextUrl.pathname.startsWith('/auth') || req.nextUrl.pathname.startsWith('/signin');
+    // Check if the user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
 
-  // If trying to access a protected route without being logged in
-  if (isProtectedRoute && !session) {
-    const redirectUrl = new URL('/signin', req.url);
-    redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
+    // Check if the request is for a protected route
+    const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard');
+    const isAuthRoute = req.nextUrl.pathname.startsWith('/auth') || req.nextUrl.pathname.startsWith('/signin');
 
-  // If trying to access auth routes while logged in
-  if (isAuthRoute && session) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    // If trying to access a protected route without being logged in
+    if (isProtectedRoute && !session) {
+      const redirectUrl = new URL('/signin', req.url);
+      redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // If trying to access auth routes while logged in
+    if (isAuthRoute && session) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+  } catch (error) {
+    console.error('Middleware error:', error);
+    // If there's an error with authentication, allow the request to continue
+    // This prevents authentication errors from blocking the entire site
   }
 
   return res;
