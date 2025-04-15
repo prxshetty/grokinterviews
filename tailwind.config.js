@@ -92,10 +92,12 @@ module.exports = {
               fontWeight: '600',
             },
             code: {
-              backgroundColor: theme('colors.gray.100'),
+              backgroundColor: '#f0f0f0',
               borderRadius: '0.25rem',
               padding: '0.2rem 0.4rem',
               fontSize: '0.875em',
+              color: '#000000',
+              fontWeight: '500',
             },
             'code::before': {
               content: '""',
@@ -104,9 +106,21 @@ module.exports = {
               content: '""',
             },
             pre: {
-              backgroundColor: theme('colors.gray.100'),
+              backgroundColor: '#f0f0f0',
               borderRadius: '0.375rem',
               padding: '1rem',
+              border: '1px solid #e0e0e0',
+              overflow: 'auto',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+            },
+            'pre code': {
+              backgroundColor: 'transparent',
+              padding: '0',
+              borderRadius: '0',
+              fontWeight: 'normal',
+              color: '#000000',
+              display: 'block',
+              lineHeight: '1.5',
             },
             img: {
               marginTop: '1rem',
@@ -175,8 +189,20 @@ module.exports = {
               color: theme('colors.white'),
             },
             code: {
-              color: theme('colors.white'),
-              backgroundColor: theme('colors.gray.800'),
+              color: '#f0f0f0',
+              backgroundColor: '#1a1a1a',
+              fontWeight: '500',
+            },
+            pre: {
+              backgroundColor: '#1a1a1a',
+              borderColor: '#333333',
+              color: '#f0f0f0',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+            },
+            'pre code': {
+              backgroundColor: 'transparent',
+              color: '#f0f0f0',
+              fontWeight: 'normal',
             },
             blockquote: {
               color: theme('colors.gray.300'),
