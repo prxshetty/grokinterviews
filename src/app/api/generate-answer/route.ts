@@ -3,21 +3,40 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
+// Define the structure of a resource item from the database
+interface Resource {
+  id: string;
+  question_id: string;
+  resource_type: 'youtube' | 'paper' | 'note' | 'code_snippet' | string; // Allow other types
+  title: string | null;
+  url: string | null;
+  content: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Define types for preferences (mirroring frontend)
+type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown';
+type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
+
 // Ensure this edge runtime is appropriate for your deployment environment
 // If using Node.js features, remove this line.
 // export const runtime = 'edge';
 
 export async function POST(request: Request) {
-  const { questionText } = await request.json();
+  // 1. Read request body
+  const { questionText, questionId } = await request.json();
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-  if (!questionText) {
-    return NextResponse.json({ error: 'Question text is required' }, { status: 400 });
+  // Validate input
+  if (!questionText || !questionId) {
+    return NextResponse.json({ error: 'Question text and Question ID are required' }, { status: 400 });
   }
 
   try {
-    // 1. Get the authenticated user
+    // 2. Get the authenticated user
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError) {
@@ -31,10 +50,10 @@ export async function POST(request: Request) {
 
     const userId = session.user.id;
 
-    // 2. Fetch the user's profile to get the API key, preferred model, and specific model ID
-    const { data: profile, error: profileError } = await supabase
+    // 3. Fetch the user's profile (for API Key)
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('preferred_model, custom_api_key, specific_model_id')
+      .select('custom_api_key') // Only select the API key here
       .eq('id', userId)
       .single();
 
@@ -42,64 +61,200 @@ export async function POST(request: Request) {
       console.error('Profile Fetch Error:', profileError.message);
       return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
     }
-
-    if (!profile) {
+    if (!profileData) {
        return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
+    const { custom_api_key } = profileData;
 
-    // 3. Check if Groq is preferred and a key exists
-    const { preferred_model, custom_api_key, specific_model_id } = profile;
+    // 3b. Fetch user preferences (for model and answer settings)
+    const { data: preferencesData, error: preferencesError } = await supabase
+      .from('user_preferences')
+      .select(`
+        specific_model_id, 
+        use_youtube_sources,
+        use_pdf_sources,
+        use_paper_sources,
+        use_website_sources,
+        use_book_sources,
+        use_expert_opinion_sources,
+        preferred_answer_format,
+        preferred_answer_depth,
+        custom_formatting_instructions
+      `)
+      .eq('user_id', userId) // Match based on user_id
+      .maybeSingle(); // Use maybeSingle as preferences might not exist yet
 
-    if (preferred_model !== 'groq' || !custom_api_key) {
-      // If Groq isn't selected or no key is provided, return a message indicating that.
-      // The frontend can decide how to handle this (e.g., prompt user to set key).
-      return NextResponse.json({ 
-        message: 'Generation requires selecting Groq as the preferred model and providing a custom API key in account settings.', 
-        answer: null // Explicitly return null for the answer
-      }, { status: 200 }); // Status 200 because it's not an error, just a condition not met
+    if (preferencesError) {
+      console.error('Preferences Fetch Error:', preferencesError.message);
+      return NextResponse.json({ error: 'Failed to fetch user preferences' }, { status: 500 });
     }
 
-    // --- SECURITY WARNING --- 
-    // Ensure custom_api_key is stored securely (e.g., encrypted) in your database.
-    // Fetching and using it directly here assumes secure storage.
+    // 4. Check required Groq settings & get preferences
+    // Use defaults if preferencesData is null or fields are missing
+    const specific_model_id = preferencesData?.specific_model_id;
+    const use_youtube_sources = preferencesData?.use_youtube_sources ?? true;
+    const use_pdf_sources = preferencesData?.use_pdf_sources ?? true;
+    const use_paper_sources = preferencesData?.use_paper_sources ?? true;
+    const use_website_sources = preferencesData?.use_website_sources ?? true;
+    const use_book_sources = preferencesData?.use_book_sources ?? false;
+    const use_expert_opinion_sources = preferencesData?.use_expert_opinion_sources ?? false;
+    const preferred_answer_format = preferencesData?.preferred_answer_format || 'markdown';
+    const preferred_answer_depth = preferencesData?.preferred_answer_depth || 'standard';
+    const custom_formatting_instructions = preferencesData?.custom_formatting_instructions || null;
+    
+    // Define preferences object using fetched/defaulted values
+    const preferences = {
+        use_youtube: use_youtube_sources,
+        use_pdf: use_pdf_sources,
+        use_paper: use_paper_sources,
+        use_website: use_website_sources,
+        use_book: use_book_sources,
+        use_expert_opinion: use_expert_opinion_sources,
+        format: preferred_answer_format as AnswerFormat,
+        depth: preferred_answer_depth as AnswerDepth,
+        custom_instructions: custom_formatting_instructions,
+    };
+
+    // Check for API Key and selected model ID
+    if (!custom_api_key || !specific_model_id) {
+      let missingItems = [];
+      if (!custom_api_key) missingItems.push("Groq API key");
+      if (!specific_model_id) missingItems.push("Groq model selection");
+      const message = `Generation requires a ${missingItems.join(' and ')} to be configured in Account Preferences.`;
+      return NextResponse.json({ message: message, answer: null }, { status: 200 });
+    }
+
+    // 5. Fetch supplementary resources for the question
+    let resources: Resource[] = [];
+    try {
+      const { data: resourceData, error: resourceError } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('question_id', questionId); // Use questionId from request
+
+      if (resourceError) {
+        console.error('Resource Fetch Error:', resourceError.message);
+        // Don't fail the request, just proceed without resources
+      } else {
+        resources = resourceData || [];
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching resources:', err);
+      // Proceed without resources
+    }
+
+    // 6. Filter resources based on user preferences
+    const sourceMap: { [key: string]: boolean } = {
+        youtube: preferences.use_youtube,
+        pdf: preferences.use_pdf,
+        paper: preferences.use_paper,
+        website: preferences.use_website, // Assuming 'website' type exists in resources
+        book: preferences.use_book,       // Assuming 'book' type exists
+        expert_opinion: preferences.use_expert_opinion, // Assuming 'expert_opinion' type exists
+        note: true, // Always include notes if they exist?
+        // code_snippet: true // [REMOVED] - Code snippets are generated, not fetched
+        // Add mappings for other resource_types if needed
+    };
+    const filteredResources = resources.filter(r => sourceMap[r.resource_type] === true);
+
+    // 7. Format *filtered* resources for the prompt
+    const formatResources = (type: string): string => {
+      return filteredResources
+        .filter(r => r.resource_type === type)
+        .map(r => {
+          if (type === 'youtube' || type === 'paper' || type === 'website' || type === 'pdf' || type === 'book' || type === 'expert_opinion') {
+            const title = r.title || (r.url ? new URL(r.url).hostname : 'Link');
+            const link = r.url ? `(${r.url})` : '';
+            let text = `- [${title}]${link}`;
+            if (r.description) text += ` - ${r.description}`;
+            return text;
+          } else if (type === 'note') {
+            return `- ${r.content || ''}`;
+          } 
+          // [REMOVED] else if (type === 'code_snippet') { ... }
+          return ''; // Fallback for unknown types
+        })
+        .join('\n');
+    };
+
+    const formattedData = {
+      youtube_links: formatResources('youtube'),
+      papers: formatResources('paper'),
+      pdfs: formatResources('pdf'),
+      websites: formatResources('website'),
+      books: formatResources('book'),
+      expert_opinions: formatResources('expert_opinion'),
+      notes: formatResources('note'),
+      // code_snippets: formatResources('code_snippet'), // [REMOVED]
+      // Add other types as needed
+    };
+
+    // 8. Construct the final prompt based on preferences
+    let promptSegments = [
+        `Please answer the following interview question:`, // Removed "concise" etc. - let depth control that.
+        `"${questionText}"`,
+        `\nAdhere to the following preferences:`, 
+        `- Answer Format: ${preferences.format}`,
+        `- Answer Depth: ${preferences.depth}`,
+    ];
+
+    if (preferences.custom_instructions) {
+        promptSegments.push(`- Additional Instructions: ${preferences.custom_instructions}`);
+    }
+
+    // Add instruction about generating code snippets if applicable
+    promptSegments.push(`- Include relevant code snippets in the answer if the question involves coding or algorithms. Format them using markdown code blocks.`);
+
+    const resourceSegments: string[] = [];
+    if (formattedData.youtube_links) resourceSegments.push(`**Relevant YouTube Videos:**\n${formattedData.youtube_links}`);
+    if (formattedData.papers) resourceSegments.push(`**Relevant Research Papers:**\n${formattedData.papers}`);
+    if (formattedData.pdfs) resourceSegments.push(`**Relevant PDFs:**\n${formattedData.pdfs}`);
+    if (formattedData.websites) resourceSegments.push(`**Relevant Websites:**\n${formattedData.websites}`);
+    if (formattedData.books) resourceSegments.push(`**Relevant Books:**\n${formattedData.books}`);
+    if (formattedData.expert_opinions) resourceSegments.push(`**Relevant Expert Opinions:**\n${formattedData.expert_opinions}`);
+    if (formattedData.notes) resourceSegments.push(`**Additional Notes:**\n${formattedData.notes}`);
+
+    if (resourceSegments.length > 0) {
+        promptSegments.push(`\nConsider the following supplementary resources based on your enabled sources:`);
+        promptSegments.push(...resourceSegments);
+    }
+
+    promptSegments.push(`\nAnswer:`);
+
+    const finalPrompt = promptSegments.join('\n');
+
+    // --- SECURITY WARNING ---
+    // Using user API key requires secure storage and handling.
+    // Templating user prompts + DB content needs care against injection if resource content isn't trusted.
     // ------------------------
 
-    // 4. Initialize Groq SDK and generate answer
+    // 9. Initialize Groq SDK and generate answer
     const groq = new Groq({
       apiKey: custom_api_key,
-      // Consider adding configuration like maxRetries, timeout if needed
     });
-
-    // Simple prompt - customize as needed
-    const prompt = `Provide a concise and helpful answer to the following interview question:
-
-Question: ${questionText}
-
-Answer:`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant designed to answer interview questions clearly and concisely.",
+          // Simpler system prompt as user prompt has instructions
+          content: "You are a helpful AI assistant.", 
         },
         {
           role: 'user',
-          content: prompt,
+          content: finalPrompt, // Use the fully constructed prompt
         },
       ],
-      // Use the specific model ID saved by the user, with a fallback
-      model: specific_model_id || 'llama-3.1-8b-instant', 
-      // Optional parameters: temperature, max_tokens, top_p, stream
-       temperature: 0.7,
-       max_tokens: 1024,
-       top_p: 1,
-       stream: false, // Set to true if you want to stream the response
+      model: specific_model_id, // Use the specific model ID from preferences
+      temperature: 0.7,
+      max_tokens: 1024,
+      top_p: 1,
+      stream: false,
     });
 
     const answer = chatCompletion.choices[0]?.message?.content || 'No answer generated.';
 
-    // 5. Return the generated answer
+    // 10. Return the generated answer
     return NextResponse.json({ answer });
 
   } catch (error: any) {

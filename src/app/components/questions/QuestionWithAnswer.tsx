@@ -123,6 +123,7 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
             },
             body: JSON.stringify({ 
               questionText: question.question_text,
+              questionId: question.id,
             }),
           });
 
@@ -228,8 +229,8 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
             ) : hasPredefinedAnswer ? (
                <ReactMarkdown>{question.answer_text || ''}</ReactMarkdown>
             ) : (
-              // Updated placeholder message
-              <p className="italic text-gray-500">No pre-defined answer. Answer generation requires selecting Groq and providing an API key in your account settings.</p> 
+              // Updated placeholder to reflect potential customization
+              <p className="italic text-gray-500">No pre-defined answer. Answer generation uses your preferred Groq model and API key (set in Account). You can customize the answer format via the prompt template in your Account Preferences.</p>
             )}
           </div>
         </div>
