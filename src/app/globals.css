@@ -107,17 +107,161 @@ button:focus {
 }
 
 .prose pre {
-  background-color: #f3f4f6;
+  background-color: #f0f0f0;
   padding: 1rem;
   border-radius: 0.375rem;
   overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .prose pre {
+  background-color: #1a1a1a;
+  border-color: #333333;
+  color: #f0f0f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .prose code {
-  background-color: #f3f4f6;
+  background-color: #f0f0f0;
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  color: #000000 !important; /* Black text for better readability - important to override any other styles */
+  font-weight: 500;
+}
+
+.dark .prose code {
+  background-color: #1a1a1a;
+  color: #f0f0f0 !important; /* Light text for better readability in dark mode - important to override */
+  font-weight: 500;
+}
+
+/* Ensure code inside pre blocks is properly styled */
+.prose pre code {
+  color: #000000 !important; /* Force black text in light mode */
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-weight: normal;
+  display: block;
+  line-height: 1.5;
+}
+
+.dark .prose pre code {
+  color: #f0f0f0 !important; /* Force light text in dark mode */
+  background-color: transparent;
+}
+
+
+
+/* Add language tag styling */
+.prose pre::before {
+  content: attr(data-language);
+  display: block;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.25rem 1rem;
+  margin: -1rem -1rem 1rem -1rem;
+  border-bottom: 1px solid #e0e0e0;
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .prose pre::before {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid #333333;
+  color: #aaa;
+}
+
+/* Improve code block readability */
+.prose pre {
+  tab-size: 2;
+  -moz-tab-size: 2;
+}
+
+/* Add syntax highlighting colors for common elements */
+.prose .token.comment,
+.prose .token.prolog,
+.prose .token.doctype,
+.prose .token.cdata {
+  color: #6a737d;
+}
+
+.prose .token.punctuation {
+  color: #24292e;
+}
+
+.dark .prose .token.punctuation {
+  color: #e1e4e8;
+}
+
+.prose .token.property,
+.prose .token.tag,
+.prose .token.boolean,
+.prose .token.number,
+.prose .token.constant,
+.prose .token.symbol {
+  color: #005cc5;
+}
+
+.dark .prose .token.property,
+.dark .prose .token.tag,
+.dark .prose .token.boolean,
+.dark .prose .token.number,
+.dark .prose .token.constant,
+.dark .prose .token.symbol {
+  color: #79b8ff;
+}
+
+.prose .token.selector,
+.prose .token.attr-name,
+.prose .token.string,
+.prose .token.char,
+.prose .token.builtin {
+  color: #032f62;
+}
+
+.dark .prose .token.selector,
+.dark .prose .token.attr-name,
+.dark .prose .token.string,
+.dark .prose .token.char,
+.dark .prose .token.builtin {
+  color: #9ecbff;
+}
+
+.prose .token.operator,
+.prose .token.entity,
+.prose .token.url,
+.prose .token.variable {
+  color: #d73a49;
+}
+
+.dark .prose .token.operator,
+.dark .prose .token.entity,
+.dark .prose .token.url,
+.dark .prose .token.variable {
+  color: #f97583;
+}
+
+.prose .token.keyword {
+  color: #d73a49;
+}
+
+.dark .prose .token.keyword {
+  color: #f97583;
+}
+
+.prose .token.function {
+  color: #6f42c1;
+}
+
+.dark .prose .token.function {
+  color: #b392f0;
 }
 
 .prose blockquote {
