@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     const { data: preferencesData, error: preferencesError } = await supabase
       .from('user_preferences')
       .select(`
-        specific_model_id, 
+        specific_model_id,
         use_youtube_sources,
         use_pdf_sources,
         use_paper_sources,
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     const preferred_answer_format = preferencesData?.preferred_answer_format || 'markdown';
     const preferred_answer_depth = preferencesData?.preferred_answer_depth || 'standard';
     const custom_formatting_instructions = preferencesData?.custom_formatting_instructions || null;
-    
+
     // Define preferences object using fetched/defaulted values
     const preferences = {
         use_youtube: use_youtube_sources,
@@ -170,7 +170,7 @@ export async function POST(request: Request) {
             return text;
           } else if (type === 'note') {
             return `- ${r.content || ''}`;
-          } 
+          }
           // [REMOVED] else if (type === 'code_snippet') { ... }
           return ''; // Fallback for unknown types
         })
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
     let promptSegments = [
         `Please answer the following interview question:`, // Removed "concise" etc. - let depth control that.
         `"${questionText}"`,
-        `\nAdhere to the following preferences:`, 
+        `\nAdhere to the following preferences:`,
         `- Answer Format: ${preferences.format}`,
         `- Answer Depth: ${preferences.depth}`,
     ];
@@ -202,8 +202,18 @@ export async function POST(request: Request) {
         promptSegments.push(`- Additional Instructions: ${preferences.custom_instructions}`);
     }
 
-    // Add instruction about generating code snippets if applicable
-    promptSegments.push(`- Include relevant code snippets in the answer if the question involves coding or algorithms. Format them using markdown code blocks.`);
+    // Add detailed instructions about generating code snippets if applicable
+    promptSegments.push(`- Include relevant code snippets in the answer if the question involves coding or algorithms. Format them using proper markdown code blocks with triple backticks and language specification. For example:
+  \`\`\`javascript
+  // Your JavaScript code here
+  \`\`\`
+  or
+  \`\`\`python
+  # Your Python code here
+  \`\`\`
+- Ensure all code is properly indented and formatted within these code blocks.
+- Always specify the programming language after the opening triple backticks.
+- Do not use single backticks for multi-line code blocks.`);
 
     const resourceSegments: string[] = [];
     if (formattedData.youtube_links) resourceSegments.push(`**Relevant YouTube Videos:**\n${formattedData.youtube_links}`);
@@ -237,8 +247,8 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          // Simpler system prompt as user prompt has instructions
-          content: "You are a helpful AI assistant.", 
+          // Enhanced system prompt with code formatting instructions
+          content: "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions. When including code examples, always format them properly using markdown code blocks with triple backticks and language specification. Ensure code is well-indented, properly commented, and follows best practices for the language being used.",
         },
         {
           role: 'user',
@@ -252,9 +262,13 @@ export async function POST(request: Request) {
       stream: false,
     });
 
-    const answer = chatCompletion.choices[0]?.message?.content || 'No answer generated.';
+    let answer = chatCompletion.choices[0]?.message?.content || 'No answer generated.';
 
-    // 10. Return the generated answer
+    // Process the answer to handle Llama 4 <think> tags
+    // Remove <think> tags and their content as they can make code almost invisible
+    answer = answer.replace(/<think>[\s\S]*?<\/think>/g, '');
+
+    // 10. Return the processed answer
     return NextResponse.json({ answer });
 
   } catch (error: any) {
@@ -273,7 +287,7 @@ export async function POST(request: Request) {
          statusCode = 400; // Return as a client error
       }
     }
-    
+
     return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
-} 
+}
