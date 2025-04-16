@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import ProgressSaver from '../components/progress/ProgressSaver';
 
 interface UserProfile {
   id: string;
@@ -41,9 +41,16 @@ const staticData = {
 };
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [progressData, setProgressData] = useState({
+    questionsCompleted: 0,
+    questionsViewed: 0,
+    totalQuestions: 0,
+    completionPercentage: 0,
+    domainsSolved: 0,
+    totalDomains: 0
+  });
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -54,7 +61,6 @@ export default function DashboardPage() {
         router.push('/signin'); // Redirect if not logged in
         return;
       }
-      setUser(session.user);
 
       // Fetch user profile
       const { data: profileData, error } = await supabase
@@ -69,6 +75,20 @@ export default function DashboardPage() {
       } else if (profileData) {
         setProfile(profileData);
       }
+
+      // Fetch user progress data
+      try {
+        const response = await fetch('/api/user/progress');
+        if (response.ok) {
+          const data = await response.json();
+          setProgressData(data);
+        } else {
+          console.error('Failed to fetch progress data');
+        }
+      } catch (err) {
+        console.error('Error fetching progress data:', err);
+      }
+
       setLoading(false);
     };
 
@@ -116,6 +136,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-gray-800 dark:text-gray-200 p-8 pt-0">
+      {/* Component to save progress when navigating away */}
+      <ProgressSaver />
 
       {/* Top Bar - Below Main Navigation */}
       <div className="flex justify-between items-center mb-8 sticky top-16 bg-white dark:bg-black py-4 z-40 border-b border-gray-200 dark:border-gray-800">
@@ -176,22 +198,121 @@ export default function DashboardPage() {
         <div className="lg:col-span-1 space-y-6">
           {/* Overview Widget */}
           <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
-            <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Overview</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Overview</h2>
+              <button
+                onClick={async () => {
+                  try {
+                    // Manually save any completed questions
+                    const completedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
+                    if (completedQuestions.length > 0) {
+                      console.log('Manually saving completed questions:', completedQuestions);
+
+                      // Save questions one by one and collect results
+                      const results = [];
+                      for (const questionId of completedQuestions) {
+                        try {
+                          const response = await fetch('/api/user/progress', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              questionId,
+                              status: 'completed',
+                            }),
+                          });
+
+                          if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error(`Error saving question ${questionId}:`, response.status, errorText);
+                            results.push({ questionId, success: false, error: errorText });
+                          } else {
+                            const result = await response.json();
+                            console.log(`Successfully saved question ${questionId}:`, result);
+                            results.push({ questionId, success: true });
+                          }
+                        } catch (err) {
+                          console.error(`Exception saving question ${questionId}:`, err);
+                          results.push({ questionId, success: false, error: String(err) });
+                        }
+                      }
+
+                      // Count successes and failures
+                      const successes = results.filter(r => r.success).length;
+                      const failures = results.length - successes;
+
+                      if (failures === 0) {
+                        sessionStorage.removeItem('completedQuestions');
+                        alert(`Successfully saved ${successes} completed questions`);
+                      } else {
+                        alert(`Saved ${successes} questions, but ${failures} failed. Check console for details.`);
+                      }
+
+                      // Refresh progress data
+                      const progressResponse = await fetch('/api/user/progress');
+                      if (progressResponse.ok) {
+                        const data = await progressResponse.json();
+                        setProgressData(data);
+                        console.log('Updated progress data:', data);
+                      } else {
+                        console.error('Failed to refresh progress data:', progressResponse.status);
+                      }
+                    } else {
+                      // Just refresh the data
+                      const progressResponse = await fetch('/api/user/progress');
+                      if (progressResponse.ok) {
+                        const data = await progressResponse.json();
+                        setProgressData(data);
+                        console.log('Refreshed progress data:', data);
+                        alert('Progress data refreshed');
+                      } else {
+                        console.error('Failed to refresh progress data:', progressResponse.status);
+                        alert('Failed to refresh progress data');
+                      }
+                    }
+                  } catch (err) {
+                    console.error('Error in refresh operation:', err);
+                    alert(`Error: ${err}`);
+                  }
+                }}
+                className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Refresh
+              </button>
+            </div>
             <div className="flex items-baseline space-x-2 mb-1">
-              <span className="text-4xl font-bold text-gray-900 dark:text-white">{staticData.overviewValue}</span>
-              <span className={`${getChangeColor(staticData.overviewChange)} text-sm font-medium`}>
-                +{staticData.overviewChange}%
+              <span className="text-4xl font-bold text-gray-900 dark:text-white">{progressData.completionPercentage}%</span>
+              <span className="text-sm font-medium text-green-500 dark:text-green-400">
+                Questions Completed
               </span>
               </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">This is current position overview</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {progressData.questionsCompleted} of {progressData.totalQuestions} questions completed
+            </p>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div className="bg-purple-600 h-2 rounded-full" style={{ width: '72%' }}></div>
+              <div
+                className="bg-purple-600 h-2 rounded-full"
+                style={{ width: `${progressData.completionPercentage}%` }}
+              ></div>
               </div>
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-              <span>72%</span>
-              <span>28%</span>
+              <span>{progressData.completionPercentage}% completed</span>
+              <span>{100 - progressData.completionPercentage}% remaining</span>
             </div>
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Domains Solved</p>
+                  <p className="text-lg font-medium text-gray-900 dark:text-white">{progressData.domainsSolved} of {progressData.totalDomains}</p>
                 </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Questions Viewed</p>
+                  <p className="text-lg font-medium text-gray-900 dark:text-white">{progressData.questionsViewed}</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Weekly Traffic Widget */}
           <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
