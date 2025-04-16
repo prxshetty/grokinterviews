@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTopicData, TopicCategoryGrid, ActivityProgress, ProgressChart, QuestionWithAnswer } from '../components';
+import ProgressSaver from '../components/progress/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
 // Import types from database
 
@@ -446,9 +447,9 @@ export default function TopicsPage() {
                                      (difficultyOrder[bDifficulty as keyof typeof difficultyOrder] || 4);
                             })
                             .map((question: QuestionType, qIndex: number) => (
-                              <QuestionWithAnswer 
-                                key={question.id || qIndex} 
-                                question={question} 
+                              <QuestionWithAnswer
+                                key={question.id || qIndex}
+                                question={question}
                                 questionIndex={qIndex}
                               />
                             ))
@@ -599,6 +600,8 @@ export default function TopicsPage() {
 
   return (
     <div className="bg-white dark:bg-black min-h-screen">
+      {/* Component to save progress when navigating away */}
+      <ProgressSaver />
       <div className="w-full px-0">
         <div className="transition-opacity duration-300">
           <div className="p-0">
@@ -788,11 +791,8 @@ export default function TopicsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                       <div>
                         <ActivityProgress
-                          questionsCompleted={24}
-                          totalQuestions={120}
+                          useRealData={true}
                           timeSpent={8.5}
-                          domainsSolved={3}
-                          totalDomains={5}
                         />
                       </div>
                       <div>
