@@ -1,20 +1,55 @@
 "use client";
 
+import { useEffect, useState } from 'react';
+import { fetchUserProgress } from '@/app/utils/progress';
+
 interface ActivityProgressProps {
   questionsCompleted?: number;
   totalQuestions?: number;
   timeSpent?: number;
   domainsSolved?: number;
   totalDomains?: number;
+  useRealData?: boolean;
 }
 
 export default function ActivityProgress({
-  questionsCompleted = 24,
-  totalQuestions = 120,
+  questionsCompleted: propQuestionsCompleted = 24,
+  totalQuestions: propTotalQuestions = 120,
   timeSpent = 8.5,
-  domainsSolved = 3,
-  totalDomains = 5
+  domainsSolved: propDomainsSolved = 3,
+  totalDomains: propTotalDomains = 5,
+  useRealData = true
 }: ActivityProgressProps) {
+  // State for real data
+  const [realData, setRealData] = useState({
+    questionsCompleted: propQuestionsCompleted,
+    totalQuestions: propTotalQuestions,
+    domainsSolved: propDomainsSolved,
+    totalDomains: propTotalDomains
+  });
+
+  // Fetch real data if requested
+  useEffect(() => {
+    if (useRealData) {
+      const loadRealData = async () => {
+        const data = await fetchUserProgress();
+        setRealData({
+          questionsCompleted: data.questionsCompleted,
+          totalQuestions: data.totalQuestions,
+          domainsSolved: data.domainsSolved,
+          totalDomains: data.totalDomains
+        });
+      };
+
+      loadRealData();
+    }
+  }, [useRealData]);
+
+  // Use either real data or props
+  const questionsCompleted = useRealData ? realData.questionsCompleted : propQuestionsCompleted;
+  const totalQuestions = useRealData ? realData.totalQuestions : propTotalQuestions;
+  const domainsSolved = useRealData ? realData.domainsSolved : propDomainsSolved;
+  const totalDomains = useRealData ? realData.totalDomains : propTotalDomains;
   // Calculate percentages
   const questionsPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
   const domainsPercentage = Math.round((domainsSolved / totalDomains) * 100);
