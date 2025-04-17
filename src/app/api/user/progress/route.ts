@@ -1,32 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import supabaseServer from '@/utils/supabase-server';
 
 // GET: Retrieve user progress statistics
-export async function GET(request: NextRequest) {
-  // Use the server-side Supabase client for anonymous access
-  // For authenticated access, we'll extract the token from the request
+export async function GET(_request: NextRequest) {
+  // Use the Next.js route handler client for authentication
+  const supabase = createRouteHandlerClient({ cookies });
   let userId = null;
 
-  // Try to get the user ID from the request cookies
+  // Get the user session using Supabase auth
   try {
-    // Get the auth cookie directly from the request headers
-    const authHeader = request.headers.get('cookie') || '';
-    const authCookieMatch = authHeader.match(/sb-kibwukwviowxuueaoegz-auth-token=([^;]+)/);
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (authCookieMatch && authCookieMatch[1]) {
-      try {
-        const decodedCookie = decodeURIComponent(authCookieMatch[1]);
-        const token = JSON.parse(decodedCookie);
-        if (token.user && token.user.id) {
-          userId = token.user.id;
-          console.log('Found user ID from cookie:', userId);
-        }
-      } catch (parseError) {
-        console.error('Error parsing auth token:', parseError);
-      }
+    if (sessionError) {
+      console.error('Session Error:', sessionError.message);
+    } else if (session?.user) {
+      userId = session.user.id;
+      console.log('Found user ID from session:', userId);
     }
   } catch (error) {
-    console.error('Error extracting auth cookie:', error);
+    console.error('Error getting user session:', error);
     // Continue with anonymous access
   }
 
@@ -183,6 +177,13 @@ export async function GET(request: NextRequest) {
     // Calculate completion percentage
     const completionPercentage = totalQuestions ? Math.round(((completedQuestions || 0) / totalQuestions) * 100) : 0;
 
+    // Debug log to see the values
+    console.log('Progress calculation:', {
+      completedQuestions,
+      totalQuestions,
+      completionPercentage
+    });
+
     return NextResponse.json({
       questionsCompleted: completedQuestions || 0,
       questionsViewed: viewedQuestions || 0,
@@ -200,30 +201,22 @@ export async function GET(request: NextRequest) {
 
 // POST: Update user progress
 export async function POST(request: NextRequest) {
-  // Use the server-side Supabase client for anonymous access
-  // For authenticated access, we'll extract the token from the request
+  // Use the Next.js route handler client for authentication
+  const supabase = createRouteHandlerClient({ cookies });
   let userId = null;
 
-  // Try to get the user ID from the request cookies
+  // Get the user session using Supabase auth
   try {
-    // Get the auth cookie directly from the request headers
-    const authHeader = request.headers.get('cookie') || '';
-    const authCookieMatch = authHeader.match(/sb-kibwukwviowxuueaoegz-auth-token=([^;]+)/);
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (authCookieMatch && authCookieMatch[1]) {
-      try {
-        const decodedCookie = decodeURIComponent(authCookieMatch[1]);
-        const token = JSON.parse(decodedCookie);
-        if (token.user && token.user.id) {
-          userId = token.user.id;
-          console.log('Found user ID from cookie for POST:', userId);
-        }
-      } catch (parseError) {
-        console.error('Error parsing auth token:', parseError);
-      }
+    if (sessionError) {
+      console.error('Session Error:', sessionError.message);
+    } else if (session?.user) {
+      userId = session.user.id;
+      console.log('Found user ID from session for POST:', userId);
     }
   } catch (error) {
-    console.error('Error extracting auth cookie:', error);
+    console.error('Error getting user session:', error);
     // Continue with anonymous access
   }
 
@@ -317,19 +310,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update user progress' }, { status: 500 });
     }
 
-    // Also log this activity
-    const activityResult = await supabaseServer
-      .from('user_activity')
-      .insert({
-        user_id: userId,
-        activity_type: status === 'completed' ? 'question_completed' : 'question_viewed',
-        activity_data: { question_id: questionId },
-        created_at: new Date().toISOString()
-      });
+    // Debug log to see the result
+    console.log('Progress updated successfully:', {
+      userId,
+      questionId,
+      status,
+      topicId,
+      categoryId: questionData.category_id,
+      isUpdate: !!existingRecord
+    });
 
-    if (activityResult.error) {
-      console.error('Error logging activity:', activityResult.error);
-      // Continue anyway, this is not critical
+    // Also log this activity
+    try {
+      // First, check if the user_activity table exists and has the expected columns
+      const { error: tableCheckError } = await supabaseServer
+        .from('user_activity')
+        .select('id')
+        .limit(1);
+
+      if (!tableCheckError) {
+        // Table exists, try to insert activity
+        // Use a more flexible approach that doesn't rely on specific column names
+        const activityData = {
+          user_id: userId,
+          activity_type: status === 'completed' ? 'question_completed' : 'question_viewed',
+          // Store question_id as a string if activity_data column doesn't exist
+          question_id: questionId.toString(),
+          created_at: new Date().toISOString()
+        };
+
+        const activityResult = await supabaseServer
+          .from('user_activity')
+          .insert(activityData);
+
+        if (activityResult.error) {
+          console.error('Error logging activity:', activityResult.error);
+          // Continue anyway, this is not critical
+        }
+      } else {
+        console.log('User activity table not available or not accessible');
+      }
+    } catch (activityError) {
+      console.error('Exception logging activity:', activityError);
+      // Continue anyway, activity logging is not critical
     }
 
     return NextResponse.json({ success: true });
