@@ -157,21 +157,29 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
             }),
           });
 
-          const data = await response.json();
-          console.log("API Response:", data); // Debug log
+          try {
+            const data = await response.json();
+            console.log("API Response:", data); // Debug log
 
-          if (!response.ok) {
-            if (data.message) {
+            if (!response.ok) {
+              if (data.message) {
+                setError(data.message);
+              } else if (data.error) {
+                setError(data.error);
+              } else {
+                setError('Failed to generate answer');
+              }
+              setGeneratedAnswer(null);
+            } else if (data.answer === null && data.message) {
               setError(data.message);
+              setGeneratedAnswer(null);
             } else {
-              throw new Error(data.error || 'Failed to generate answer');
+              setGeneratedAnswer(data.answer || 'No answer content received.');
             }
+          } catch (jsonError) {
+            console.error('Error parsing JSON response:', jsonError);
+            setError('Error processing server response');
             setGeneratedAnswer(null);
-          } else if (data.answer === null && data.message) {
-            setError(data.message);
-            setGeneratedAnswer(null);
-          } else {
-            setGeneratedAnswer(data.answer || 'No answer content received.');
           }
         } catch (err: unknown) {
           console.error("Generation fetch error:", err);
