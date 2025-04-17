@@ -27,8 +27,8 @@ type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 export async function POST(request: Request) {
   // 1. Read request body
   const { questionText, questionId } = await request.json();
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  // Use the correct approach for Next.js 15
+  const supabase = createRouteHandlerClient({ cookies });
 
   // Validate input
   if (!questionText || !questionId) {
@@ -286,6 +286,10 @@ export async function POST(request: Request) {
          errorMessage = "Invalid Groq API Key provided in account settings.";
          statusCode = 400; // Return as a client error
       }
+    } else if (error.name === 'TypeError' && error.message.includes('cookies')) {
+      // Handle cookie-related errors
+      errorMessage = "Authentication error. Please try signing in again.";
+      statusCode = 401;
     }
 
     return NextResponse.json({ error: errorMessage }, { status: statusCode });
