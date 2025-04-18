@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProgressSaver from '../components/progress/ProgressSaver';
 
@@ -144,32 +145,23 @@ export default function DashboardPage() {
         {/* Left Tabs */}
         <div className="flex items-center space-x-2">
           <button className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-md text-sm font-medium text-gray-900 dark:text-white">Overview</button>
-          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Insights</button>
-          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Audiences</button>
-          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Users</button>
-          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Reports</button>
+          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Progress</button>
+          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Activity</button>
+          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Settings</button>
         </div>
 
         {/* Right Controls */}
         <div className="flex items-center space-x-4">
-          {/* Search Input - Placeholder */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search for anything..."
-              className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-4 pl-10 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
-            />
-            <svg className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+          <Link href="/topics" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+            Continue Learning
+          </Link>
 
-          {/* Time Period Buttons - Placeholder */}
+          {/* Time Period Selector */}
           <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md p-1">
             <button className="px-3 py-1 rounded text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-white">Today</button>
             <button className="px-3 py-1 rounded text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-white">Week</button>
             <button className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded text-xs font-medium text-gray-700 dark:text-white">Month</button>
-            <button className="px-3 py-1 rounded text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-white">Year</button>
+            <button className="px-3 py-1 rounded text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-white">All Time</button>
           </div>
 
           {/* Date Range - Placeholder */}
@@ -282,7 +274,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="flex items-baseline space-x-2 mb-1">
-              <span className="text-4xl font-bold text-gray-900 dark:text-white">{progressData.completionPercentage}%</span>
+              <span className="text-4xl font-bold text-gray-900 dark:text-white">{progressData.completionPercentage.toFixed(1)}%</span>
               <span className="text-sm font-medium text-green-500 dark:text-green-400">
                 Questions Completed
               </span>
@@ -293,12 +285,12 @@ export default function DashboardPage() {
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className="bg-purple-600 h-2 rounded-full"
-                style={{ width: `${progressData.completionPercentage}%` }}
+                style={{ width: `${Math.max(0.5, progressData.completionPercentage)}%` }}
               ></div>
               </div>
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-              <span>{progressData.completionPercentage}% completed</span>
-              <span>{100 - progressData.completionPercentage}% remaining</span>
+              <span>{progressData.completionPercentage.toFixed(1)}% completed</span>
+              <span>{(100 - progressData.completionPercentage).toFixed(1)}% remaining</span>
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-center">
@@ -370,31 +362,45 @@ export default function DashboardPage() {
               </div>
             </div>
 
-          {/* Customer by Time Widget */}
+          {/* Recent Activity */}
           <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer by Time</h2>
-              <div className="flex space-x-3 text-xs text-gray-500 dark:text-gray-400">
-                <span>&lt; 500</span>
-                <span>1,000+</span>
-                <span>2,000+</span>
-                <span>3,000+</span>
+              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Recent Activity</h2>
+              <Link href="/dashboard/activity" className="text-xs text-purple-600 dark:text-purple-400 hover:underline">
+                View All
+              </Link>
+            </div>
+
+            {/* Activity List */}
+            <div className="space-y-4">
+              {/* Activity Item */}
+              <div className="flex items-start">
+                <div className="w-2 h-2 mt-1.5 bg-green-500 rounded-full mr-3"></div>
+                <div>
+                  <p className="text-sm text-gray-900 dark:text-white">Completed question: "What is the time complexity of quicksort?"</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">2 hours ago</p>
+                </div>
               </div>
-                            </div>
-            <div className="grid grid-cols-7 gap-1 aspect-square">
-              {Array.from({ length: 49 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-sm"
-                  style={{ backgroundColor: `rgba(168, 85, 247, ${Math.random() * 0.6 + 0.1})`}}
-                                ></div>
-              ))}
-                              </div>
-             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-                              </div>
-                            </div>
-                          </div>
+
+              {/* Activity Item */}
+              <div className="flex items-start">
+                <div className="w-2 h-2 mt-1.5 bg-blue-500 rounded-full mr-3"></div>
+                <div>
+                  <p className="text-sm text-gray-900 dark:text-white">Viewed question: "How does a B-tree differ from a binary search tree?"</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">3 hours ago</p>
+                </div>
+              </div>
+
+              {/* Activity Item */}
+              <div className="flex items-start">
+                <div className="w-2 h-2 mt-1.5 bg-green-500 rounded-full mr-3"></div>
+                <div>
+                  <p className="text-sm text-gray-900 dark:text-white">Completed question: "Explain the CAP theorem"</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Yesterday</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
         {/* Right Column (Metrics + Highest Campaign) */}
         <div className="lg:col-span-1 space-y-6">
