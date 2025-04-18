@@ -52,6 +52,29 @@ export default function DashboardPage() {
     domainsSolved: 0,
     totalDomains: 0
   });
+  interface ActivityItem {
+    id: string;
+    activityType: string;
+    topicId: string;
+    topicName: string;
+    categoryId: string;
+    categoryName: string;
+    questionId: number;
+    questionText: string;
+    createdAt: string;
+    displayText: string;
+    timeAgo: string;
+  }
+
+  const [activityData, setActivityData] = useState<{
+    activities: ActivityItem[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    activities: [],
+    loading: true,
+    error: null
+  });
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -95,6 +118,42 @@ export default function DashboardPage() {
 
     checkUserAndProfile();
   }, [supabase, router]);
+
+  // Fetch activity data when loading is complete
+  useEffect(() => {
+    const fetchActivityData = async () => {
+      setActivityData(prev => ({ ...prev, loading: true, error: null }));
+      try {
+        const response = await fetch('/api/user/activity?limit=3');
+        if (response.ok) {
+          const data = await response.json();
+          setActivityData({
+            activities: data.activities,
+            loading: false,
+            error: null
+          });
+        } else {
+          console.error('Failed to fetch activity data:', response.status);
+          setActivityData(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Failed to fetch activity data'
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching activity data:', error);
+        setActivityData(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Error fetching activity data'
+        }));
+      }
+    };
+
+    if (!loading) {
+      fetchActivityData();
+    }
+  }, [loading]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -373,34 +432,77 @@ export default function DashboardPage() {
 
             {/* Activity List */}
             <div className="space-y-4">
-              {/* Activity Item */}
-              <div className="flex items-start">
-                <div className="w-2 h-2 mt-1.5 bg-green-500 rounded-full mr-3"></div>
-                <div>
-                  <p className="text-sm text-gray-900 dark:text-white">Completed question: "What is the time complexity of quicksort?"</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">2 hours ago</p>
+              {activityData.loading ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-600 dark:border-purple-500"></div>
                 </div>
-              </div>
-
-              {/* Activity Item */}
-              <div className="flex items-start">
-                <div className="w-2 h-2 mt-1.5 bg-blue-500 rounded-full mr-3"></div>
-                <div>
-                  <p className="text-sm text-gray-900 dark:text-white">Viewed question: "How does a B-tree differ from a binary search tree?"</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">3 hours ago</p>
+              ) : activityData.error ? (
+                <div className="text-center py-4 text-red-500 dark:text-red-400">
+                  <p>{activityData.error}</p>
+                  <button
+                    onClick={() => {
+                      if (!loading) {
+                        const fetchActivityData = async () => {
+                          setActivityData(prev => ({ ...prev, loading: true, error: null }));
+                          try {
+                            const response = await fetch('/api/user/activity?limit=3');
+                            if (response.ok) {
+                              const data = await response.json();
+                              setActivityData({
+                                activities: data.activities,
+                                loading: false,
+                                error: null
+                              });
+                            } else {
+                              setActivityData(prev => ({
+                                ...prev,
+                                loading: false,
+                                error: 'Failed to fetch activity data'
+                              }));
+                            }
+                          } catch (error) {
+                            setActivityData(prev => ({
+                              ...prev,
+                              loading: false,
+                              error: 'Error fetching activity data'
+                            }));
+                          }
+                        };
+                        fetchActivityData();
+                      }
+                    }}
+                    className="text-xs text-purple-600 dark:text-purple-400 hover:underline mt-2"
+                  >
+                    Try Again
+                  </button>
                 </div>
-              </div>
-
-              {/* Activity Item */}
-              <div className="flex items-start">
-                <div className="w-2 h-2 mt-1.5 bg-green-500 rounded-full mr-3"></div>
-                <div>
-                  <p className="text-sm text-gray-900 dark:text-white">Completed question: "Explain the CAP theorem"</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Yesterday</p>
+              ) : activityData.activities.length === 0 ? (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  <p>No activity found</p>
+                  <Link href="/topics" className="text-xs text-purple-600 dark:text-purple-400 hover:underline block mt-2">
+                    Start Learning
+                  </Link>
                 </div>
-              </div>
+              ) : (
+                activityData.activities.map((activity) => (
+                  <div key={activity.id} className="flex items-start">
+                    <div
+                      className={`w-2 h-2 mt-1.5 rounded-full mr-3 ${
+                        activity.activityType === 'question_completed' ? 'bg-green-500' :
+                        activity.activityType === 'question_viewed' ? 'bg-blue-500' :
+                        'bg-purple-500'
+                      }`}
+                    ></div>
+                    <div>
+                      <p className="text-sm text-gray-900 dark:text-white">{activity.displayText}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{activity.timeAgo}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
+        </div>
 
         {/* Right Column (Metrics + Highest Campaign) */}
         <div className="lg:col-span-1 space-y-6">
