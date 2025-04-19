@@ -75,6 +75,33 @@ export default function DashboardPage() {
     loading: true,
     error: null
   });
+
+  // User stats state
+  const [userStats, setUserStats] = useState<{
+    totalTimeSpent: number;
+    apiCallsMade: number;
+    bookmarksCount: number;
+    lastActive: string | null;
+    questionsAnswered: number;
+    topicsExplored: number;
+    avgTimePerQuestion: number;
+    preferredModel: string;
+    joinDate: string | null;
+    loading: boolean;
+    error: string | null;
+  }>({
+    totalTimeSpent: 0,
+    apiCallsMade: 0,
+    bookmarksCount: 0,
+    lastActive: null,
+    questionsAnswered: 0,
+    topicsExplored: 0,
+    avgTimePerQuestion: 0,
+    preferredModel: '',
+    joinDate: null,
+    loading: true,
+    error: null
+  });
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -150,8 +177,38 @@ export default function DashboardPage() {
       }
     };
 
+    const fetchUserStats = async () => {
+      setUserStats(prev => ({ ...prev, loading: true, error: null }));
+      try {
+        const response = await fetch('/api/user/stats');
+        if (response.ok) {
+          const data = await response.json();
+          setUserStats({
+            ...data,
+            loading: false,
+            error: null
+          });
+        } else {
+          console.error('Failed to fetch user stats:', response.status);
+          setUserStats(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Failed to fetch user stats'
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching user stats:', error);
+        setUserStats(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Error fetching user stats'
+        }));
+      }
+    };
+
     if (!loading) {
       fetchActivityData();
+      fetchUserStats();
     }
   }, [loading]);
 
@@ -160,6 +217,74 @@ export default function DashboardPage() {
     if (hour < 12) return 'Morning';
     if (hour < 18) return 'Afternoon';
     return 'Evening';
+  };
+
+  // Function to fetch user stats
+  const fetchUserStats = async () => {
+    setUserStats(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const response = await fetch('/api/user/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setUserStats({
+          ...data,
+          loading: false,
+          error: null
+        });
+      } else {
+        console.error('Failed to fetch user stats:', response.status);
+        setUserStats(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Failed to fetch user stats'
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      setUserStats(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Error fetching user stats'
+      }));
+    }
+  };
+
+  // Function to format time ago
+  const formatTimeAgo = (date: Date): string => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds} seconds ago`;
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+    }
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks} week${diffInWeeks === 1 ? '' : 's'} ago`;
+    }
+
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) {
+      return `${diffInMonths} month${diffInMonths === 1 ? '' : 's'} ago`;
+    }
+
+    const diffInYears = Math.floor(diffInDays / 365);
+    return `${diffInYears} year${diffInYears === 1 ? '' : 's'} ago`;
   };
 
   const formatCurrency = (value: number) => {
@@ -547,51 +672,95 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column (Metrics + Highest Campaign) */}
+        {/* Right Column (Metrics Summary) */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Metrics Sidebar Widget */}
-          <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
-             <div className="flex justify-end mb-4">
-                <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5" /></svg>
-                        </div>
-            <div className="space-y-5">
-              <div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Users</span>
-                  <span className={`${getChangeColor(staticData.usersChange)} text-xs`}>
-                     {staticData.usersChange > 0 ? '+' : ''}{staticData.usersChange}%
-                  </span>
-                          </div>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{formatNumber(staticData.users)}</p>
-                        </div>
-               <div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sessions</span>
-                  <span className={`${getChangeColor(staticData.sessionsChange)} text-xs`}>
-                     {staticData.sessionsChange > 0 ? '+' : ''}{staticData.sessionsChange}%
-                  </span>
-                </div>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{formatNumber(staticData.sessions)}</p>
+          {/* User Stats Widget */}
+          <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 relative overflow-hidden">
+            {/* Stats background pattern */}
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center">
+                <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Your Stats</h2>
               </div>
-               <div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Session Duration</span>
-                  <span className={`${getChangeColor(staticData.sessionDurationChange)} text-xs`}>
-                     {staticData.sessionDurationChange > 0 ? '+' : ''}{staticData.sessionDurationChange}%
-                  </span>
             </div>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{staticData.sessionDuration}</p>
+
+            {userStats.loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 dark:border-purple-500 border-t-transparent dark:border-t-transparent"></div>
               </div>
-                              <div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Page Views</span>
-                  <span className={`${getChangeColor(staticData.pageViewsChange)} text-xs`}>
-                     {staticData.pageViewsChange > 0 ? '+' : ''}{staticData.pageViewsChange}%
-                                </span>
-                              </div>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">{formatNumber(staticData.pageViews)}</p>
-                                </div>
-                              </div>
+            ) : userStats.error ? (
+              <div className="text-center py-4 text-red-500 dark:text-red-400">
+                <p>{userStats.error}</p>
+                <button
+                  onClick={() => fetchUserStats()}
+                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline mt-2"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {/* Time Spent */}
+                <div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Time Spent</span>
+                  </div>
+                  <div className="flex items-baseline">
+                    <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      {userStats.totalTimeSpent} <span className="text-sm font-normal">min</span>
+                    </p>
+                    {userStats.avgTimePerQuestion > 0 && (
+                      <p className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                        ~{userStats.avgTimePerQuestion} min/question
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* API Calls */}
+                <div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">API Calls</span>
+                  </div>
+                  <div className="flex items-baseline">
+                    <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                      {userStats.apiCallsMade}
+                    </p>
+                    <p className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                      using {userStats.preferredModel}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bookmarks */}
+                <div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Bookmarks</span>
+                  </div>
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {userStats.bookmarksCount}
+                  </p>
+                </div>
+
+                {/* Topics Explored */}
+                <div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Topics Explored</span>
+                  </div>
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {userStats.topicsExplored}
+                  </p>
+                </div>
+
+                {/* Last Active */}
+                {userStats.lastActive && (
+                  <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Last active: {formatTimeAgo(new Date(userStats.lastActive))}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Highest Campaign Widget */}

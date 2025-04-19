@@ -268,6 +268,25 @@ export async function POST(request: Request) {
     // Remove <think> tags and their content as they can make code almost invisible
     answer = answer.replace(/<think>[\s\S]*?<\/think>/g, '');
 
+    // Log activity for answer generation
+    try {
+      await supabase
+        .from('user_activity')
+        .insert({
+          user_id: userId,
+          activity_type: 'answer_generated',
+          question_id: questionId,
+          metadata: {
+            model: specific_model_id,
+            timestamp: new Date().toISOString()
+          },
+          created_at: new Date().toISOString()
+        });
+    } catch (activityError) {
+      console.error('Error logging answer generation activity:', activityError);
+      // Continue anyway, this is not critical
+    }
+
     // 10. Return the processed answer
     return NextResponse.json({ answer });
 
