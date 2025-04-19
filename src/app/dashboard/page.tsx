@@ -822,6 +822,12 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex justify-between items-baseline">
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Bookmarks</span>
+                    <Link href="/dashboard/bookmarks" className="text-xs text-purple-600 dark:text-purple-400 hover:underline group flex items-center">
+                      View All
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
                   <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                     {userStats.bookmarksCount}

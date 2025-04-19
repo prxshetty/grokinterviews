@@ -1,10 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { TopicNavWrapper } from '../topic';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { motion } from 'framer-motion';
+import { LogOut, Moon, Sun, User, LayoutDashboard } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 interface UserProfile {
   id: string;
@@ -20,8 +31,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   const [showNavTitle, setShowNavTitle] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClientComponentClient();
@@ -100,19 +109,11 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       }
     });
 
-    // Handle clicks outside dropdown
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
+    // No need for click outside handler with Radix UI dropdown
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       subscription.unsubscribe();
-      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isTopicsPage, supabase]);
 
@@ -139,7 +140,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    setDropdownOpen(false);
     router.push('/');
     router.refresh();
   };
@@ -149,7 +149,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     return (
       <>
         {/* Skeleton Navigation Bar */}
-        <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md transition-all duration-300 border-b border-transparent">
+        <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/90 dark:bg-black/90 backdrop-blur-md transition-all duration-300 border-b border-transparent">
           <div className="w-full flex items-center justify-between px-8">
             <div className="flex items-center">
               <div className="text-xl md:text-3xl font-normal tracking-tight opacity-0">
@@ -171,7 +171,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   return (
     <>
       {/* Main Navigation Bar - minimalistic design */}
-      <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md transition-all duration-300 border-b border-transparent hover:border-gray-200 dark:hover:border-gray-800">
+      <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/90 dark:bg-black/90 backdrop-blur-md transition-all duration-300 border-b border-transparent hover:border-gray-200 dark:hover:border-white/10">
         <div className="w-full flex items-center justify-between px-8">
           {/* Left side - Logo with proper left alignment */}
           <div className="flex items-center">
@@ -185,69 +185,76 @@ export default function MainNavigation({ children }: { children: React.ReactNode
           {/* Right Side Controls */}
           <div className="flex items-center space-x-6">
             {user ? (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="text-sm text-black/80 dark:text-white/80 hover:text-black dark:hover:text-white transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 hover:after:w-full flex items-center space-x-1"
-                >
-                  <span>
-                    {profile?.full_name || profile?.username || user.email.split('@')[0]}
-                  </span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <motion.button
+                    className="text-sm text-black/90 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors duration-300 flex items-center space-x-1 focus:outline-none"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                  </svg>
-                </button>
-
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
-                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{profile?.full_name || 'User'}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                    <span>
+                      {profile?.full_name || profile?.username || user.email.split('@')[0]}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-4 h-4 transition-transform"
+                    >
+                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                    </svg>
+                  </motion.button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md overflow-hidden animate-in fade-in-80 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
+                  <DropdownMenuLabel className="text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10">
+                    <div>
+                      <p className="font-medium">{profile?.full_name || 'User'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-300 truncate font-normal">{user.email}</p>
                     </div>
-
-                    <button
-                      onClick={toggleDarkMode}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-                    </button>
-
-                    <Link
-                      href="/dashboard"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
-
-                    <Link
-                      href="/account"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      Account
-                    </Link>
-
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => router.push('/account')} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Account</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard')} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/bookmarks')} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                      </svg>
+                      <span>Bookmarks</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={toggleDarkMode} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
+                      {isDarkMode ? (
+                        <>
+                          <Sun className="mr-2 h-4 w-4" />
+                          <span>Light Mode</span>
+                        </>
+                      ) : (
+                        <>
+                          <Moon className="mr-2 h-4 w-4" />
+                          <span>Dark Mode</span>
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:bg-gray-100 dark:focus:bg-white/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <>
                 {/* Sign In Button - Minimalistic */}
                 <Link
                   href="/signin"
-                  className="text-sm text-black/80 dark:text-white/80 hover:text-black dark:hover:text-white transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 hover:after:w-full"
+                  className="text-sm text-black/90 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 hover:after:w-full"
                 >
                   Sign In
                 </Link>
@@ -255,7 +262,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 {/* Dark Mode Toggle - Simple Button */}
                 <button
                   onClick={toggleDarkMode}
-                  className="text-sm text-black/80 dark:text-white/80 hover:text-black dark:hover:text-white transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 hover:after:w-full"
+                  className="text-sm text-black/90 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 hover:after:w-full"
                   aria-label="Toggle dark mode"
                 >
                   {isDarkMode ? 'Light' : 'Dark'}
