@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProgressSaver from '../components/progress/ProgressSaver';
+import { ActivityGrid } from '../components/progress';
+import DashboardNav from '../components/ui/DashboardNav';
 
 interface UserProfile {
   id: string;
@@ -102,6 +104,28 @@ export default function DashboardPage() {
     loading: true,
     error: null
   });
+  // Domain stats state
+  interface DomainStat {
+    domain: string;
+    domainName: string;
+    totalQuestions: number;
+    completedQuestions: number;
+    completionPercentage: number;
+    color: string;
+  }
+
+  const [domainStats, setDomainStats] = useState<{
+    domains: DomainStat[];
+    totalDomains: number;
+    loading: boolean;
+    error: string | null;
+  }>({
+    domains: [],
+    totalDomains: 0,
+    loading: true,
+    error: null
+  });
+
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -206,9 +230,40 @@ export default function DashboardPage() {
       }
     };
 
+    const fetchDomainStats = async () => {
+      setDomainStats(prev => ({ ...prev, loading: true, error: null }));
+      try {
+        const response = await fetch('/api/user/domains');
+        if (response.ok) {
+          const data = await response.json();
+          setDomainStats({
+            domains: data.domains,
+            totalDomains: data.totalDomains,
+            loading: false,
+            error: null
+          });
+        } else {
+          console.error('Failed to fetch domain stats:', response.status);
+          setDomainStats(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Failed to fetch domain stats'
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching domain stats:', error);
+        setDomainStats(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Error fetching domain stats'
+        }));
+      }
+    };
+
     if (!loading) {
       fetchActivityData();
       fetchUserStats();
+      fetchDomainStats();
     }
   }, [loading]);
 
@@ -245,6 +300,37 @@ export default function DashboardPage() {
         ...prev,
         loading: false,
         error: 'Error fetching user stats'
+      }));
+    }
+  };
+
+  // Function to fetch domain stats
+  const fetchDomainStats = async () => {
+    setDomainStats(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const response = await fetch('/api/user/domains');
+      if (response.ok) {
+        const data = await response.json();
+        setDomainStats({
+          domains: data.domains,
+          totalDomains: data.totalDomains,
+          loading: false,
+          error: null
+        });
+      } else {
+        console.error('Failed to fetch domain stats:', response.status);
+        setDomainStats(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Failed to fetch domain stats'
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching domain stats:', error);
+      setDomainStats(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Error fetching domain stats'
       }));
     }
   };
@@ -295,16 +381,15 @@ export default function DashboardPage() {
     return value.toLocaleString('en-US');
   };
 
-  const getChangeColor = (change: number) => {
-    // Adjusted for better visibility in both modes if needed, but green/red usually works
-    return change >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400';
-  };
-
+  // Helper function to get status color for campaign status
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Achieved': return 'text-green-500 dark:text-green-400';
-      case 'On-Process': return 'text-yellow-500 dark:text-yellow-400';
-      default: return 'text-gray-500 dark:text-gray-400';
+      case 'Achieved':
+        return 'text-green-500 dark:text-green-400';
+      case 'On-Process':
+        return 'text-yellow-500 dark:text-yellow-400';
+      default:
+        return 'text-gray-500 dark:text-gray-400';
     }
   };
 
@@ -325,40 +410,8 @@ export default function DashboardPage() {
       <ProgressSaver />
 
       {/* Top Bar - Below Main Navigation */}
-      <div className="flex justify-between items-center mb-8 sticky top-16 bg-white dark:bg-black py-4 z-40 border-b border-gray-200 dark:border-gray-800">
-        {/* Left Tabs */}
-        <div className="flex items-center space-x-2">
-          <button className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-md text-sm font-medium text-gray-900 dark:text-white">Overview</button>
-          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Progress</button>
-          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Activity</button>
-          <button className="px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800">Settings</button>
-        </div>
-
-        {/* Right Controls */}
-        <div className="flex items-center space-x-4">
-          <Link href="/topics" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-            Continue Learning
-          </Link>
-
-          {/* Time Period Selector */}
-          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md p-1">
-            <button className="px-3 py-1 rounded text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-white">Today</button>
-            <button className="px-3 py-1 rounded text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-white">Week</button>
-            <button className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded text-xs font-medium text-gray-700 dark:text-white">Month</button>
-            <button className="px-3 py-1 rounded text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-white">All Time</button>
-          </div>
-
-          {/* Date Range - Placeholder */}
-          <button className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">
-            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>May 12 - Jun 12, 2025</span>
-            <svg className="w-4 h-4 opacity-50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
+      <div className="sticky top-16 bg-white dark:bg-black py-4 z-40 border-b border-gray-200 dark:border-gray-800 mb-8">
+        <DashboardNav />
       </div>
 
 
@@ -367,9 +420,6 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-medium text-gray-900 dark:text-white">
           {getGreeting()}, {profile?.full_name || profile?.username || 'User'}
         </h1>
-        <span className="ml-4 px-2 py-1 text-xs font-semibold bg-purple-600 text-white rounded-md animate-pulse">
-          BETA
-        </span>
       </div>
 
       {/* Main Grid */}
@@ -495,61 +545,98 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Weekly Traffic Widget */}
-          <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Weekly Traffic</h2>
-              <div className="flex space-x-3 text-xs">
-                <span className="flex items-center text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-purple-500 rounded-full mr-1.5"></span>New Orders</span>
-                <span className="flex items-center text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-cyan-500 rounded-full mr-1.5"></span>Repeat Orders</span>
-                <span className="flex items-center text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-pink-500 rounded-full mr-1.5"></span>Lower Limit</span>
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{formatNumber(staticData.weeklyTraffic)} <span className="text-lg font-medium text-gray-500 dark:text-gray-400">Orders</span></p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">This is the total orders for this week</p>
-            <div className="h-48 bg-gray-100 dark:bg-gray-800/30 rounded-md flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
-              Weekly Traffic Chart Placeholder
-            </div>
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-            </div>
-          </div>
+          {/* Activity Grid Widget */}
+          <ActivityGrid />
         </div>
 
         {/* Center Column (Revenue + Customer by Time) */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Revenue Widget */}
-          <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800">
+          {/* Domain Completion Widget */}
+          <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 relative overflow-hidden">
+            {/* Domain background pattern */}
+            <div className="absolute top-0 right-0 w-32 h-32 opacity-5 dark:opacity-10">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-purple-600">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              </svg>
+            </div>
+
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Revenue</h2>
-              <div className="flex space-x-2 text-gray-400 dark:text-gray-500">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5" /></svg>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-              </div>
+              <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Domain Completion</h2>
+              <button onClick={() => fetchDomainStats()} className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
             </div>
-            <div className="h-24 flex items-end justify-between space-x-1 mb-4">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="w-full bg-purple-500 dark:bg-purple-600/50 rounded-t-sm" style={{ height: `${Math.random() * 80 + 15}%` }}>
-                   <div className="w-full bg-purple-400 dark:bg-purple-600/30 rounded-t-sm h-1/3"></div>
+
+            {domainStats.loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 dark:border-purple-500 border-t-transparent dark:border-t-transparent"></div>
+              </div>
+            ) : domainStats.error ? (
+              <div className="text-center py-4 text-red-500 dark:text-red-400">
+                <p>{domainStats.error}</p>
+                <button
+                  onClick={() => fetchDomainStats()}
+                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline mt-2"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : domainStats.domains.length === 0 ? (
+              <div className="text-center py-8 px-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">No domains explored yet</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Start learning to see your domain progress</p>
+                <Link href="/topics" className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-md transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                  Explore Domains
+                </Link>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  Progress across {domainStats.domains.length} of {domainStats.totalDomains} domains
+                </p>
+                <div className="space-y-3 mb-4">
+                  {domainStats.domains.slice(0, 5).map((domain) => (
+                    <div key={domain.domain} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{domain.domainName}</span>
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{domain.completionPercentage}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full"
+                          style={{
+                            width: `${Math.max(0.5, domain.completionPercentage)}%`,
+                            backgroundColor: domain.color
+                          }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span>{domain.completedQuestions} completed</span>
+                        <span>{domain.totalQuestions} total</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+
+                {domainStats.domains.length > 5 && (
+                  <div className="text-center">
+                    <button className="text-xs text-purple-600 dark:text-purple-400 hover:underline">
+                      Show {domainStats.domains.length - 5} more domains
+                    </button>
                   </div>
-            <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-4">
-              <div >
-                <span className="flex items-center mb-1 text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-purple-500 rounded-full mr-1.5"></span>Total Revenue</span>
-                <span className="text-lg font-medium text-gray-900 dark:text-white">{formatCurrency(staticData.revenue)}</span>
-                  </div>
-              <div >
-                <span className="flex items-center mb-1 text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-purple-500/50 rounded-full mr-1.5"></span>Taxes</span>
-                <span className="text-lg font-medium text-gray-900 dark:text-white">{formatCurrency(staticData.taxes)}</span>
-                  </div>
-              <div >
-                <span className="flex items-center mb-1 text-gray-700 dark:text-gray-300"><span className="w-2 h-2 bg-purple-500/30 rounded-full mr-1.5"></span>Opex</span>
-                <span className="text-lg font-medium text-gray-900 dark:text-white">{formatCurrency(staticData.opex)}</span>
-              </div>
-              </div>
-            </div>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Recent Activity */}
           <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 relative overflow-hidden">

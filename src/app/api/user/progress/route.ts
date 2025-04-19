@@ -329,15 +329,33 @@ export async function POST(request: NextRequest) {
         .limit(1);
 
       if (!tableCheckError) {
-        // Table exists, try to insert activity
-        // Use a more flexible approach that doesn't rely on specific column names
+        // Get the domain for this topic
+        const { data: topicData, error: topicError } = await supabaseServer
+          .from('topics')
+          .select('domain')
+          .eq('id', topicId)
+          .single();
+
+        if (topicError) {
+          console.error('Error fetching topic domain:', topicError);
+        }
+
+        // Table exists, try to insert activity with all required fields
         const activityData = {
           user_id: userId,
           activity_type: status === 'completed' ? 'question_completed' : 'question_viewed',
-          // Store question_id as a string if activity_data column doesn't exist
-          question_id: questionId.toString(),
+          topic_id: topicId,
+          category_id: questionData.category_id,
+          question_id: questionId,
+          domain: topicData?.domain || null,
+          metadata: {
+            status,
+            timestamp: new Date().toISOString()
+          },
           created_at: new Date().toISOString()
         };
+
+        console.log('Inserting activity with data:', activityData);
 
         const activityResult = await supabaseServer
           .from('user_activity')
@@ -346,6 +364,8 @@ export async function POST(request: NextRequest) {
         if (activityResult.error) {
           console.error('Error logging activity:', activityResult.error);
           // Continue anyway, this is not critical
+        } else {
+          console.log('Successfully logged activity with topic, category, and domain');
         }
       } else {
         console.log('User activity table not available or not accessible');
