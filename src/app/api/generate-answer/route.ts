@@ -270,18 +270,60 @@ export async function POST(request: Request) {
 
     // Log activity for answer generation
     try {
-      await supabase
-        .from('user_activity')
-        .insert({
-          user_id: userId,
-          activity_type: 'answer_generated',
-          question_id: questionId,
-          metadata: {
-            model: specific_model_id,
-            timestamp: new Date().toISOString()
-          },
-          created_at: new Date().toISOString()
-        });
+      // First, get the question to find its category_id
+      const { data: questionData, error: questionError } = await supabase
+        .from('questions')
+        .select('category_id')
+        .eq('id', questionId)
+        .single();
+
+      if (questionError) {
+        console.error('Error fetching question data:', questionError);
+        // Continue with partial data
+      } else {
+        // Get the topic_id from the category
+        const { data: categoryData, error: categoryError } = await supabase
+          .from('categories')
+          .select('topic_id')
+          .eq('id', questionData.category_id)
+          .single();
+
+        if (categoryError) {
+          console.error('Error fetching category data:', categoryError);
+          // Continue with partial data
+        } else {
+          // Get the domain from the topic
+          const { data: topicData, error: topicError } = await supabase
+            .from('topics')
+            .select('domain')
+            .eq('id', categoryData.topic_id)
+            .single();
+
+          if (topicError) {
+            console.error('Error fetching topic data:', topicError);
+            // Continue with partial data
+          }
+
+          // Insert activity with all the data
+          await supabase
+            .from('user_activity')
+            .insert({
+              user_id: userId,
+              activity_type: 'answer_generated',
+              question_id: questionId,
+              category_id: questionData.category_id,
+              topic_id: categoryData.topic_id,
+              domain: topicData?.domain || null,
+              metadata: {
+                model: specific_model_id,
+                timestamp: new Date().toISOString()
+              },
+              created_at: new Date().toISOString()
+            });
+
+          console.log('Successfully logged answer generation activity with topic, category, and domain');
+        }
+      }
     } catch (activityError) {
       console.error('Error logging answer generation activity:', activityError);
       // Continue anyway, this is not critical
