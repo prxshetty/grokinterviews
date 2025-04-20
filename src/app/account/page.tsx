@@ -11,29 +11,16 @@ interface GroqModel {
   id: string;
   name: string; // User-friendly name
   rpm: number; // Requests Per Minute
+  notes?: string; // Optional notes about the model's capabilities
 }
 
 const availableGroqModels: GroqModel[] = [
-  // Extracted from user-provided chart, sorted roughly by capability/recency
-  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', rpm: 30 },
-  { id: 'llama3-8b-8192', name: 'Llama 3 8B (8k context)', rpm: 30 },
-  { id: 'gemma2-9b-it', name: 'Gemma2 9B Instruct', rpm: 30 },
-  { id: 'llama-guard-3-8b', name: 'Llama Guard 3 8B', rpm: 30 },
-  { id: 'allam-2-7b', name: 'Allam 2 7B', rpm: 30 },
-  { id: 'llama-3.2-1b-preview', name: 'Llama 3.2 1B Preview', rpm: 30 },
-  { id: 'llama-3.2-3b-preview', name: 'Llama 3.2 3B Preview', rpm: 30 },
-  { id: 'mistral-saba-24b', name: 'Mistral Saba 24B', rpm: 30 },
-  { id: 'qwen-qwq-32b', name: 'Qwen QWQ 32B', rpm: 30 },
-  { id: 'deepseek-r1-distill-qwen-32b', name: 'DeepSeek R1 Distill Qwen 32B', rpm: 30 },
-  { id: 'llama3-70b-8192', name: 'Llama 3 70B (8k context)', rpm: 30 },
-  { id: 'llama-3.3-70b-specdec', name: 'Llama 3.3 70B Speculative', rpm: 30 },
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', rpm: 30 },
-  { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B', rpm: 30 },
-  { id: 'llama-3.2-11b-vision-preview', name: 'Llama 3.2 11B Vision Preview', rpm: 30 },
-  { id: 'llama-3.2-90b-vision-preview', name: 'Llama 3.2 90B Vision Preview', rpm: 15 },
-  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B Instruct', rpm: 30 },
-  { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick 17B Instruct', rpm: 30 },
-  // Note: Excluded deprecated/duplicate qwen models mentioned in user text if qwen-qwq-32b is the intended replacement.
+  // Curated list of high-performance models for different use cases
+  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', rpm: 750, notes: 'Fastest for general text' },
+  { id: 'gemma2-9b-it', name: 'Gemma2 9B Instruct', rpm: 500, notes: 'Excels in code/math, low resource' },
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', rpm: 276, notes: 'Fastest large model, 8 languages' },
+  { id: 'whisper-large-v3-turbo', name: 'Whisper Large V3 Turbo', rpm: 600, notes: 'Fastest Whisper variant for speech-to-text' },
+  { id: 'llama-guard-3-8b', name: 'Llama Guard 3 8B', rpm: 500, notes: 'Real-time content filtering' },
 ];
 // ----------------------------------------------
 
@@ -248,10 +235,18 @@ export default function AccountPage() {
 
   // Saves Full Name, Username (to profiles) AND Model/Answer Prefs (to user_preferences)
   const saveChanges = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('No user found. User must be authenticated to save changes.');
+      setMessage({ type: 'error', text: 'You must be signed in to save changes.' });
+      return;
+    }
 
     setSaving(true);
     setMessage({ type: '', text: '' });
+
+    // Log the current user and form data for debugging
+    console.log('Current user:', user);
+    console.log('Form data to save:', formData);
 
     // Destructure all fields from the combined form data
     const {
@@ -273,53 +268,32 @@ export default function AccountPage() {
 
     try {
       // 1. Update profile table (full_name, username)
-      const { error: profileUpdateError } = await supabase
+      console.log('Updating profile for user ID:', user.id);
+      const { data: profileData, error: profileUpdateError } = await supabase
         .from('profiles')
         .update({
           full_name,
           username,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
-      if (profileUpdateError) throw profileUpdateError;
+      if (profileUpdateError) {
+        console.error('Profile update error:', profileUpdateError);
+        throw profileUpdateError;
+      }
+
+      console.log('Profile updated successfully:', profileData);
 
       // 2. Upsert user_preferences table (model, answer prefs)
-      const { error: preferencesUpsertError } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: user.id, // Make sure user_id is included for upsert
-          specific_model_id,
-          preferred_model: 'groq', // Keep setting this for potential legacy use
-          use_youtube_sources,
-          use_pdf_sources,
-          use_paper_sources,
-          use_website_sources,
-          use_book_sources,
-          use_expert_opinion_sources,
-          preferred_answer_format,
-          preferred_answer_depth,
-          include_code_snippets,
-          include_latex_formulas,
-          custom_formatting_instructions,
-          updated_at: new Date().toISOString(), // Update timestamp here too
-        }, {
-           onConflict: 'user_id' // Specify the conflict column for upsert
-        });
+      console.log('Upserting preferences for user ID:', user.id);
 
-      if (preferencesUpsertError) throw preferencesUpsertError;
-
-      setMessage({ type: 'success', text: 'Preferences saved successfully.' });
-
-      // Update local state after successful saves
-      setProfile(prev => {
-        if (!prev) return null;
-        return { ...prev, full_name, username };
-      });
-      setPreferences(prev => ({
-        // Reconstruct preferences state from formData
-        ...(prev || { user_id: user.id }), // Keep existing fields like theme if they were loaded
+      // Create the preferences object
+      const preferencesData = {
+        user_id: user.id, // Make sure user_id is included for upsert
         specific_model_id,
+        preferred_model: 'groq', // Keep setting this for potential legacy use
         use_youtube_sources,
         use_pdf_sources,
         use_paper_sources,
@@ -331,12 +305,62 @@ export default function AccountPage() {
         include_code_snippets,
         include_latex_formulas,
         custom_formatting_instructions,
-      }));
+        updated_at: new Date().toISOString(), // Update timestamp here too
+      };
+
+      console.log('Preferences data to upsert:', preferencesData);
+
+      const { data: upsertedData, error: preferencesUpsertError } = await supabase
+        .from('user_preferences')
+        .upsert(preferencesData, {
+           onConflict: 'user_id' // Specify the conflict column for upsert
+        })
+        .select();
+
+      if (preferencesUpsertError) {
+        console.error('Preferences upsert error:', preferencesUpsertError);
+        throw preferencesUpsertError;
+      }
+
+      console.log('Preferences upserted successfully:', upsertedData);
+
+      console.log('All database operations completed successfully');
+      setMessage({ type: 'success', text: 'Preferences saved successfully.' });
+
+      // Update local state after successful saves
+      setProfile(prev => {
+        if (!prev) return null;
+        const updatedProfile = { ...prev, full_name, username };
+        console.log('Updated profile state:', updatedProfile);
+        return updatedProfile;
+      });
+
+      setPreferences(prev => {
+        // Reconstruct preferences state from formData
+        const updatedPreferences = {
+          ...(prev || { user_id: user.id }), // Keep existing fields like theme if they were loaded
+          specific_model_id,
+          use_youtube_sources,
+          use_pdf_sources,
+          use_paper_sources,
+          use_website_sources,
+          use_book_sources,
+          use_expert_opinion_sources,
+          preferred_answer_format,
+          preferred_answer_depth,
+          include_code_snippets,
+          include_latex_formulas,
+          custom_formatting_instructions,
+        };
+        console.log('Updated preferences state:', updatedPreferences);
+        return updatedPreferences;
+      });
 
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
 
     } catch (error: any) {
       console.error('Error updating profile/preferences:', error);
+      console.log('Error details:', JSON.stringify(error, null, 2));
       setMessage({ type: 'error', text: error.message || 'Failed to save preferences. Please try again.' });
     } finally {
       setSaving(false);
@@ -633,7 +657,7 @@ export default function AccountPage() {
                 {/* Right Panel - Profile Preview */}
                 <div className="w-80 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-black/80 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center">
                   <div className="relative mb-6">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg">
+                    <div className="w-32 h-32 rounded-full bg-black dark:bg-white flex items-center justify-center overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg">
                       {profile?.avatar_url ? (
                         <img
                           src={profile.avatar_url}
@@ -641,7 +665,7 @@ export default function AccountPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="text-4xl font-light text-white">
+                        <div className="text-4xl font-light text-white dark:text-black">
                           {formData.full_name ? formData.full_name.charAt(0).toUpperCase() : formData.username ? formData.username.charAt(0).toUpperCase() : '?'}
                         </div>
                       )}
@@ -695,7 +719,7 @@ export default function AccountPage() {
                               >
                                 {availableGroqModels.map((model) => (
                                   <option key={model.id} value={model.id}>
-                                    {model.name} ({model.id})
+                                    {model.name}
                                   </option>
                                 ))}
                               </select>
@@ -705,14 +729,9 @@ export default function AccountPage() {
                                 </svg>
                               </div>
                             </div>
-                            {/* Display RPM for selected model */}
-                            {getSelectedModelDetails() && (
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Rate Limit: {getSelectedModelDetails()?.rpm} Requests / Minute
-                              </p>
-                            )}
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                              Select the specific Groq model for generating answers. Requires your Groq API key (below).
+
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                              Select a model for generating answers. Model details will appear in the preview panel.
                             </p>
                           </div>
                        </div>
@@ -1105,6 +1124,13 @@ export default function AccountPage() {
                   <div className="mt-auto">
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Settings</h4>
                     <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                      {getSelectedModelDetails() && (
+                        <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md border border-gray-200 dark:border-gray-700">
+                          <p className="font-medium mb-1 text-gray-700 dark:text-gray-300">{getSelectedModelDetails()?.name}</p>
+                          <p><span className="font-medium">Speed:</span> {getSelectedModelDetails()?.rpm} tokens/sec</p>
+                          <p><span className="font-medium">Highlight:</span> {getSelectedModelDetails()?.notes}</p>
+                        </div>
+                      )}
                       <p><span className="font-medium">Format:</span> {formData.preferred_answer_format.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                       <p><span className="font-medium">Depth:</span> {formData.preferred_answer_depth.charAt(0).toUpperCase() + formData.preferred_answer_depth.slice(1)}</p>
                       <p><span className="font-medium">Add-ons:</span>
