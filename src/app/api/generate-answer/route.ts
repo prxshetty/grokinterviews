@@ -243,6 +243,16 @@ export async function POST(request: Request) {
       apiKey: custom_api_key,
     });
 
+    // Determine max_tokens based on answer depth
+    let max_tokens = 1024; // Default for 'standard' depth
+    if (preferences.depth === 'brief') {
+      max_tokens = 768; // Shorter for brief answers
+    } else if (preferences.depth === 'comprehensive') {
+      max_tokens = 4096; // Much larger for comprehensive answers
+    }
+
+    console.log(`Using max_tokens=${max_tokens} for answer depth: ${preferences.depth}`);
+
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         {
@@ -257,7 +267,7 @@ export async function POST(request: Request) {
       ],
       model: specific_model_id, // Use the specific model ID from preferences
       temperature: 0.7,
-      max_tokens: 1024,
+      max_tokens: max_tokens,
       top_p: 1,
       stream: false,
     });

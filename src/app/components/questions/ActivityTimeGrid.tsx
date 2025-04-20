@@ -8,12 +8,12 @@ interface ActivityData {
   count: number;
 }
 
-interface ActivityGridProps {
+interface ActivityTimeGridProps {
   className?: string;
   fullWidth?: boolean;
 }
 
-export default function ActivityGrid({ className = "", fullWidth = false }: ActivityGridProps) {
+export default function ActivityTimeGrid({ className = "", fullWidth = false }: ActivityTimeGridProps) {
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
