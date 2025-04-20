@@ -8,12 +8,18 @@ module.exports = {
   ],
   theme: {
     extend: {
+      gridTemplateColumns: {
+        '31': 'repeat(31, minmax(0, 1fr))',
+      },
       colors: {
         orange: {
           500: '#F84C1E',
         },
         background: '#dfe3ec',
         card: '#f5f9fc',
+        border: 'hsl(var(--border))',
+        foreground: 'hsl(var(--foreground))',
+        muted: 'hsl(var(--muted))',
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
@@ -33,6 +39,7 @@ module.exports = {
         'slideRight': 'slideRight 0.3s ease-out forwards',
         'slideLeft': 'slideLeft 0.3s ease-out forwards',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
+
       },
       keyframes: {
          spin: {
@@ -47,6 +54,7 @@ module.exports = {
            '0%': { transform: 'translateY(0)' },
            '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
          },
+
          'scroll-smooth': {
            '0%': { transform: 'translateX(0)' },
            '100%': { transform: 'translateX(calc(-50%))' },

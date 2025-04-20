@@ -8,6 +8,11 @@
   --card-background: #f5f9fc;
   --text-color: #333333;
 
+  /* TiltedScroll component variables */
+  --border: 215.4 16.3% 46.9%;
+  --foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+
   /* Topic card colors */
   --tw-red-600: #dc2626;
   --tw-red-700: #b91c1c;
@@ -27,6 +32,12 @@
   --tw-fuchsia-600: #c026d3;
   --tw-pink-600: #db2777;
   --tw-rose-600: #e11d48;
+}
+
+.dark {
+  --border: 217.2 32.6% 17.5%;
+  --foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
 }
 
 body {

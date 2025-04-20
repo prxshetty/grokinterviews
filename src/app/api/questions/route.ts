@@ -10,6 +10,39 @@ export async function GET(request: NextRequest) {
     const topicId = url.searchParams.get('topicId');
     const difficulty = url.searchParams.get('difficulty') as 'easy' | 'medium' | 'hard' | null;
     const query = url.searchParams.get('query');
+    const limit = url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!) : 20;
+
+    // If no specific parameters, return recent questions
+    if (!categoryId && !topicId && !difficulty && !query) {
+      const { data: questions, error } = await supabaseServer
+        .from('questions')
+        .select(`
+          id,
+          question_text,
+          difficulty,
+          category_id,
+          created_at
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching recent questions:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch recent questions' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { questions: questions || [] },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
+          },
+        }
+      );
+    }
 
     // Try to use Supabase directly first
     try {
