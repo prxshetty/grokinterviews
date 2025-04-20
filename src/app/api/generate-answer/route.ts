@@ -80,6 +80,7 @@ export async function POST(request: Request) {
         preferred_answer_format,
         preferred_answer_depth,
         include_code_snippets,
+        include_latex_formulas,
         custom_formatting_instructions
       `)
       .eq('user_id', userId) // Match based on user_id
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
     const preferred_answer_format = preferencesData?.preferred_answer_format || 'markdown';
     const preferred_answer_depth = preferencesData?.preferred_answer_depth || 'standard';
     const include_code_snippets = preferencesData?.include_code_snippets ?? true;
+    const include_latex_formulas = preferencesData?.include_latex_formulas ?? false;
     const custom_formatting_instructions = preferencesData?.custom_formatting_instructions || null;
 
     // Define preferences object using fetched/defaulted values
@@ -115,6 +117,7 @@ export async function POST(request: Request) {
         format: preferred_answer_format as AnswerFormat,
         depth: preferred_answer_depth as AnswerDepth,
         include_code: include_code_snippets,
+        include_latex: include_latex_formulas,
         custom_instructions: custom_formatting_instructions,
     };
 
@@ -222,6 +225,16 @@ export async function POST(request: Request) {
       promptSegments.push(`- Focus on theoretical explanations rather than code examples. If the question is about programming or algorithms, explain the concepts, patterns, and approaches in plain language without including code snippets.`);
     }
 
+    // Add instructions for LaTeX formulas if enabled
+    if (preferences.include_latex) {
+      promptSegments.push(`- For mathematical formulas and equations, use LaTeX notation. Use single dollar signs for inline formulas ($...$) and double dollar signs for block formulas ($$...$$). For example:
+  The quadratic formula is $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$ for the equation $ax^2 + bx + c = 0$.
+
+  For more complex equations, use block format:
+  $$\int_{a}^{b} f(x) dx = F(b) - F(a)$$
+- Ensure all mathematical symbols, variables, and expressions are properly formatted using LaTeX notation.`);
+    }
+
     const resourceSegments: string[] = [];
     if (formattedData.youtube_links) resourceSegments.push(`**Relevant YouTube Videos:**\n${formattedData.youtube_links}`);
     if (formattedData.papers) resourceSegments.push(`**Relevant Research Papers:**\n${formattedData.papers}`);
@@ -258,14 +271,21 @@ export async function POST(request: Request) {
       max_tokens = 4096; // Much larger for comprehensive answers
     }
 
-    console.log(`Using max_tokens=${max_tokens} for answer depth: ${preferences.depth}, include_code: ${preferences.include_code}`);
+    console.log(`Using max_tokens=${max_tokens} for answer depth: ${preferences.depth}, include_code: ${preferences.include_code}, include_latex: ${preferences.include_latex}`);
 
-    // Prepare system prompt based on code snippet preference
+    // Prepare system prompt based on user preferences
     let systemPrompt = "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions.";
+
+    // Add code snippet instructions if enabled
     if (preferences.include_code) {
       systemPrompt += " When including code examples, always format them properly using markdown code blocks with triple backticks and language specification. Ensure code is well-indented, properly commented, and follows best practices for the language being used.";
     } else {
       systemPrompt += " Focus on theoretical explanations and concepts rather than code examples. Explain programming concepts in plain language without code snippets.";
+    }
+
+    // Add LaTeX formula instructions if enabled
+    if (preferences.include_latex) {
+      systemPrompt += " For mathematical formulas and equations, use LaTeX notation enclosed in dollar signs for inline formulas ($...$) and double dollar signs for block formulas ($$...$$). Ensure all mathematical symbols, variables, and expressions are properly formatted using LaTeX.";
     }
 
     const chatCompletion = await groq.chat.completions.create({
