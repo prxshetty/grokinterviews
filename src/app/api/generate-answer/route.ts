@@ -79,6 +79,7 @@ export async function POST(request: Request) {
         use_expert_opinion_sources,
         preferred_answer_format,
         preferred_answer_depth,
+        include_code_snippets,
         custom_formatting_instructions
       `)
       .eq('user_id', userId) // Match based on user_id
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
     const use_expert_opinion_sources = preferencesData?.use_expert_opinion_sources ?? false;
     const preferred_answer_format = preferencesData?.preferred_answer_format || 'markdown';
     const preferred_answer_depth = preferencesData?.preferred_answer_depth || 'standard';
+    const include_code_snippets = preferencesData?.include_code_snippets ?? true;
     const custom_formatting_instructions = preferencesData?.custom_formatting_instructions || null;
 
     // Define preferences object using fetched/defaulted values
@@ -112,6 +114,7 @@ export async function POST(request: Request) {
         use_expert_opinion: use_expert_opinion_sources,
         format: preferred_answer_format as AnswerFormat,
         depth: preferred_answer_depth as AnswerDepth,
+        include_code: include_code_snippets,
         custom_instructions: custom_formatting_instructions,
     };
 
@@ -202,8 +205,9 @@ export async function POST(request: Request) {
         promptSegments.push(`- Additional Instructions: ${preferences.custom_instructions}`);
     }
 
-    // Add detailed instructions about generating code snippets if applicable
-    promptSegments.push(`- Include relevant code snippets in the answer if the question involves coding or algorithms. Format them using proper markdown code blocks with triple backticks and language specification. For example:
+    // Add detailed instructions about generating code snippets if applicable and enabled
+    if (preferences.include_code) {
+      promptSegments.push(`- Include relevant code snippets in the answer if the question involves coding or algorithms. Format them using proper markdown code blocks with triple backticks and language specification. For example:
   \`\`\`javascript
   // Your JavaScript code here
   \`\`\`
@@ -214,6 +218,9 @@ export async function POST(request: Request) {
 - Ensure all code is properly indented and formatted within these code blocks.
 - Always specify the programming language after the opening triple backticks.
 - Do not use single backticks for multi-line code blocks.`);
+    } else {
+      promptSegments.push(`- Focus on theoretical explanations rather than code examples. If the question is about programming or algorithms, explain the concepts, patterns, and approaches in plain language without including code snippets.`);
+    }
 
     const resourceSegments: string[] = [];
     if (formattedData.youtube_links) resourceSegments.push(`**Relevant YouTube Videos:**\n${formattedData.youtube_links}`);
@@ -251,14 +258,21 @@ export async function POST(request: Request) {
       max_tokens = 4096; // Much larger for comprehensive answers
     }
 
-    console.log(`Using max_tokens=${max_tokens} for answer depth: ${preferences.depth}`);
+    console.log(`Using max_tokens=${max_tokens} for answer depth: ${preferences.depth}, include_code: ${preferences.include_code}`);
+
+    // Prepare system prompt based on code snippet preference
+    let systemPrompt = "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions.";
+    if (preferences.include_code) {
+      systemPrompt += " When including code examples, always format them properly using markdown code blocks with triple backticks and language specification. Ensure code is well-indented, properly commented, and follows best practices for the language being used.";
+    } else {
+      systemPrompt += " Focus on theoretical explanations and concepts rather than code examples. Explain programming concepts in plain language without code snippets.";
+    }
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          // Enhanced system prompt with code formatting instructions
-          content: "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions. When including code examples, always format them properly using markdown code blocks with triple backticks and language specification. Ensure code is well-indented, properly commented, and follows best practices for the language being used.",
+          content: systemPrompt,
         },
         {
           role: 'user',
