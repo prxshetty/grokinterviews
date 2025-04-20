@@ -277,7 +277,7 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
           {/* Using prose for markdown styling - make this scrollable with a fixed height */}
           <div
             ref={answerRef}
-            className="text-gray-700 dark:text-gray-300 text-sm prose dark:prose-invert max-w-none max-h-[400px] overflow-y-auto pr-2"
+            className="text-gray-700 dark:text-gray-300 text-sm prose dark:prose-invert max-w-none max-h-[600px] overflow-y-auto pr-2"
           >
             {isGenerating ? (
               <div className="flex items-center space-x-2 text-gray-500">
