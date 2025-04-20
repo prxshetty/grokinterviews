@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useTopicData, TopicCategoryGrid, ActivityProgress, ProgressChart, QuestionWithAnswer } from '../components';
+import { useTopicData, TopicCategoryGrid, QuestionWithAnswer } from '../components';
 import ProgressSaver from '../components/progress/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
 // Import types from database
@@ -42,6 +42,8 @@ type TopicItem = {
   isGenerated?: boolean;
 };
 
+
+
 export default function TopicsPage() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -49,6 +51,7 @@ export default function TopicsPage() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [categoryDetails, setCategoryDetails] = useState<any>(null);
   const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
+
 
   const { topicData } = useTopicData();
 
@@ -286,6 +289,8 @@ export default function TopicsPage() {
       loadTopicCategories(selectedTopic);
     }
   }, [selectedTopic]);
+
+
 
   // Renders a category and its content in the structured format
   const renderCategoryContent = (categoryId: string) => {
@@ -770,11 +775,9 @@ export default function TopicsPage() {
 
               {/* Q&A Content Section */}
               <div className="space-y-3 mt-8 pt-8">
-                {!selectedCategory && (
+                {!selectedCategory && selectedTopic && (
                   <h1 className="text-4xl font-normal tracking-tight mb-8">
-                    {selectedTopic
-                      ? mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'
-                      : 'Status'}
+                    {mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'}
                   </h1>
                 )}
                 {/* Debug info */}
@@ -784,23 +787,7 @@ export default function TopicsPage() {
                   <p>Topic Categories: {JSON.stringify(topicCategories.map(cat => ({ id: cat.id, label: cat.label })))}</p>
                 </div>
 
-                {/* Only show the status section when no topic or category is selected */}
-                {!selectedTopic && !selectedCategory && (
-                  <div>
-                    {/* Activity Progress and Chart in the same row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                      <div>
-                        <ActivityProgress
-                          useRealData={true}
-                          timeSpent={8.5}
-                        />
-                      </div>
-                      <div>
-                        <ProgressChart />
-                      </div>
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
