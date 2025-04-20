@@ -58,6 +58,7 @@ interface UserPreferences {
   use_expert_opinion_sources?: boolean;
   preferred_answer_format?: AnswerFormat;
   preferred_answer_depth?: AnswerDepth;
+  include_code_snippets?: boolean; // Whether to include code examples in answers
   custom_formatting_instructions?: string | null;
   theme?: string; // Include existing fields
   email_notifications?: boolean;
@@ -116,6 +117,7 @@ export default function AccountPage() {
     use_expert_opinion_sources: false, // Default off
     preferred_answer_format: 'markdown' as AnswerFormat, // Default format
     preferred_answer_depth: 'standard' as AnswerDepth, // Default depth
+    include_code_snippets: true, // Default to including code snippets
     custom_formatting_instructions: '',
   });
 
@@ -189,6 +191,7 @@ export default function AccountPage() {
           use_expert_opinion_sources: preferencesData.use_expert_opinion_sources ?? false,
           preferred_answer_format: (preferencesData.preferred_answer_format || 'markdown') as AnswerFormat,
           preferred_answer_depth: (preferencesData.preferred_answer_depth || 'standard') as AnswerDepth,
+          include_code_snippets: preferencesData.include_code_snippets ?? true,
           custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
         }));
       } else {
@@ -260,6 +263,7 @@ export default function AccountPage() {
       use_expert_opinion_sources,
       preferred_answer_format,
       preferred_answer_depth,
+      include_code_snippets,
       custom_formatting_instructions
     } = formData;
 
@@ -291,6 +295,7 @@ export default function AccountPage() {
           use_expert_opinion_sources,
           preferred_answer_format,
           preferred_answer_depth,
+          include_code_snippets,
           custom_formatting_instructions,
           updated_at: new Date().toISOString(), // Update timestamp here too
         }, {
@@ -318,6 +323,7 @@ export default function AccountPage() {
         use_expert_opinion_sources,
         preferred_answer_format,
         preferred_answer_depth,
+        include_code_snippets,
         custom_formatting_instructions,
       }));
 
@@ -878,6 +884,30 @@ export default function AccountPage() {
                         </select>
                       </div>
 
+                      {/* Code Snippets Toggle */}
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="include_code_snippets" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Include Code Snippets
+                          </label>
+                          <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                            <input
+                              type="checkbox"
+                              id="include_code_snippets"
+                              name="include_code_snippets"
+                              checked={formData.include_code_snippets}
+                              onChange={handleSwitchChange}
+                              className="sr-only"
+                            />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${formData.include_code_snippets ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                            <div className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform bg-white transform ${formData.include_code_snippets ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                          </div>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          When enabled, answers will include code examples for programming-related questions. Disable to focus on theory and save tokens.
+                        </p>
+                      </div>
+
                       {/* Answer Depth */}
                       <div className="mb-6">
                         <label htmlFor="answer_depth_slider" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Answer Depth</label>
@@ -1026,6 +1056,7 @@ export default function AccountPage() {
                     <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                       <p><span className="font-medium">Format:</span> {formData.preferred_answer_format.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                       <p><span className="font-medium">Depth:</span> {formData.preferred_answer_depth.charAt(0).toUpperCase() + formData.preferred_answer_depth.slice(1)}</p>
+                      <p><span className="font-medium">Code Snippets:</span> {formData.include_code_snippets ? 'Included' : 'Excluded'}</p>
                       <p><span className="font-medium">Sources:</span> {(Object.keys(formData) as Array<keyof typeof formData>)
                         .filter(key => key.startsWith('use_') && formData[key as keyof typeof formData] === true)
                         .map(key => key.replace('use_','').replace('_sources','').replace('_', ' '))
