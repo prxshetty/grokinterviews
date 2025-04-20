@@ -59,6 +59,7 @@ interface UserPreferences {
   preferred_answer_format?: AnswerFormat;
   preferred_answer_depth?: AnswerDepth;
   include_code_snippets?: boolean; // Whether to include code examples in answers
+  include_latex_formulas?: boolean; // Whether to include LaTeX formulas in answers
   custom_formatting_instructions?: string | null;
   theme?: string; // Include existing fields
   email_notifications?: boolean;
@@ -118,6 +119,7 @@ export default function AccountPage() {
     preferred_answer_format: 'markdown' as AnswerFormat, // Default format
     preferred_answer_depth: 'standard' as AnswerDepth, // Default depth
     include_code_snippets: true, // Default to including code snippets
+    include_latex_formulas: false, // Default to not including LaTeX formulas (experimental)
     custom_formatting_instructions: '',
   });
 
@@ -192,6 +194,7 @@ export default function AccountPage() {
           preferred_answer_format: (preferencesData.preferred_answer_format || 'markdown') as AnswerFormat,
           preferred_answer_depth: (preferencesData.preferred_answer_depth || 'standard') as AnswerDepth,
           include_code_snippets: preferencesData.include_code_snippets ?? true,
+          include_latex_formulas: preferencesData.include_latex_formulas ?? false,
           custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
         }));
       } else {
@@ -264,6 +267,7 @@ export default function AccountPage() {
       preferred_answer_format,
       preferred_answer_depth,
       include_code_snippets,
+      include_latex_formulas,
       custom_formatting_instructions
     } = formData;
 
@@ -296,6 +300,7 @@ export default function AccountPage() {
           preferred_answer_format,
           preferred_answer_depth,
           include_code_snippets,
+          include_latex_formulas,
           custom_formatting_instructions,
           updated_at: new Date().toISOString(), // Update timestamp here too
         }, {
@@ -324,6 +329,7 @@ export default function AccountPage() {
         preferred_answer_format,
         preferred_answer_depth,
         include_code_snippets,
+        include_latex_formulas,
         custom_formatting_instructions,
       }));
 
@@ -679,19 +685,26 @@ export default function AccountPage() {
                             <label htmlFor="specific_model_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                               Groq AI Model
                             </label>
-                            <select
-                              id="specific_model_id"
-                              name="specific_model_id" // Ensure name matches state key
-                              value={formData.specific_model_id}
-                              onChange={handleInputChange} // Use the general handler
-                              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
-                            >
-                              {availableGroqModels.map((model) => (
-                                <option key={model.id} value={model.id}>
-                                  {model.name} ({model.id})
-                                </option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              <select
+                                id="specific_model_id"
+                                name="specific_model_id" // Ensure name matches state key
+                                value={formData.specific_model_id}
+                                onChange={handleInputChange} // Use the general handler
+                                className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm appearance-none pl-3 pr-10 py-2"
+                              >
+                                {availableGroqModels.map((model) => (
+                                  <option key={model.id} value={model.id}>
+                                    {model.name} ({model.id})
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 mt-1 text-gray-700 dark:text-gray-300">
+                                <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            </div>
                             {/* Display RPM for selected model */}
                             {getSelectedModelDetails() && (
                               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -721,7 +734,7 @@ export default function AccountPage() {
                             id="custom_api_key"
                             value={apiKeyInput}
                             onChange={handleApiKeyInputChange}
-                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
+                            className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm pl-3 py-2"
                             placeholder="Enter your Groq API key (starts with gsk_...)"
                             autoComplete="off"
                           />
@@ -835,8 +848,8 @@ export default function AccountPage() {
             {/* Answer Preferences Section */}
             {activeTab === 'answer-preferences' && (
               <div className="flex gap-8">
-                {/* Left Panel - Preferences Form */}
-                <div className="flex-1 bg-white dark:bg-black/60 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+                {/* Left Panel - Preferences Form (60%) */}
+                <div className="w-3/5 bg-white dark:bg-black/60 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Answer Preferences</h2>
                   <div className="space-y-8">
                     {/* Content Sources */}
@@ -869,43 +882,79 @@ export default function AccountPage() {
                       <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Answer Format</h3>
                       <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format Style</label>
-                        <select
-                          id="preferred_answer_format"
-                          name="preferred_answer_format"
-                          value={formData.preferred_answer_format}
-                          onChange={handleInputChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
-                        >
-                          <option value="markdown">Markdown (Default - Recommended)</option>
-                          <option value="bullet_points">Bullet Points</option>
-                          <option value="numbered_lists">Numbered Lists</option>
-                          <option value="paragraph">Paragraph Style</option>
-                          <option value="table">Table Format (Experimental)</option>
-                        </select>
-                      </div>
-
-                      {/* Code Snippets Toggle */}
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between">
-                          <label htmlFor="include_code_snippets" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Include Code Snippets
-                          </label>
-                          <div className="relative inline-block w-10 mr-2 align-middle select-none">
-                            <input
-                              type="checkbox"
-                              id="include_code_snippets"
-                              name="include_code_snippets"
-                              checked={formData.include_code_snippets}
-                              onChange={handleSwitchChange}
-                              className="sr-only"
-                            />
-                            <div className={`block w-10 h-6 rounded-full transition-colors ${formData.include_code_snippets ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                            <div className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform bg-white transform ${formData.include_code_snippets ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                        <div className="relative">
+                          <select
+                            id="preferred_answer_format"
+                            name="preferred_answer_format"
+                            value={formData.preferred_answer_format}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm appearance-none pl-3 pr-10 py-2"
+                          >
+                            <option value="markdown">Markdown (Default - Recommended)</option>
+                            <option value="bullet_points">Bullet Points</option>
+                            <option value="numbered_lists">Numbered Lists</option>
+                            <option value="paragraph">Paragraph Style</option>
+                            <option value="table">Table Format (Experimental)</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 mt-1 text-gray-700 dark:text-gray-300">
+                            <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
                           </div>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          When enabled, answers will include code examples for programming-related questions. Disable to focus on theory and save tokens.
-                        </p>
+                      </div>
+
+                      {/* Answer Add-ons Section */}
+                      <div className="mb-6">
+                        <h4 className="text-base font-medium text-gray-800 dark:text-gray-200 mb-3">Answer Add-ons</h4>
+
+                        {/* Code Snippets Toggle */}
+                        <div className="mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <label htmlFor="include_code_snippets" className="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                              Include Code Snippets
+                            </label>
+                            <label className="relative inline-block w-10 mr-2 align-middle select-none cursor-pointer" htmlFor="include_code_snippets">
+                              <input
+                                type="checkbox"
+                                id="include_code_snippets"
+                                name="include_code_snippets"
+                                checked={formData.include_code_snippets}
+                                onChange={handleSwitchChange}
+                                className="sr-only"
+                              />
+                              <div className={`block w-10 h-6 rounded-full transition-colors ${formData.include_code_snippets ? 'bg-black dark:bg-black' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                              <div className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform bg-white transform ${formData.include_code_snippets ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                            </label>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            When enabled, answers will include code examples for programming-related questions. Disable to focus on theory and save tokens.
+                          </p>
+                        </div>
+
+                        {/* LaTeX Formulas Toggle */}
+                        <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between">
+                            <label htmlFor="include_latex_formulas" className="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                              Include LaTeX Formulas <span className="text-xs text-amber-600 dark:text-amber-400 ml-1">(Experimental)</span>
+                            </label>
+                            <label className="relative inline-block w-10 mr-2 align-middle select-none cursor-pointer" htmlFor="include_latex_formulas">
+                              <input
+                                type="checkbox"
+                                id="include_latex_formulas"
+                                name="include_latex_formulas"
+                                checked={formData.include_latex_formulas || false}
+                                onChange={handleSwitchChange}
+                                className="sr-only"
+                              />
+                              <div className={`block w-10 h-6 rounded-full transition-colors ${(formData.include_latex_formulas || false) ? 'bg-black dark:bg-black' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                              <div className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform bg-white transform ${(formData.include_latex_formulas || false) ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                            </label>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            When enabled, mathematical formulas will be rendered using LaTeX notation. Useful for math, physics, and engineering questions.
+                          </p>
+                        </div>
                       </div>
 
                       {/* Answer Depth */}
@@ -942,7 +991,7 @@ export default function AccountPage() {
                           rows={3}
                           value={formData.custom_formatting_instructions || ''}
                           onChange={handleInputChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
+                          className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
                           placeholder="e.g., Start with a summary. Use bold for key terms."
                         />
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -956,8 +1005,8 @@ export default function AccountPage() {
                   </div>
                 </div>
 
-                {/* Right Panel - Answer Preview */}
-                <div className="w-80 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-black/80 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col">
+                {/* Right Panel - Answer Preview (40%) */}
+                <div className="w-2/5 bg-gradient-to-br from-gray-50 to-white dark:from-black/90 dark:to-black rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col">
                   <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Answer Preview</h3>
 
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-auto max-h-[500px]">
@@ -1020,32 +1069,34 @@ export default function AccountPage() {
                       {formData.preferred_answer_format === 'table' && (
                         <div>
                           <p><strong>Binary Search Tree Operations</strong></p>
-                          <table className="min-w-full border border-gray-300 dark:border-gray-700">
-                            <thead>
-                              <tr className="bg-gray-100 dark:bg-gray-800">
-                                <th className="border border-gray-300 dark:border-gray-700 px-2 py-1">Operation</th>
-                                <th className="border border-gray-300 dark:border-gray-700 px-2 py-1">Time Complexity</th>
-                                <th className="border border-gray-300 dark:border-gray-700 px-2 py-1">Description</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">Insert</td>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">O(log n)</td>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">Add new node</td>
-                              </tr>
-                              <tr>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">Search</td>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">O(log n)</td>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">Find value</td>
-                              </tr>
-                              <tr>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">Delete</td>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">O(log n)</td>
-                                <td className="border border-gray-300 dark:border-gray-700 px-2 py-1">Remove node</td>
-                              </tr>
-                            </tbody>
-                          </table>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full border-collapse text-sm">
+                              <thead>
+                                <tr className="bg-gray-100 dark:bg-gray-800">
+                                  <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Operation</th>
+                                  <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Time Complexity</th>
+                                  <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Description</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr className="bg-white dark:bg-gray-900">
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Insert</td>
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">O(log n)</td>
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Add new node</td>
+                                </tr>
+                                <tr className="bg-gray-50 dark:bg-gray-800/50">
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Search</td>
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">O(log n)</td>
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Find value</td>
+                                </tr>
+                                <tr className="bg-white dark:bg-gray-900">
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Delete</td>
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">O(log n)</td>
+                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Remove node</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1056,7 +1107,12 @@ export default function AccountPage() {
                     <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                       <p><span className="font-medium">Format:</span> {formData.preferred_answer_format.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                       <p><span className="font-medium">Depth:</span> {formData.preferred_answer_depth.charAt(0).toUpperCase() + formData.preferred_answer_depth.slice(1)}</p>
-                      <p><span className="font-medium">Code Snippets:</span> {formData.include_code_snippets ? 'Included' : 'Excluded'}</p>
+                      <p><span className="font-medium">Add-ons:</span>
+                        {[formData.include_code_snippets ? 'Code Snippets' : null,
+                          formData.include_latex_formulas ? 'LaTeX Formulas' : null]
+                          .filter(Boolean)
+                          .join(', ') || 'None'}
+                      </p>
                       <p><span className="font-medium">Sources:</span> {(Object.keys(formData) as Array<keyof typeof formData>)
                         .filter(key => key.startsWith('use_') && formData[key as keyof typeof formData] === true)
                         .map(key => key.replace('use_','').replace('_sources','').replace('_', ' '))
