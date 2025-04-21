@@ -932,26 +932,55 @@ export default function AccountPage() {
                     {/* Content Sources */}
                     <section>
                       <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Content Sources</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select which types of supplementary resources (if available for the question) should be considered when generating answers.</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {(Object.keys(formData) as Array<keyof typeof formData>)
-                          .filter(key => key.startsWith('use_'))
-                          .map(key => (
-                            <div key={key} className="flex items-center">
-                              <input
-                                type="checkbox"
-                                id={key}
-                                name={key}
-                                checked={formData[key as keyof typeof formData] as boolean}
-                                onChange={handleSwitchChange} // Use checkbox handler
-                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-purple-600 dark:focus:ring-offset-gray-800 rounded"
-                              />
-                              <label htmlFor={key} className="ml-2 block text-sm text-gray-900 dark:text-gray-100 capitalize">
-                                {key.replace('use_','').replace('_sources','').replace('_', ' ')}
-                              </label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select which types of supplementary resources should be considered when generating answers.</p>
+                      <div className="grid grid-cols-3 gap-3 mt-2">
+                        {[
+                          { id: 'use_youtube_sources', name: 'YouTube', tag: 'Relevant videos', description: 'Videos based on keywords' },
+                          { id: 'use_pdf_sources', name: 'PDF', tag: 'Documents', description: 'Notes from Reddit, blogs, drives' },
+                          { id: 'use_paper_sources', name: 'Papers', tag: 'Research', description: 'Academic research papers' },
+                          { id: 'use_website_sources', name: 'Websites', tag: 'Articles', description: 'Relevant web articles' },
+                          { id: 'use_book_sources', name: 'Books', tag: 'References', description: 'Amazon book links' },
+                          { id: 'use_expert_opinion_sources', name: 'Expert Opinion', tag: 'Coming Soon', description: 'Twitter citations to concepts' }
+                        ].map((source) => {
+                          const isSelected = formData[source.id as keyof typeof formData] as boolean;
+                          const isComingSoon = source.id === 'use_expert_opinion_sources';
+                          return (
+                            <div
+                              key={source.id}
+                              className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-4 ${isComingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-500'} transition-colors`}
+                              onClick={() => {
+                                if (!isComingSoon) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    [source.id]: !isSelected
+                                  }));
+                                  if (message.text) setMessage({ type: '', text: '' });
+                                }
+                              }}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h4 className="font-medium text-gray-900 dark:text-white">{source.name}</h4>
+                                  <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${isComingSoon ? 'border-amber-500 dark:border-amber-400 text-amber-600 dark:text-amber-400' : 'border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200'} bg-transparent`}>
+                                    {source.tag}
+                                  </span>
+                                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{source.description}</p>
+                                </div>
+                                <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
+                                  {isSelected && (
+                                    <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                                    </svg>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          ))}
+                          );
+                        })}
                       </div>
+                      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        Select the sources you want to include in your answers. <span className="text-amber-600 dark:text-amber-400">Coming Soon</span> features will be available in future updates.
+                      </p>
                     </section>
 
                     {/* Answer Format */}
