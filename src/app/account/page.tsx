@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion } from 'framer-motion';
-import { DemoButton } from '../components/ui';
+import { DemoButton, AnswerDepthSliderSimple } from '../components/ui';
 
 // --- Define Groq Model Structure and List ---
 interface GroqModel {
@@ -219,9 +219,8 @@ export default function AccountPage() {
     if (message.text) setMessage({ type: '', text: '' });
   };
 
-  // Specific handler for slider (range input)
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
+  // Specific handler for answer depth slider
+  const handleAnswerDepthChange = (value: number) => {
     let depth: AnswerDepth = 'standard';
     if (value === 1) depth = 'brief';
     else if (value === 3) depth = 'comprehensive';
@@ -960,26 +959,48 @@ export default function AccountPage() {
                       <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Answer Format</h3>
                       <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format Style</label>
-                        <div className="relative">
-                          <select
-                            id="preferred_answer_format"
-                            name="preferred_answer_format"
-                            value={formData.preferred_answer_format}
-                            onChange={handleInputChange}
-                            className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm appearance-none pl-3 pr-10 py-2"
-                          >
-                            <option value="markdown">Markdown (Default - Recommended)</option>
-                            <option value="bullet_points">Bullet Points</option>
-                            <option value="numbered_lists">Numbered Lists</option>
-                            <option value="paragraph">Paragraph Style</option>
-                            <option value="table">Table Format (Experimental)</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 mt-1 text-gray-700 dark:text-gray-300">
-                            <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </div>
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                          {[
+                            { id: 'markdown', name: 'Markdown', tag: 'Default' },
+                            { id: 'bullet_points', name: 'Bullet Points', tag: 'Concise' },
+                            { id: 'table', name: 'Table Format', tag: 'Experimental' },
+                            { id: 'paragraph', name: 'Paragraph Style', tag: 'Narrative' }
+                          ].map((format) => {
+                            const isSelected = formData.preferred_answer_format === format.id;
+                            return (
+                              <div
+                                key={format.id}
+                                className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    preferred_answer_format: format.id as AnswerFormat
+                                  }));
+                                  if (message.text) setMessage({ type: '', text: '' });
+                                }}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="font-medium text-gray-900 dark:text-white">{format.name}</h4>
+                                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
+                                      {format.tag}
+                                    </span>
+                                  </div>
+                                  <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
+                                    {isSelected && (
+                                      <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                                      </svg>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
+                        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                          Choose how you'd like answers to be structured. Markdown is recommended for most cases.
+                        </p>
                       </div>
 
                       {/* Answer Add-ons Section */}
@@ -1037,22 +1058,11 @@ export default function AccountPage() {
 
                       {/* Answer Depth */}
                       <div className="mb-6">
-                        <label htmlFor="answer_depth_slider" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Answer Depth</label>
-                        <div className="flex items-center space-x-4">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">Brief</span>
-                          <input
-                            type="range"
-                            id="answer_depth_slider"
-                            min="1"
-                            max="3"
-                            step="1"
-                            value={formData.preferred_answer_depth === 'brief' ? 1 : formData.preferred_answer_depth === 'standard' ? 2 : 3}
-                            onChange={handleSliderChange}
-                            className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-black"
-                          />
-                           <span className="text-xs text-gray-500 dark:text-gray-400">Comprehensive</span>
-                        </div>
-                        <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize">{formData.preferred_answer_depth}</p>
+                        <AnswerDepthSliderSimple
+                          value={formData.preferred_answer_depth === 'brief' ? 1 : formData.preferred_answer_depth === 'standard' ? 2 : 3}
+                          onChange={handleAnswerDepthChange}
+                          className="mt-2"
+                        />
                       </div>
                     </section>
 
@@ -1069,7 +1079,7 @@ export default function AccountPage() {
                           rows={3}
                           value={formData.custom_formatting_instructions || ''}
                           onChange={handleInputChange}
-                          className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
+                          className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm px-4 py-3"
                           placeholder="e.g., Start with a summary. Use bold for key terms."
                         />
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -1124,19 +1134,7 @@ export default function AccountPage() {
                         </div>
                       )}
 
-                      {formData.preferred_answer_format === 'numbered_lists' && (
-                        <div>
-                          <p><strong>Binary Search Tree Implementation Steps:</strong></p>
-                          <ol>
-                            <li>Create a Node class with value, left, and right properties</li>
-                            <li>Implement a BST class with a root property</li>
-                            <li>Add insert method that places nodes in correct position</li>
-                            <li>Add search method to find values in the tree</li>
-                            <li>Implement traversal methods (inorder, preorder, postorder)</li>
-                            <li>Add delete method to remove nodes while maintaining BST properties</li>
-                          </ol>
-                        </div>
-                      )}
+                      {/* Numbered lists option removed */}
 
                       {formData.preferred_answer_format === 'paragraph' && (
                         <div>
