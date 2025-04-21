@@ -2,55 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const router = useRouter();
 
   // Handle initial setup after mount
   useEffect(() => {
     setMounted(true);
-    const storedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setIsDarkMode(storedDarkMode);
-
-    if (storedDarkMode) {
-      document.documentElement.classList.add('dark');
-    }
-
-    // Mock user authentication status
-    // For demo purposes, let's check if there's a mock auth token in localStorage
-    const hasAuthToken = localStorage.getItem('mockAuthToken') === 'true';
-    setUser(hasAuthToken ? { id: '123', email: 'user@example.com' } : null);
-
-    // Listen for auth changes (mock implementation)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'mockAuthToken') {
-        setUser(e.newValue === 'true' ? { id: '123', email: 'user@example.com' } : null);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
   }, []);
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    localStorage.setItem('darkMode', String(newDarkMode));
-  };
 
   const handleTitleClick = () => {
     // Reset all topic selections
@@ -60,96 +19,55 @@ export default function Navbar() {
     window.dispatchEvent(new CustomEvent('topicChange', { detail: null }));
   };
 
-  const handleSignOut = () => {
-    // Mock sign-out by removing the token
-    localStorage.setItem('mockAuthToken', 'false');
-    setUser(null);
-    router.refresh();
-
-    // Dispatch storage event to notify other components
-    window.dispatchEvent(new StorageEvent('storage', {
-      key: 'mockAuthToken',
-      newValue: 'false'
-    }));
-  };
-
   if (!mounted) {
-    return <nav className="w-full py-4 px-6 border-b border-gray-200 font-mono"></nav>;
+    return <nav className="w-full bg-black"></nav>;
   }
 
   return (
-    <nav className="w-full py-4 px-6 border-b border-gray-200 dark:border-gray-800 font-mono">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left-aligned Title */}
+    <nav className="w-full bg-black text-white py-4">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10">
+        {/* Left-aligned Logo */}
         <div>
-          <Link href="/" onClick={handleTitleClick}>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white cursor-pointer hover:underline">
-              Grok Interviews
-            </h1>
+          <Link href="/" onClick={handleTitleClick} className="flex items-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="text-xl font-semibold">AgentBoost</span>
+          </Link>
+        </div>
+
+        {/* Center Navigation Links */}
+        <div className="flex items-center space-x-10 mx-auto md:mx-0">
+          <Link href="/features" className="text-white hover:text-gray-300 transition-colors">
+            Features
+          </Link>
+          <Link href="/platform" className="text-white hover:text-gray-300 transition-colors">
+            Platform
+          </Link>
+          <Link href="/about" className="text-white hover:text-gray-300 transition-colors">
+            About
           </Link>
         </div>
 
         {/* Right Side Controls */}
-        <div className="flex items-center space-x-2">
-          {/* Sign In/Out Button */}
-          {user ? (
-            <div className="flex items-center space-x-2">
-              <Link href="/dashboard" className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
-                Dashboard
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <Link href="/signin">
-              <button
-                className="px-4 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                Sign In
-              </button>
-            </Link>
-          )}
+        <div className="flex items-center space-x-4">
+          {/* Login Button */}
+          <Link href="/signin" className="text-white hover:text-gray-300 transition-colors font-medium">
+            Login
+          </Link>
 
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none text-gray-700 dark:text-gray-300"
-            aria-label="Toggle dark mode"
-          >
-            {isDarkMode ? (
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                />
+          {/* Join Free Beta Button */}
+          <Link href="/signup">
+            <button className="bg-gray-900 text-white px-4 py-2 rounded-full border border-gray-700 hover:bg-gray-800 transition-colors flex items-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+                <path d="M22 2L13 7L22 12L13 17L22 22" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M11 7H6C3.79086 7 2 8.79086 2 11V13C2 15.2091 3.79086 17 6 17H11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            ) : (
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                />
-              </svg>
-            )}
-          </button>
+              <span>Join Free Beta</span>
+            </button>
+          </Link>
         </div>
       </div>
     </nav>

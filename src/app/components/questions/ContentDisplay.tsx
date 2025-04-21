@@ -24,17 +24,17 @@ export default function ContentDisplay({ questionId }: ContentDisplayProps) {
   useEffect(() => {
     const fetchContent = async () => {
       if (!questionId) return;
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/content?questionId=${questionId}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch content');
         }
-        
+
         const data = await response.json();
         setContent(data);
       } catch (err) {
@@ -80,7 +80,7 @@ export default function ContentDisplay({ questionId }: ContentDisplayProps) {
   if (content.length === 0) {
     return (
       <div className="card shadow-card overflow-hidden">
-        <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Answer</h2>
+        <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Answer</h2>
         <div className="p-6 text-gray-500">No content available for this question.</div>
       </div>
     );
@@ -88,7 +88,7 @@ export default function ContentDisplay({ questionId }: ContentDisplayProps) {
 
   return (
     <div className="card shadow-card overflow-hidden">
-      <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Answer</h2>
+      <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Answer</h2>
       <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto hide-scrollbar">
         {content.map((item) => (
           <div key={item.content_id} className="mb-4">
@@ -101,12 +101,12 @@ export default function ContentDisplay({ questionId }: ContentDisplayProps) {
                 ))}
               </div>
             )}
-            
+
             {item.content_type === 'image' && item.media_url && (
               <div className="mt-4">
-                <img 
-                  src={item.media_url} 
-                  alt={item.caption || 'Image'} 
+                <img
+                  src={item.media_url}
+                  alt={item.caption || 'Image'}
                   className="max-w-full rounded-md shadow-sm"
                 />
                 {item.caption && (
@@ -136,4 +136,4 @@ export default function ContentDisplay({ questionId }: ContentDisplayProps) {
       </div>
     </div>
   );
-} 
+}

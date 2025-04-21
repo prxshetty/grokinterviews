@@ -227,7 +227,7 @@ function AnswerContent({
       <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Answer:</h5>
       <div
         ref={answerRef}
-        className="text-gray-700 dark:text-gray-300 text-sm prose dark:prose-invert max-w-none max-h-[600px] overflow-y-auto pr-2"
+        className="text-gray-800 dark:text-gray-200 prose dark:prose-invert max-w-none max-h-[600px] overflow-y-auto pr-2 text-base"
       >
         {isGenerating ? (
           <div className="flex items-center space-x-2 text-gray-500">
