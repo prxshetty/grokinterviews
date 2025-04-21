@@ -28,7 +28,6 @@ interface UserProfile {
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [showNavTitle, setShowNavTitle] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
@@ -46,26 +45,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
 
-    // Add scroll event listener to show/hide nav title
-    const handleScroll = () => {
-      // Always show title on topics page
-      if (isTopicsPage) {
-        setShowNavTitle(true);
-        return;
-      }
 
-      // Get the hero section element
-      const heroSection = document.querySelector('.hero-section');
-      if (heroSection) {
-        const heroRect = heroSection.getBoundingClientRect();
-        // Show nav title when hero section is scrolled out of view
-        setShowNavTitle(heroRect.bottom < 0);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    // Initial check
-    handleScroll();
 
     // Check if user is logged in
     const checkUser = async () => {
@@ -112,7 +92,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     // No need for click outside handler with Radix UI dropdown
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
       subscription.unsubscribe();
     };
   }, [isTopicsPage, supabase]);
@@ -149,16 +128,21 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     return (
       <>
         {/* Skeleton Navigation Bar */}
-        <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/90 dark:bg-black/90 backdrop-blur-md transition-all duration-300 border-b border-transparent">
+        <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-transparent text-black dark:text-white">
           <div className="w-full flex items-center justify-between px-8">
             <div className="flex items-center">
-              <div className="text-xl md:text-3xl font-normal tracking-tight opacity-0">
+              <div className="text-xl md:text-2xl font-normal tracking-tight opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2">
                 Grok Interviews
               </div>
             </div>
-            <div className="flex items-center space-x-6">
-              <div className="text-sm opacity-0">Sign In</div>
-              <div className="text-sm opacity-0">Dark</div>
+            <div className="flex items-center space-x-10 mx-auto border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2 opacity-0">
+              <div>Topics</div>
+              <div>Quizzes</div>
+              <div>Contact</div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-sm opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">Login</div>
+              <div className="text-sm opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">Join Free Beta</div>
             </div>
           </div>
         </nav>
@@ -170,25 +154,39 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   return (
     <>
-      {/* Main Navigation Bar - minimalistic design */}
-      <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-white/90 dark:bg-black/90 backdrop-blur-md transition-all duration-300 border-b border-transparent hover:border-gray-200 dark:hover:border-white/10">
+      {/* Main Navigation Bar - AgentBoost design with transparent background */}
+      <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-transparent text-black dark:text-white">
         <div className="w-full flex items-center justify-between px-8">
           {/* Left side - Logo with proper left alignment */}
           <div className="flex items-center">
-            <Link href="/" onClick={handleTitleClick} className="group">
-              <h1 className={`text-xl md:text-3xl font-normal tracking-tight text-black dark:text-white transition-all duration-500 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 group-hover:after:w-full ${showNavTitle ? 'opacity-100' : 'opacity-0'}`}>
-                Grok Interviews
-              </h1>
+            <Link href="/" onClick={handleTitleClick} className="flex items-center border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2">
+              <span className="text-xl md:text-2xl font-normal tracking-tight text-black dark:text-white">Grok Interviews</span>
+            </Link>
+          </div>
+
+          {/* Center Navigation Links - with border */}
+          <div className="flex items-center mx-auto md:mx-0 border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2">
+            <Link href="/topics" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
+              Topics
+            </Link>
+            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
+            <Link href="/quizzes" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4 flex items-center">
+              Quizzes
+              <span className="ml-1.5 text-xs px-1.5 py-0.5 bg-black/10 dark:bg-white/20 text-black/70 dark:text-white/80 rounded-sm font-medium">BETA</span>
+            </Link>
+            <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
+            <Link href="/contact" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
+              Contact
             </Link>
           </div>
 
           {/* Right Side Controls */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <motion.button
-                    className="text-sm text-black/90 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors duration-300 flex items-center space-x-1 focus:outline-none"
+                    className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -199,7 +197,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 20 20"
                       fill="currentColor"
-                      className="w-4 h-4 transition-transform"
+                      className="w-4 h-4 transition-transform ml-1"
                     >
                       <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
                     </svg>
@@ -220,7 +218,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/dashboard')} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
+                      <span className="flex items-center">Dashboard <span className="ml-1.5 text-xs px-1.5 py-0.5 bg-black/10 dark:bg-white/20 text-black/70 dark:text-white/80 rounded-sm font-medium">BETA</span></span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/dashboard/bookmarks')} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
                       <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -251,22 +249,19 @@ export default function MainNavigation({ children }: { children: React.ReactNode
               </DropdownMenu>
             ) : (
               <>
-                {/* Sign In Button - Minimalistic */}
-                <Link
-                  href="/signin"
-                  className="text-sm text-black/90 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 hover:after:w-full"
-                >
-                  Sign In
+                {/* Login Button - with border */}
+                <Link href="/signin" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-medium border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">
+                  Login
                 </Link>
 
-                {/* Dark Mode Toggle - Simple Button */}
-                <button
-                  onClick={toggleDarkMode}
-                  className="text-sm text-black/90 dark:text-white/90 hover:text-black dark:hover:text-white transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-black dark:after:bg-white after:transition-all after:duration-300 hover:after:w-full"
-                  aria-label="Toggle dark mode"
-                >
-                  {isDarkMode ? 'Light' : 'Dark'}
-                </button>
+                {/* Join Free Beta Button */}
+                <Link href="/signup" className="bg-transparent text-black dark:text-white rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors flex items-center px-5 py-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+                    <path d="M22 2L13 7L22 12L13 17L22 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M11 7H6C3.79086 7 2 8.79086 2 11V13C2 15.2091 3.79086 17 6 17H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Join Free Beta</span>
+                </Link>
               </>
             )}
           </div>

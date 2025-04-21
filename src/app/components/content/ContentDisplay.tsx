@@ -80,7 +80,7 @@ export default function ContentDisplay({ questionId }: ContentDisplayProps) {
   if (content.length === 0) {
     return (
       <div className="card shadow-card overflow-hidden">
-        <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Answer</h2>
+        <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Answer</h2>
         <div className="p-6 text-gray-500">No content available for this question.</div>
       </div>
     );
@@ -88,7 +88,7 @@ export default function ContentDisplay({ questionId }: ContentDisplayProps) {
 
   return (
     <div className="card shadow-card overflow-hidden">
-      <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Answer</h2>
+      <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Answer</h2>
       <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto hide-scrollbar">
         {content.map((item) => (
           <div key={item.content_id} className="mb-4">

@@ -52,7 +52,7 @@ export default function QuestionList({
   if (!topicId) {
     return (
       <div className="card shadow-card overflow-hidden">
-        <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Questions</h2>
+        <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Questions</h2>
         <div className="p-4 text-gray-500">Please select a topic to view questions.</div>
       </div>
     );
@@ -61,7 +61,7 @@ export default function QuestionList({
   if (isLoading) {
     return (
       <div className="card shadow-card overflow-hidden">
-        <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Questions</h2>
+        <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Questions</h2>
         <div className="p-4">Loading questions...</div>
       </div>
     );
@@ -70,7 +70,7 @@ export default function QuestionList({
   if (error) {
     return (
       <div className="card shadow-card overflow-hidden">
-        <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Questions</h2>
+        <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Questions</h2>
         <div className="p-4 text-red-500">{error}</div>
       </div>
     );
@@ -79,7 +79,7 @@ export default function QuestionList({
   if (questions.length === 0) {
     return (
       <div className="card shadow-card overflow-hidden">
-        <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Questions</h2>
+        <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Questions</h2>
         <div className="p-4 text-gray-500">No questions found for this topic.</div>
       </div>
     );
@@ -87,17 +87,17 @@ export default function QuestionList({
 
   return (
     <div className="card shadow-card overflow-hidden">
-      <h2 className="text-xl font-semibold p-4 bg-orange-500 text-white">Questions</h2>
+      <h2 className="text-xl font-semibold p-4 bg-gray-800 dark:bg-gray-700 text-white">Questions</h2>
       <div className="max-h-[60vh] overflow-y-auto hide-scrollbar">
         {questions.map((question) => (
           <div key={question.question_id} className="p-3 border-b border-gray-100">
             <button
               onClick={() => onSelectQuestion(question.question_id)}
               className={`w-full text-left p-3 rounded-md hover:bg-gray-50 transition-colors ${
-                selectedQuestionId === question.question_id ? 'bg-gray-100 border-l-4 border-orange-500' : ''
+                selectedQuestionId === question.question_id ? 'bg-gray-100 dark:bg-gray-800 border-l-4 border-gray-800 dark:border-gray-300' : ''
               }`}
             >
-              <h3 className={`${selectedQuestionId === question.question_id ? 'font-medium text-orange-500' : 'text-gray-800'}`}>
+              <h3 className={`${selectedQuestionId === question.question_id ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-800 dark:text-gray-300'}`}>
                 {question.title}
               </h3>
             </button>
