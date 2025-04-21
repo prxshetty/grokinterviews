@@ -135,7 +135,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 Grok Interviews
               </div>
             </div>
-            <div className="flex items-center space-x-10 mx-auto border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2 opacity-0">
+            <div className="flex items-center space-x-10 mx-auto absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2 opacity-0">
               <div>Topics</div>
               <div>Quizzes <span className="text-xs">COMING SOON</span></div>
               <div>Contact</div>
@@ -164,7 +164,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
           </div>
 
           {/* Center Navigation Links - with border */}
-          <div className="flex items-center mx-auto md:mx-0 border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2">
+          <div className="flex items-center absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2">
             <Link href="/topics" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
               Topics
             </Link>
