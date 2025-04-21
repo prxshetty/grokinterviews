@@ -137,12 +137,11 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             </div>
             <div className="flex items-center space-x-10 mx-auto border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2 opacity-0">
               <div>Topics</div>
-              <div>Quizzes</div>
+              <div>Quizzes <span className="text-xs">COMING SOON</span></div>
               <div>Contact</div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-sm opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">Login</div>
-              <div className="text-sm opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">Join Free Beta</div>
             </div>
           </div>
         </nav>
@@ -172,7 +171,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
             <Link href="/quizzes" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4 flex items-center">
               Quizzes
-              <span className="ml-1.5 text-xs px-1.5 py-0.5 bg-black/10 dark:bg-white/20 text-black/70 dark:text-white/80 rounded-sm font-medium">BETA</span>
+              <span className="ml-1.5 text-xs px-1.5 py-0.5 bg-black/10 dark:bg-white/20 text-black/70 dark:text-white/80 rounded-sm font-medium">COMING SOON</span>
             </Link>
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
             <Link href="/contact" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
@@ -252,15 +251,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 {/* Login Button - with border */}
                 <Link href="/signin" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-medium border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">
                   Login
-                </Link>
-
-                {/* Join Free Beta Button */}
-                <Link href="/signup" className="bg-transparent text-black dark:text-white rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors flex items-center px-5 py-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
-                    <path d="M22 2L13 7L22 12L13 17L22 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M11 7H6C3.79086 7 2 8.79086 2 11V13C2 15.2091 3.79086 17 6 17H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span>Join Free Beta</span>
                 </Link>
               </>
             )}
