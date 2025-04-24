@@ -1,6 +1,6 @@
 # Grok Interviews
 
-A modern web application that aggregates, organizes, and presents Data Science and Software Engineering interview preparation resources.
+A modern web application that aggregates, organizes, and presents Data Science and Software Engineering interview preparation resources with relevant content sources. 
 
 ## Features
 
