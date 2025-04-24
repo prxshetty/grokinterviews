@@ -128,24 +128,24 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     return (
       <>
         {/* Skeleton Navigation Bar */}
-        <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-transparent text-black dark:text-white">
+        <nav className={`fixed top-0 left-0 right-0 z-50 py-3 ${pathname === '/topics' ? 'bg-white/95 dark:bg-black/95 backdrop-blur-md shadow-sm' : 'bg-transparent'} text-black dark:text-white`}>
           <div className="w-full flex items-center justify-between px-8">
             <div className="flex items-center">
-              <div className="text-xl md:text-2xl font-normal tracking-tight opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2">
+              <div className="text-lg md:text-xl font-normal tracking-tight opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1">
                 Grok Interviews
               </div>
             </div>
-            <div className="flex items-center space-x-10 mx-auto absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2 opacity-0">
+            <div className="flex items-center space-x-10 mx-auto absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-1 opacity-0">
               <div>Topics</div>
               <div>Quizzes <span className="text-xs">COMING SOON</span></div>
               <div>Contact</div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">Login</div>
+              <div className="text-sm opacity-0 border border-gray-300 dark:border-gray-700 rounded-full px-4 py-1">Login</div>
             </div>
           </div>
         </nav>
-        <div className="h-16"></div>
+        <div className="h-12"></div>
         {children}
       </>
     );
@@ -154,17 +154,17 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   return (
     <>
       {/* Main Navigation Bar - AgentBoost design with transparent background */}
-      <nav className="fixed top-0 left-0 right-0 z-50 py-4 bg-transparent text-black dark:text-white">
+      <nav className={`fixed top-0 left-0 right-0 z-50 py-3 ${isTopicsPage ? 'bg-white/95 dark:bg-black/95 backdrop-blur-md shadow-sm' : 'bg-transparent'} text-black dark:text-white transition-transform duration-300`}>
         <div className="w-full flex items-center justify-between px-8">
           {/* Left side - Logo with proper left alignment */}
           <div className="flex items-center">
-            <Link href="/" onClick={handleTitleClick} className="flex items-center border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2">
-              <span className="text-xl md:text-2xl font-normal tracking-tight text-black dark:text-white">Grok Interviews</span>
+            <Link href="/" onClick={handleTitleClick} className="flex items-center border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1">
+              <span className="text-lg md:text-xl font-normal tracking-tight text-black dark:text-white">Grok Interviews</span>
             </Link>
           </div>
 
           {/* Center Navigation Links - with border */}
-          <div className="flex items-center absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-6 py-2">
+          <div className="flex items-center absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-1">
             <Link href="/topics" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
               Topics
             </Link>
@@ -185,7 +185,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <motion.button
-                    className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2"
+                    className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -249,7 +249,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             ) : (
               <>
                 {/* Login Button - with border */}
-                <Link href="/signin" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-medium border border-gray-300 dark:border-gray-700 rounded-full px-5 py-2">
+                <Link href="/signin" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-medium border border-gray-300 dark:border-gray-700 rounded-full px-4 py-1">
                   Login
                 </Link>
               </>
@@ -259,7 +259,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       </nav>
 
       {/* Spacer to prevent content from being hidden under fixed navbar */}
-      <div className="h-16"></div>
+      <div className="h-12"></div>
 
       {/* Topic Navigation - only shown on topic detail pages */}
       {isTopicDetailPage && <TopicNavWrapper />}
