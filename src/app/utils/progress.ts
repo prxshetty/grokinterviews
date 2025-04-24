@@ -124,3 +124,78 @@ export const fetchUserProgress = async (): Promise<{
     };
   }
 };
+
+/**
+ * Checks if a question is completed by the user
+ * @param questionId The ID of the question to check
+ * @returns Promise resolving to boolean indicating completion status
+ */
+export const isQuestionCompleted = async (questionId: number): Promise<boolean> => {
+  try {
+    const response = await fetch(`/api/user/progress/status?questionId=${questionId}`);
+    if (!response.ok) {
+      return false;
+    }
+    const data = await response.json();
+    return data.status === 'completed';
+  } catch (error) {
+    console.error('Failed to check completion status:', error);
+    return false;
+  }
+};
+
+/**
+ * Fetches progress data for a specific category
+ * @param categoryId The ID of the category
+ * @returns Promise resolving to category progress data
+ */
+export const fetchCategoryProgress = async (categoryId: number): Promise<{
+  questionsCompleted: number;
+  totalQuestions: number;
+  completionPercentage: number;
+}> => {
+  try {
+    const response = await fetch(`/api/user/progress/category?categoryId=${categoryId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch category progress data');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch category progress data:', error);
+    return {
+      questionsCompleted: 0,
+      totalQuestions: 0,
+      completionPercentage: 0
+    };
+  }
+};
+
+/**
+ * Fetches progress data for a specific topic
+ * @param topicId The ID of the topic
+ * @returns Promise resolving to topic progress data
+ */
+export const fetchTopicProgress = async (topicId: number): Promise<{
+  categoriesCompleted: number;
+  totalCategories: number;
+  questionsCompleted: number;
+  totalQuestions: number;
+  completionPercentage: number;
+}> => {
+  try {
+    const response = await fetch(`/api/user/progress/topic?topicId=${topicId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch topic progress data');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch topic progress data:', error);
+    return {
+      categoriesCompleted: 0,
+      totalCategories: 0,
+      questionsCompleted: 0,
+      totalQuestions: 0,
+      completionPercentage: 0
+    };
+  }
+};

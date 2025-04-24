@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { ProgressBar } from '../ui/ProgressBar';
+import { fetchTopicProgress } from '@/app/utils/progress';
 
 const mainTopics = [
-  { id: 'ml', label: 'Machine Learning' },
-  { id: 'ai', label: 'Artificial Intelligence' },
-  { id: 'webdev', label: 'Web Development' },
-  { id: 'sdesign', label: 'System Design' },
-  { id: 'dsa', label: 'Data Structures & Algorithms' }
+  { id: 'ml', label: 'Machine Learning', topicId: 1 },
+  { id: 'ai', label: 'Artificial Intelligence', topicId: 2 },
+  { id: 'webdev', label: 'Web Development', topicId: 3 },
+  { id: 'sdesign', label: 'System Design', topicId: 4 },
+  { id: 'dsa', label: 'Data Structures & Algorithms', topicId: 5 }
 ];
 
 interface TopicNavProps {
@@ -21,6 +23,11 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
   const [internalSelectedTopic, setInternalSelectedTopic] = useState<string | null>(null);
   const [lastClickTime, setLastClickTime] = useState<{[key: string]: number}>({});
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
+  const [topicProgress, setTopicProgress] = useState<{[key: number]: {
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  }}>({});
   const pathname = usePathname();
 
   // Check if we're on the topics page
@@ -48,6 +55,35 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
       }
     }, 100);
   }, [externalSelectedTopic, effectiveSelectedTopic]);
+
+  // Fetch progress data for each topic
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        // Create a new progress object
+        const newProgress: {[key: number]: any} = {};
+
+        // Fetch progress for each topic
+        for (const topic of mainTopics) {
+          if (topic.topicId) {
+            const progress = await fetchTopicProgress(topic.topicId);
+            newProgress[topic.topicId] = progress;
+          }
+        }
+
+        setTopicProgress(newProgress);
+      } catch (error) {
+        console.error('Failed to fetch topic progress:', error);
+      }
+    };
+
+    fetchProgress();
+
+    // Set up an interval to refresh progress data every 30 seconds
+    const intervalId = setInterval(fetchProgress, 30000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Detect double click on a topic
   const handleTopicClick = (topicId: string) => {
@@ -132,28 +168,43 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
               {index > 0 && (
                 <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 absolute -left-0.5 top-1/2 transform -translate-y-1/2"></div>
               )}
-              <motion.button
-                onClick={(e) => {
-                  handleTopicClick(topic.id);
-                  // Update cursor position immediately for smoother transition
-                  const parentElement = e.currentTarget.parentElement as HTMLElement;
-                  if (parentElement) {
-                    const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                    if (cursor) {
-                      cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
-                      cursor.style.left = `${parentElement.offsetLeft}px`;
-                      cursor.style.opacity = '1';
+              <motion.div className="flex flex-col">
+                <motion.button
+                  onClick={(e) => {
+                    handleTopicClick(topic.id);
+                    // Update cursor position immediately for smoother transition
+                    const parentElement = e.currentTarget.parentElement?.parentElement as HTMLElement;
+                    if (parentElement) {
+                      const cursor = document.querySelector('.nav-cursor') as HTMLElement;
+                      if (cursor) {
+                        cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
+                        cursor.style.left = `${parentElement.offsetLeft}px`;
+                        cursor.style.opacity = '1';
+                      }
                     }
-                  }
-                }}
-                className={`px-4 py-2 text-sm font-medium block whitespace-nowrap ${
-                  effectiveSelectedTopic === topic.id
-                    ? 'text-gray-800 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'
-                }`}
-              >
-                {topic.label}
-              </motion.button>
+                  }}
+                  className={`px-4 pt-2 pb-1 text-sm font-medium block whitespace-nowrap ${
+                    effectiveSelectedTopic === topic.id
+                      ? 'text-gray-800 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'
+                  }`}
+                >
+                  {topic.label}
+                </motion.button>
+
+                {/* Progress bar */}
+                {topic.topicId && topicProgress[topic.topicId] && (
+                  <div className="px-4 pb-1">
+                    <ProgressBar
+                      progress={topicProgress[topic.topicId].completionPercentage}
+                      completed={topicProgress[topic.topicId].questionsCompleted}
+                      total={topicProgress[topic.topicId].totalQuestions}
+                      height="sm"
+                      showText={false}
+                    />
+                  </div>
+                )}
+              </motion.div>
             </li>
           ))}
         </ul>
