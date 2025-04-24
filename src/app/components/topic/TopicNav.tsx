@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 const mainTopics = [
   { id: 'ml', label: 'Machine Learning' },
@@ -19,13 +21,33 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
   const [internalSelectedTopic, setInternalSelectedTopic] = useState<string | null>(null);
   const [lastClickTime, setLastClickTime] = useState<{[key: string]: number}>({});
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
+  const pathname = usePathname();
 
-  // Sync with external state when it changes
+  // Check if we're on the topics page
+  const isTopicsPage = pathname === '/topics';
+
+  // Use external selected topic if provided, otherwise use internal state
+  const effectiveSelectedTopic = externalSelectedTopic !== undefined ? externalSelectedTopic : internalSelectedTopic;
+
+  // Sync with external state when it changes and initialize cursor position
   useEffect(() => {
     if (externalSelectedTopic !== undefined) {
       setInternalSelectedTopic(externalSelectedTopic);
     }
-  }, [externalSelectedTopic]);
+
+    // Initialize cursor position
+    setTimeout(() => {
+      const activeTopicElement = document.querySelector(`[data-topic="${effectiveSelectedTopic}"]`) as HTMLElement;
+      if (activeTopicElement) {
+        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
+        if (cursor) {
+          cursor.style.width = `${activeTopicElement.getBoundingClientRect().width}px`;
+          cursor.style.left = `${activeTopicElement.offsetLeft}px`;
+          cursor.style.opacity = '1';
+        }
+      }
+    }, 100);
+  }, [externalSelectedTopic, effectiveSelectedTopic]);
 
   // Detect double click on a topic
   const handleTopicClick = (topicId: string) => {
@@ -56,25 +78,85 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
     onTopicSelect(topicId);
   };
 
-  // Use external selected topic if provided, otherwise use internal state
-  const effectiveSelectedTopic = externalSelectedTopic !== undefined ? externalSelectedTopic : internalSelectedTopic;
+
 
   return (
-    <div className="w-full py-4 px-6 font-mono border-b border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 overflow-x-auto">
-        {mainTopics.map((topic) => (
-          <button
-            key={topic.id}
-            onClick={() => handleTopicClick(topic.id)}
-            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-              effectiveSelectedTopic === topic.id
-                ? 'font-bold text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:underline'
-            }`}
-          >
-            {topic.label}
-          </button>
-        ))}
+    <div className={`w-full py-3 pl-8 pr-4 ${isTopicsPage ? 'bg-white/95 dark:bg-black/95 backdrop-blur-md' : 'bg-transparent'} text-black dark:text-white transition-all duration-300`}>
+      <div className="flex items-center">
+        {/* Left-aligned Navigation Links - with border */}
+        <ul className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-white/20 dark:bg-black/20 backdrop-blur-sm p-1 overflow-x-auto"
+          onMouseLeave={() => {
+            // Reset cursor to active tab position when mouse leaves
+            const activeTabElement = document.querySelector(`[data-topic="${effectiveSelectedTopic}"]`) as HTMLElement;
+            if (activeTabElement) {
+              const cursor = document.querySelector('.nav-cursor') as HTMLElement;
+              if (cursor) {
+                cursor.style.width = `${activeTabElement.getBoundingClientRect().width}px`;
+                cursor.style.left = `${activeTabElement.offsetLeft}px`;
+                cursor.style.opacity = '1';
+              }
+            }
+          }}
+        >
+          {/* Animated Background Cursor */}
+          <motion.div
+            className="nav-cursor absolute z-0 h-9 rounded-full bg-gray-100 dark:bg-gray-800"
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: 1
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 30
+            }}
+          />
+          {mainTopics.map((topic, index) => (
+            <li
+              key={topic.id}
+              data-topic={topic.id}
+              className="relative z-10 block cursor-pointer"
+              onMouseEnter={(e) => {
+                // Only apply hover effect if this isn't the active topic
+                if (effectiveSelectedTopic !== topic.id) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const cursor = document.querySelector('.nav-cursor') as HTMLElement;
+                  if (cursor) {
+                    cursor.style.width = `${rect.width}px`;
+                    cursor.style.left = `${e.currentTarget.offsetLeft}px`;
+                    cursor.style.opacity = '1';
+                  }
+                }
+              }}
+            >
+              {index > 0 && (
+                <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 absolute -left-0.5 top-1/2 transform -translate-y-1/2"></div>
+              )}
+              <motion.button
+                onClick={(e) => {
+                  handleTopicClick(topic.id);
+                  // Update cursor position immediately for smoother transition
+                  const parentElement = e.currentTarget.parentElement as HTMLElement;
+                  if (parentElement) {
+                    const cursor = document.querySelector('.nav-cursor') as HTMLElement;
+                    if (cursor) {
+                      cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
+                      cursor.style.left = `${parentElement.offsetLeft}px`;
+                      cursor.style.opacity = '1';
+                    }
+                  }
+                }}
+                className={`px-4 py-2 text-sm font-medium block whitespace-nowrap ${
+                  effectiveSelectedTopic === topic.id
+                    ? 'text-gray-800 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'
+                }`}
+              >
+                {topic.label}
+              </motion.button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
