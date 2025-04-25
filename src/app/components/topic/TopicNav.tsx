@@ -67,10 +67,12 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
         for (const topic of mainTopics) {
           if (topic.topicId) {
             const progress = await fetchTopicProgress(topic.topicId);
+            console.log(`Progress for topic ${topic.label} (ID: ${topic.topicId}):`, progress);
             newProgress[topic.topicId] = progress;
           }
         }
 
+        console.log('Setting new topic progress:', newProgress);
         setTopicProgress(newProgress);
       } catch (error) {
         console.error('Failed to fetch topic progress:', error);
@@ -79,10 +81,24 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
 
     fetchProgress();
 
-    // Set up an interval to refresh progress data every 30 seconds
-    const intervalId = setInterval(fetchProgress, 30000);
+    // Set up an interval to refresh progress data every 10 seconds
+    const intervalId = setInterval(fetchProgress, 10000);
 
-    return () => clearInterval(intervalId);
+    // Listen for question completion events
+    const handleQuestionCompleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Question completed event detected:', customEvent.detail);
+      console.log('Refreshing progress data for all topics');
+      fetchProgress();
+    };
+
+    // Add event listener for question completion
+    window.addEventListener('questionCompleted', handleQuestionCompleted);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('questionCompleted', handleQuestionCompleted);
+    };
   }, []);
 
   // Detect double click on a topic

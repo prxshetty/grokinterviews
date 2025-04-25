@@ -6,7 +6,8 @@ import supabaseServer from '@/utils/supabase-server';
 // GET: Retrieve status of a specific question for the current user
 export async function GET(request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
   // Get the user session using Supabase auth
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return the status or 'unknown' if no record exists
-    return NextResponse.json({ 
+    return NextResponse.json({
       status: data?.status || 'unknown',
       isBookmarked: data?.status === 'bookmarked'
     });

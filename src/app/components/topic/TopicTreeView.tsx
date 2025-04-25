@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useTopicData } from './TopicDataProvider';
+import { ProgressBar } from '../ui/ProgressBar';
+import { fetchCategoryProgress } from '@/app/utils/progress';
 
 interface TopicTreeViewProps {
   topicId: string;
@@ -11,6 +13,11 @@ interface TopicTreeViewProps {
 interface SectionHeader {
   id: number;
   name: string;
+  progress?: {
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  };
 }
 
 export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) {
@@ -39,7 +46,25 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
 
         const data = await response.json();
         console.log('TopicTreeView - Received section headers:', data);
-        setSectionHeaders(data || []);
+
+        // Fetch progress data for each section header
+        const headersWithProgress = await Promise.all(
+          (data || []).map(async (header: SectionHeader) => {
+            try {
+              if (header.id) {
+                const progress = await fetchCategoryProgress(header.id);
+                console.log(`Progress for section ${header.name} (ID: ${header.id}):`, progress);
+                return { ...header, progress };
+              }
+              return header;
+            } catch (error) {
+              console.error(`Failed to fetch progress for section ${header.id}:`, error);
+              return header;
+            }
+          })
+        );
+
+        setSectionHeaders(headersWithProgress || []);
       } catch (err) {
         console.error('Error fetching section headers:', err);
         setError('Failed to load section headers');
@@ -51,6 +76,22 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
     if (topicId) {
       fetchSectionHeaders();
     }
+
+    // Set up an event listener for question completion
+    const handleQuestionCompleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Question completed event detected:', customEvent.detail);
+      console.log('Refreshing progress data for section headers');
+      if (topicId) {
+        fetchSectionHeaders();
+      }
+    };
+
+    window.addEventListener('questionCompleted', handleQuestionCompleted);
+
+    return () => {
+      window.removeEventListener('questionCompleted', handleQuestionCompleted);
+    };
   }, [topicId]);
 
   // Function to handle clicking on a topic header
@@ -164,6 +205,17 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
                   <div className="font-medium text-sm uppercase tracking-wider">
                     {header.name}
                   </div>
+                  {header.progress && (
+                    <div className="mt-2">
+                      <ProgressBar
+                        progress={header.progress.completionPercentage}
+                        completed={header.progress.questionsCompleted}
+                        total={header.progress.totalQuestions}
+                        height="sm"
+                        showText={false}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { BookmarkButton } from './BookmarkButton';
-import { isQuestionBookmarked } from '@/app/utils/progress';
+import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted } from '@/app/utils/progress';
 // Attempting import from common Supabase types location
 // import { Tables } from '@/types/database.types';
 // Removed ContentDisplay import as it's not suitable
@@ -37,6 +37,7 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
   const [error, setError] = useState<string | null>(null);
   const [isViewed, setIsViewed] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0); // 0-100 percentage
   const answerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -47,12 +48,18 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
 
   const questionId = `q-${question.id || questionIndex}`;
 
-  // Check if question is bookmarked when component mounts
+  // Check if question is bookmarked and completed when component mounts
   useEffect(() => {
     if (question.id) {
+      // Check bookmark status
       isQuestionBookmarked(question.id)
         .then(bookmarked => setIsBookmarked(bookmarked))
         .catch(err => console.error('Failed to check bookmark status:', err));
+
+      // Check completion status
+      isQuestionCompleted(question.id)
+        .then(completed => setIsCompleted(completed))
+        .catch(err => console.error('Failed to check completion status:', err));
     }
   }, [question.id]);
 
@@ -105,19 +112,42 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
       const percentage = Math.min(Math.round((scrollPosition / totalHeight) * 100), 100);
       setScrollProgress(percentage);
 
-      // If user has scrolled to the bottom (or near bottom), consider it completed
-      // But don't send to the server yet - we'll do that when they navigate away
-      if (percentage >= 90) {
-        // Store in sessionStorage that this question has been completed
-        try {
-          const completedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
-          if (!completedQuestions.includes(question.id)) {
-            completedQuestions.push(question.id);
-            sessionStorage.setItem('completedQuestions', JSON.stringify(completedQuestions));
-          }
-        } catch (err) {
-          console.error('Error storing completed question:', err);
-        }
+      // If user has scrolled to the bottom (or near bottom), mark as completed
+      if (percentage >= 90 && !isCompleted && question.id) {
+        console.log(`Scroll progress reached ${percentage}%, marking question ${question.id} as completed`);
+        // Mark as completed in the database
+        markQuestionAsCompleted(question.id)
+          .then(() => {
+            setIsCompleted(true);
+            console.log(`Question ${question.id} marked as completed in database`);
+
+            // Dispatch an event to notify other components
+            window.dispatchEvent(new CustomEvent('questionCompleted', {
+              detail: {
+                questionId: question.id,
+                categoryId: question.category_id,
+                status: 'completed'
+              }
+            }));
+            console.log('Dispatched questionCompleted event with details:', {
+              questionId: question.id,
+              categoryId: question.category_id,
+              status: 'completed'
+            });
+
+            // Store in sessionStorage that this question has been completed
+            try {
+              const completedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
+              if (!completedQuestions.includes(question.id)) {
+                completedQuestions.push(question.id);
+                sessionStorage.setItem('completedQuestions', JSON.stringify(completedQuestions));
+                console.log(`Added question ${question.id} to completedQuestions in sessionStorage`);
+              }
+            } catch (err) {
+              console.error('Error storing completed question:', err);
+            }
+          })
+          .catch(err => console.error('Failed to mark question as completed:', err));
       }
     };
 
@@ -148,7 +178,7 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
       clearTimeout(initialTimer);
       answerElement.removeEventListener('scroll', handleScroll);
     };
-  }, [isExpanded, question.id, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text]);
+  }, [isExpanded, question.id, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text, isCompleted]);
 
   // Fetch generated answer when expanded, if applicable
   useEffect(() => {
@@ -232,9 +262,18 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
         aria-expanded={isExpanded}
         aria-controls={`answer-content-${questionId}`}
       >
-        <h4 className="font-medium text-gray-900 dark:text-white pr-4">
-          {question.question_text || 'Question text not available'}
-        </h4>
+        <div className="flex items-center">
+          {isCompleted && (
+            <div className="mr-2 text-green-600 dark:text-green-400 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+          )}
+          <h4 className="font-medium text-gray-900 dark:text-white pr-4">
+            {question.question_text || 'Question text not available'}
+          </h4>
+        </div>
         <div className="flex items-center flex-shrink-0">
           {question.id && (
             <div className="mr-2" onClick={(e) => e.stopPropagation()}>

@@ -2,11 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import styles from './TopicCategoryGrid.module.css';
+import { ProgressBar } from '../ui/ProgressBar';
+import { fetchCategoryProgress } from '@/app/utils/progress';
 
 // Define the structure for items to be displayed
 interface DisplayItem {
   id: string;
   label: string;
+  progress?: {
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  };
 }
 
 // Define the possible levels this grid can represent
@@ -36,6 +43,7 @@ export default function TopicCategoryGrid({
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [itemsWithProgress, setItemsWithProgress] = useState<DisplayItem[]>([]);
 
   // Check for dark mode on mount and when theme changes
   useEffect(() => {
@@ -78,17 +86,77 @@ export default function TopicCategoryGrid({
     return `${String(index + 1).padStart(2, '0')}`;
   };
 
-  // Use the items passed via props, with fallback to categories for backward compatibility
-  let displayItems = items || categories || [];
+  // Fetch progress data for each item (category, topic, or section)
+  useEffect(() => {
+    const fetchProgress = async () => {
+      // Use the items passed via props, with fallback to categories for backward compatibility
+      const baseItems = items || categories || [];
 
-  // Optional: Reverse order if needed (e.g., for sections) - parent should handle this if necessary
-  // Example (could be controlled by a prop):
-  // if (level === 'section') {
-  //   displayItems = [...displayItems].reverse();
-  // }
+      if (!baseItems || !Array.isArray(baseItems) || baseItems.length === 0) {
+        setItemsWithProgress([]);
+        return;
+      }
+
+      try {
+        // Create a new array with progress data
+        const itemsWithProgressData = await Promise.all(
+          baseItems.map(async (item) => {
+            try {
+              // Try to parse the ID as a number
+              if (!isNaN(parseInt(item.id))) {
+                const numericId = parseInt(item.id);
+
+                // Fetch progress based on the level
+                if (level === 'category' || level === 'topic' || level === 'section') {
+                  // For all levels, we'll use the category progress endpoint
+                  // The backend will handle the appropriate aggregation
+                  const progress = await fetchCategoryProgress(numericId);
+                  console.log(`Progress for ${level} ${item.label} (ID: ${item.id}):`, progress);
+
+                  // If progress data is valid, add it to the item
+                  if (progress && typeof progress.completionPercentage === 'number') {
+                    return { ...item, progress };
+                  }
+                }
+              }
+              return item;
+            } catch (error) {
+              console.error(`Failed to fetch progress for item ${item.id}:`, error);
+              return item;
+            }
+          })
+        );
+
+        console.log('Items with progress data:', itemsWithProgressData);
+        setItemsWithProgress(itemsWithProgressData);
+      } catch (error) {
+        console.error('Failed to fetch progress data:', error);
+        setItemsWithProgress(baseItems);
+      }
+    };
+
+    fetchProgress();
+
+    // Set up an event listener for question completion
+    const handleQuestionCompleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Question completed event detected:', customEvent.detail);
+      console.log('Refreshing progress data for all items');
+      fetchProgress();
+    };
+
+    window.addEventListener('questionCompleted', handleQuestionCompleted);
+
+    return () => {
+      window.removeEventListener('questionCompleted', handleQuestionCompleted);
+    };
+  }, [items, categories, level]);
+
+  // Use the items with progress data
+  let displayItems = itemsWithProgress;
 
   console.log(`TopicCategoryGrid - Rendering level: ${level}`);
-  console.log(`TopicCategoryGrid - Display items:`, displayItems);
+  console.log(`TopicCategoryGrid - Display items with progress:`, displayItems);
   console.log(`TopicCategoryGrid - Topic ID:`, topicId);
 
   // Check if displayItems is defined and has a length property before using it
@@ -149,7 +217,20 @@ export default function TopicCategoryGrid({
               onClick={() => handleItemSelect(item.id)}
             >
               <div className={styles.categoryNumber}>{formatIndex(index)}</div>
-              <div className={styles.categoryLabel}>{item.label}</div>
+              <div className={styles.categoryContent}>
+                <div className={styles.categoryLabel}>{item.label}</div>
+                {item.progress && (
+                  <div className={styles.progressBar}>
+                    <ProgressBar
+                      progress={item.progress.completionPercentage}
+                      completed={item.progress.questionsCompleted}
+                      total={item.progress.totalQuestions}
+                      height="sm"
+                      showText={false}
+                    />
+                  </div>
+                )}
+              </div>
               <div className={styles.expandIcon}>
                 {expandedItemId === item.id ? '×' : '+'}
               </div>
@@ -167,7 +248,20 @@ export default function TopicCategoryGrid({
               onClick={() => handleItemSelect(item.id)}
             >
               <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn)}</div>
-              <div className={styles.categoryLabel}>{item.label}</div>
+              <div className={styles.categoryContent}>
+                <div className={styles.categoryLabel}>{item.label}</div>
+                {item.progress && (
+                  <div className={styles.progressBar}>
+                    <ProgressBar
+                      progress={item.progress.completionPercentage}
+                      completed={item.progress.questionsCompleted}
+                      total={item.progress.totalQuestions}
+                      height="sm"
+                      showText={false}
+                    />
+                  </div>
+                )}
+              </div>
               <div className={styles.expandIcon}>
                 {expandedItemId === item.id ? '×' : '+'}
               </div>
@@ -185,7 +279,20 @@ export default function TopicCategoryGrid({
               onClick={() => handleItemSelect(item.id)}
             >
               <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn * 2)}</div>
-              <div className={styles.categoryLabel}>{item.label}</div>
+              <div className={styles.categoryContent}>
+                <div className={styles.categoryLabel}>{item.label}</div>
+                {item.progress && (
+                  <div className={styles.progressBar}>
+                    <ProgressBar
+                      progress={item.progress.completionPercentage}
+                      completed={item.progress.questionsCompleted}
+                      total={item.progress.totalQuestions}
+                      height="sm"
+                      showText={false}
+                    />
+                  </div>
+                )}
+              </div>
               <div className={styles.expandIcon}>
                 {expandedItemId === item.id ? '×' : '+'}
               </div>

@@ -29,7 +29,8 @@ export const markQuestionAsViewed = async (questionId: number): Promise<void> =>
  */
 export const markQuestionAsCompleted = async (questionId: number): Promise<void> => {
   try {
-    await fetch('/api/user/progress', {
+    console.log(`Calling API to mark question ${questionId} as completed`);
+    const response = await fetch('/api/user/progress', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,6 +40,13 @@ export const markQuestionAsCompleted = async (questionId: number): Promise<void>
         status: 'completed',
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`API returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`API response for marking question ${questionId} as completed:`, data);
   } catch (error) {
     console.error('Failed to mark question as completed:', error);
   }
@@ -183,11 +191,14 @@ export const fetchTopicProgress = async (topicId: number): Promise<{
   completionPercentage: number;
 }> => {
   try {
+    console.log(`Fetching progress for topic ${topicId}`);
     const response = await fetch(`/api/user/progress/topic?topicId=${topicId}`);
     if (!response.ok) {
-      throw new Error('Failed to fetch topic progress data');
+      throw new Error(`Failed to fetch topic progress data: ${response.status}`);
     }
-    return await response.json();
+    const data = await response.json();
+    console.log(`Progress data for topic ${topicId}:`, data);
+    return data;
   } catch (error) {
     console.error('Failed to fetch topic progress data:', error);
     return {
