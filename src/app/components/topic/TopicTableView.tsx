@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './TopicTableView.module.css';
-import { ProgressBar } from '../ui/ProgressBar';
+import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress } from '@/app/utils/progress';
 
 interface TopicTableViewProps {
@@ -161,17 +161,16 @@ export default function TopicTableView({
             {header.created_at && (
               <span className={styles.dateLabel}>Added: {dateAdded}</span>
             )}
-            {header.progress && (
-              <div className={styles.progressBar}>
-                <ProgressBar
-                  progress={header.progress.completionPercentage}
-                  completed={header.progress.questionsCompleted}
-                  total={header.progress.totalQuestions}
-                  height="sm"
-                  showText={false}
-                />
-              </div>
-            )}
+            {/* Always show progress bar, with 0% if no progress data */}
+            <div className={styles.progressBar}>
+              <ProgressBar
+                progress={header.progress ? header.progress.completionPercentage : 0}
+                completed={header.progress ? header.progress.questionsCompleted : 0}
+                total={header.progress ? header.progress.totalQuestions : 0}
+                height="md"
+                showText={false}
+              />
+            </div>
           </div>
         </div>
         <div className={styles.categoryProject}>

@@ -28,7 +28,8 @@ export async function POST(request: Request) {
   // 1. Read request body
   const { questionText, questionId } = await request.json();
   // Use the correct approach for Next.js 15
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
   // Validate input
   if (!questionText || !questionId) {

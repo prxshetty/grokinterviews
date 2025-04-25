@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTopicData, TopicCategoryGrid, QuestionWithAnswer } from '../components';
+import ProgressBar from '../components/ui/ProgressBar';
 import ProgressSaver from '../components/progress/ProgressSaver';
 import { motion } from 'framer-motion';
 import TopicDataService from '@/services/TopicDataService';
@@ -39,6 +40,7 @@ type TopicItem = {
   content?: string;
   questions?: QuestionType[];
   categoryId?: number;
+  subtopicId?: number;
   subtopics?: Record<string, TopicItem>;
   isGenerated?: boolean;
 };
@@ -291,6 +293,48 @@ export default function TopicsPage() {
     }
   }, [selectedTopic]);
 
+  // Load progress data for all categories and subtopics when category details change
+  useEffect(() => {
+    const loadProgressData = async (forceRefresh: boolean = false) => {
+      if (!categoryDetails || !categoryDetails.subtopics) return;
+
+      // Get all category IDs from the subtopics
+      const categoryIds: number[] = [];
+      const subtopicIds: number[] = [];
+
+      Object.values(categoryDetails.subtopics).forEach((item: any) => {
+        if (item.categoryId) {
+          categoryIds.push(item.categoryId);
+        }
+        if (item.subtopicId) {
+          subtopicIds.push(item.subtopicId);
+        }
+      });
+
+      // Fetch progress for each category
+      for (const categoryId of categoryIds) {
+        await fetchCategoryProgress(categoryId, forceRefresh);
+      }
+
+      // Fetch progress for each subtopic
+      for (const subtopicId of subtopicIds) {
+        await fetchSubtopicProgressData(subtopicId, forceRefresh);
+      }
+    };
+
+    // Initial load of progress data
+    loadProgressData();
+
+    // Set up a refresh interval to periodically update progress
+    const refreshInterval = setInterval(() => {
+      loadProgressData(true); // Force refresh every interval
+    }, 30000); // Refresh every 30 seconds
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [categoryDetails]);
+
   // Initialize cursor position when component mounts or selectedTopic changes
   useEffect(() => {
     if (selectedTopic) {
@@ -310,6 +354,208 @@ export default function TopicsPage() {
   }, [selectedTopic]);
 
 
+
+  // State to track progress for each category and subtopic
+  const [categoryProgress, setCategoryProgress] = useState<Record<string, { progress: number, completed: number, total: number }>>({});
+  const [subtopicProgress, setSubtopicProgress] = useState<Record<string, { progress: number, completed: number, total: number, categoriesCompleted: number, totalCategories: number }>>({});
+
+  // Function to fetch progress for a category
+  const fetchCategoryProgress = async (categoryId: number, forceRefresh: boolean = false) => {
+    try {
+      // Add cache-busting parameter if forceRefresh is true
+      const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
+      const response = await fetch(`/api/user/progress/category?categoryId=${categoryId}${cacheBuster}`, {
+        headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch category progress data: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log(`Fetched progress for category ${categoryId}:`, data);
+
+      const progressData = {
+        progress: data.completionPercentage || 0,
+        completed: data.questionsCompleted || 0,
+        total: data.totalQuestions || 0
+      };
+
+      // Update the category progress state
+      setCategoryProgress(prev => ({
+        ...prev,
+        [categoryId]: progressData
+      }));
+
+      return progressData;
+    } catch (error) {
+      console.error(`Failed to fetch progress for category ${categoryId}:`, error);
+      return { progress: 0, completed: 0, total: 0 };
+    }
+  };
+
+  // Function to fetch progress for a subtopic
+  const fetchSubtopicProgressData = async (subtopicId: number, forceRefresh: boolean = false) => {
+    try {
+      // Add cache-busting parameter if forceRefresh is true
+      const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
+      // Use the new optimized endpoint
+      const response = await fetch(`/api/user/progress/subtopic-progress?subtopicId=${subtopicId}${cacheBuster}`, {
+        headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch subtopic progress data: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log(`Fetched progress for subtopic ${subtopicId}:`, data);
+
+      const progressData = {
+        progress: data.completionPercentage || 0,
+        completed: data.questionsCompleted || 0,
+        total: data.totalQuestions || 0,
+        categoriesCompleted: data.categoriesCompleted || 0,
+        totalCategories: data.totalCategories || 0
+      };
+
+      // Update the subtopic progress state
+      setSubtopicProgress(prev => ({
+        ...prev,
+        [subtopicId]: progressData
+      }));
+
+      return progressData;
+    } catch (error) {
+      console.error(`Failed to fetch progress for subtopic ${subtopicId}:`, error);
+      return { progress: 0, completed: 0, total: 0, categoriesCompleted: 0, totalCategories: 0 };
+    }
+  };
+
+  // Function to update progress for a specific category and its parent subtopic
+  const updateCategoryProgress = async (categoryId: number) => {
+    console.log(`Updating progress for category ${categoryId}`);
+
+    // Update category progress with force refresh
+    await fetchCategoryProgress(categoryId, true);
+
+    // Find the subtopic that contains this category
+    if (categoryDetails && categoryDetails.subtopics) {
+      // First, find which subtopic this category belongs to
+      let parentSubtopicId: number | null = null;
+
+      // Look through all subtopics to find the one containing this category
+      Object.values(categoryDetails.subtopics).forEach((item: any) => {
+        if (item.categoryId === categoryId) {
+          console.log(`Found category ${categoryId} in subtopics`);
+          if (item.subtopicId) {
+            parentSubtopicId = item.subtopicId;
+          }
+        }
+      });
+
+      // If we found a parent subtopic, update its progress
+      if (parentSubtopicId) {
+        console.log(`Updating progress for parent subtopic ${parentSubtopicId}`);
+        await fetchSubtopicProgressData(parentSubtopicId, true); // Force refresh
+      } else {
+        console.log(`No parent subtopic found for category ${categoryId}`);
+
+        // If we couldn't find a specific parent, update all subtopics
+        const subtopicIds = new Set<number>();
+        Object.values(categoryDetails.subtopics).forEach((item: any) => {
+          if (item.subtopicId) {
+            subtopicIds.add(item.subtopicId);
+          }
+        });
+
+        // Update progress for each subtopic with force refresh
+        for (const subtopicId of subtopicIds) {
+          await fetchSubtopicProgressData(subtopicId, true);
+        }
+      }
+    }
+  };
+
+  // Listen for question completion events and subtopic progress updates
+  useEffect(() => {
+    const handleQuestionCompleted = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Question completed event detected:', customEvent.detail);
+
+      // If we have a category ID, update its progress
+      if (customEvent.detail?.categoryId) {
+        const categoryId = customEvent.detail.categoryId;
+
+        // Add a small delay to ensure the database has been updated
+        setTimeout(async () => {
+          console.log(`Updating progress for category ${categoryId} after delay`);
+          await updateCategoryProgress(categoryId);
+
+          // After updating the specific category, refresh all progress data
+          setTimeout(async () => {
+            if (categoryDetails && categoryDetails.subtopics) {
+              console.log('Refreshing all progress data');
+              // Get all category IDs from the subtopics
+              const categoryIds: number[] = [];
+              const subtopicIds: number[] = [];
+
+              Object.values(categoryDetails.subtopics).forEach((item: any) => {
+                if (item.categoryId) {
+                  categoryIds.push(item.categoryId);
+                }
+                if (item.subtopicId) {
+                  subtopicIds.push(item.subtopicId);
+                }
+              });
+
+              // Fetch progress for each category
+              for (const catId of categoryIds) {
+                await fetchCategoryProgress(catId, true);
+              }
+
+              // Fetch progress for each subtopic
+              for (const subtopicId of subtopicIds) {
+                await fetchSubtopicProgressData(subtopicId, true);
+              }
+            }
+          }, 1000);
+        }, 500);
+      }
+    };
+
+    // Handle subtopic progress updates directly
+    const handleSubtopicProgressUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Subtopic progress updated event detected:', customEvent.detail);
+
+      if (customEvent.detail?.subtopicId && customEvent.detail?.progress) {
+        const { subtopicId, progress } = customEvent.detail;
+
+        // Update the subtopic progress state directly with the data from the event
+        setSubtopicProgress(prev => ({
+          ...prev,
+          [subtopicId]: {
+            progress: progress.completionPercentage || 0,
+            completed: progress.questionsCompleted || 0,
+            total: progress.totalQuestions || 0,
+            categoriesCompleted: progress.categoriesCompleted || 0,
+            totalCategories: progress.totalCategories || 0
+          }
+        }));
+
+        console.log(`Updated subtopic ${subtopicId} progress directly from event`);
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('questionCompleted', handleQuestionCompleted);
+    window.addEventListener('subtopicProgressUpdated', handleSubtopicProgressUpdated);
+
+    return () => {
+      // Remove event listeners when component unmounts
+      window.removeEventListener('questionCompleted', handleQuestionCompleted);
+      window.removeEventListener('subtopicProgressUpdated', handleSubtopicProgressUpdated);
+    };
+  }, [categoryDetails]);
 
   // Renders a category and its content in the structured format
   const renderCategoryContent = (categoryId: string) => {
@@ -388,18 +634,33 @@ export default function TopicsPage() {
                           className="border-b border-gray-200 dark:border-gray-700"
                           onClick={() => isTopic && handleCategorySelect(typedListItem.id || '')}
                         >
-                          <div className={`flex items-center py-4 ${isTopic ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}>
-                            <div className="w-12 text-gray-400 text-xl font-light">{formattedNumber}</div>
-                            <div className="flex-grow">
-                              <h3 className="font-medium">{typedListItem.label}</h3>
-                            </div>
-                            {isTopic && (
-                              <div className="w-8 text-center text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
+                          <div className={`flex flex-col py-4 ${isTopic ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}>
+                            <div className="flex items-center">
+                              <div className="w-12 text-gray-400 text-xl font-light">{formattedNumber}</div>
+                              <div className="flex-grow">
+                                <h3 className="font-medium">{typedListItem.label}</h3>
                               </div>
-                            )}
+                              {isTopic && (
+                                <div className="w-8 text-center text-gray-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            {/* Progress bar */}
+                            <div className="ml-12 mr-8 mt-2">
+                              <ProgressBar
+                                progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
+                                         (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
+                                completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
+                                          (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
+                                total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
+                                      (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                                height="md"
+                                showText={false}
+                              />
+                            </div>
                           </div>
                         </div>
                       );
@@ -424,18 +685,33 @@ export default function TopicsPage() {
                           className="border-b border-gray-200 dark:border-gray-700"
                           onClick={() => isTopic && handleCategorySelect(typedListItem.id || '')}
                         >
-                          <div className={`flex items-center py-4 ${isTopic ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}>
-                            <div className="w-12 text-gray-400 text-xl font-light">{formattedNumber}</div>
-                            <div className="flex-grow">
-                              <h3 className="font-medium">{typedListItem.label}</h3>
-                            </div>
-                            {isTopic && (
-                              <div className="w-8 text-center text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
+                          <div className={`flex flex-col py-4 ${isTopic ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}>
+                            <div className="flex items-center">
+                              <div className="w-12 text-gray-400 text-xl font-light">{formattedNumber}</div>
+                              <div className="flex-grow">
+                                <h3 className="font-medium">{typedListItem.label}</h3>
                               </div>
-                            )}
+                              {isTopic && (
+                                <div className="w-8 text-center text-gray-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            {/* Progress bar */}
+                            <div className="ml-12 mr-8 mt-2">
+                              <ProgressBar
+                                progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
+                                         (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
+                                completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
+                                          (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
+                                total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
+                                      (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                                height="md"
+                                showText={false}
+                              />
+                            </div>
                           </div>
                         </div>
                       );
@@ -452,10 +728,25 @@ export default function TopicsPage() {
 
                   return (
                     <div key={listId} className="mb-8">
-                      <div className="flex items-center py-4 bg-gray-50 dark:bg-gray-800 mb-4 rounded-t-lg">
-                        <div className="w-16 text-gray-400 text-2xl font-light pl-4">{formattedNumber}</div>
-                        <div className="flex-grow">
-                          <h3 className="font-medium">{typedListItem.label}</h3>
+                      <div className="flex flex-col py-4 bg-gray-50 dark:bg-gray-800 mb-4 rounded-t-lg">
+                        <div className="flex items-center">
+                          <div className="w-16 text-gray-400 text-2xl font-light pl-4">{formattedNumber}</div>
+                          <div className="flex-grow">
+                            <h3 className="font-medium">{typedListItem.label}</h3>
+                          </div>
+                        </div>
+                        {/* Progress bar */}
+                        <div className="ml-16 mr-8 mt-2">
+                          <ProgressBar
+                            progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
+                                     (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
+                            completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
+                                      (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
+                            total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
+                                  (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                            height="md"
+                            showText={false}
+                          />
                         </div>
                       </div>
 
@@ -584,12 +875,27 @@ export default function TopicsPage() {
 
               return (
                 <div key={listId} className="border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center py-4">
-                    <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
-                    <div className="flex-grow">
-                      <h3 className="font-medium">{typedListItem.label}</h3>
+                  <div className="flex flex-col py-4">
+                    <div className="flex items-center">
+                      <div className="w-16 text-gray-400 text-2xl font-light">{formattedNumber}</div>
+                      <div className="flex-grow">
+                        <h3 className="font-medium">{typedListItem.label}</h3>
+                      </div>
+                      <div className="w-8 text-center text-gray-400">+</div>
                     </div>
-                    <div className="w-8 text-center text-gray-400">+</div>
+                    {/* Progress bar */}
+                    <div className="ml-16 mr-8 mt-2">
+                      <ProgressBar
+                        progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
+                                 (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
+                        completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
+                                  (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
+                        total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
+                              (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                        height="md"
+                        showText={false}
+                      />
+                    </div>
                   </div>
                 </div>
               );

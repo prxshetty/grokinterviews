@@ -4,26 +4,16 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { BookmarkButton } from './BookmarkButton';
 import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted } from '@/app/utils/progress';
-// Attempting import from common Supabase types location
-// import { Tables } from '@/types/database.types';
-// Removed ContentDisplay import as it's not suitable
-// import ContentDisplay from './ContentDisplay';
-
-// Removed unused TOPIC_ID_MAP
 
 // Define QuestionType locally based on usage in topics/page.tsx
-// This ensures the component works even if the central types file is missing/incorrect
 type QuestionType = {
-  id: number; // Assuming id is always a number based on usage
+  id: number;
   question_text: string;
   answer_text?: string | null;
-  keywords?: string[] | string | null; // Allow for string or array
+  keywords?: string[] | string | null;
   difficulty?: string | null;
   category_id?: number | null;
-  // Add any other fields passed from topics/page.tsx if needed
 };
-
-// Removed unused interfaces
 
 interface QuestionWithAnswerProps {
   question: QuestionType;
@@ -38,7 +28,7 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
   const [isViewed, setIsViewed] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0); // 0-100 percentage
+  const [scrollProgress, setScrollProgress] = useState(0);
   const answerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -51,15 +41,49 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
   // Check if question is bookmarked and completed when component mounts
   useEffect(() => {
     if (question.id) {
+      console.log(`Checking status for question ${question.id}`);
+
       // Check bookmark status
       isQuestionBookmarked(question.id)
-        .then(bookmarked => setIsBookmarked(bookmarked))
+        .then(bookmarked => {
+          console.log(`Question ${question.id} bookmark status:`, bookmarked);
+          setIsBookmarked(bookmarked);
+        })
         .catch(err => console.error('Failed to check bookmark status:', err));
 
       // Check completion status
       isQuestionCompleted(question.id)
-        .then(completed => setIsCompleted(completed))
+        .then(completed => {
+          console.log(`Question ${question.id} completion status:`, completed);
+          setIsCompleted(completed);
+        })
         .catch(err => console.error('Failed to check completion status:', err));
+
+      // Also check sessionStorage for completed questions
+      try {
+        const completedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
+        if (completedQuestions.includes(question.id)) {
+          console.log(`Question ${question.id} found in sessionStorage as completed`);
+          setIsCompleted(true);
+        }
+      } catch (err) {
+        console.error('Error checking sessionStorage:', err);
+      }
+
+      // Direct check with the API as a fallback
+      fetch(`/api/user/progress/status?questionId=${question.id}&_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(`Direct API check for question ${question.id}:`, data);
+        if (data.status === 'completed') {
+          setIsCompleted(true);
+        }
+      })
+      .catch(err => {
+        console.error(`Error directly checking status for question ${question.id}:`, err);
+      });
     }
   }, [question.id]);
 
@@ -115,39 +139,124 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
       // If user has scrolled to the bottom (or near bottom), mark as completed
       if (percentage >= 90 && !isCompleted && question.id) {
         console.log(`Scroll progress reached ${percentage}%, marking question ${question.id} as completed`);
+
         // Mark as completed in the database
         markQuestionAsCompleted(question.id)
-          .then(() => {
-            setIsCompleted(true);
-            console.log(`Question ${question.id} marked as completed in database`);
+          .then((success) => {
+            if (success) {
+              setIsCompleted(true);
+              console.log(`Question ${question.id} marked as completed in database`);
 
-            // Dispatch an event to notify other components
-            window.dispatchEvent(new CustomEvent('questionCompleted', {
-              detail: {
-                questionId: question.id,
-                categoryId: question.category_id,
-                status: 'completed'
+              // Dispatch an event to notify other components
+              try {
+                window.dispatchEvent(new CustomEvent('questionCompleted', {
+                  detail: {
+                    questionId: question.id,
+                    categoryId: question.category_id,
+                    status: 'completed',
+                    timestamp: Date.now()
+                  }
+                }));
+                console.log('Dispatched questionCompleted event with details:', {
+                  questionId: question.id,
+                  categoryId: question.category_id,
+                  status: 'completed',
+                  timestamp: Date.now()
+                });
+              } catch (eventError) {
+                console.error('Error dispatching completion event:', eventError);
               }
-            }));
-            console.log('Dispatched questionCompleted event with details:', {
-              questionId: question.id,
-              categoryId: question.category_id,
-              status: 'completed'
-            });
 
-            // Store in sessionStorage that this question has been completed
-            try {
-              const completedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
-              if (!completedQuestions.includes(question.id)) {
-                completedQuestions.push(question.id);
-                sessionStorage.setItem('completedQuestions', JSON.stringify(completedQuestions));
-                console.log(`Added question ${question.id} to completedQuestions in sessionStorage`);
+              // Also directly update the progress via API
+              try {
+                // Refresh category progress
+                fetch(`/api/user/progress/category?categoryId=${question.category_id}&_t=${Date.now()}`, {
+                  method: 'GET',
+                  headers: {
+                    'Cache-Control': 'no-cache',
+                  },
+                }).then(response => {
+                  if (!response.ok) {
+                    throw new Error(`Failed to refresh category progress: ${response.status}`);
+                  }
+                  return response.json();
+                }).then(data => {
+                  console.log(`Forced refresh of category ${question.category_id} progress:`, data);
+                }).catch(err => {
+                  console.error('Error refreshing category progress:', err);
+                });
+
+                // Also refresh subtopic progress if we have a subtopic ID
+                const subtopicId = new URLSearchParams(window.location.search).get('subtopicId');
+                if (subtopicId) {
+                  console.log(`Will refresh progress for subtopic ${subtopicId} after delay`);
+
+                  // Add a delay to ensure the database has been updated with the category completion
+                  setTimeout(() => {
+                    console.log(`Refreshing progress for subtopic ${subtopicId} after delay`);
+
+                    // First check the debug endpoint to see detailed progress information
+                    fetch(`/api/debug/subtopic-progress?subtopicId=${subtopicId}&_t=${Date.now()}`, {
+                      method: 'GET',
+                      headers: {
+                        'Cache-Control': 'no-cache',
+                      },
+                    }).then(response => response.json())
+                      .then(debugData => {
+                        console.log(`Debug data for subtopic ${subtopicId}:`, debugData);
+                      })
+                      .catch(err => {
+                        console.error('Error fetching debug data:', err);
+                      });
+
+                    // Then refresh the actual progress
+                    fetch(`/api/user/progress/subtopic-progress?subtopicId=${subtopicId}&_t=${Date.now()}`, {
+                      method: 'GET',
+                      headers: {
+                        'Cache-Control': 'no-cache',
+                      },
+                    }).then(response => {
+                      if (!response.ok) {
+                        throw new Error(`Failed to refresh subtopic progress: ${response.status}`);
+                      }
+                      return response.json();
+                    }).then(data => {
+                      console.log(`Forced refresh of subtopic ${subtopicId} progress:`, data);
+                      // Dispatch an event to notify components that subtopic progress has been updated
+                      window.dispatchEvent(new CustomEvent('subtopicProgressUpdated', {
+                        detail: {
+                          subtopicId,
+                          progress: data,
+                          timestamp: Date.now()
+                        }
+                      }));
+                    }).catch(err => {
+                      console.error('Error refreshing subtopic progress:', err);
+                    });
+                  }, 1000); // 1 second delay to ensure database updates are complete
+                }
+              } catch (fetchError) {
+                console.error('Error fetching progress:', fetchError);
               }
-            } catch (err) {
-              console.error('Error storing completed question:', err);
+
+              // Store in sessionStorage that this question has been completed
+              try {
+                const completedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
+                if (!completedQuestions.includes(question.id)) {
+                  completedQuestions.push(question.id);
+                  sessionStorage.setItem('completedQuestions', JSON.stringify(completedQuestions));
+                  console.log(`Added question ${question.id} to completedQuestions in sessionStorage`);
+                }
+              } catch (storageError) {
+                console.error('Error storing completed question:', storageError);
+              }
+            } else {
+              console.error(`Failed to mark question ${question.id} as completed`);
             }
           })
-          .catch(err => console.error('Failed to mark question as completed:', err));
+          .catch(err => {
+            console.error('Failed to mark question as completed:', err);
+          });
       }
     };
 
@@ -187,7 +296,7 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
         setIsGenerating(true);
         setError(null);
         try {
-          console.log(`Generating answer for question: ${question.id} - ${question.question_text}`); // Debug log
+          console.log(`Generating answer for question: ${question.id} - ${question.question_text}`);
           const response = await fetch('/api/generate-answer', {
             method: 'POST',
             headers: {
@@ -201,7 +310,7 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
 
           try {
             const data = await response.json();
-            console.log("API Response:", data); // Debug log
+            console.log("API Response:", data);
 
             if (!response.ok) {
               if (data.message) {
@@ -238,10 +347,8 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
 
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded);
-    if(isExpanded) { // Reset error when collapsing
+    if(isExpanded) {
        setError(null);
-       // Decide if you want to clear the generated answer on collapse
-       // setGeneratedAnswer(null);
     }
   };
 
@@ -251,6 +358,9 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
     if (Array.isArray(keywords)) return keywords.join(', ');
     return keywords; // Assume it's already a string
   };
+
+  // Debug log for rendering
+  console.log(`Rendering QuestionWithAnswer for question ${question.id}, isCompleted=${isCompleted}`);
 
   return (
     <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -263,12 +373,14 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
         aria-controls={`answer-content-${questionId}`}
       >
         <div className="flex items-center">
-          {isCompleted && (
+          {isCompleted ? (
             <div className="mr-2 text-green-600 dark:text-green-400 flex-shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             </div>
+          ) : (
+            <div className="mr-2 w-5"></div>
           )}
           <h4 className="font-medium text-gray-900 dark:text-white pr-4">
             {question.question_text || 'Question text not available'}
@@ -330,7 +442,6 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
             ) : hasPredefinedAnswer ? (
                <ReactMarkdown>{question.answer_text || ''}</ReactMarkdown>
             ) : (
-              // Updated placeholder to reflect potential customization
               <p className="italic text-gray-500">No pre-defined answer. Answer generation uses your preferred Groq model and API key (set in Account). You can customize the answer format via the prompt template in your Account Preferences.</p>
             )}
             {/* Only show progress bar when answer is fully loaded, not generating, and has enough content to scroll */}
@@ -364,6 +475,3 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
     </div>
   );
 }
-
-// Make sure to export it if index.ts is used
-// export { QuestionWithAnswer };

@@ -47,18 +47,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to count questions' }, { status: 500 });
     }
 
+    // First get the IDs of questions in this category
+    const { data: questionIds, error: questionIdsError } = await supabaseServer
+      .from('questions')
+      .select('id')
+      .eq('category_id', categoryId);
+
+    if (questionIdsError) {
+      console.error('Error fetching question IDs:', questionIdsError);
+      return NextResponse.json({ error: 'Failed to fetch question IDs' }, { status: 500 });
+    }
+
+    // Extract just the IDs into an array
+    const questionIdArray = questionIds.map(q => q.id);
+
+    // If there are no questions in this category, return zeros
+    if (questionIdArray.length === 0) {
+      return NextResponse.json({
+        questionsCompleted: 0,
+        totalQuestions: 0,
+        completionPercentage: 0
+      });
+    }
+
     // Get the number of completed questions in this category
-    const { count: questionsCompleted, error: completedError } = await supabaseServer
-      .from('user_progress')
-      .select('*', { count: 'exact', head: true })
+    // We need to handle potential duplicates in the user_activity table
+    const { data: completedQuestionData, error: completedError } = await supabaseServer
+      .from('user_activity')
+      .select('question_id')
       .eq('user_id', userId)
       .eq('status', 'completed')
-      .in('question_id',
-        supabaseServer
-          .from('questions')
-          .select('id')
-          .eq('category_id', categoryId)
-      );
+      .in('question_id', questionIdArray);
+
+    // Count unique completed questions
+    const uniqueCompletedQuestions = new Set();
+    completedQuestionData?.forEach(item => {
+      if (item.question_id) {
+        uniqueCompletedQuestions.add(item.question_id);
+      }
+    });
+    const questionsCompleted = uniqueCompletedQuestions.size;
 
     if (completedError) {
       console.error('Error counting completed questions:', completedError);
@@ -71,7 +99,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       questionsCompleted: questionsCompleted || 0,
       totalQuestions: totalQuestions || 0,
-      completionPercentage
+      completionPercentage,
+      timestamp: Date.now() // Add timestamp to prevent caching
     });
 
   } catch (error) {

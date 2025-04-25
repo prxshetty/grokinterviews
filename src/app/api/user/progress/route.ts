@@ -50,7 +50,7 @@ export async function GET(_request: NextRequest) {
 
     // Get completed questions count
     const { count: completedQuestions, error: completedError } = await supabaseServer
-      .from('user_progress')
+      .from('user_activity')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'completed');
@@ -62,7 +62,7 @@ export async function GET(_request: NextRequest) {
 
     // Get viewed questions count
     const { count: viewedQuestions, error: viewedError } = await supabaseServer
-      .from('user_progress')
+      .from('user_activity')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'viewed');
@@ -75,7 +75,7 @@ export async function GET(_request: NextRequest) {
     // Get distinct domains the user has completed questions in
     // First get the questions the user has completed
     const { data: userProgress, error: progressError } = await supabaseServer
-      .from('user_progress')
+      .from('user_activity')
       .select('question_id')
       .eq('user_id', userId)
       .eq('status', 'completed');
@@ -268,13 +268,14 @@ export async function POST(request: NextRequest) {
 
     const topicId = categoryData.topic_id;
 
-    // Check if a record already exists
-    const { data: existingRecord, error: checkError } = await supabaseServer
-      .from('user_progress')
-      .select('*')
+    // Check if a record already exists - get the most recent one
+    const { data: existingRecords, error: checkError } = await supabaseServer
+      .from('user_activity')
+      .select('id, status, created_at')
       .eq('user_id', userId)
       .eq('question_id', questionId)
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1);
 
     if (checkError) {
       console.error('Error checking existing record:', checkError);
@@ -282,29 +283,84 @@ export async function POST(request: NextRequest) {
     }
 
     let result;
+    const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
 
     if (existingRecord) {
       // Update existing record
-      result = await supabaseServer
-        .from('user_progress')
-        .update({
-          status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingRecord.id);
+      try {
+        result = await supabaseServer
+          .from('user_activity')
+          .update({
+            status,
+            activity_type: status === 'completed' ? 'question_completed' :
+                         status === 'viewed' ? 'question_viewed' :
+                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
+            metadata: {
+              status,
+              timestamp: new Date().toISOString()
+            },
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecord.id);
+      } catch (updateError) {
+        console.error('Error updating record with updated_at:', updateError);
+        // Try again without updated_at if it fails
+        result = await supabaseServer
+          .from('user_activity')
+          .update({
+            status,
+            activity_type: status === 'completed' ? 'question_completed' :
+                         status === 'viewed' ? 'question_viewed' :
+                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
+            metadata: {
+              status,
+              timestamp: new Date().toISOString()
+            }
+          })
+          .eq('id', existingRecord.id);
+      }
     } else {
       // Insert new record with topic_id
-      result = await supabaseServer
-        .from('user_progress')
-        .insert({
-          user_id: userId,
-          question_id: questionId,
-          topic_id: topicId,
-          category_id: questionData.category_id, // Also include category_id for completeness
-          status,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      try {
+        result = await supabaseServer
+          .from('user_activity')
+          .insert({
+            user_id: userId,
+            question_id: questionId,
+            topic_id: topicId,
+            category_id: questionData.category_id, // Also include category_id for completeness
+            status,
+            activity_type: status === 'completed' ? 'question_completed' :
+                         status === 'viewed' ? 'question_viewed' :
+                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
+            metadata: {
+              status,
+              timestamp: new Date().toISOString()
+            },
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+      } catch (insertError) {
+        console.error('Error inserting record with updated_at:', insertError);
+        // Try again without updated_at if it fails
+        result = await supabaseServer
+          .from('user_activity')
+          .insert({
+            user_id: userId,
+            question_id: questionId,
+            topic_id: topicId,
+            category_id: questionData.category_id,
+            status,
+            activity_type: status === 'completed' ? 'question_completed' :
+                         status === 'viewed' ? 'question_viewed' :
+                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
+            metadata: {
+              status,
+              timestamp: new Date().toISOString()
+            },
+            created_at: new Date().toISOString()
+          });
+      }
     }
 
     if (result.error) {

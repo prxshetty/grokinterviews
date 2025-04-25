@@ -3,7 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import supabaseServer from '@/utils/supabase-server';
 
-// GET: Retrieve progress data for a specific topic
+// GET: Retrieve progress data for a specific subtopic
 export async function GET(request: NextRequest) {
   // Use the Next.js route handler client for authentication
   const cookieStore = await cookies();
@@ -28,19 +28,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get the topic ID from the query parameters
+    // Get the subtopic ID from the query parameters
     const url = new URL(request.url);
-    const topicId = url.searchParams.get('topicId');
+    const subtopicId = url.searchParams.get('subtopicId');
 
-    if (!topicId) {
-      return NextResponse.json({ error: 'Topic ID is required' }, { status: 400 });
+    if (!subtopicId) {
+      return NextResponse.json({ error: 'Subtopic ID is required' }, { status: 400 });
     }
 
-    // Get all categories in this topic
+    // Get all categories in this subtopic
     const { data: categories, error: categoriesError } = await supabaseServer
       .from('categories')
       .select('id')
-      .eq('topic_id', topicId);
+      .eq('subtopic_id', subtopicId);
 
     if (categoriesError) {
       console.error('Error fetching categories:', categoriesError);
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get the total number of questions in all categories of this topic
+    // Get the total number of questions in all categories of this subtopic
     const { count: totalQuestions, error: countError } = await supabaseServer
       .from('questions')
       .select('*', { count: 'exact', head: true })
@@ -97,13 +97,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get the number of completed questions in all categories of this topic
-    const { count: questionsCompleted, error: completedError } = await supabaseServer
-      .from('user_progress')
-      .select('*', { count: 'exact', head: true })
+    // Get the number of completed questions in all categories of this subtopic
+    // We need to handle potential duplicates in the user_activity table
+    const { data: completedQuestionData, error: completedError } = await supabaseServer
+      .from('user_activity')
+      .select('question_id')
       .eq('user_id', userId)
       .eq('status', 'completed')
       .in('question_id', questionIdArray);
+
+    // Count unique completed questions
+    const uniqueCompletedQuestions = new Set();
+    completedQuestionData?.forEach(item => {
+      if (item.question_id) {
+        uniqueCompletedQuestions.add(item.question_id);
+      }
+    });
+    const questionsCompleted = uniqueCompletedQuestions.size;
 
     if (completedError) {
       console.error('Error counting completed questions:', completedError);
@@ -145,38 +155,54 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Get completed questions in this category
-      const { count: catCompletedQuestions, error: catCompletedError } = await supabaseServer
-        .from('user_progress')
-        .select('*', { count: 'exact', head: true })
+      // Get distinct completed question IDs in this category
+      // We need to handle potential duplicates in the user_activity table
+      const { data: completedQuestionData, error: catCompletedError } = await supabaseServer
+        .from('user_activity')
+        .select('question_id')
         .eq('user_id', userId)
         .eq('status', 'completed')
         .in('question_id', catQuestionIdArray);
 
       if (catCompletedError) {
-        console.error(`Error counting completed questions for category ${categoryId}:`, catCompletedError);
+        console.error(`Error fetching completed questions for category ${categoryId}:`, catCompletedError);
         continue;
       }
+
+      // Count unique completed questions
+      const uniqueCompletedQuestions = new Set();
+      completedQuestionData?.forEach(item => {
+        if (item.question_id) {
+          uniqueCompletedQuestions.add(item.question_id);
+        }
+      });
+      const catCompletedQuestions = uniqueCompletedQuestions.size;
+
+      console.log(`Category ${categoryId}: ${catCompletedQuestions}/${catTotalQuestions} questions completed`);
 
       // If all questions are completed, increment the counter
       if (catTotalQuestions > 0 && catCompletedQuestions === catTotalQuestions) {
         categoriesCompleted++;
+        console.log(`Category ${categoryId} is fully completed`);
       }
     }
 
     // Calculate completion percentage
     const completionPercentage = totalQuestions ? Math.round((questionsCompleted / totalQuestions) * 100) : 0;
 
+    console.log(`Subtopic ${subtopicId} progress: ${questionsCompleted}/${totalQuestions} questions, ${categoriesCompleted}/${totalCategories} categories, ${completionPercentage}% complete`);
+
     return NextResponse.json({
       categoriesCompleted,
       totalCategories,
       questionsCompleted: questionsCompleted || 0,
       totalQuestions: totalQuestions || 0,
-      completionPercentage
+      completionPercentage,
+      timestamp: Date.now() // Add timestamp to prevent caching
     });
 
   } catch (error) {
-    console.error('Error fetching topic progress:', error);
-    return NextResponse.json({ error: 'Failed to fetch topic progress' }, { status: 500 });
+    console.error('Error fetching subtopic progress:', error);
+    return NextResponse.json({ error: 'Failed to fetch subtopic progress' }, { status: 500 });
   }
 }
