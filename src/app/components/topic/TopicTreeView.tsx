@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTopicData } from './TopicDataProvider';
-import { ProgressBar } from '../ui/ProgressBar';
+import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress } from '@/app/utils/progress';
 
 interface TopicTreeViewProps {
@@ -52,7 +52,8 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
           (data || []).map(async (header: SectionHeader) => {
             try {
               if (header.id) {
-                const progress = await fetchCategoryProgress(header.id);
+                // Add cache-busting parameter to force fresh data
+                const progress = await fetchCategoryProgress(header.id, true);
                 console.log(`Progress for section ${header.name} (ID: ${header.id}):`, progress);
                 return { ...header, progress };
               }
@@ -82,8 +83,13 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
       const customEvent = event as CustomEvent;
       console.log('Question completed event detected:', customEvent.detail);
       console.log('Refreshing progress data for section headers');
+
+      // Force refresh the progress data
       if (topicId) {
-        fetchSectionHeaders();
+        // Small delay to ensure the database has been updated
+        setTimeout(() => {
+          fetchSectionHeaders();
+        }, 500);
       }
     };
 
@@ -205,17 +211,17 @@ export default function TopicTreeView({ topicId, onClose }: TopicTreeViewProps) 
                   <div className="font-medium text-sm uppercase tracking-wider">
                     {header.name}
                   </div>
-                  {header.progress && (
-                    <div className="mt-2">
-                      <ProgressBar
-                        progress={header.progress.completionPercentage}
-                        completed={header.progress.questionsCompleted}
-                        total={header.progress.totalQuestions}
-                        height="sm"
-                        showText={false}
-                      />
-                    </div>
-                  )}
+                  {/* Always show progress bar */}
+                  <div className="mt-2">
+                    <ProgressBar
+                      progress={header.progress ? header.progress.completionPercentage : 0}
+                      completed={header.progress ? header.progress.questionsCompleted : 0}
+                      total={header.progress ? header.progress.totalQuestions : 0}
+                      height="md"
+                      showText={false}
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               ))}
             </div>

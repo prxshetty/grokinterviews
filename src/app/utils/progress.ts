@@ -27,7 +27,7 @@ export const markQuestionAsViewed = async (questionId: number): Promise<void> =>
  * Marks a question as completed
  * @param questionId The ID of the completed question
  */
-export const markQuestionAsCompleted = async (questionId: number): Promise<void> => {
+export const markQuestionAsCompleted = async (questionId: number): Promise<boolean> => {
   try {
     console.log(`Calling API to mark question ${questionId} as completed`);
     const response = await fetch('/api/user/progress', {
@@ -42,13 +42,17 @@ export const markQuestionAsCompleted = async (questionId: number): Promise<void>
     });
 
     if (!response.ok) {
-      throw new Error(`API returned status ${response.status}`);
+      const errorText = await response.text();
+      console.error(`API returned status ${response.status}:`, errorText);
+      throw new Error(`API returned status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
     console.log(`API response for marking question ${questionId} as completed:`, data);
+    return true;
   } catch (error) {
     console.error('Failed to mark question as completed:', error);
+    return false;
   }
 };
 
@@ -90,11 +94,19 @@ export const toggleQuestionBookmark = async (questionId: number, isBookmarked: b
  */
 export const isQuestionBookmarked = async (questionId: number): Promise<boolean> => {
   try {
-    const response = await fetch(`/api/user/progress/status?questionId=${questionId}`);
+    // Add cache-busting parameter to prevent caching
+    const cacheBuster = `&_t=${Date.now()}`;
+    const response = await fetch(`/api/user/progress/status?questionId=${questionId}${cacheBuster}`, {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+
     if (!response.ok) {
+      console.error(`Error checking bookmark status for question ${questionId}:`, response.status);
       return false;
     }
+
     const data = await response.json();
+    console.log(`Bookmark status for question ${questionId}:`, data);
     return data.status === 'bookmarked';
   } catch (error) {
     console.error('Failed to check bookmark status:', error);
@@ -140,12 +152,23 @@ export const fetchUserProgress = async (): Promise<{
  */
 export const isQuestionCompleted = async (questionId: number): Promise<boolean> => {
   try {
-    const response = await fetch(`/api/user/progress/status?questionId=${questionId}`);
+    console.log(`isQuestionCompleted called for question ${questionId}`);
+    // Add cache-busting parameter to prevent caching
+    const cacheBuster = `&_t=${Date.now()}`;
+    const response = await fetch(`/api/user/progress/status?questionId=${questionId}${cacheBuster}`, {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+
     if (!response.ok) {
+      console.error(`Error checking completion status for question ${questionId}:`, response.status);
       return false;
     }
+
     const data = await response.json();
-    return data.status === 'completed';
+    console.log(`Completion status API response for question ${questionId}:`, data);
+    const isCompleted = data.status === 'completed';
+    console.log(`Question ${questionId} is ${isCompleted ? 'completed' : 'not completed'}`);
+    return isCompleted;
   } catch (error) {
     console.error('Failed to check completion status:', error);
     return false;
@@ -155,22 +178,73 @@ export const isQuestionCompleted = async (questionId: number): Promise<boolean> 
 /**
  * Fetches progress data for a specific category
  * @param categoryId The ID of the category
+ * @param forceRefresh Whether to force a fresh fetch (bypass cache)
  * @returns Promise resolving to category progress data
  */
-export const fetchCategoryProgress = async (categoryId: number): Promise<{
+export const fetchCategoryProgress = async (categoryId: number, forceRefresh: boolean = false): Promise<{
   questionsCompleted: number;
   totalQuestions: number;
   completionPercentage: number;
 }> => {
   try {
-    const response = await fetch(`/api/user/progress/category?categoryId=${categoryId}`);
+    console.log(`Fetching progress for category ${categoryId}${forceRefresh ? ' (forced refresh)' : ''}`);
+
+    // Add cache-busting parameter if forceRefresh is true
+    const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
+    const response = await fetch(`/api/user/progress/category?categoryId=${categoryId}${cacheBuster}`, {
+      headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+    });
+
     if (!response.ok) {
-      throw new Error('Failed to fetch category progress data');
+      throw new Error(`Failed to fetch category progress data: ${response.status}`);
     }
-    return await response.json();
+    const data = await response.json();
+    console.log(`Progress data for category ${categoryId}:`, data);
+    return data;
   } catch (error) {
     console.error('Failed to fetch category progress data:', error);
     return {
+      questionsCompleted: 0,
+      totalQuestions: 0,
+      completionPercentage: 0
+    };
+  }
+};
+
+/**
+ * Fetches progress data for a specific subtopic
+ * @param subtopicId The ID of the subtopic
+ * @param forceRefresh Whether to force a fresh fetch (bypass cache)
+ * @returns Promise resolving to subtopic progress data
+ */
+export const fetchSubtopicProgress = async (subtopicId: number, forceRefresh: boolean = false): Promise<{
+  categoriesCompleted: number;
+  totalCategories: number;
+  questionsCompleted: number;
+  totalQuestions: number;
+  completionPercentage: number;
+}> => {
+  try {
+    console.log(`Fetching progress for subtopic ${subtopicId}${forceRefresh ? ' (forced refresh)' : ''}`);
+
+    // Use the new optimized endpoint
+    // Add cache-busting parameter if forceRefresh is true
+    const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
+    const response = await fetch(`/api/user/progress/subtopic-progress?subtopicId=${subtopicId}${cacheBuster}`, {
+      headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch subtopic progress data: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log(`Progress data for subtopic ${subtopicId}:`, data);
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch subtopic progress data:', error);
+    return {
+      categoriesCompleted: 0,
+      totalCategories: 0,
       questionsCompleted: 0,
       totalQuestions: 0,
       completionPercentage: 0

@@ -11,7 +11,7 @@ interface ProgressBarProps {
   className?: string;
 }
 
-export function ProgressBar({
+export default function ProgressBar({
   progress,
   total,
   completed,
@@ -27,17 +27,20 @@ export function ProgressBar({
 
   // Determine height class
   const heightClass = {
-    sm: 'h-1',
-    md: 'h-2',
-    lg: 'h-3',
+    sm: 'h-2',
+    md: 'h-3',
+    lg: 'h-4',
   }[height];
+
+  // Ensure we always show at least 1% width for visibility, unless progress is actually 0
+  const displayWidth = safeProgress === 0 ? 0 : Math.max(safeProgress, 1);
 
   return (
     <div className={`flex items-center ${className}`}>
-      <div className={`flex-grow bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${heightClass}`}>
+      <div className={`flex-grow bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${heightClass} border border-gray-300 dark:border-gray-600`}>
         <div
-          className="bg-green-500 dark:bg-green-600 rounded-full transition-all duration-300 ease-out"
-          style={{ width: `${safeProgress}%`, height: '100%' }}
+          className="bg-black dark:bg-white rounded-full transition-all duration-300 ease-out"
+          style={{ width: `${displayWidth}%`, height: '100%' }}
         ></div>
       </div>
 

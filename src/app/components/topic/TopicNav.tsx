@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ProgressBar } from '../ui/ProgressBar';
+import ProgressBar from '../ui/ProgressBar';
 import { fetchTopicProgress } from '@/app/utils/progress';
 
 const mainTopics = [
@@ -208,18 +208,16 @@ export default function TopicNav({ onTopicSelect, selectedTopic: externalSelecte
                   {topic.label}
                 </motion.button>
 
-                {/* Progress bar */}
-                {topic.topicId && topicProgress[topic.topicId] && (
-                  <div className="px-4 pb-1">
-                    <ProgressBar
-                      progress={topicProgress[topic.topicId].completionPercentage}
-                      completed={topicProgress[topic.topicId].questionsCompleted}
-                      total={topicProgress[topic.topicId].totalQuestions}
-                      height="sm"
-                      showText={false}
-                    />
-                  </div>
-                )}
+                {/* Progress bar - always show */}
+                <div className="px-4 pb-1">
+                  <ProgressBar
+                    progress={topic.topicId && topicProgress[topic.topicId] ? topicProgress[topic.topicId].completionPercentage : 0}
+                    completed={topic.topicId && topicProgress[topic.topicId] ? topicProgress[topic.topicId].questionsCompleted : 0}
+                    total={topic.topicId && topicProgress[topic.topicId] ? topicProgress[topic.topicId].totalQuestions : 0}
+                    height="md"
+                    showText={false}
+                  />
+                </div>
               </motion.div>
             </li>
           ))}

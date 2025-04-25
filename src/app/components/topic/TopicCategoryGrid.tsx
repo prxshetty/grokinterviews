@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './TopicCategoryGrid.module.css';
-import { ProgressBar } from '../ui/ProgressBar';
+import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress } from '@/app/utils/progress';
 
 // Define the structure for items to be displayed
@@ -159,6 +159,22 @@ export default function TopicCategoryGrid({
   console.log(`TopicCategoryGrid - Display items with progress:`, displayItems);
   console.log(`TopicCategoryGrid - Topic ID:`, topicId);
 
+  // Log progress data specifically for debugging
+  if (displayItems && displayItems.length > 0) {
+    console.log('Progress data for items:');
+    displayItems.forEach(item => {
+      if (item.progress) {
+        console.log(`Item ${item.label} (ID: ${item.id}):`, {
+          completionPercentage: item.progress.completionPercentage,
+          questionsCompleted: item.progress.questionsCompleted,
+          totalQuestions: item.progress.totalQuestions
+        });
+      } else {
+        console.log(`Item ${item.label} (ID: ${item.id}): No progress data`);
+      }
+    });
+  }
+
   // Check if displayItems is defined and has a length property before using it
   if (!displayItems || !Array.isArray(displayItems)) {
     console.error('TopicCategoryGrid - displayItems is not an array:', displayItems);
@@ -219,17 +235,16 @@ export default function TopicCategoryGrid({
               <div className={styles.categoryNumber}>{formatIndex(index)}</div>
               <div className={styles.categoryContent}>
                 <div className={styles.categoryLabel}>{item.label}</div>
-                {item.progress && (
-                  <div className={styles.progressBar}>
-                    <ProgressBar
-                      progress={item.progress.completionPercentage}
-                      completed={item.progress.questionsCompleted}
-                      total={item.progress.totalQuestions}
-                      height="sm"
-                      showText={false}
-                    />
-                  </div>
-                )}
+                {/* Always show progress bar, with 0% if no progress data */}
+                <div className={styles.progressBar}>
+                  <ProgressBar
+                    progress={item.progress ? item.progress.completionPercentage : 0}
+                    completed={item.progress ? item.progress.questionsCompleted : 0}
+                    total={item.progress ? item.progress.totalQuestions : 0}
+                    height="md"
+                    showText={false}
+                  />
+                </div>
               </div>
               <div className={styles.expandIcon}>
                 {expandedItemId === item.id ? '×' : '+'}
@@ -250,17 +265,16 @@ export default function TopicCategoryGrid({
               <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn)}</div>
               <div className={styles.categoryContent}>
                 <div className={styles.categoryLabel}>{item.label}</div>
-                {item.progress && (
-                  <div className={styles.progressBar}>
-                    <ProgressBar
-                      progress={item.progress.completionPercentage}
-                      completed={item.progress.questionsCompleted}
-                      total={item.progress.totalQuestions}
-                      height="sm"
-                      showText={false}
-                    />
-                  </div>
-                )}
+                {/* Always show progress bar, with 0% if no progress data */}
+                <div className={styles.progressBar}>
+                  <ProgressBar
+                    progress={item.progress ? item.progress.completionPercentage : 0}
+                    completed={item.progress ? item.progress.questionsCompleted : 0}
+                    total={item.progress ? item.progress.totalQuestions : 0}
+                    height="md"
+                    showText={false}
+                  />
+                </div>
               </div>
               <div className={styles.expandIcon}>
                 {expandedItemId === item.id ? '×' : '+'}
@@ -281,17 +295,16 @@ export default function TopicCategoryGrid({
               <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn * 2)}</div>
               <div className={styles.categoryContent}>
                 <div className={styles.categoryLabel}>{item.label}</div>
-                {item.progress && (
-                  <div className={styles.progressBar}>
-                    <ProgressBar
-                      progress={item.progress.completionPercentage}
-                      completed={item.progress.questionsCompleted}
-                      total={item.progress.totalQuestions}
-                      height="sm"
-                      showText={false}
-                    />
-                  </div>
-                )}
+                {/* Always show progress bar, with 0% if no progress data */}
+                <div className={styles.progressBar}>
+                  <ProgressBar
+                    progress={item.progress ? item.progress.completionPercentage : 0}
+                    completed={item.progress ? item.progress.questionsCompleted : 0}
+                    total={item.progress ? item.progress.totalQuestions : 0}
+                    height="md"
+                    showText={false}
+                  />
+                </div>
               </div>
               <div className={styles.expandIcon}>
                 {expandedItemId === item.id ? '×' : '+'}
