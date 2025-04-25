@@ -20,8 +20,11 @@ export function ProgressBar({
   className = '',
 }: ProgressBarProps) {
   // Ensure progress is between 0 and 100
-  const safeProgress = Math.min(Math.max(progress, 0), 100);
-  
+  const safeProgress = Math.min(Math.max(progress || 0, 0), 100);
+
+  // Log the progress values for debugging
+  console.log('ProgressBar props:', { progress, total, completed, safeProgress });
+
   // Determine height class
   const heightClass = {
     sm: 'h-1',
@@ -37,7 +40,7 @@ export function ProgressBar({
           style={{ width: `${safeProgress}%`, height: '100%' }}
         ></div>
       </div>
-      
+
       {showText && (
         <div className="ml-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
           {completed !== undefined && total !== undefined ? (

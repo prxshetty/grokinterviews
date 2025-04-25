@@ -6,7 +6,8 @@ import supabaseServer from '@/utils/supabase-server';
 // GET: Retrieve progress data for a specific topic
 export async function GET(request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
   // Get the user session using Supabase auth
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'completed')
-      .in('question_id', 
+      .in('question_id',
         supabaseServer
           .from('questions')
           .select('id')
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate how many categories are "completed" (all questions completed)
     let categoriesCompleted = 0;
-    
+
     // For each category, check if all questions are completed
     for (const categoryId of categoryIds) {
       // Get total questions in this category
@@ -99,30 +100,30 @@ export async function GET(request: NextRequest) {
         .from('questions')
         .select('*', { count: 'exact', head: true })
         .eq('category_id', categoryId);
-      
+
       if (catCountError) {
         console.error(`Error counting questions for category ${categoryId}:`, catCountError);
         continue;
       }
-      
+
       // Get completed questions in this category
       const { count: catCompletedQuestions, error: catCompletedError } = await supabaseServer
         .from('user_progress')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('status', 'completed')
-        .in('question_id', 
+        .in('question_id',
           supabaseServer
             .from('questions')
             .select('id')
             .eq('category_id', categoryId)
         );
-      
+
       if (catCompletedError) {
         console.error(`Error counting completed questions for category ${categoryId}:`, catCompletedError);
         continue;
       }
-      
+
       // If all questions are completed, increment the counter
       if (catTotalQuestions > 0 && catCompletedQuestions === catTotalQuestions) {
         categoriesCompleted++;

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import styles from './TopicTableView.module.css';
+import { ProgressBar } from '../ui/ProgressBar';
+import { fetchCategoryProgress } from '@/app/utils/progress';
 
 interface TopicTableViewProps {
   selectedMainTopic: string | null;
@@ -12,6 +14,11 @@ interface SectionHeader {
   id: number;
   name: string;
   created_at?: string; // Optional created_at timestamp
+  progress?: {
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  };
 }
 
 export default function TopicTableView({
@@ -44,7 +51,25 @@ export default function TopicTableView({
 
         const data = await response.json();
         console.log(`TopicTableView - Received ${data?.length || 0} section headers:`, data);
-        setSectionHeaders(data || []);
+
+        // Fetch progress data for each section header
+        const headersWithProgress = await Promise.all(
+          (data || []).map(async (header: SectionHeader) => {
+            try {
+              if (header.id) {
+                const progress = await fetchCategoryProgress(header.id);
+                console.log(`Progress for section ${header.name} (ID: ${header.id}):`, progress);
+                return { ...header, progress };
+              }
+              return header;
+            } catch (error) {
+              console.error(`Failed to fetch progress for section ${header.id}:`, error);
+              return header;
+            }
+          })
+        );
+
+        setSectionHeaders(headersWithProgress || []);
       } catch (err) {
         console.error('Error fetching section headers:', err);
         setError('Failed to load section headers');
@@ -54,6 +79,20 @@ export default function TopicTableView({
     };
 
     fetchSectionHeaders();
+
+    // Set up an event listener for question completion
+    const handleQuestionCompleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Question completed event detected:', customEvent.detail);
+      console.log('Refreshing progress data for section headers');
+      fetchSectionHeaders();
+    };
+
+    window.addEventListener('questionCompleted', handleQuestionCompleted);
+
+    return () => {
+      window.removeEventListener('questionCompleted', handleQuestionCompleted);
+    };
   }, [selectedMainTopic]);
 
   // Handle topic selection
@@ -117,10 +156,23 @@ export default function TopicTableView({
           <div className={styles.arrowContainer}>
             <span>→</span>
           </div>
-          <span className={styles.topicLabel}>{header.name}</span>
-          {header.created_at && (
-            <span className={styles.dateLabel}>Added: {dateAdded}</span>
-          )}
+          <div className={styles.topicContent}>
+            <span className={styles.topicLabel}>{header.name}</span>
+            {header.created_at && (
+              <span className={styles.dateLabel}>Added: {dateAdded}</span>
+            )}
+            {header.progress && (
+              <div className={styles.progressBar}>
+                <ProgressBar
+                  progress={header.progress.completionPercentage}
+                  completed={header.progress.questionsCompleted}
+                  total={header.progress.totalQuestions}
+                  height="sm"
+                  showText={false}
+                />
+              </div>
+            )}
+          </div>
         </div>
         <div className={styles.categoryProject}>
           <span className={styles.topicLabel}>View Content</span>
