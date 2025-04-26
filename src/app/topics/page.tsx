@@ -152,11 +152,15 @@ export default function TopicsPage() {
               acc[`topic-${index}`] = {
                 id: topic.id,
                 label: topic.label,
-                content: ''
+                content: '',
+                subtopicId: topic.id // Add the subtopicId for progress tracking
               };
               return acc;
             }, {})
           });
+
+          // We'll fetch progress data in a batch later to avoid multiple API calls
+          // This will be handled by the useEffect that runs when categoryDetails changes
         } else {
           console.warn(`Section header not found for ID ${headerNumber}`);
           setCategoryDetails({
@@ -176,6 +180,8 @@ export default function TopicsPage() {
         // Extract the numeric ID from the topic-{id} format
         const numericId = categoryId.replace('topic-', '');
         console.log(`Extracted numeric ID: ${numericId}`);
+
+        // We'll fetch progress data later in a batch to avoid multiple API calls
 
         try {
           // Fetch topic details directly from the API
@@ -290,8 +296,73 @@ export default function TopicsPage() {
   useEffect(() => {
     if (selectedTopic) {
       loadTopicCategories(selectedTopic);
+
+      // Preload subtopic progress data for this domain
+      preloadSubtopicProgressForDomain(selectedTopic);
     }
   }, [selectedTopic]);
+
+  // Function to preload subtopic progress data for a domain
+  const preloadSubtopicProgressForDomain = async (domain: string) => {
+    console.log(`Preloading subtopic progress data for domain: ${domain}`);
+
+    try {
+      // Determine what kind of request to make based on the current state
+      let requestParams = '';
+
+      if (selectedCategory) {
+        // If a category is selected, try to get its section name
+        if (categoryDetails && categoryDetails.label) {
+          console.log(`Using section name from selected category: ${categoryDetails.label}`);
+          requestParams = `&section=${encodeURIComponent(categoryDetails.label)}`;
+        }
+      } else if (selectedTopic) {
+        // If only a topic is selected (domain like 'ml', 'ai'), get only main topics
+        console.log(`Using domain-level request for ${domain}`);
+        requestParams = `&mainTopicsOnly=true`;
+      }
+
+      // Use the optimized endpoint to fetch progress for subtopics
+      const response = await fetch(`/api/user/progress/domain-subtopics?domain=${domain}${requestParams}&_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch domain subtopics progress: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`Received progress data for ${Object.keys(data.subtopics).length} subtopics in domain ${domain}`);
+
+      // Update the subtopic progress state with the data from the API
+      const newSubtopicProgress = {};
+
+      // Check if data.subtopics exists and is an object
+      if (data.subtopics && typeof data.subtopics === 'object') {
+        Object.entries(data.subtopics).forEach(([subtopicId, progressData]: [string, any]) => {
+          newSubtopicProgress[subtopicId] = {
+            progress: progressData.completionPercentage || 0,
+            completed: progressData.questionsCompleted || 0,
+            total: progressData.totalQuestions || 0,
+            categoriesCompleted: progressData.categoriesCompleted || 0,
+            totalCategories: progressData.totalCategories || 0
+          };
+        });
+      } else {
+        console.log('No subtopics progress data found in API response');
+      }
+
+      // Update the state with all subtopic progress data at once
+      setSubtopicProgress(prev => ({
+        ...prev,
+        ...newSubtopicProgress
+      }));
+
+      console.log('Updated subtopic progress state with domain data');
+    } catch (error) {
+      console.error(`Error preloading subtopic progress for domain ${domain}:`, error);
+    }
+  };
 
   // Load progress data for all categories and subtopics when category details change
   useEffect(() => {
@@ -311,12 +382,56 @@ export default function TopicsPage() {
         }
       });
 
-      // Fetch progress for each category
+      // If we have a section name, fetch progress for all subtopics in this section at once
+      if (categoryDetails.label) {
+        const sectionName = categoryDetails.label;
+        console.log(`Fetching progress for all subtopics in section ${sectionName} (batch request)`);
+
+        try {
+          const response = await fetch(`/api/user/progress/domain-subtopics?domain=${selectedTopic}&section=${encodeURIComponent(sectionName)}&_t=${Date.now()}`, {
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+
+            if (data.subtopics && typeof data.subtopics === 'object') {
+              // Update progress for all subtopics in this section
+              const newSubtopicProgress = {};
+
+              Object.entries(data.subtopics).forEach(([id, progressData]: [string, any]) => {
+                newSubtopicProgress[id] = {
+                  progress: progressData.completionPercentage || 0,
+                  completed: progressData.questionsCompleted || 0,
+                  total: progressData.totalQuestions || 0,
+                  categoriesCompleted: progressData.categoriesCompleted || 0,
+                  totalCategories: progressData.totalCategories || 0
+                };
+              });
+
+              // Update the subtopic progress state with all subtopics at once
+              setSubtopicProgress(prev => ({
+                ...prev,
+                ...newSubtopicProgress
+              }));
+
+              console.log(`Updated progress for ${Object.keys(newSubtopicProgress).length} subtopics in section ${sectionName}`);
+
+              // We've already fetched all subtopic progress, so we can skip individual fetches
+              return;
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching batch progress for section ${sectionName}:`, error);
+        }
+      }
+
+      // Fallback: Fetch progress for each category individually
       for (const categoryId of categoryIds) {
         await fetchCategoryProgress(categoryId, forceRefresh);
       }
 
-      // Fetch progress for each subtopic
+      // Fallback: Fetch progress for each subtopic individually
       for (const subtopicId of subtopicIds) {
         await fetchSubtopicProgressData(subtopicId, forceRefresh);
       }
@@ -328,7 +443,7 @@ export default function TopicsPage() {
     // Set up a refresh interval to periodically update progress
     const refreshInterval = setInterval(() => {
       loadProgressData(true); // Force refresh every interval
-    }, 30000); // Refresh every 30 seconds
+    }, 60000); // Refresh every 60 seconds (reduced frequency to minimize API calls)
 
     return () => {
       clearInterval(refreshInterval);
@@ -394,16 +509,94 @@ export default function TopicsPage() {
   };
 
   // Function to fetch progress for a subtopic
-  const fetchSubtopicProgressData = async (subtopicId: number, forceRefresh: boolean = false) => {
+  const fetchSubtopicProgressData = async (subtopicId: number | string, forceRefresh: boolean = false) => {
+    // Handle string IDs (like 'topic-123')
+    let querySubtopicId = subtopicId;
+    if (typeof subtopicId === 'string' && subtopicId.startsWith('topic-')) {
+      querySubtopicId = subtopicId.replace('topic-', '');
+      console.log(`Extracted numeric ID ${querySubtopicId} from ${subtopicId} for progress query`);
+    }
     try {
       // Add cache-busting parameter if forceRefresh is true
       const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
-      // Use the new optimized endpoint
-      const response = await fetch(`/api/user/progress/subtopic-progress?subtopicId=${subtopicId}${cacheBuster}`, {
+
+      // First, try to get the section name for this subtopic
+      let sectionName = null;
+
+      // Try to get the section name for this subtopic from the database
+      try {
+        const sectionResponse = await fetch(`/api/topics/topic-details?topicId=${querySubtopicId}`);
+        if (sectionResponse.ok) {
+          const sectionData = await sectionResponse.json();
+          if (sectionData.topic && sectionData.topic.section_name) {
+            sectionName = sectionData.topic.section_name;
+            console.log(`Found section name for subtopic ${querySubtopicId}: ${sectionName}`);
+          }
+        }
+      } catch (err) {
+        console.error(`Error getting section name for subtopic ${querySubtopicId}:`, err);
+      }
+
+      // If we couldn't get the section name from the database, try from category details
+      if (!sectionName && categoryDetails && categoryDetails.label) {
+        sectionName = categoryDetails.label;
+        console.log(`Using section name from category details: ${sectionName}`);
+      }
+
+      // If we have a section name, fetch progress for all subtopics in this section
+      // But only if we're forcing a refresh or if this is a specific request for a single subtopic
+      if (sectionName && (forceRefresh || typeof subtopicId === 'number')) {
+        console.log(`Fetching progress for all subtopics in section ${sectionName}`);
+        const sectionResponse = await fetch(`/api/user/progress/domain-subtopics?domain=${selectedTopic}&section=${encodeURIComponent(sectionName)}${cacheBuster}`, {
+          headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+        });
+
+        if (sectionResponse.ok) {
+          const sectionData = await sectionResponse.json();
+          console.log(`Fetched progress for all subtopics in section ${sectionName}`);
+
+          if (sectionData.subtopics && typeof sectionData.subtopics === 'object') {
+            // Update progress for all subtopics in this section
+            const newSubtopicProgress = {};
+
+            Object.entries(sectionData.subtopics).forEach(([id, progressData]: [string, any]) => {
+              newSubtopicProgress[id] = {
+                progress: progressData.completionPercentage || 0,
+                completed: progressData.questionsCompleted || 0,
+                total: progressData.totalQuestions || 0,
+                categoriesCompleted: progressData.categoriesCompleted || 0,
+                totalCategories: progressData.totalCategories || 0
+              };
+            });
+
+            // Update the subtopic progress state with all subtopics at once
+            setSubtopicProgress(prev => ({
+              ...prev,
+              ...newSubtopicProgress
+            }));
+
+            // Return the progress data for the requested subtopic
+            if (sectionData.subtopics[subtopicId]) {
+              return {
+                progress: sectionData.subtopics[subtopicId].completionPercentage || 0,
+                completed: sectionData.subtopics[subtopicId].questionsCompleted || 0,
+                total: sectionData.subtopics[subtopicId].totalQuestions || 0,
+                categoriesCompleted: sectionData.subtopics[subtopicId].categoriesCompleted || 0,
+                totalCategories: sectionData.subtopics[subtopicId].totalCategories || 0
+              };
+            }
+          }
+        }
+      }
+
+      // Fallback to the individual subtopic endpoint if section approach fails
+      const response = await fetch(`/api/user/progress/subtopic-progress?subtopicId=${querySubtopicId}${cacheBuster}`, {
         headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Failed to fetch subtopic progress data: ${response.status}`, errorText);
         throw new Error(`Failed to fetch subtopic progress data: ${response.status}`);
       }
       const data = await response.json();
@@ -546,14 +739,67 @@ export default function TopicsPage() {
       }
     };
 
+    // Handle domain subtopics progress updates
+    const handleDomainSubtopicsProgressUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Domain subtopics progress updated event detected:', customEvent.detail);
+
+      if (customEvent.detail?.domain && customEvent.detail?.subtopics) {
+        const { domain, subtopics, section } = customEvent.detail;
+
+        // Update the subtopic progress state with all subtopics at once
+        const newSubtopicProgress = {};
+
+        // Check if subtopics exists and is an object
+        if (subtopics && typeof subtopics === 'object') {
+          console.log(`Processing progress data for ${Object.keys(subtopics).length} subtopics${section ? ` in section ${section}` : ''}`);
+
+          // Log the first few subtopics for debugging
+          const subtopicEntries = Object.entries(subtopics);
+          if (subtopicEntries.length > 0) {
+            console.log('Sample subtopic progress data:', subtopicEntries.slice(0, 3).map(([id, data]) => {
+              return {
+                id,
+                name: (data as any).name,
+                section: (data as any).section_name,
+                progress: (data as any).completionPercentage
+              };
+            }));
+          }
+
+          Object.entries(subtopics).forEach(([subtopicId, progressData]: [string, any]) => {
+            newSubtopicProgress[subtopicId] = {
+              progress: progressData.completionPercentage || 0,
+              completed: progressData.questionsCompleted || 0,
+              total: progressData.totalQuestions || 0,
+              categoriesCompleted: progressData.categoriesCompleted || 0,
+              totalCategories: progressData.totalCategories || 0
+            };
+          });
+        } else {
+          console.log('No subtopics progress data found in event');
+        }
+
+        // Update the state with all subtopic progress data at once
+        setSubtopicProgress(prev => ({
+          ...prev,
+          ...newSubtopicProgress
+        }));
+
+        console.log(`Updated progress for ${Object.keys(newSubtopicProgress).length} subtopics in domain ${domain}`);
+      }
+    };
+
     // Add event listeners
     window.addEventListener('questionCompleted', handleQuestionCompleted);
     window.addEventListener('subtopicProgressUpdated', handleSubtopicProgressUpdated);
+    window.addEventListener('domainSubtopicsProgressUpdated', handleDomainSubtopicsProgressUpdated);
 
     return () => {
       // Remove event listeners when component unmounts
       window.removeEventListener('questionCompleted', handleQuestionCompleted);
       window.removeEventListener('subtopicProgressUpdated', handleSubtopicProgressUpdated);
+      window.removeEventListener('domainSubtopicsProgressUpdated', handleDomainSubtopicsProgressUpdated);
     };
   }, [categoryDetails]);
 
@@ -651,12 +897,85 @@ export default function TopicsPage() {
                             {/* Progress bar */}
                             <div className="ml-12 mr-8 mt-2">
                               <ProgressBar
-                                progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
-                                         (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
-                                completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
-                                          (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
-                                total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
-                                      (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                                progress={(() => {
+                                  // For debugging
+                                  const itemId = typedListItem.id || 'no-id';
+                                  const itemLabel = typedListItem.label || 'no-label';
+                                  const categoryId = typedListItem.categoryId;
+                                  const subtopicId = typedListItem.subtopicId;
+                                  const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                                  console.log(`Progress calculation for item: ${itemLabel} (${itemId})`, {
+                                    categoryId,
+                                    subtopicId,
+                                    topicId,
+                                    hasProgress: topicId ? !!subtopicProgress[topicId] : false
+                                  });
+
+                                  // Category progress takes precedence
+                                  if (categoryId && categoryProgress[categoryId]) {
+                                    return categoryProgress[categoryId].progress;
+                                  }
+
+                                  // Then check for topic ID (from topic-XXX format)
+                                  if (topicId && subtopicProgress[topicId]) {
+                                    return subtopicProgress[topicId].progress;
+                                  }
+
+                                  // Then check for subtopic ID
+                                  if (subtopicId && subtopicProgress[subtopicId]) {
+                                    return subtopicProgress[subtopicId].progress;
+                                  }
+
+                                  // Default to 0
+                                  return 0;
+                                })()}
+                                completed={(() => {
+                                  const categoryId = typedListItem.categoryId;
+                                  const subtopicId = typedListItem.subtopicId;
+                                  const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                                  // Category progress takes precedence
+                                  if (categoryId && categoryProgress[categoryId]) {
+                                    return categoryProgress[categoryId].completed;
+                                  }
+
+                                  // Then check for topic ID (from topic-XXX format)
+                                  if (topicId && subtopicProgress[topicId]) {
+                                    return subtopicProgress[topicId].completed;
+                                  }
+
+                                  // Then check for subtopic ID
+                                  if (subtopicId && subtopicProgress[subtopicId]) {
+                                    return subtopicProgress[subtopicId].completed;
+                                  }
+
+                                  // Default to 0
+                                  return 0;
+                                })()}
+                                total={(() => {
+                                  const categoryId = typedListItem.categoryId;
+                                  const subtopicId = typedListItem.subtopicId;
+                                  const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                                  // Category progress takes precedence
+                                  if (categoryId && categoryProgress[categoryId]) {
+                                    return categoryProgress[categoryId].total;
+                                  }
+
+                                  // Then check for topic ID (from topic-XXX format)
+                                  if (topicId && subtopicProgress[topicId]) {
+                                    return subtopicProgress[topicId].total;
+                                  }
+
+                                  // Then check for subtopic ID
+                                  if (subtopicId && subtopicProgress[subtopicId]) {
+                                    return subtopicProgress[subtopicId].total;
+                                  }
+
+                                  // Default to 0
+                                  return 0;
+                                })()}
                                 height="md"
                                 showText={false}
                               />
@@ -702,12 +1021,78 @@ export default function TopicsPage() {
                             {/* Progress bar */}
                             <div className="ml-12 mr-8 mt-2">
                               <ProgressBar
-                                progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
-                                         (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
-                                completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
-                                          (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
-                                total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
-                                      (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                                progress={(() => {
+                                  // For debugging
+                                  const itemId = typedListItem.id || 'no-id';
+                                  const itemLabel = typedListItem.label || 'no-label';
+                                  const categoryId = typedListItem.categoryId;
+                                  const subtopicId = typedListItem.subtopicId;
+                                  const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                                  // Category progress takes precedence
+                                  if (categoryId && categoryProgress[categoryId]) {
+                                    return categoryProgress[categoryId].progress;
+                                  }
+
+                                  // Then check for topic ID (from topic-XXX format)
+                                  if (topicId && subtopicProgress[topicId]) {
+                                    return subtopicProgress[topicId].progress;
+                                  }
+
+                                  // Then check for subtopic ID
+                                  if (subtopicId && subtopicProgress[subtopicId]) {
+                                    return subtopicProgress[subtopicId].progress;
+                                  }
+
+                                  // Default to 0
+                                  return 0;
+                                })()}
+                                completed={(() => {
+                                  const categoryId = typedListItem.categoryId;
+                                  const subtopicId = typedListItem.subtopicId;
+                                  const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                                  // Category progress takes precedence
+                                  if (categoryId && categoryProgress[categoryId]) {
+                                    return categoryProgress[categoryId].completed;
+                                  }
+
+                                  // Then check for topic ID (from topic-XXX format)
+                                  if (topicId && subtopicProgress[topicId]) {
+                                    return subtopicProgress[topicId].completed;
+                                  }
+
+                                  // Then check for subtopic ID
+                                  if (subtopicId && subtopicProgress[subtopicId]) {
+                                    return subtopicProgress[subtopicId].completed;
+                                  }
+
+                                  // Default to 0
+                                  return 0;
+                                })()}
+                                total={(() => {
+                                  const categoryId = typedListItem.categoryId;
+                                  const subtopicId = typedListItem.subtopicId;
+                                  const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                                  // Category progress takes precedence
+                                  if (categoryId && categoryProgress[categoryId]) {
+                                    return categoryProgress[categoryId].total;
+                                  }
+
+                                  // Then check for topic ID (from topic-XXX format)
+                                  if (topicId && subtopicProgress[topicId]) {
+                                    return subtopicProgress[topicId].total;
+                                  }
+
+                                  // Then check for subtopic ID
+                                  if (subtopicId && subtopicProgress[subtopicId]) {
+                                    return subtopicProgress[subtopicId].total;
+                                  }
+
+                                  // Default to 0
+                                  return 0;
+                                })()}
                                 height="md"
                                 showText={false}
                               />
@@ -738,12 +1123,78 @@ export default function TopicsPage() {
                         {/* Progress bar */}
                         <div className="ml-16 mr-8 mt-2">
                           <ProgressBar
-                            progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
-                                     (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
-                            completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
-                                      (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
-                            total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
-                                  (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                            progress={(() => {
+                              // For debugging
+                              const itemId = typedListItem.id || 'no-id';
+                              const itemLabel = typedListItem.label || 'no-label';
+                              const categoryId = typedListItem.categoryId;
+                              const subtopicId = typedListItem.subtopicId;
+                              const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                              // Category progress takes precedence
+                              if (categoryId && categoryProgress[categoryId]) {
+                                return categoryProgress[categoryId].progress;
+                              }
+
+                              // Then check for topic ID (from topic-XXX format)
+                              if (topicId && subtopicProgress[topicId]) {
+                                return subtopicProgress[topicId].progress;
+                              }
+
+                              // Then check for subtopic ID
+                              if (subtopicId && subtopicProgress[subtopicId]) {
+                                return subtopicProgress[subtopicId].progress;
+                              }
+
+                              // Default to 0
+                              return 0;
+                            })()}
+                            completed={(() => {
+                              const categoryId = typedListItem.categoryId;
+                              const subtopicId = typedListItem.subtopicId;
+                              const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                              // Category progress takes precedence
+                              if (categoryId && categoryProgress[categoryId]) {
+                                return categoryProgress[categoryId].completed;
+                              }
+
+                              // Then check for topic ID (from topic-XXX format)
+                              if (topicId && subtopicProgress[topicId]) {
+                                return subtopicProgress[topicId].completed;
+                              }
+
+                              // Then check for subtopic ID
+                              if (subtopicId && subtopicProgress[subtopicId]) {
+                                return subtopicProgress[subtopicId].completed;
+                              }
+
+                              // Default to 0
+                              return 0;
+                            })()}
+                            total={(() => {
+                              const categoryId = typedListItem.categoryId;
+                              const subtopicId = typedListItem.subtopicId;
+                              const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                              // Category progress takes precedence
+                              if (categoryId && categoryProgress[categoryId]) {
+                                return categoryProgress[categoryId].total;
+                              }
+
+                              // Then check for topic ID (from topic-XXX format)
+                              if (topicId && subtopicProgress[topicId]) {
+                                return subtopicProgress[topicId].total;
+                              }
+
+                              // Then check for subtopic ID
+                              if (subtopicId && subtopicProgress[subtopicId]) {
+                                return subtopicProgress[subtopicId].total;
+                              }
+
+                              // Default to 0
+                              return 0;
+                            })()}
                             height="md"
                             showText={false}
                           />
@@ -886,12 +1337,78 @@ export default function TopicsPage() {
                     {/* Progress bar */}
                     <div className="ml-16 mr-8 mt-2">
                       <ProgressBar
-                        progress={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].progress :
-                                 (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].progress : 0)}
-                        completed={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].completed :
-                                  (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].completed : 0)}
-                        total={typedListItem.categoryId && categoryProgress[typedListItem.categoryId] ? categoryProgress[typedListItem.categoryId].total :
-                              (typedListItem.subtopicId && subtopicProgress[typedListItem.subtopicId] ? subtopicProgress[typedListItem.subtopicId].total : 0)}
+                        progress={(() => {
+                          // For debugging
+                          const itemId = typedListItem.id || 'no-id';
+                          const itemLabel = typedListItem.label || 'no-label';
+                          const categoryId = typedListItem.categoryId;
+                          const subtopicId = typedListItem.subtopicId;
+                          const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                          // Category progress takes precedence
+                          if (categoryId && categoryProgress[categoryId]) {
+                            return categoryProgress[categoryId].progress;
+                          }
+
+                          // Then check for topic ID (from topic-XXX format)
+                          if (topicId && subtopicProgress[topicId]) {
+                            return subtopicProgress[topicId].progress;
+                          }
+
+                          // Then check for subtopic ID
+                          if (subtopicId && subtopicProgress[subtopicId]) {
+                            return subtopicProgress[subtopicId].progress;
+                          }
+
+                          // Default to 0
+                          return 0;
+                        })()}
+                        completed={(() => {
+                          const categoryId = typedListItem.categoryId;
+                          const subtopicId = typedListItem.subtopicId;
+                          const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                          // Category progress takes precedence
+                          if (categoryId && categoryProgress[categoryId]) {
+                            return categoryProgress[categoryId].completed;
+                          }
+
+                          // Then check for topic ID (from topic-XXX format)
+                          if (topicId && subtopicProgress[topicId]) {
+                            return subtopicProgress[topicId].completed;
+                          }
+
+                          // Then check for subtopic ID
+                          if (subtopicId && subtopicProgress[subtopicId]) {
+                            return subtopicProgress[subtopicId].completed;
+                          }
+
+                          // Default to 0
+                          return 0;
+                        })()}
+                        total={(() => {
+                          const categoryId = typedListItem.categoryId;
+                          const subtopicId = typedListItem.subtopicId;
+                          const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+
+                          // Category progress takes precedence
+                          if (categoryId && categoryProgress[categoryId]) {
+                            return categoryProgress[categoryId].total;
+                          }
+
+                          // Then check for topic ID (from topic-XXX format)
+                          if (topicId && subtopicProgress[topicId]) {
+                            return subtopicProgress[topicId].total;
+                          }
+
+                          // Then check for subtopic ID
+                          if (subtopicId && subtopicProgress[subtopicId]) {
+                            return subtopicProgress[subtopicId].total;
+                          }
+
+                          // Default to 0
+                          return 0;
+                        })()}
                         height="md"
                         showText={false}
                       />
