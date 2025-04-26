@@ -159,8 +159,10 @@ export default function TopicsPage() {
             }, {})
           });
 
-          // We'll fetch progress data in a batch later to avoid multiple API calls
-          // This will be handled by the useEffect that runs when categoryDetails changes
+          // Fetch progress for this section
+          fetchSectionProgress(sectionHeader.name, false).catch(err => {
+            console.error(`Error fetching section progress for ${sectionHeader.name}:`, err);
+          });
         } else {
           console.warn(`Section header not found for ID ${headerNumber}`);
           setCategoryDetails({
@@ -255,6 +257,27 @@ export default function TopicsPage() {
           }
 
           setCategoryDetails(formattedDetails);
+
+          // After setting category details, fetch progress data for all categories
+          setTimeout(async () => {
+            if (formattedDetails.subtopics) {
+              console.log('Fetching progress data for newly loaded categories');
+              const categoryIds: number[] = [];
+
+              Object.values(formattedDetails.subtopics).forEach((item: any) => {
+                if (item.categoryId) {
+                  categoryIds.push(item.categoryId);
+                }
+              });
+
+              // Fetch progress for each category in parallel
+              if (categoryIds.length > 0) {
+                console.log(`Fetching progress for ${categoryIds.length} categories`);
+                const categoryPromises = categoryIds.map(categoryId => fetchCategoryProgress(categoryId, true));
+                await Promise.all(categoryPromises);
+              }
+            }
+          }, 500);
         } catch (error) {
           console.error(`Error fetching topic details for ${numericId}:`, error);
           setCategoryDetails({
@@ -279,6 +302,27 @@ export default function TopicsPage() {
         console.log(`Successfully loaded details for category ${categoryId}`);
         console.log('topics/page - Category details:', data);
         setCategoryDetails(data);
+
+        // After setting category details, fetch progress data for all categories
+        setTimeout(async () => {
+          if (data.subtopics) {
+            console.log('Fetching progress data for newly loaded categories');
+            const categoryIds: number[] = [];
+
+            Object.values(data.subtopics).forEach((item: any) => {
+              if (item.categoryId) {
+                categoryIds.push(item.categoryId);
+              }
+            });
+
+            // Fetch progress for each category in parallel
+            if (categoryIds.length > 0) {
+              console.log(`Fetching progress for ${categoryIds.length} categories`);
+              const categoryPromises = categoryIds.map(categoryId => fetchCategoryProgress(categoryId, true));
+              await Promise.all(categoryPromises);
+            }
+          }
+        }, 500);
       }
     } catch (error) {
       console.error(`Error loading details for category ${categoryId}:`, error);
@@ -301,6 +345,85 @@ export default function TopicsPage() {
       preloadSubtopicProgressForDomain(selectedTopic);
     }
   }, [selectedTopic]);
+
+  // Function to fetch progress for a section
+  const fetchSectionProgress = async (sectionName: string, forceRefresh: boolean = false) => {
+    try {
+      // Add cache-busting parameter if forceRefresh is true
+      const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
+      const response = await fetch(`/api/user/progress/section-progress?domain=${selectedTopic}&section=${encodeURIComponent(sectionName)}${cacheBuster}`, {
+        headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+      });
+
+      if (!response.ok) {
+        // If we get a 404, it means the section doesn't exist or has no content yet
+        if (response.status === 404) {
+          console.log(`No content found for section ${sectionName}`);
+          return {
+            progress: 0,
+            completed: 0,
+            total: 0,
+            subtopicsCompleted: 0,
+            partiallyCompletedSubtopics: 0,
+            totalSubtopics: 0
+          };
+        }
+
+        // For other errors, try to get the error message from the response
+        try {
+          const errorData = await response.json();
+          console.error(`Failed to fetch section progress data: ${response.status}`, errorData.error || 'Unknown error');
+        } catch (jsonError) {
+          // If we can't parse JSON, fall back to text
+          const errorText = await response.text();
+          console.error(`Failed to fetch section progress data: ${response.status}`, errorText);
+        }
+
+        // Return default values regardless of error
+        return {
+          progress: 0,
+          completed: 0,
+          total: 0,
+          subtopicsCompleted: 0,
+          partiallyCompletedSubtopics: 0,
+          totalSubtopics: 0
+        };
+      }
+
+      const data = await response.json();
+      console.log(`Fetched progress for section ${sectionName}:`, data);
+
+      const progressData = {
+        progress: data.completionPercentage || 0,
+        completed: data.questionsCompleted || 0,
+        total: data.totalQuestions || 0,
+        subtopicsCompleted: data.subtopicsCompleted || 0,
+        partiallyCompletedSubtopics: data.partiallyCompletedSubtopics || 0,
+        totalSubtopics: data.totalSubtopics || 0
+      };
+
+      console.log(`Section ${sectionName} progress: ${progressData.subtopicsCompleted} completed, ${progressData.partiallyCompletedSubtopics} partially completed out of ${progressData.totalSubtopics} subtopics (${progressData.progress}%)`);
+
+      // Update the section progress state
+      setSectionProgress(prev => ({
+        ...prev,
+        [sectionName]: progressData
+      }));
+
+      return progressData;
+    } catch (error) {
+      console.error(`Failed to fetch progress for section ${sectionName}:`, error);
+      // Return default values on error
+      return {
+        progress: 0,
+        completed: 0,
+        total: 0,
+        subtopicsCompleted: 0,
+        partiallyCompletedSubtopics: 0,
+        totalSubtopics: 0
+      };
+    }
+  };
 
   // Function to preload subtopic progress data for a domain
   const preloadSubtopicProgressForDomain = async (domain: string) => {
@@ -388,6 +511,10 @@ export default function TopicsPage() {
         console.log(`Fetching progress for all subtopics in section ${sectionName} (batch request)`);
 
         try {
+          // First, fetch section progress
+          await fetchSectionProgress(sectionName, forceRefresh);
+
+          // Then, fetch progress for all subtopics in this section
           const response = await fetch(`/api/user/progress/domain-subtopics?domain=${selectedTopic}&section=${encodeURIComponent(sectionName)}&_t=${Date.now()}`, {
             headers: { 'Cache-Control': 'no-cache' }
           });
@@ -426,15 +553,13 @@ export default function TopicsPage() {
         }
       }
 
-      // Fallback: Fetch progress for each category individually
-      for (const categoryId of categoryIds) {
-        await fetchCategoryProgress(categoryId, forceRefresh);
-      }
+      // Fetch progress for each category in parallel
+      const categoryPromises = categoryIds.map(categoryId => fetchCategoryProgress(categoryId, forceRefresh));
+      await Promise.all(categoryPromises);
 
-      // Fallback: Fetch progress for each subtopic individually
-      for (const subtopicId of subtopicIds) {
-        await fetchSubtopicProgressData(subtopicId, forceRefresh);
-      }
+      // Fetch progress for each subtopic in parallel
+      const subtopicPromises = subtopicIds.map(subtopicId => fetchSubtopicProgressData(subtopicId, forceRefresh));
+      await Promise.all(subtopicPromises);
     };
 
     // Initial load of progress data
@@ -470,13 +595,23 @@ export default function TopicsPage() {
 
 
 
-  // State to track progress for each category and subtopic
+  // State to track progress for each category, subtopic, and section
   const [categoryProgress, setCategoryProgress] = useState<Record<string, { progress: number, completed: number, total: number }>>({});
   const [subtopicProgress, setSubtopicProgress] = useState<Record<string, { progress: number, completed: number, total: number, categoriesCompleted: number, totalCategories: number }>>({});
+  const [sectionProgress, setSectionProgress] = useState<Record<string, {
+    progress: number,
+    completed: number,
+    total: number,
+    subtopicsCompleted: number,
+    partiallyCompletedSubtopics: number,
+    totalSubtopics: number
+  }>>({});
 
   // Function to fetch progress for a category
   const fetchCategoryProgress = async (categoryId: number, forceRefresh: boolean = false) => {
     try {
+      console.log(`Fetching progress for category ${categoryId} (forceRefresh: ${forceRefresh})`);
+
       // Add cache-busting parameter if forceRefresh is true
       const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
       const response = await fetch(`/api/user/progress/category?categoryId=${categoryId}${cacheBuster}`, {
@@ -484,6 +619,8 @@ export default function TopicsPage() {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Failed to fetch category progress data: ${response.status}`, errorText);
         throw new Error(`Failed to fetch category progress data: ${response.status}`);
       }
       const data = await response.json();
@@ -634,6 +771,7 @@ export default function TopicsPage() {
     if (categoryDetails && categoryDetails.subtopics) {
       // First, find which subtopic this category belongs to
       let parentSubtopicId: number | null = null;
+      let sectionName: string | null = null;
 
       // Look through all subtopics to find the one containing this category
       Object.values(categoryDetails.subtopics).forEach((item: any) => {
@@ -645,10 +783,21 @@ export default function TopicsPage() {
         }
       });
 
+      // Get the section name from category details
+      if (categoryDetails.label) {
+        sectionName = categoryDetails.label;
+      }
+
       // If we found a parent subtopic, update its progress
       if (parentSubtopicId) {
         console.log(`Updating progress for parent subtopic ${parentSubtopicId}`);
         await fetchSubtopicProgressData(parentSubtopicId, true); // Force refresh
+
+        // If we have a section name, update the section progress too
+        if (sectionName) {
+          console.log(`Updating progress for section ${sectionName}`);
+          await fetchSectionProgress(sectionName, true); // Force refresh
+        }
       } else {
         console.log(`No parent subtopic found for category ${categoryId}`);
 
@@ -663,6 +812,12 @@ export default function TopicsPage() {
         // Update progress for each subtopic with force refresh
         for (const subtopicId of subtopicIds) {
           await fetchSubtopicProgressData(subtopicId, true);
+        }
+
+        // If we have a section name, update the section progress too
+        if (sectionName) {
+          console.log(`Updating progress for section ${sectionName}`);
+          await fetchSectionProgress(sectionName, true); // Force refresh
         }
       }
     }
@@ -700,14 +855,18 @@ export default function TopicsPage() {
                 }
               });
 
-              // Fetch progress for each category
-              for (const catId of categoryIds) {
-                await fetchCategoryProgress(catId, true);
-              }
+              // Fetch progress for all categories in parallel
+              const categoryPromises = categoryIds.map(catId => fetchCategoryProgress(catId, true));
+              await Promise.all(categoryPromises);
 
-              // Fetch progress for each subtopic
-              for (const subtopicId of subtopicIds) {
-                await fetchSubtopicProgressData(subtopicId, true);
+              // Fetch progress for all subtopics in parallel
+              const subtopicPromises = subtopicIds.map(subtopicId => fetchSubtopicProgressData(subtopicId, true));
+              await Promise.all(subtopicPromises);
+
+              // If we have a section name, update the section progress too
+              if (categoryDetails.label) {
+                console.log(`Updating progress for section ${categoryDetails.label}`);
+                await fetchSectionProgress(categoryDetails.label, true); // Force refresh
               }
             }
           }, 1000);
@@ -909,7 +1068,10 @@ export default function TopicsPage() {
                                     categoryId,
                                     subtopicId,
                                     topicId,
-                                    hasProgress: topicId ? !!subtopicProgress[topicId] : false
+                                    hasProgress: topicId ? !!subtopicProgress[topicId] : false,
+                                    categoryProgressAvailable: categoryId ? !!categoryProgress[categoryId] : false,
+                                    categoryProgressValue: categoryId ? categoryProgress[categoryId]?.progress : 'N/A',
+                                    subtopicProgressValue: topicId ? subtopicProgress[topicId]?.progress : 'N/A'
                                   });
 
                                   // Category progress takes precedence
@@ -1028,6 +1190,12 @@ export default function TopicsPage() {
                                   const categoryId = typedListItem.categoryId;
                                   const subtopicId = typedListItem.subtopicId;
                                   const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+                                  const isSection = itemId.startsWith('header-');
+
+                                  // Section progress for header items
+                                  if (isSection && typedListItem.label && sectionProgress[typedListItem.label]) {
+                                    return sectionProgress[typedListItem.label].progress;
+                                  }
 
                                   // Category progress takes precedence
                                   if (categoryId && categoryProgress[categoryId]) {
@@ -1048,9 +1216,17 @@ export default function TopicsPage() {
                                   return 0;
                                 })()}
                                 completed={(() => {
+                                  const itemId = typedListItem.id || 'no-id';
+                                  const itemLabel = typedListItem.label || 'no-label';
                                   const categoryId = typedListItem.categoryId;
                                   const subtopicId = typedListItem.subtopicId;
                                   const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+                                  const isSection = itemId.startsWith('header-');
+
+                                  // Section progress for header items
+                                  if (isSection && typedListItem.label && sectionProgress[typedListItem.label]) {
+                                    return sectionProgress[typedListItem.label].completed;
+                                  }
 
                                   // Category progress takes precedence
                                   if (categoryId && categoryProgress[categoryId]) {
@@ -1071,9 +1247,17 @@ export default function TopicsPage() {
                                   return 0;
                                 })()}
                                 total={(() => {
+                                  const itemId = typedListItem.id || 'no-id';
+                                  const itemLabel = typedListItem.label || 'no-label';
                                   const categoryId = typedListItem.categoryId;
                                   const subtopicId = typedListItem.subtopicId;
                                   const topicId = typedListItem.id?.startsWith('topic-') ? typedListItem.id.replace('topic-', '') : null;
+                                  const isSection = itemId.startsWith('header-');
+
+                                  // Section progress for header items
+                                  if (isSection && typedListItem.label && sectionProgress[typedListItem.label]) {
+                                    return sectionProgress[typedListItem.label].total;
+                                  }
 
                                   // Category progress takes precedence
                                   if (categoryId && categoryProgress[categoryId]) {
