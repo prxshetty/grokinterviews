@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const { data: categories, error: categoriesError } = await supabaseServer
       .from('categories')
       .select('id')
-      .eq('subtopic_id', subtopicId);
+      .eq('topic_id', subtopicId);
 
     if (categoriesError) {
       console.error('Error fetching categories:', categoriesError);
@@ -55,14 +55,7 @@ export async function GET(request: NextRequest) {
 
     if (totalCategories === 0) {
       console.log(`No categories found for subtopic ${subtopicId}`);
-      return NextResponse.json({
-        categoriesCompleted: 0,
-        totalCategories: 0,
-        questionsCompleted: 0,
-        totalQuestions: 0,
-        completionPercentage: 0,
-        timestamp: Date.now()
-      });
+      return NextResponse.json({ error: 'No categories found for this subtopic' }, { status: 404 });
     }
 
     console.log(`Found ${totalCategories} categories for subtopic ${subtopicId}:`, categoryIds);
@@ -82,14 +75,7 @@ export async function GET(request: NextRequest) {
 
     if (totalQuestions === 0) {
       console.log(`No questions found for subtopic ${subtopicId}`);
-      return NextResponse.json({
-        categoriesCompleted: 0,
-        totalCategories,
-        questionsCompleted: 0,
-        totalQuestions: 0,
-        completionPercentage: 0,
-        timestamp: Date.now()
-      });
+      return NextResponse.json({ error: 'No questions found for this subtopic' }, { status: 404 });
     }
 
     console.log(`Found ${totalQuestions} questions for subtopic ${subtopicId}`);
@@ -150,9 +136,9 @@ export async function GET(request: NextRequest) {
       // If all questions are completed, increment the counter
       if (categoryCompletedCount === categoryQuestions.length) {
         categoriesCompleted++;
-        console.log(`Category ${categoryId} is fully completed (${categoryCompletedCount}/${categoryQuestions.length})`);
+        // Category is fully completed
       } else {
-        console.log(`Category ${categoryId} is partially completed (${categoryCompletedCount}/${categoryQuestions.length})`);
+        // Category is partially completed
       }
     }
 
@@ -160,22 +146,22 @@ export async function GET(request: NextRequest) {
     let completionPercentage = 0;
 
     if (totalCategories > 0) {
-      // Calculate progress based on the number of completed categories
-      // This makes the progress bar reflect category completion rather than individual questions
+      // For other subtopics, calculate progress based on the number of completed categories
       completionPercentage = Math.round((categoriesCompleted / totalCategories) * 100);
-      console.log(`Subtopic ${subtopicId} category-based progress: ${categoriesCompleted}/${totalCategories} = ${completionPercentage}%`);
+      // Calculate progress based on completed categories
 
       // If all categories are completed, ensure it shows 100%
       if (categoriesCompleted === totalCategories) {
         completionPercentage = 100;
-        console.log(`All categories in subtopic ${subtopicId} are completed, setting progress to 100%`);
+        // All categories are completed
       }
     } else if (totalQuestions > 0) {
       // Fallback to question-based progress if no categories are defined
       completionPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
-      console.log(`No categories found, using question-based progress: ${questionsCompleted}/${totalQuestions} = ${completionPercentage}%`);
+      // Using question-based progress as fallback
     }
 
+    // Log a summary instead of detailed information
     console.log(`Subtopic ${subtopicId} progress: ${questionsCompleted}/${totalQuestions} questions, ${categoriesCompleted}/${totalCategories} categories, ${completionPercentage}% complete`);
 
     return NextResponse.json({

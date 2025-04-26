@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { BookmarkButton } from './BookmarkButton';
 import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted } from '@/app/utils/progress';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Define QuestionType locally based on usage in topics/page.tsx
 type QuestionType = {
@@ -21,6 +22,9 @@ interface QuestionWithAnswerProps {
 }
 
 export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnswerProps) {
+  // Initialize Supabase client
+  const supabase = createClientComponentClient();
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAnswer, setGeneratedAnswer] = useState<string | null>(null);
@@ -186,12 +190,57 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
                   console.error('Error refreshing category progress:', err);
                 });
 
-                // Also refresh subtopic progress if we have a subtopic ID
-                const subtopicId = new URLSearchParams(window.location.search).get('subtopicId');
+                // Get the topic_id (subtopic) from the URL or use a default
+                let subtopicId = new URLSearchParams(window.location.search).get('subtopicId');
+
+                // Also fetch the category's topic_id to update that subtopic's progress
+                supabase
+                  .from('categories')
+                  .select('topic_id')
+                  .eq('id', question.category_id)
+                  .single()
+                  .then(({ data: categoryData, error: categoryError }) => {
+                    if (categoryError) {
+                      console.error(`Error fetching topic_id for category ${question.category_id}:`, categoryError);
+                    } else {
+                      console.log(`Category data for ${question.category_id}:`, categoryData);
+                      if (categoryData?.topic_id) {
+                        console.log(`Category ${question.category_id} belongs to topic/subtopic ${categoryData.topic_id}`);
+
+                      // If we found a topic_id, refresh its progress too
+                      setTimeout(() => {
+                        console.log(`Refreshing progress for category's topic/subtopic ${categoryData.topic_id}`);
+                        fetch(`/api/user/progress/subtopic-progress?subtopicId=${categoryData.topic_id}&_t=${Date.now()}`, {
+                          method: 'GET',
+                          headers: {
+                            'Cache-Control': 'no-cache',
+                          },
+                        }).then(response => response.json())
+                          .then(data => {
+                            console.log(`Forced refresh of topic/subtopic ${categoryData.topic_id} progress:`, data);
+                            // Dispatch an event to notify components that subtopic progress has been updated
+                            window.dispatchEvent(new CustomEvent('subtopicProgressUpdated', {
+                              detail: {
+                                subtopicId: categoryData.topic_id,
+                                progress: data,
+                                timestamp: Date.now()
+                              }
+                            }));
+                          }).catch(err => {
+                            console.error(`Error refreshing topic/subtopic ${categoryData.topic_id} progress:`, err);
+                          });
+                      }, 1000);
+                      }
+                    }
+                  })
+                  .catch(error => {
+                    console.error(`Error getting topic_id for category ${question.category_id}:`, error);
+                  });
                 if (subtopicId) {
                   console.log(`Will refresh progress for subtopic ${subtopicId} after delay`);
 
                   // Add a delay to ensure the database has been updated with the category completion
+                  // Use a longer delay to ensure database updates are complete
                   setTimeout(() => {
                     console.log(`Refreshing progress for subtopic ${subtopicId} after delay`);
 
@@ -204,36 +253,173 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
                     }).then(response => response.json())
                       .then(debugData => {
                         console.log(`Debug data for subtopic ${subtopicId}:`, debugData);
+
+                        // Log detailed information about the subtopic progress
+                        if (debugData.statistics) {
+                          console.log(`Subtopic ${subtopicId} statistics:`, debugData.statistics);
+                          console.log(`Categories completed: ${debugData.statistics.categoriesCompleted}/${debugData.statistics.totalCategories}`);
+                          console.log(`Questions completed: ${debugData.statistics.questionsCompleted}/${debugData.statistics.totalQuestions}`);
+                        }
+
+                        // After getting debug data, refresh the actual progress with another delay
+                        setTimeout(() => {
+                          // Then refresh the actual progress
+                          fetch(`/api/user/progress/subtopic-progress?subtopicId=${subtopicId}&_t=${Date.now()}`, {
+                            method: 'GET',
+                            headers: {
+                              'Cache-Control': 'no-cache',
+                            },
+                          }).then(response => {
+                            if (!response.ok) {
+                              throw new Error(`Failed to refresh subtopic progress: ${response.status}`);
+                            }
+                            return response.json();
+                          }).then(data => {
+                            console.log(`Forced refresh of subtopic ${subtopicId} progress:`, data);
+                            // Dispatch an event to notify components that subtopic progress has been updated
+                            window.dispatchEvent(new CustomEvent('subtopicProgressUpdated', {
+                              detail: {
+                                subtopicId,
+                                progress: data,
+                                timestamp: Date.now()
+                              }
+                            }));
+
+                            // Get the domain and section name from the URL
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const domain = urlParams.get('domain') || 'ml'; // Default to 'ml' if not specified
+                            const sectionName = urlParams.get('section'); // Get the section name if available
+
+                            // Get the category data to find the section name if not in URL
+                            let effectiveSectionName = sectionName;
+                            if (!effectiveSectionName && question.category_id) {
+                              // Try to get the section name from the category data
+                              supabase
+                                .from('categories')
+                                .select('topic_id')
+                                .eq('id', question.category_id)
+                                .single()
+                                .then(({ data }) => {
+                                  if (data?.topic_id) {
+                                    // Now get the topic (subtopic) details to find its section_name
+                                    return supabase
+                                      .from('topics')
+                                      .select('section_name')
+                                      .eq('id', data.topic_id)
+                                      .single();
+                                  }
+                                  return { data: null };
+                                })
+                                .then(({ data }) => {
+                                  if (data?.section_name) {
+                                    console.log(`Found section name from category: ${data.section_name}`);
+                                    effectiveSectionName = data.section_name;
+
+                                    // Now refresh with the section name
+                                    refreshDomainProgress(domain, effectiveSectionName);
+
+                                    // Also refresh progress for all subtopics in this section
+                                    console.log(`Refreshing progress for all subtopics in section ${effectiveSectionName}`);
+                                    // Add a small delay to ensure the first request completes
+                                    setTimeout(() => {
+                                      // Use section parameter to get all subtopics in this section
+                                      fetch(`/api/user/progress/domain-subtopics?domain=${domain}&section=${encodeURIComponent(effectiveSectionName)}&_t=${Date.now()}`, {
+                                      method: 'GET',
+                                      headers: {
+                                        'Cache-Control': 'no-cache',
+                                      },
+                                    }).then(response => {
+                                      if (!response.ok) {
+                                        throw new Error(`Failed to refresh section subtopics progress: ${response.status}`);
+                                      }
+                                      return response.json();
+                                    }).then(data => {
+                                      console.log(`Received progress data for section ${effectiveSectionName}`);
+
+                                      if (data.subtopics && typeof data.subtopics === 'object') {
+                                        console.log(`Found ${Object.keys(data.subtopics).length} subtopics with progress data in section ${effectiveSectionName}`);
+
+                                        // Dispatch an event to notify components that all subtopic progress has been updated
+                                        window.dispatchEvent(new CustomEvent('domainSubtopicsProgressUpdated', {
+                                          detail: {
+                                            domain,
+                                            section: effectiveSectionName,
+                                            subtopics: data.subtopics,
+                                            timestamp: Date.now(),
+                                            // Include the question's category and topic information for better context
+                                            questionInfo: {
+                                              categoryId: question.category_id,
+                                              sectionName: effectiveSectionName
+                                            }
+                                          }
+                                        }));
+                                      } else {
+                                        console.log('No subtopics progress data found in API response');
+                                      }
+                                    }).catch(err => {
+                                      console.error('Error refreshing section subtopics progress:', err);
+                                    });
+                                    }, 500); // 500ms delay
+                                  }
+                                })
+                                .catch(err => {
+                                  console.error('Error getting section name:', err);
+                                });
+                            }
+
+                            // Function to refresh domain progress
+                            const refreshDomainProgress = (domain, sectionName) => {
+                              // Refresh progress for subtopics in this domain, filtered by section name if available
+                              console.log(`Refreshing progress for subtopics in domain ${domain}${sectionName ? ` for section ${sectionName}` : ''}`);
+                              fetch(`/api/user/progress/domain-subtopics?domain=${domain}${sectionName ? `&section=${encodeURIComponent(sectionName)}` : ''}&_t=${Date.now()}`, {
+                                method: 'GET',
+                                headers: {
+                                  'Cache-Control': 'no-cache',
+                                },
+                              }).then(response => {
+                                if (!response.ok) {
+                                  throw new Error(`Failed to refresh domain subtopics progress: ${response.status}`);
+                                }
+                                return response.json();
+                              }).then(data => {
+                                console.log(`Received progress data for domain ${domain}${sectionName ? ` and section ${sectionName}` : ''}`);
+
+                                if (data.subtopics && typeof data.subtopics === 'object') {
+                                  console.log(`Found ${Object.keys(data.subtopics).length} subtopics with progress data`);
+
+                                  // Dispatch an event to notify components that all subtopic progress has been updated
+                                  window.dispatchEvent(new CustomEvent('domainSubtopicsProgressUpdated', {
+                                    detail: {
+                                      domain,
+                                      section: sectionName, // Use consistent property name
+                                      subtopics: data.subtopics,
+                                      timestamp: Date.now(),
+                                      // Include the question's category and topic information for better context
+                                      questionInfo: {
+                                        categoryId: question.category_id,
+                                        sectionName: sectionName
+                                      }
+                                    }
+                                  }));
+                                } else {
+                                  console.log('No subtopics progress data found in API response');
+                                }
+                              }).catch(err => {
+                                console.error('Error refreshing domain subtopics progress:', err);
+                              });
+                            };
+
+                            // Call the refresh function with the initial section name
+                            refreshDomainProgress(domain, effectiveSectionName);
+                          }).catch(err => {
+                            console.error('Error refreshing subtopic progress:', err);
+                          });
+                        }, 500); // Additional delay before refreshing progress
                       })
                       .catch(err => {
                         console.error('Error fetching debug data:', err);
                       });
-
-                    // Then refresh the actual progress
-                    fetch(`/api/user/progress/subtopic-progress?subtopicId=${subtopicId}&_t=${Date.now()}`, {
-                      method: 'GET',
-                      headers: {
-                        'Cache-Control': 'no-cache',
-                      },
-                    }).then(response => {
-                      if (!response.ok) {
-                        throw new Error(`Failed to refresh subtopic progress: ${response.status}`);
-                      }
-                      return response.json();
-                    }).then(data => {
-                      console.log(`Forced refresh of subtopic ${subtopicId} progress:`, data);
-                      // Dispatch an event to notify components that subtopic progress has been updated
-                      window.dispatchEvent(new CustomEvent('subtopicProgressUpdated', {
-                        detail: {
-                          subtopicId,
-                          progress: data,
-                          timestamp: Date.now()
-                        }
-                      }));
-                    }).catch(err => {
-                      console.error('Error refreshing subtopic progress:', err);
-                    });
-                  }, 1000); // 1 second delay to ensure database updates are complete
+                  }, 1500); // 1.5 second delay to ensure database updates are complete
                 }
               } catch (fetchError) {
                 console.error('Error fetching progress:', fetchError);
