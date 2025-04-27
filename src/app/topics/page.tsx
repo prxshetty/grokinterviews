@@ -17,6 +17,16 @@ interface QuestionType {
   keywords?: string[];
   difficulty?: string;
   created_at?: string;
+  categories?: {
+    id: number;
+    name: string;
+    topic_id: number;
+    topics?: {
+      id: number;
+      name: string;
+      domain: string;
+    }
+  };
 }
 
 // Main topics with their corresponding colors
@@ -45,16 +55,90 @@ type TopicItem = {
   isGenerated?: boolean;
 };
 
+// Consolidate the duplicate ProgressData interface into one definition
+interface ProgressData {
+  progress: number;
+  completed: number;
+  total: number;
+  subtopicsCompleted?: number;
+  partiallyCompletedSubtopics?: number;
+  totalSubtopics?: number;
+}
 
+// Add domain-specific keyword suggestions
+const getDomainKeywords = (domain: string | null): string[] => {
+  if (!domain) return [];
+  
+  switch (domain) {
+    case 'ml':
+      return ['Machine Learning', 'Neural Networks', 'Deep Learning', 'Supervised', 'Unsupervised', 'Reinforcement', 'NLP', 'Computer Vision', 'Regression', 'Classification'];
+    case 'ai':
+      return ['AI Ethics', 'Generative AI', 'LLMs', 'Transformers', 'Prompt Engineering', 'RAG', 'Fine-tuning', 'Embeddings', 'Multimodal', 'AGI'];
+    case 'webdev':
+      return ['Frontend', 'Backend', 'JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Node.js', 'API', 'Performance'];
+    case 'system-design':
+      return ['Scalability', 'Microservices', 'Distributed Systems', 'Load Balancing', 'Caching', 'Database', 'API Design', 'Messaging', 'Fault Tolerance', 'Security'];
+    case 'dsa':
+      return ['Arrays', 'Linked Lists', 'Trees', 'Graphs', 'Sorting', 'Searching', 'Dynamic Programming', 'Recursion', 'Time Complexity', 'Space Complexity'];
+    default:
+      return ['Algorithms', 'Data Structures', 'Programming', 'Design Patterns', 'Databases', 'APIs', 'Machine Learning', 'Web Development'];
+  }
+};
 
-export default function TopicsPage() {
+// Add secondary domain-specific keywords that complement the main ones
+const getSecondaryDomainKeywords = (domain: string | null): string[] => {
+  if (!domain) return [];
+  
+  switch (domain) {
+    case 'ml':
+      return ['Clustering', 'Feature Engineering', 'Model Evaluation', 'Data Preprocessing', 'Ensemble Methods', 'Transfer Learning', 'Dimensionality Reduction', 'Overfitting', 'Hyperparameters', 'Bias-Variance'];
+    case 'ai':
+      return ['Inference', 'Agents', 'Knowledge Graphs', 'Vectorization', 'Tokens', 'Context Window', 'Semantic Search', 'Hallucination', 'Chain of Thought', 'Zero-shot'];
+    case 'webdev':
+      return ['Full Stack', 'Next.js', 'State Management', 'Responsive Design', 'Authentication', 'SEO', 'Web Security', 'REST', 'GraphQL', 'Accessibility'];
+    case 'system-design':
+      return ['High Availability', 'CAP Theorem', 'Eventual Consistency', 'Sharding', 'Replication', 'Rate Limiting', 'Circuit Breaking', 'System Requirements', 'Throughput', 'Latency'];
+    case 'dsa':
+      return ['Hash Tables', 'Stacks', 'Queues', 'Heaps', 'Binary Search', 'Breadth-First Search', 'Depth-First Search', 'Backtracking', 'Greedy Algorithms', 'Two Pointers'];
+    default:
+      return ['Frontend', 'Backend', 'Full Stack', 'Database', 'Cloud', 'DevOps', 'Testing', 'Security', 'Performance', 'UI/UX', 'Mobile', 'Accessibility'];
+  }
+};
+
+export default function Page({ params }: { params: { domain: string } }) {
+  const domain = decodeURIComponent(params.domain);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
   const [categoryDetails, setCategoryDetails] = useState<TopicItem | null>(null);
   const [loadingCategories, setLoadingCategories] = useState<boolean>(false);
   const [loadingSections, setLoadingSections] = useState<boolean>(false); // Add loading state specifically for sections
+  
+  // Add proper type for sectionProgressCache and sectionProgress states
+  const [sectionProgressCache, setSectionProgressCache] = useState<Record<string, ProgressData>>({});
+  const [sectionProgress, setSectionProgress] = useState<Record<string, ProgressData>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Define proper types for state variables
+  const [categoryProgress, setCategoryProgress] = useState<Record<string, ProgressData>>({});
+  const [categoryProgressCache, setCategoryProgressCache] = useState<Record<string, ProgressData>>({});
+  const [subtopicProgress, setSubtopicProgress] = useState<Record<string, { 
+    progress: number, 
+    completed: number, 
+    total: number, 
+    categoriesCompleted: number, 
+    totalCategories: number 
+  }>>({});
+
+  // Add state for keyword filtering
+  const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
+  const [keywordQuestions, setKeywordQuestions] = useState<QuestionType[]>([]);
+  const [loadingKeywordQuestions, setLoadingKeywordQuestions] = useState<boolean>(false);
+
+  // Add additional state for pagination
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalResults, setTotalResults] = useState<number>(0);
 
   const { topicData } = useTopicData();
 
@@ -180,7 +264,7 @@ export default function TopicsPage() {
           });
 
           // Fetch progress for this section
-          fetchSectionProgress(sectionHeader.name, false).catch(err => {
+          fetchSectionProgress(sectionHeader.name, selectedTopic || '').catch(err => {
             console.error(`Error fetching section progress for ${sectionHeader.name}:`, err);
           });
         } else {
@@ -367,40 +451,23 @@ export default function TopicsPage() {
   }, [selectedTopic]);
 
   // Function to fetch progress for a section
-  const fetchSectionProgress = async (sectionName: string, forceRefresh: boolean = false) => {
+  const fetchSectionProgress = async (sectionId: string, domain: string) => {
+    // Check if we already have this section's progress data in the cache
+    if (sectionId in sectionProgressCache) {
+      console.log(`Using cached progress data for section ${sectionId}`);
+      setSectionProgress(prevState => ({
+        ...prevState,
+        [sectionId]: sectionProgressCache[sectionId]
+      }));
+      return;
+    }
+
+    setLoadingSections(true);
     try {
-      // Add cache-busting parameter if forceRefresh is true
-      const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
-      const response = await fetch(`/api/user/progress/section-progress?domain=${selectedTopic}&section=${encodeURIComponent(sectionName)}${cacheBuster}`, {
-        headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
-      });
-
-      if (!response.ok) {
-        // If we get a 404, it means the section doesn't exist or has no content yet
-        if (response.status === 404) {
-          console.log(`No content found for section ${sectionName}`);
-          return {
-            progress: 0,
-            completed: 0,
-            total: 0,
-            subtopicsCompleted: 0,
-            partiallyCompletedSubtopics: 0,
-            totalSubtopics: 0
-          };
-        }
-
-        // For other errors, try to get the error message from the response
-        try {
-          const errorData = await response.json();
-          console.error(`Failed to fetch section progress data: ${response.status}`, errorData.error || 'Unknown error');
-        } catch (jsonError) {
-          // If we can't parse JSON, fall back to text
-          const errorText = await response.text();
-          console.error(`Failed to fetch section progress data: ${response.status}`, errorText);
-        }
-
-        // Return default values regardless of error
-        return {
+      const response = await fetch(`/api/user/progress/section?id=${sectionId}&domain=${encodeURIComponent(domain)}`);
+      if (response.status === 404) {
+        console.log(`No progress data found for section ${sectionId}`);
+        const defaultProgress: ProgressData = {
           progress: 0,
           completed: 0,
           total: 0,
@@ -408,40 +475,39 @@ export default function TopicsPage() {
           partiallyCompletedSubtopics: 0,
           totalSubtopics: 0
         };
+        
+        setSectionProgress(prevState => ({
+          ...prevState,
+          [sectionId]: defaultProgress
+        }));
+        
+        // Cache the default progress data
+        setSectionProgressCache(prevCache => ({
+          ...prevCache,
+          [sectionId]: defaultProgress
+        }));
+        
+        return;
       }
-
-      const data = await response.json();
-      console.log(`Fetched progress for section ${sectionName}:`, data);
-
-      const progressData = {
-        progress: data.completionPercentage || 0,
-        completed: data.questionsCompleted || 0,
-        total: data.totalQuestions || 0,
-        subtopicsCompleted: data.subtopicsCompleted || 0,
-        partiallyCompletedSubtopics: data.partiallyCompletedSubtopics || 0,
-        totalSubtopics: data.totalSubtopics || 0
-      };
-
-      console.log(`Section ${sectionName} progress: ${progressData.subtopicsCompleted} completed, ${progressData.partiallyCompletedSubtopics} partially completed out of ${progressData.totalSubtopics} subtopics (${progressData.progress}%)`);
-
-      // Update the section progress state
-      setSectionProgress(prev => ({
-        ...prev,
-        [sectionName]: progressData
+      
+      const progressData = await response.json();
+      console.log(`Progress data for section ${sectionId}:`, progressData);
+      
+      setSectionProgress(prevState => ({
+        ...prevState,
+        [sectionId]: progressData
       }));
-
-      return progressData;
+      
+      // Cache the fetched progress data
+      setSectionProgressCache(prevCache => ({
+        ...prevCache,
+        [sectionId]: progressData
+      }));
+      
     } catch (error) {
-      console.error(`Failed to fetch progress for section ${sectionName}:`, error);
-      // Return default values on error
-      return {
-        progress: 0,
-        completed: 0,
-        total: 0,
-        subtopicsCompleted: 0,
-        partiallyCompletedSubtopics: 0,
-        totalSubtopics: 0
-      };
+      console.error(`Error fetching progress for section ${sectionId}:`, error);
+    } finally {
+      setLoadingSections(false);
     }
   };
 
@@ -475,7 +541,13 @@ export default function TopicsPage() {
       console.log(`Received progress data for ${Object.keys(data.subtopics).length} subtopics in domain ${domain}`);
 
       // Update the subtopic progress state with the data from the API
-      const newSubtopicProgress = {};
+      const newSubtopicProgress: Record<string, {
+        progress: number, 
+        completed: number, 
+        total: number, 
+        categoriesCompleted: number, 
+        totalCategories: number 
+      }> = {};
 
       // Check if data.subtopics exists and is an object
       if (data.subtopics && typeof data.subtopics === 'object') {
@@ -529,7 +601,7 @@ export default function TopicsPage() {
 
         try {
           // First, fetch section progress
-          await fetchSectionProgress(sectionName, forceRefresh);
+          await fetchSectionProgress(sectionName, selectedTopic || '');
 
           // Then, fetch progress for all subtopics in this section
           const response = await fetch(`/api/user/progress/domain-subtopics?domain=${selectedTopic}&section=${encodeURIComponent(sectionName)}&_t=${Date.now()}`, {
@@ -612,26 +684,24 @@ export default function TopicsPage() {
 
 
 
-  // State to track progress for each category, subtopic, and section
-  const [categoryProgress, setCategoryProgress] = useState<Record<string, { progress: number, completed: number, total: number }>>({});
-  const [subtopicProgress, setSubtopicProgress] = useState<Record<string, { progress: number, completed: number, total: number, categoriesCompleted: number, totalCategories: number }>>({});
-  const [sectionProgress, setSectionProgress] = useState<Record<string, {
-    progress: number,
-    completed: number,
-    total: number,
-    subtopicsCompleted: number,
-    partiallyCompletedSubtopics: number,
-    totalSubtopics: number
-  }>>({});
-
   // Function to fetch progress for a category
-  const fetchCategoryProgress = async (categoryId: number, forceRefresh: boolean = false) => {
+  const fetchCategoryProgress = async (categoryId: string | number, forceRefresh = false) => {
+    const categoryIdStr = String(categoryId);
+    
+    if (!forceRefresh && categoryProgressCache[categoryIdStr]) {
+      console.log(`Using cached progress data for category ${categoryIdStr}`);
+      setCategoryProgress(prevState => ({
+        ...prevState,
+        [categoryIdStr]: categoryProgressCache[categoryIdStr]
+      }));
+      return categoryProgressCache[categoryIdStr];
+    }
     try {
-      console.log(`Fetching progress for category ${categoryId} (forceRefresh: ${forceRefresh})`);
+      console.log(`Fetching progress for category ${categoryIdStr} (forceRefresh: ${forceRefresh})`);
 
       // Add cache-busting parameter if forceRefresh is true
       const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
-      const response = await fetch(`/api/user/progress/category?categoryId=${categoryId}${cacheBuster}`, {
+      const response = await fetch(`/api/user/progress/category?categoryId=${categoryIdStr}${cacheBuster}`, {
         headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
       });
 
@@ -641,9 +711,9 @@ export default function TopicsPage() {
         throw new Error(`Failed to fetch category progress data: ${response.status}`);
       }
       const data = await response.json();
-      console.log(`Fetched progress for category ${categoryId}:`, data);
+      console.log(`Fetched progress for category ${categoryIdStr}:`, data);
 
-      const progressData = {
+      const progressData: ProgressData = {
         progress: data.completionPercentage || 0,
         completed: data.questionsCompleted || 0,
         total: data.totalQuestions || 0
@@ -652,12 +722,18 @@ export default function TopicsPage() {
       // Update the category progress state
       setCategoryProgress(prev => ({
         ...prev,
-        [categoryId]: progressData
+        [categoryIdStr]: progressData
+      }));
+
+      // Cache the fetched progress data
+      setCategoryProgressCache(prevCache => ({
+        ...prevCache,
+        [categoryIdStr]: progressData
       }));
 
       return progressData;
     } catch (error) {
-      console.error(`Failed to fetch progress for category ${categoryId}:`, error);
+      console.error(`Failed to fetch progress for category ${categoryIdStr}:`, error);
       return { progress: 0, completed: 0, total: 0 };
     }
   };
@@ -813,7 +889,7 @@ export default function TopicsPage() {
         // If we have a section name, update the section progress too
         if (sectionName) {
           console.log(`Updating progress for section ${sectionName}`);
-          await fetchSectionProgress(sectionName, true); // Force refresh
+          await fetchSectionProgress(sectionName, selectedTopic || ''); // Force refresh
         }
       } else {
         console.log(`No parent subtopic found for category ${categoryId}`);
@@ -834,7 +910,7 @@ export default function TopicsPage() {
         // If we have a section name, update the section progress too
         if (sectionName) {
           console.log(`Updating progress for section ${sectionName}`);
-          await fetchSectionProgress(sectionName, true); // Force refresh
+          await fetchSectionProgress(sectionName, selectedTopic || ''); // Force refresh
         }
       }
     }
@@ -883,7 +959,7 @@ export default function TopicsPage() {
               // If we have a section name, update the section progress too
               if (categoryDetails.label) {
                 console.log(`Updating progress for section ${categoryDetails.label}`);
-                await fetchSectionProgress(categoryDetails.label, true); // Force refresh
+                await fetchSectionProgress(categoryDetails.label, selectedTopic || ''); // Force refresh
               }
             }
           }, 1000);
@@ -1646,6 +1722,315 @@ export default function TopicsPage() {
     );
   };
 
+  // Add function to handle keyword selection
+  const handleKeywordSelect = async (keyword: string, page: number = 1) => {
+    try {
+      // If clicking the same keyword, toggle it off
+      if (selectedKeyword === keyword && page === 1) {
+        setSelectedKeyword(null);
+        setKeywordQuestions([]);
+        setCurrentPage(1);
+        setTotalPages(1);
+        setTotalResults(0);
+        return;
+      }
+
+      // If changing page for same keyword, don't reset the keyword selection
+      if (selectedKeyword !== keyword) {
+        setSelectedKeyword(keyword);
+      }
+      
+      setCurrentPage(page);
+      setLoadingKeywordQuestions(true);
+
+      // Call API to get questions by keyword and domain with pagination
+      const domain = selectedTopic || '';
+      const pageSize = 10; // Number of results per page
+      const response = await fetch(
+        `/api/questions/keywords?keyword=${encodeURIComponent(keyword)}&domain=${encodeURIComponent(domain)}&page=${page}&pageSize=${pageSize}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setKeywordQuestions(data.questions || []);
+      
+      // Update pagination state
+      if (data.pagination) {
+        setTotalPages(data.pagination.totalPages || 1);
+        setTotalResults(data.pagination.totalCount || 0);
+      } else {
+        setTotalPages(1);
+        setTotalResults(data.questions?.length || 0);
+      }
+    } catch (error) {
+      console.error(`Error fetching questions for keyword ${keyword}:`, error);
+      setKeywordQuestions([]);
+      setTotalPages(1);
+      setTotalResults(0);
+    } finally {
+      setLoadingKeywordQuestions(false);
+    }
+  };
+
+  // Add function to handle page changes
+  const handlePageChange = (newPage: number) => {
+    if (selectedKeyword && newPage >= 1 && newPage <= totalPages) {
+      handleKeywordSelect(selectedKeyword, newPage);
+    }
+  };
+
+  // Update the useEffect for topic changes to pass the current page
+  useEffect(() => {
+    // If we have a selected keyword, refresh results when topic changes
+    if (selectedKeyword) {
+      // Reset to page 1 when topic changes
+      setCurrentPage(1);
+      handleKeywordSelect(selectedKeyword, 1);
+    }
+  }, [selectedTopic]);
+
+  // Add a Pagination component to render the pagination controls
+  function Pagination({ 
+    currentPage, 
+    totalPages, 
+    onPageChange 
+  }: { 
+    currentPage: number; 
+    totalPages: number; 
+    onPageChange: (page: number) => void 
+  }) {
+    // Don't show pagination if there's only one page
+    if (totalPages <= 1) return null;
+    
+    // Calculate which page numbers to show (max 5)
+    let pageNumbers: number[] = [];
+    
+    if (totalPages <= 5) {
+      // If 5 or fewer pages, show all
+      pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+    } else {
+      // Always include first and last page
+      pageNumbers.push(1);
+      
+      // Show current page and neighbors if possible
+      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        pageNumbers.push(i);
+      }
+      
+      // Add ellipsis indication with special value
+      if (currentPage - 1 > 2) pageNumbers.splice(1, 0, -1);
+      if (currentPage + 1 < totalPages - 1) pageNumbers.push(-1);
+      
+      // Add the last page
+      pageNumbers.push(totalPages);
+    }
+    
+    return (
+      <div className="flex items-center justify-center mt-8 space-x-2">
+        {/* Previous button */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-3 py-1 rounded-md border ${
+            currentPage === 1 
+              ? 'text-gray-400 border-gray-200 cursor-not-allowed' 
+              : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        {/* Page numbers */}
+        {pageNumbers.map((page, index) => 
+          page === -1 ? (
+            // Ellipsis
+            <span key={`ellipsis-${index}`} className="px-3 py-1">...</span>
+          ) : (
+            // Page number button
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`px-3 py-1 rounded-md ${
+                currentPage === page
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {page}
+            </button>
+          )
+        )}
+        
+        {/* Next button */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-3 py-1 rounded-md border ${
+            currentPage === totalPages 
+              ? 'text-gray-400 border-gray-200 cursor-not-allowed' 
+              : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
+  // Update the renderKeywordQuestions function to include pagination
+  const renderKeywordQuestions = () => {
+    if (loadingKeywordQuestions) {
+      return (
+        <div className="w-full space-y-3 animate-fadeIn flex justify-center items-center py-12">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500 mr-3"></div>
+          <p className="text-sm text-gray-500">
+            Loading questions for "{selectedKeyword}"
+            {selectedTopic ? ` in ${mainTopics.find(t => t.id === selectedTopic)?.label || selectedTopic}` : ''}...
+          </p>
+        </div>
+      );
+    }
+
+    if (keywordQuestions.length === 0) {
+      return (
+        <div className="w-full animate-fadeIn">
+          <div className="p-6 bg-gray-100 dark:bg-gray-800 rounded">
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              No questions found for the keyword "{selectedKeyword}"
+              {selectedTopic ? ` in ${mainTopics.find(t => t.id === selectedTopic)?.label || selectedTopic}` : ''}.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Group questions by category with proper typing
+    const questionsByCategory: Record<string, { categoryName: string, questions: QuestionType[] }> = {};
+    
+    keywordQuestions.forEach(question => {
+      const categoryId = String(question.category_id);
+      const categoryName = 
+        question.categories?.name || 
+        `Category ${question.category_id}`;
+      
+      if (!questionsByCategory[categoryId]) {
+        questionsByCategory[categoryId] = {
+          categoryName,
+          questions: []
+        };
+      }
+      
+      questionsByCategory[categoryId].questions.push(question);
+    });
+
+    return (
+      <div className="w-full animate-fadeIn">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold">
+              Questions for keyword: <span className="text-blue-600 dark:text-blue-400">{selectedKeyword}</span>
+            </h2>
+            {selectedTopic && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Filtered to: {mainTopics.find(t => t.id === selectedTopic)?.label || selectedTopic}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => setSelectedKeyword(null)}
+            className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+            Clear
+          </button>
+        </div>
+
+        <div className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          {totalPages > 1 && (
+            <span>Page {currentPage} of {totalPages}</span>
+          )}
+        </div>
+
+        {Object.entries(questionsByCategory).map(([categoryId, { categoryName, questions }]) => (
+          <div key={categoryId} className="mb-8">
+            <div className="flex flex-col py-4 bg-gray-50 dark:bg-gray-800 mb-4 rounded-t-lg">
+              <div className="flex items-center">
+                <div className="w-16 text-gray-400 text-2xl font-light pl-4"></div>
+                <div className="flex-grow">
+                  <h3 className="font-medium">{categoryName}</h3>
+                </div>
+              </div>
+              <div className="ml-16 mr-8 mt-2">
+                <ProgressBar
+                  progress={(() => {
+                    if (categoryProgress[categoryId]) {
+                      return categoryProgress[categoryId].progress;
+                    }
+                    return 0;
+                  })()}
+                  completed={(() => {
+                    if (categoryProgress[categoryId]) {
+                      return categoryProgress[categoryId].completed;
+                    }
+                    return 0;
+                  })()}
+                  total={(() => {
+                    if (categoryProgress[categoryId]) {
+                      return categoryProgress[categoryId].total;
+                    }
+                    return 0;
+                  })()}
+                  height="md"
+                  showText={false}
+                />
+              </div>
+            </div>
+
+            <div className="pl-8 pr-8 pb-4 space-y-4">
+              {questions.length > 0 ? (
+                [...questions]
+                  .sort((a, b) => {
+                    const difficultyOrder = { 'beginner': 1, 'intermediate': 2, 'advanced': 3 };
+                    const aDifficulty = a.difficulty?.toLowerCase() || 'unspecified';
+                    const bDifficulty = b.difficulty?.toLowerCase() || 'unspecified';
+                    return (difficultyOrder[aDifficulty as keyof typeof difficultyOrder] || 4) -
+                           (difficultyOrder[bDifficulty as keyof typeof difficultyOrder] || 4);
+                  })
+                  .map((question: QuestionType, qIndex: number) => (
+                    <QuestionWithAnswer
+                      key={question.id || qIndex}
+                      question={question}
+                      questionIndex={qIndex}
+                    />
+                  ))
+              ) : (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  <p>No questions available for this category.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Add pagination at the bottom */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white dark:bg-black min-h-screen pt-4">
       {/* Component to save progress when navigating away */}
@@ -1659,12 +2044,12 @@ export default function TopicsPage() {
                 <ul className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-white/20 dark:bg-black/20 backdrop-blur-sm p-0.5 overflow-x-auto"
                   onMouseLeave={() => {
                     // Reset cursor to active tab position when mouse leaves
-                    const activeTabElement = document.querySelector(`[data-topic="${selectedTopic}"]`) as HTMLElement;
-                    if (activeTabElement) {
+                    const activeTopicElement = document.querySelector(`[data-topic="${selectedTopic}"]`) as HTMLElement;
+                    if (activeTopicElement) {
                       const cursor = document.querySelector('.nav-cursor') as HTMLElement;
                       if (cursor) {
-                        cursor.style.width = `${activeTabElement.getBoundingClientRect().width}px`;
-                        cursor.style.left = `${activeTabElement.offsetLeft}px`;
+                        cursor.style.width = `${activeTopicElement.getBoundingClientRect().width}px`;
+                        cursor.style.left = `${activeTopicElement.offsetLeft}px`;
                         cursor.style.opacity = '1';
                       }
                     }
@@ -1734,24 +2119,36 @@ export default function TopicsPage() {
               </div>
             </div>
 
-            {/* Popular Categories section - removed border-bottom */}
+            {/* Popular Categories section - make the tags interactive */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">Popular Categories</h3>
+              <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                {selectedTopic ? `Popular Keywords for ${mainTopics.find(t => t.id === selectedTopic)?.label || 'Selected Domain'}` : 'Popular Keywords'}
+              </h3>
               <div className="flex flex-wrap gap-2">
-                {['JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Node.js', 'Next.js', 'API Design', 'System Design', 'Algorithms'].map((tag, index) => (
+                {(selectedTopic ? getDomainKeywords(selectedTopic) : ['JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Node.js', 'Next.js', 'API Design', 'System Design', 'Algorithms']).map((tag) => (
                   <span
-                    key={index}
-                    className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600"
+                    key={tag}
+                    className={`px-3 py-1 ${
+                      selectedKeyword === tag 
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700' 
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    } text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors`}
+                    onClick={() => handleKeywordSelect(tag)}
                   >
                     {tag}
                   </span>
                 ))}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {['Frontend', 'Backend', 'Full Stack', 'Database', 'Cloud', 'DevOps', 'Testing', 'Security', 'Performance', 'UI/UX', 'Mobile', 'Accessibility'].map((tag, index) => (
+                {(selectedTopic ? getSecondaryDomainKeywords(selectedTopic) : ['Frontend', 'Backend', 'Full Stack', 'Database', 'Cloud', 'DevOps', 'Testing', 'Security', 'Performance', 'UI/UX', 'Mobile', 'Accessibility']).map((tag) => (
                   <span
-                    key={index}
-                    className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                    key={tag}
+                    className={`px-3 py-1 ${
+                      selectedKeyword === tag 
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700' 
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                    } text-xs rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors`}
+                    onClick={() => handleKeywordSelect(tag)}
                   >
                     {tag}
                   </span>
@@ -1761,7 +2158,12 @@ export default function TopicsPage() {
 
             {/* Content area - directly adjacent to Popular Categories without gap */}
             <div className="pt-0 pb-6">
-              {selectedTopic ? (
+              {/* If a keyword is selected, show keyword questions */}
+              {selectedKeyword ? (
+                <div className="p-4">
+                  {renderKeywordQuestions()}
+                </div>
+              ) : selectedTopic ? (
                 // Show improved topic tree when a topic is selected
                 <div className="mb-12">
                   {/* SimpleTopicTree component removed */}
@@ -1887,7 +2289,7 @@ export default function TopicsPage() {
 
               {/* Q&A Content Section */}
               <div className="space-y-3 mt-8 pt-8">
-                {!selectedCategory && selectedTopic && (
+                {!selectedCategory && selectedTopic && !selectedKeyword && (
                   <h1 className="text-4xl font-normal tracking-tight mb-8">
                     {mainTopics.find(topic => topic.id === selectedTopic)?.label || 'Selected Topic'}
                   </h1>
@@ -1898,8 +2300,6 @@ export default function TopicsPage() {
                   <p>Category Details Label: {categoryDetails?.label}</p>
                   <p>Topic Categories: {JSON.stringify(topicCategories.map(cat => ({ id: cat.id, label: cat.label })))}</p>
                 </div>
-
-
               </div>
             </div>
           </div>

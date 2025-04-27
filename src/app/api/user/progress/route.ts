@@ -265,101 +265,29 @@ export async function POST(request: NextRequest) {
     }
 
     const topicId = categoryData.topic_id;
-
-    // Check if a record already exists - get the most recent one
-    const { data: existingRecords, error: checkError } = await supabaseServer
-      .from('user_activity')
-      .select('id, status, created_at')
-      .eq('user_id', userId)
-      .eq('question_id', questionId)
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (checkError) {
-      console.error('Error checking existing record:', checkError);
-      return NextResponse.json({ error: 'Failed to check existing record' }, { status: 500 });
-    }
-
-    let result;
-    const existingRecord = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
-
-    if (existingRecord) {
-      // Update existing record
-      try {
-        result = await supabaseServer
-          .from('user_activity')
-          .update({
-            status,
-            activity_type: status === 'completed' ? 'question_completed' :
+    
+    // Determine activity type based on status
+    const activity_type = status === 'completed' ? 'question_completed' :
                          status === 'viewed' ? 'question_viewed' :
-                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
-            metadata: {
-              status,
-              timestamp: new Date().toISOString()
-            },
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingRecord.id);
-      } catch (updateError) {
-        console.error('Error updating record with updated_at:', updateError);
-        // Try again without updated_at if it fails
-        result = await supabaseServer
-          .from('user_activity')
-          .update({
-            status,
-            activity_type: status === 'completed' ? 'question_completed' :
-                         status === 'viewed' ? 'question_viewed' :
-                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
-            metadata: {
-              status,
-              timestamp: new Date().toISOString()
-            }
-          })
-          .eq('id', existingRecord.id);
-      }
-    } else {
-      // Insert new record with topic_id
-      try {
-        result = await supabaseServer
-          .from('user_activity')
-          .insert({
-            user_id: userId,
-            question_id: questionId,
-            topic_id: topicId,
-            category_id: questionData.category_id, // Also include category_id for completeness
-            status,
-            activity_type: status === 'completed' ? 'question_completed' :
-                         status === 'viewed' ? 'question_viewed' :
-                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
-            metadata: {
-              status,
-              timestamp: new Date().toISOString()
-            },
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-      } catch (insertError) {
-        console.error('Error inserting record with updated_at:', insertError);
-        // Try again without updated_at if it fails
-        result = await supabaseServer
-          .from('user_activity')
-          .insert({
-            user_id: userId,
-            question_id: questionId,
-            topic_id: topicId,
-            category_id: questionData.category_id,
-            status,
-            activity_type: status === 'completed' ? 'question_completed' :
-                         status === 'viewed' ? 'question_viewed' :
-                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity',
-            metadata: {
-              status,
-              timestamp: new Date().toISOString()
-            },
-            created_at: new Date().toISOString()
-          });
-      }
-    }
+                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity';
+                         
+    // Create metadata
+    const metadata = {
+      status,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Use the RPC function to update user progress
+    // This bypasses materialized view permission issues
+    const result = await supabaseServer.rpc('update_user_progress', {
+      p_user_id: userId,
+      p_question_id: questionId,
+      p_topic_id: topicId,
+      p_category_id: questionData.category_id,
+      p_status: status,
+      p_activity_type: activity_type,
+      p_metadata: metadata
+    });
 
     if (result.error) {
       console.error('Error updating user progress:', result.error);
@@ -367,68 +295,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Debug log to see the result
-    console.log('Progress updated successfully:', {
+    console.log('Progress updated successfully via RPC:', {
       userId,
       questionId,
       status,
       topicId,
-      categoryId: questionData.category_id,
-      isUpdate: !!existingRecord
+      categoryId: questionData.category_id
     });
 
-    // Also log this activity
-    try {
-      // First, check if the user_activity table exists and has the expected columns
-      const { error: tableCheckError } = await supabaseServer
-        .from('user_activity')
-        .select('id')
-        .limit(1);
+    // Get the domain for this topic (for logging purposes)
+    const { data: topicData, error: topicError } = await supabaseServer
+      .from('topics')
+      .select('domain')
+      .eq('id', topicId)
+      .single();
 
-      if (!tableCheckError) {
-        // Get the domain for this topic
-        const { data: topicData, error: topicError } = await supabaseServer
-          .from('topics')
-          .select('domain')
-          .eq('id', topicId)
-          .single();
-
-        if (topicError) {
-          console.error('Error fetching topic domain:', topicError);
-        }
-
-        // Table exists, try to insert activity with all required fields
-        const activityData = {
-          user_id: userId,
-          activity_type: status === 'completed' ? 'question_completed' : 'question_viewed',
-          topic_id: topicId,
-          category_id: questionData.category_id,
-          question_id: questionId,
-          domain: topicData?.domain || null,
-          metadata: {
-            status,
-            timestamp: new Date().toISOString()
-          },
-          created_at: new Date().toISOString()
-        };
-
-        console.log('Inserting activity with data:', activityData);
-
-        const activityResult = await supabaseServer
-          .from('user_activity')
-          .insert(activityData);
-
-        if (activityResult.error) {
-          console.error('Error logging activity:', activityResult.error);
-          // Continue anyway, this is not critical
-        } else {
-          console.log('Successfully logged activity with topic, category, and domain');
-        }
-      } else {
-        console.log('User activity table not available or not accessible');
-      }
-    } catch (activityError) {
-      console.error('Exception logging activity:', activityError);
-      // Continue anyway, activity logging is not critical
+    if (topicError) {
+      console.error('Error fetching topic domain:', topicError);
+      // Continue anyway, this is not critical
+    } else {
+      console.log('Topic domain:', topicData?.domain);
     }
 
     return NextResponse.json({ success: true });
