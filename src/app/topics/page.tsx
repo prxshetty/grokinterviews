@@ -34,7 +34,7 @@ const mainTopics = [
   { id: 'ml', label: 'Machine Learning', color: 'bg-blue-500' },
   { id: 'ai', label: 'Artificial Intelligence', color: 'bg-red-500' },
   { id: 'webdev', label: 'Web Development', color: 'bg-gray-300' },
-  { id: 'system-design', label: 'System Design', color: 'bg-yellow-300' },
+  { id: 'sdesign', label: 'System Design', color: 'bg-yellow-300' },
   { id: 'dsa', label: 'Data Structures & Algorithms', color: 'bg-green-500' }
 ];
 
@@ -76,7 +76,7 @@ const getDomainKeywords = (domain: string | null): string[] => {
       return ['AI Ethics', 'Generative AI', 'LLMs', 'Transformers', 'Prompt Engineering', 'RAG', 'Fine-tuning', 'Embeddings', 'Multimodal', 'AGI'];
     case 'webdev':
       return ['Frontend', 'Backend', 'JavaScript', 'React', 'CSS', 'HTML', 'TypeScript', 'Node.js', 'API', 'Performance'];
-    case 'system-design':
+    case 'sdesign':
       return ['Scalability', 'Microservices', 'Distributed Systems', 'Load Balancing', 'Caching', 'Database', 'API Design', 'Messaging', 'Fault Tolerance', 'Security'];
     case 'dsa':
       return ['Arrays', 'Linked Lists', 'Trees', 'Graphs', 'Sorting', 'Searching', 'Dynamic Programming', 'Recursion', 'Time Complexity', 'Space Complexity'];
@@ -96,7 +96,7 @@ const getSecondaryDomainKeywords = (domain: string | null): string[] => {
       return ['Inference', 'Agents', 'Knowledge Graphs', 'Vectorization', 'Tokens', 'Context Window', 'Semantic Search', 'Hallucination', 'Chain of Thought', 'Zero-shot'];
     case 'webdev':
       return ['Full Stack', 'Next.js', 'State Management', 'Responsive Design', 'Authentication', 'SEO', 'Web Security', 'REST', 'GraphQL', 'Accessibility'];
-    case 'system-design':
+    case 'sdesign':
       return ['High Availability', 'CAP Theorem', 'Eventual Consistency', 'Sharding', 'Replication', 'Rate Limiting', 'Circuit Breaking', 'System Requirements', 'Throughput', 'Latency'];
     case 'dsa':
       return ['Hash Tables', 'Stacks', 'Queues', 'Heaps', 'Binary Search', 'Breadth-First Search', 'Depth-First Search', 'Backtracking', 'Greedy Algorithms', 'Two Pointers'];
