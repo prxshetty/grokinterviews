@@ -6,3 +6,5 @@ export { Button, buttonVariants } from './button';
 export { DemoButton } from './demo-button';
 export { SimpleSlider } from './simple-slider';
 export { AnswerDepthSliderSimple } from './answer-depth-slider-simple';
+export { default as Pagination } from './Pagination';
+export { default as ProgressBar } from './ProgressBar';
