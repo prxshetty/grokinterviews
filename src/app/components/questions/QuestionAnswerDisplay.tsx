@@ -12,11 +12,11 @@ interface Content {
   youtube_video_id?: string;
 }
 
-interface ContentDisplayProps {
+interface QuestionAnswerDisplayProps {
   questionId: number | null;
 }
 
-export default function ContentDisplay({ questionId }: ContentDisplayProps) {
+export default function QuestionAnswerDisplay({ questionId }: QuestionAnswerDisplayProps) {
   const [content, setContent] = useState<Content[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

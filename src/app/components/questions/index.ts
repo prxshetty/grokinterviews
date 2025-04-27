@@ -1,5 +1,5 @@
 export * from './QuestionList';
-export * from './ContentDisplay'; // Assuming named export, adjust if default
+export { default as QuestionAnswerDisplay } from './QuestionAnswerDisplay';
 export * from './QuestionWithAnswer';
 export * from './BookmarkButton';
 export { default as ActivityTimeGrid } from './ActivityTimeGrid';
