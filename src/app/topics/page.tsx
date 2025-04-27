@@ -51,21 +51,41 @@ export default function TopicsPage() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [categoryDetails, setCategoryDetails] = useState<any>(null);
-  const [loadingCategoryDetails, setLoadingCategoryDetails] = useState(false);
+  const [categoryDetails, setCategoryDetails] = useState<TopicItem | null>(null);
+  const [loadingCategories, setLoadingCategories] = useState<boolean>(false);
+  const [loadingSections, setLoadingSections] = useState<boolean>(false); // Add loading state specifically for sections
 
 
   const { topicData } = useTopicData();
 
   const handleTopicClick = async (topicId: string) => {
-    setSelectedTopic(topicId);
-    setSelectedCategory(null); // Reset category selection when topic changes
-
-    // Load categories for this topic
-    if (selectedTopic !== topicId) {
-      await loadTopicCategories(topicId);
+    console.log('Topic clicked:', topicId);
+    
+    // Set loading states
+    setLoadingSections(true);
+    
+    // Reset selected category if clicking on already selected topic
+    if (selectedTopic === topicId) {
+      setSelectedTopic(null);
+      setSelectedCategory(null);
+      setCategoryDetails(null);
+      setTopicCategories([]);
+      setLoadingSections(false);
+      return;
     }
+    
+    // Set the selected topic and reset other states
+    setSelectedTopic(topicId);
+    setSelectedCategory(null);
+    setCategoryDetails(null);
+    
+    // Load topic categories
+    await loadTopicCategories(topicId);
+    
+    // Preload progress data for this domain
+    await preloadSubtopicProgressForDomain(topicId);
+    
+    setLoadingSections(false);
   };
 
   const loadTopicCategories = async (topicId: string) => {
@@ -118,7 +138,7 @@ export default function TopicsPage() {
       setSelectedTopic('ml');
     }
 
-    setLoadingCategoryDetails(true);
+    setLoadingSections(true); // Set loading state for sections
     try {
       // Ensure selectedTopic is not null
       const topicId = selectedTopic || 'ml';
@@ -171,7 +191,7 @@ export default function TopicsPage() {
           });
         }
 
-        setLoadingCategoryDetails(false);
+        setLoadingSections(false);
         return;
       }
 
@@ -286,7 +306,7 @@ export default function TopicsPage() {
           });
         }
 
-        setLoadingCategoryDetails(false);
+        setLoadingSections(false);
         return;
       }
 
@@ -328,7 +348,7 @@ export default function TopicsPage() {
       console.error(`Error loading details for category ${categoryId}:`, error);
       setCategoryDetails(null);
     } finally {
-      setLoadingCategoryDetails(false);
+      setLoadingSections(false);
     }
   };
 
@@ -427,27 +447,24 @@ export default function TopicsPage() {
 
   // Function to preload subtopic progress data for a domain
   const preloadSubtopicProgressForDomain = async (domain: string) => {
-    console.log(`Preloading subtopic progress data for domain: ${domain}`);
-
     try {
-      // Determine what kind of request to make based on the current state
+      // This prevents repeated unnecessary calls
+      console.log(`Fetching progress for subtopics in domain ${domain}`);
+      
+      // Set what type of requestParams to use based on selected states
       let requestParams = '';
-
-      if (selectedCategory) {
-        // If a category is selected, try to get its section name
-        if (categoryDetails && categoryDetails.label) {
-          console.log(`Using section name from selected category: ${categoryDetails.label}`);
-          requestParams = `&section=${encodeURIComponent(categoryDetails.label)}`;
-        }
-      } else if (selectedTopic) {
+      if (selectedTopic) {
         // If only a topic is selected (domain like 'ml', 'ai'), get only main topics
         console.log(`Using domain-level request for ${domain}`);
         requestParams = `&mainTopicsOnly=true`;
       }
 
       // Use the optimized endpoint to fetch progress for subtopics
-      const response = await fetch(`/api/user/progress/domain-subtopics?domain=${domain}${requestParams}&_t=${Date.now()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
+      const response = await fetch(`/api/user/progress/domain-subtopics?domain=${domain}${requestParams}`, {
+        headers: { 
+          // Use proper cache control to leverage browser caching
+          'Cache-Control': 'max-age=300' // Cache for 5 minutes
+        }
       });
 
       if (!response.ok) {
@@ -968,7 +985,7 @@ export default function TopicsPage() {
       return null;
     }
 
-    if (loadingCategoryDetails) {
+    if (loadingSections) {
       return (
         <div className="w-full space-y-3 animate-fadeIn flex justify-center items-center py-12">
           <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500 mr-3"></div>
@@ -1767,6 +1784,9 @@ export default function TopicsPage() {
                             categories={topicCategories}
                             onSelectCategory={handleCategorySelect}
                             topicId={selectedTopic} // Pass the selected topic ID
+                            domain={selectedTopic} // Pass the domain for section progress
+                            level="section" // Set the level to section for section headers
+                            isLoading={loadingSections} // Pass the loading state
                           />
                         ) : (
                           // Show only a minimalistic back button when a category is selected
