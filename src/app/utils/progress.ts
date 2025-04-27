@@ -284,3 +284,146 @@ export const fetchTopicProgress = async (topicId: number): Promise<{
     };
   }
 };
+
+/**
+ * Fetches progress data for a specific section
+ * @param domain The domain (e.g., 'ml', 'ai')
+ * @param sectionName The name of the section
+ * @param forceRefresh Whether to force a fresh fetch (bypass cache)
+ * @returns Promise resolving to section progress data
+ */
+export const fetchSectionProgress = async (
+  domain: string,
+  sectionName: string,
+  forceRefresh: boolean = false
+): Promise<{
+  subtopicsCompleted: number;
+  partiallyCompletedSubtopics?: number;
+  totalSubtopics: number;
+  questionsCompleted: number;
+  totalQuestions: number;
+  completionPercentage: number;
+}> => {
+  try {
+    console.log(`Fetching progress for section ${sectionName} in domain ${domain}${forceRefresh ? ' (forced refresh)' : ''}`);
+
+    // Try to get progress from the progress summary API first
+    try {
+      const summaryData = await fetchProgressSummary('section', 0, domain, sectionName, forceRefresh);
+      if (summaryData && typeof summaryData.completion_percentage === 'number') {
+        console.log(`Using progress summary data for section ${sectionName}:`, summaryData);
+        return {
+          subtopicsCompleted: summaryData.completed_children || 0,
+          partiallyCompletedSubtopics: summaryData.partially_completed_children || 0,
+          totalSubtopics: summaryData.total_children || 0,
+          questionsCompleted: summaryData.questions_completed || 0,
+          totalQuestions: summaryData.total_questions || 0,
+          completionPercentage: summaryData.completion_percentage
+        };
+      }
+    } catch (summaryError) {
+      console.warn(`Failed to fetch progress summary for section ${sectionName}:`, summaryError);
+      // Continue with the fallback approach
+    }
+
+    // Fallback to the section-progress API
+    // Add cache-busting parameter if forceRefresh is true
+    const cacheBuster = forceRefresh ? `&_t=${Date.now()}` : '';
+    const response = await fetch(
+      `/api/user/progress/section-progress?domain=${domain}&section=${encodeURIComponent(sectionName)}${cacheBuster}`,
+      { headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {} }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch section progress data: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log(`Progress data for section ${sectionName}:`, data);
+
+    // Ensure the completionPercentage is a number
+    if (data && typeof data.completionPercentage !== 'number') {
+      console.warn(`Invalid completionPercentage for section ${sectionName}:`, data.completionPercentage);
+      data.completionPercentage = 0;
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch progress data for section ${sectionName}:`, error);
+    return {
+      subtopicsCompleted: 0,
+      totalSubtopics: 0,
+      questionsCompleted: 0,
+      totalQuestions: 0,
+      completionPercentage: 0
+    };
+  }
+};
+
+/**
+ * Fetches progress data from the progress summary API
+ * @param entityType The type of entity ('domain', 'section', 'topic', 'category')
+ * @param entityId The ID of the entity (0 for domain and section)
+ * @param domain The domain (e.g., 'ml', 'ai')
+ * @param sectionName The name of the section (optional)
+ * @param forceRefresh Whether to force a fresh fetch (bypass cache)
+ * @returns Promise resolving to progress summary data
+ */
+export const fetchProgressSummary = async (
+  entityType: string,
+  entityId: number,
+  domain: string,
+  sectionName?: string,
+  forceRefresh: boolean = false
+): Promise<{
+  completion_percentage: number;
+  questions_completed: number;
+  total_questions: number;
+  completed_children: number;
+  partially_completed_children: number;
+  total_children: number;
+  timestamp: number;
+}> => {
+  try {
+    console.log(`Fetching progress summary for ${entityType} ${entityId} in domain ${domain}${sectionName ? `, section ${sectionName}` : ''}${forceRefresh ? ' (forced refresh)' : ''}`);
+
+    // Build the URL
+    let url = `/api/user/progress/summary?entityType=${entityType}&domain=${domain}`;
+
+    if (entityId > 0) {
+      url += `&entityId=${entityId}`;
+    }
+
+    if (sectionName) {
+      url += `&section=${encodeURIComponent(sectionName)}`;
+    }
+
+    // Add cache-busting parameter if forceRefresh is true
+    if (forceRefresh) {
+      url += `&_t=${Date.now()}`;
+    }
+
+    const response = await fetch(url, {
+      headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch progress summary data: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`Progress summary data for ${entityType} ${entityId}:`, data);
+
+    return data;
+  } catch (error) {
+    console.error(`Failed to fetch progress summary data for ${entityType} ${entityId}:`, error);
+    return {
+      completion_percentage: 0,
+      questions_completed: 0,
+      total_questions: 0,
+      completed_children: 0,
+      partially_completed_children: 0,
+      total_children: 0,
+      timestamp: Date.now()
+    };
+  }
+};

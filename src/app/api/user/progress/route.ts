@@ -6,8 +6,7 @@ import supabaseServer from '@/utils/supabase-server';
 // GET: Retrieve user progress statistics
 export async function GET(_request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies });
   let userId = null;
 
   // Get the user session using Supabase auth
@@ -203,8 +202,7 @@ export async function GET(_request: NextRequest) {
 // POST: Update user progress
 export async function POST(request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies });
   let userId = null;
 
   // Get the user session using Supabase auth

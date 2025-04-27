@@ -6,8 +6,7 @@ import supabaseServer from '@/utils/supabase-server';
 // GET: Retrieve progress data for a specific category
 export async function GET(request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies });
   let userId = null;
 
   // Get the user session using Supabase auth

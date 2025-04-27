@@ -405,8 +405,73 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`Calculated progress for ${Object.keys(subtopicProgress).length} subtopics in domain ${domain}`);
+
+    // If this is a section-specific request, calculate section progress
+    let sectionProgress = null;
+    if (sectionParam) {
+      // Calculate section progress based on subtopics
+      let completedSubtopics = 0;
+      let partiallyCompletedSubtopics = 0;
+      let totalQuestionsCompleted = 0;
+      let totalQuestionsCount = 0;
+
+      // Count completed and partially completed subtopics
+      Object.values(subtopicProgress).forEach((subtopic: any) => {
+        if (subtopic.completionPercentage === 100) {
+          completedSubtopics++;
+        } else if (subtopic.completionPercentage > 0) {
+          partiallyCompletedSubtopics++;
+        }
+
+        totalQuestionsCompleted += subtopic.questionsCompleted || 0;
+        totalQuestionsCount += subtopic.totalQuestions || 0;
+      });
+
+      // Calculate section completion percentage
+      let sectionCompletionPercentage = 0;
+      const totalSubtopics = Object.keys(subtopicProgress).length;
+
+      if (totalSubtopics > 0) {
+        // If at least one subtopic is completed, calculate percentage
+        if (completedSubtopics > 0) {
+          sectionCompletionPercentage = Math.round((completedSubtopics / totalSubtopics) * 100);
+
+          // Ensure it shows at least 25% if one subtopic is completed
+          if (completedSubtopics === 1 && sectionCompletionPercentage < 25) {
+            sectionCompletionPercentage = 25;
+          }
+        }
+        // If no subtopics are fully completed but some are partially completed
+        else if (partiallyCompletedSubtopics > 0) {
+          sectionCompletionPercentage = Math.round((partiallyCompletedSubtopics * 0.5 / totalSubtopics) * 100);
+
+          // Ensure it shows at least 15% if one subtopic is partially completed
+          if (partiallyCompletedSubtopics === 1 && sectionCompletionPercentage < 15) {
+            sectionCompletionPercentage = 15;
+          }
+        }
+
+        // If all subtopics are completed, ensure it shows 100%
+        if (completedSubtopics === totalSubtopics) {
+          sectionCompletionPercentage = 100;
+        }
+      }
+
+      sectionProgress = {
+        completionPercentage: sectionCompletionPercentage,
+        subtopicsCompleted: completedSubtopics,
+        partiallyCompletedSubtopics: partiallyCompletedSubtopics,
+        totalSubtopics: totalSubtopics,
+        questionsCompleted: totalQuestionsCompleted,
+        totalQuestions: totalQuestionsCount
+      };
+
+      console.log(`Section ${sectionParam} progress:`, sectionProgress);
+    }
+
     return NextResponse.json({
       subtopics: subtopicProgress,
+      sectionProgress: sectionProgress,
       timestamp: Date.now()
     });
 

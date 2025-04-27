@@ -228,28 +228,51 @@ export async function GET(request: NextRequest) {
     let completionPercentage = 0;
 
     if (totalSubtopics > 0) {
-      // Calculate progress based on fully and partially completed subtopics
-      // Fully completed subtopics count as 100%, partially completed as 50%
-      const weightedCompletionValue = subtopicsCompleted + (partiallyCompletedSubtopics * 0.5);
-      completionPercentage = Math.round((weightedCompletionValue / totalSubtopics) * 100);
+      // For sections, we want to show progress based on completed subtopics
+      // If at least one subtopic is completed, show 25% progress
+      if (subtopicsCompleted > 0) {
+        // Calculate progress based on completed subtopics
+        completionPercentage = Math.round((subtopicsCompleted / totalSubtopics) * 100);
 
-      // Ensure it shows at least 25% if one subtopic is completed or at least 15% if one is partially completed
-      if (subtopicsCompleted === 0 && partiallyCompletedSubtopics > 0 && completionPercentage < 15) {
-        completionPercentage = 15;
-      } else if (subtopicsCompleted === 1 && completionPercentage < 25) {
-        completionPercentage = 25;
+        // Ensure it shows at least 25% if one subtopic is completed
+        if (subtopicsCompleted === 1 && completionPercentage < 25) {
+          completionPercentage = 25;
+          console.log(`Adjusted completion percentage to 25% for section ${sectionName} with 1 completed subtopic`);
+        }
       }
+      // If no subtopics are fully completed but some are partially completed
+      else if (partiallyCompletedSubtopics > 0) {
+        // Calculate progress based on partially completed subtopics (count as 50%)
+        completionPercentage = Math.round((partiallyCompletedSubtopics * 0.5 / totalSubtopics) * 100);
 
+        // Ensure it shows at least 15% if one subtopic is partially completed
+        if (partiallyCompletedSubtopics === 1 && completionPercentage < 15) {
+          completionPercentage = 15;
+          console.log(`Adjusted completion percentage to 15% for section ${sectionName} with 1 partially completed subtopic`);
+        }
+      }
       // If no subtopics are completed or partially completed but some questions are, show some progress
-      if (completionPercentage === 0 && questionsCompleted > 0) {
+      else if (questionsCompleted > 0) {
         const questionBasedPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
         completionPercentage = Math.min(10, questionBasedPercentage);
+        console.log(`Using question-based percentage for section ${sectionName}: ${completionPercentage}%`);
       }
 
       // If all subtopics are completed, ensure it shows 100%
       if (subtopicsCompleted === totalSubtopics && totalSubtopics > 0) {
         completionPercentage = 100;
+        console.log(`All subtopics completed for section ${sectionName}, setting to 100%`);
       }
+
+      // Log the calculation details
+      console.log(`Section ${sectionName} progress calculation:`, {
+        subtopicsCompleted,
+        partiallyCompletedSubtopics,
+        totalSubtopics,
+        questionsCompleted,
+        totalQuestions,
+        completionPercentage
+      });
     }
 
     console.log(`Section ${sectionName} progress: ${subtopicsCompleted}/${totalSubtopics} subtopics, ${questionsCompleted}/${totalQuestions} questions, ${completionPercentage}% complete`);
