@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { TopicNavWrapper } from '../topic';
+import { TopicNav, TopicNavWrapper } from '../topic';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { motion } from 'framer-motion';
 import { LogOut, Moon, Sun, User, LayoutDashboard } from 'lucide-react';
@@ -165,7 +165,19 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
           {/* Center Navigation Links - with border */}
           <div className="flex items-center absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-1">
-            <Link href="/topics" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
+            <Link 
+              href="/topics" 
+              className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4"
+              onClick={(e) => {
+                // Reset any previously selected topic to ensure a clean state
+                if (pathname.startsWith('/topics/') && pathname !== '/topics') {
+                  e.preventDefault();
+                  router.push('/topics');
+                  // Reset navigation state via custom event
+                  window.dispatchEvent(new CustomEvent('resetNavigation'));
+                }
+              }}
+            >
               Topics
             </Link>
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
@@ -261,8 +273,21 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       {/* Spacer to prevent content from being hidden under fixed navbar */}
       <div className="h-12"></div>
 
-      {/* Topic Navigation - only shown on topic detail pages except the domain page */}
-      {isTopicDetailPage && !pathname.endsWith('/topics') && <TopicNavWrapper />}
+      {/* Show topics navigation on either the main /topics page or topic detail pages */}
+      {(pathname === '/topics' || (isTopicDetailPage && !pathname.endsWith('/topics'))) && (
+        <div className="topic-navigation w-full sticky top-12 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-md px-0 mt-0 border-b border-gray-200 dark:border-gray-800">
+          {pathname === '/topics' ? (
+            <div className="w-full">
+              <TopicNav 
+                onTopicSelect={(topicId) => router.push(`/topics/${topicId}`)}
+                selectedTopic={null}
+              />
+            </div>
+          ) : (
+            <TopicNavWrapper />
+          )}
+        </div>
+      )}
 
       {/* Main Content */}
       <main className={isTopicDetailPage ? "w-full px-8 py-8" : ""}>

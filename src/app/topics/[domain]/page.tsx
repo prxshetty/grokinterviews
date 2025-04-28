@@ -88,9 +88,21 @@ export default function Page() {
   
   // Update selectedTopic when domain changes
   useEffect(() => {
-    if (domain) {
+    if (domain && domain !== 'topics') {
       setSelectedTopic(domain);
       loadTopicCategories(domain);
+    } else {
+      // Reset to default state if we're at the topics landing page (not a specific domain)
+      setSelectedTopic(null);
+      setTopicCategories([]);
+      setCategoryDetails(null);
+      setSelectedCategory(null);
+      
+      // Also clear any filters 
+      setSelectedKeyword(null);
+      setKeywordQuestions([]);
+      setSelectedDifficulty(null);
+      setDifficultyQuestions([]);
     }
   }, [domain]);
   
@@ -314,6 +326,13 @@ export default function Page() {
   const handleDifficultySelect = async (difficulty: string, page: number = 1) => {
     console.log(`handleDifficultySelect called with difficulty: ${difficulty}, current domain: ${domain}, page: ${page}`);
     
+    // Validate domain first to prevent errors
+    const currentDomain = selectedTopic || domain;
+    if (!currentDomain || currentDomain === 'topics') {
+      console.error("No valid domain selected for difficulty filter");
+      return;
+    }
+    
     // If difficulty is empty string, treat it as null (clearing the filter)
     if (!difficulty) {
       setSelectedDifficulty(null);
@@ -352,10 +371,10 @@ export default function Page() {
         setCurrentPage(1);
       } else {
         // Otherwise fetch from API ensuring domain is always included
-        const currentDomain = selectedTopic || domain;
-        if (!currentDomain) {
-          console.error("No domain selected for difficulty filter");
+        if (!currentDomain || currentDomain === 'topics') {
+          console.error("No valid domain selected for difficulty filter");
           setDifficultyQuestions([]);
+          setLoadingDifficultyQuestions(false);
           return;
         }
         
@@ -427,8 +446,10 @@ export default function Page() {
   
   // Initialize and handle URL parameters
   useEffect(() => {
-    // If domain is provided and loaded, set it as selected topic
-    if (domain) {
+    // Only load topics if domain parameter is explicitly provided in URL
+    // and is not the special 'topics' value (which should just show the landing page)
+    if (domain && domain !== 'topics') {
+      console.log(`Loading topic data for domain: ${domain}`);
       setSelectedTopic(domain);
       loadTopicCategories(domain);
     
@@ -464,6 +485,10 @@ export default function Page() {
         setSelectedDifficulty(null);
         setDifficultyQuestions([]);
       }
+    } else if (domain === 'topics') {
+      // Special case for /topics - ensure no data is loaded
+      console.log('On main topics page, not loading any specific topic data');
+      setSelectedTopic(null);
     }
   }, [domain]); // Only re-run when domain changes
   
@@ -526,8 +551,8 @@ export default function Page() {
           <div className="p-0">
             {/* Navigation tabs removed - now only using TopicNavWrapper from MainNavigation */}
             
-            {/* Filters section - shown when a topic is selected */}
-            {(selectedTopic || selectedCategory) && (
+            {/* Filters section - only shown when a valid topic is explicitly selected */}
+            {selectedTopic && selectedTopic !== 'topics' && (
               <SidebarFilters
                 selectedTopic={selectedTopic}
                 selectedCategory={selectedCategory}
