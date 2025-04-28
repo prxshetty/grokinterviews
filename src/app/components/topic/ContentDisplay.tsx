@@ -275,28 +275,19 @@ export default function ContentDisplay({
     );
   }
   
-  // Default view when nothing is selected
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 mb-8 animate-fadeIn">
-      {mainTopics.map((topic) => (
-        <div
-          key={topic.id}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 dark:border-gray-700 cursor-pointer"
-          onClick={() => {
-            router.push(`/topics/${topic.id}`);
-          }}
-        >
-          <div className={`${topic.color} w-12 h-12 rounded-full mb-4 flex items-center justify-center`}>
-            <span className="text-white text-xl font-bold">{topic.label.charAt(0)}</span>
-          </div>
-          <h3 className="text-xl font-semibold mb-2">{topic.label}</h3>
-          <p className="text-gray-600 dark:text-gray-300 text-sm">
-            Explore {topic.label} concepts, algorithms, and practices.
-          </p>
-        </div>
-      ))}
-    </div>
-  );
+  // Specific fallback for when we're on the main /topics page
+  // This ensures we don't make any API calls or show loading states
+  if (!selectedTopic && pathname === '/topics') {
+    // Return empty div - navigation will be handled by TopicNavWrapper
+    return <div className="h-8"></div>;
+  }
+  
+  // Default view when nothing is selected - we're either on the main topics page or a 
+  // specific domain page but no topic is selected yet
+  if (!selectedTopic) {
+    // Return nothing - the topics page will handle this case with TopicNavWrapper
+    return null;
+  }
 }
 
 // Main topics with their corresponding colors - same as in page.tsx and TopicTabs.tsx

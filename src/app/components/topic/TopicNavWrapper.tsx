@@ -24,6 +24,15 @@ export default function TopicNavWrapper() {
     };
   }, []);
 
+  // Get the current domain from the URL path if available
+  useEffect(() => {
+    const pathParts = pathname.split('/');
+    if (pathParts.length >= 3 && pathParts[1] === 'topics' && pathParts[2]) {
+      const domain = pathParts[2];
+      setSelectedMainTopic(domain);
+    }
+  }, [pathname]);
+
   const handleTopicSelect = (topicId: string) => {
     console.log(`TopicNavWrapper - handleTopicSelect called with topicId: ${topicId}`);
 

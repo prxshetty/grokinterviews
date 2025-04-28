@@ -27,8 +27,8 @@ export default function DifficultyFilter({
   ];
   
   const handleDifficultyClick = (difficulty: string) => {
-    if (!selectedTopic) {
-      console.error("No topic selected for difficulty filter");
+    if (!selectedTopic || selectedTopic === 'topics') {
+      console.error("No valid topic selected for difficulty filter");
       return;
     }
     
@@ -46,7 +46,7 @@ export default function DifficultyFilter({
       params.set('difficulty', difficulty);
       params.set('page', '1'); // Always start at page 1 when changing difficulty
       // Always include domain parameter if available
-      if (!params.has('domain') && selectedTopic) {
+      if (!params.has('domain') && selectedTopic && selectedTopic !== 'topics') {
         params.set('domain', selectedTopic);
       }
       router.push(`${pathname}?${params.toString()}`);
@@ -67,14 +67,14 @@ export default function DifficultyFilter({
           <button
             key={difficulty.id}
             onClick={() => handleDifficultyClick(difficulty.id)}
-            disabled={isLoading || !selectedTopic}
-            title={!selectedTopic ? "Select a topic first" : ""}
+            disabled={isLoading || !selectedTopic || selectedTopic === 'topics'}
+            title={!selectedTopic || selectedTopic === 'topics' ? "Select a specific topic first" : ""}
             className={`px-3 py-1 text-xs font-medium rounded-full transition-colors
               ${selectedDifficulty === difficulty.id 
                 ? 'bg-black text-white dark:bg-white dark:text-black shadow-md border-2 border-gray-400 dark:border-gray-600' 
                 : 'bg-white text-black dark:bg-black dark:text-white border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'}
               ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-              ${!selectedTopic ? 'opacity-40 cursor-not-allowed' : ''}
+              ${!selectedTopic || selectedTopic === 'topics' ? 'opacity-40 cursor-not-allowed' : ''}
             `}
           >
             {difficulty.label}
@@ -88,6 +88,10 @@ export default function DifficultyFilter({
       ) : selectedDifficulty && !isLoading ? (
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
           Showing {selectedDifficulty} difficulty questions
+        </p>
+      ) : !selectedTopic || selectedTopic === 'topics' ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          Select a specific topic to use difficulty filters
         </p>
       ) : null}
     </div>

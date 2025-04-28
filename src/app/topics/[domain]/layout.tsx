@@ -1,5 +1,6 @@
 // This is a server component by default in Next.js App Router
 import React from 'react';
+import { notFound } from 'next/navigation';
 
 // Page-specific context provider for passing the domain safely
 export default async function DomainLayout({
@@ -13,6 +14,12 @@ export default async function DomainLayout({
   const unwrappedParams = await params;
   const domain = decodeURIComponent(unwrappedParams.domain);
   
+  // Domain validation - ensure only valid domains can be accessed
+  const validDomains = ['dsa', 'ml', 'webdev', 'ai', 'sdesign'];
+  if (!validDomains.includes(domain)) {
+    notFound();
+  }
+  
   return (
     <>
       {/* Pass the domain as a data attribute that client components can access */}
@@ -25,11 +32,12 @@ export default async function DomainLayout({
 
 // Generate static paths for common domains
 export function generateStaticParams() {
+  // Generate all domains except 'ml' to avoid it being the default
   return [
-    { domain: 'ml' },
     { domain: 'ai' },
     { domain: 'webdev' },
     { domain: 'sdesign' },
     { domain: 'dsa' },
+    { domain: 'ml' }, // ML stays in the list but isn't first
   ];
 } 

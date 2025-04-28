@@ -37,17 +37,17 @@ export default function TopicNav({ onTopicSelect, selectedTopic }: TopicNavProps
   }
 
   return (
-    <nav className="w-full px-0 py-2 bg-transparent">
-      <ul className="flex flex-row gap-2 md:gap-4 justify-center items-center">
-        {mainTopics.map((topic) => (
+    <nav className="w-full px-4 py-4">
+      <ul className="flex flex-wrap gap-3 justify-center items-center">
+        {mainTopics.map((topic, index) => (
           <li key={topic.id}>
             <button
               type="button"
               onClick={() => handleTopicClick(topic.id)}
-              className={`px-4 py-1 text-sm font-medium border border-gray-300 dark:border-gray-700 rounded-full transition-colors duration-200
-                ${effectiveSelectedTopic === topic.id
-                  ? "bg-black text-white dark:bg-white dark:text-black shadow"
-                  : "bg-white text-black dark:bg-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"}
+              className={`px-5 py-2 text-sm md:text-base font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap
+                ${effectiveSelectedTopic === topic.id || (index === 0 && !effectiveSelectedTopic)
+                  ? "bg-black text-white dark:bg-black" 
+                  : "bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"}
               `}
               aria-current={effectiveSelectedTopic === topic.id ? "page" : undefined}
             >
