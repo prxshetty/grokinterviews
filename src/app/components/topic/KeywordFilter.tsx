@@ -26,9 +26,6 @@ export default function KeywordFilter({
     
     // Update URL for deep linking
     if (selectedTopic) {
-      // Keep only path segments up to the domain
-      const baseUrl = pathname.split('/').slice(0, 3).join('/');
-      
       // Create a new URL with the keyword parameter
       const params = new URLSearchParams(searchParams);
       
@@ -42,8 +39,8 @@ export default function KeywordFilter({
         params.set('page', '1');
       }
       
-      // Build the new URL
-      const newUrl = `${baseUrl}/keyword?${params.toString()}`;
+      // Build the new URL - use the full pathname
+      const newUrl = `${pathname}?${params.toString()}`;
       router.push(newUrl);
     }
   };

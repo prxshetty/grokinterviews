@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
 import { Pagination } from '../ui';
@@ -117,9 +117,11 @@ export default function ContentDisplay({
           </div>
           <button
             onClick={() => {
-              // Reset difficulty filter in URL
-              const baseUrl = pathname.split('/').slice(0, 3).join('/');
-              router.push(baseUrl);
+              // Reset difficulty filter in URL but maintain other parameters
+              const params = new URLSearchParams(searchParams);
+              params.delete('difficulty');
+              const newUrl = `${pathname}?${params.toString()}`;
+              router.push(newUrl);
             }}
             className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
           >
@@ -170,9 +172,11 @@ export default function ContentDisplay({
           </div>
           <button
             onClick={() => {
-              // Reset keyword filter in URL
-              const baseUrl = pathname.split('/').slice(0, 3).join('/');
-              router.push(baseUrl);
+              // Reset keyword filter in URL but maintain other parameters
+              const params = new URLSearchParams(searchParams);
+              params.delete('q');
+              const newUrl = `${pathname}?${params.toString()}`;
+              router.push(newUrl);
             }}
             className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
           >
@@ -226,21 +230,27 @@ export default function ContentDisplay({
         
         {/* Main topic categories */}
         <div className="w-full">
-          {loadingCategories ? (
+          {loadingCategories || loadingSections ? (
             <div className="w-full text-center py-6">
               <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
               <p className="mt-2 text-sm text-gray-500">Loading categories...</p>
             </div>
           ) : (
             <div className="w-full">
-              <TopicCategoryGrid
-                categories={topicCategories}
-                onSelectCategory={onSelectCategory}
-                topicId={selectedTopic}
-                domain={selectedTopic}
-                level="section"
-                isLoading={loadingSections}
-              />
+              {topicCategories.length > 0 ? (
+                <TopicCategoryGrid
+                  categories={topicCategories}
+                  onSelectCategory={onSelectCategory}
+                  topicId={selectedTopic}
+                  domain={selectedTopic}
+                  level="section"
+                  isLoading={false}
+                />
+              ) : (
+                <div className="w-full text-center py-6">
+                  <p className="text-sm text-gray-500">No sections found for this topic.</p>
+                </div>
+              )}
             </div>
           )}
         </div>

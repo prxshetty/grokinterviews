@@ -261,8 +261,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       {/* Spacer to prevent content from being hidden under fixed navbar */}
       <div className="h-12"></div>
 
-      {/* Topic Navigation - only shown on topic detail pages */}
-      {isTopicDetailPage && <TopicNavWrapper />}
+      {/* Topic Navigation - only shown on topic detail pages except the domain page */}
+      {isTopicDetailPage && !pathname.endsWith('/topics') && <TopicNavWrapper />}
 
       {/* Main Content */}
       <main className={isTopicDetailPage ? "w-full px-8 py-8" : ""}>
