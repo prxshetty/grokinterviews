@@ -38,16 +38,16 @@ export default function DifficultyFilter({
       
       if (selectedDifficulty === difficulty) {
         // If clicking the same difficulty, clear it
-        params.delete('level');
+        params.delete('difficulty');
       } else {
         // Otherwise set the new difficulty
-        params.set('level', difficulty);
+        params.set('difficulty', difficulty);
         // Reset page to 1 when changing difficulty
         params.set('page', '1');
       }
       
       // Build the new URL
-      const newUrl = `${baseUrl}/difficulty?${params.toString()}`;
+      const newUrl = `${baseUrl}?${params.toString()}`;
       router.push(newUrl);
     }
   };

@@ -1,8 +1,7 @@
 'use client';
 
 import { KeywordFilter } from './index';
-import { DifficultyFilter } from './index';
-import { getDomainKeywords } from '@/app/utils/keywords';
+import { getDomainKeywords } from '@/app/utils';
 
 interface SidebarFiltersProps {
   selectedTopic: string | null;
@@ -31,26 +30,13 @@ export default function SidebarFilters({
 
   return (
     <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-      <div className="flex flex-wrap justify-between items-start">
-        <div className="w-1/2 pr-2">
-          <KeywordFilter 
-            selectedTopic={selectedTopic}
-            selectedKeyword={selectedKeyword}
-            keywordsList={keywords}
-            onSelectKeyword={onSelectKeyword}
-          />
-        </div>
-        
-        {/* Show difficulty filter only if no keyword is selected */}
-        {!selectedKeyword && (
-          <div className="w-1/2 pl-2">
-            <DifficultyFilter 
-              selectedTopic={selectedTopic}
-              selectedDifficulty={selectedDifficulty}
-              onSelectDifficulty={onSelectDifficulty}
-            />
-          </div>
-        )}
+      <div className="w-full">
+        <KeywordFilter 
+          selectedTopic={selectedTopic}
+          selectedKeyword={selectedKeyword}
+          keywordsList={keywords}
+          onSelectKeyword={onSelectKeyword}
+        />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   TopicTabs,
   SidebarFilters,
@@ -75,10 +75,10 @@ export default function Page() {
   
   // URL parameters
   const searchParams = useSearchParams();
-  const questionParam = searchParams.get('question');
-  const keywordParam = searchParams.get('q');
-  const difficultyParam = searchParams.get('level');
   const pageParam = searchParams.get('page');
+  const keywordParam = searchParams.get('q');
+  const difficultyParam = searchParams.get('difficulty');
+  const questionIdParam = searchParams.get('questionId');
   
   const [selectedTopic, setSelectedTopic] = useState<string | null>(domain || null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -125,10 +125,13 @@ export default function Page() {
   
   // State for highlighted question (from URL)
   const [highlightedQuestionId, setHighlightedQuestionId] = useState<number | undefined>(
-    questionParam ? parseInt(questionParam) : undefined
+    questionIdParam ? parseInt(questionIdParam) : undefined
   );
   
   const { topicData } = useTopicData();
+  
+  const router = useRouter();
+  const pathname = usePathname();
   
   // Handle topic selection
   const handleTopicClick = async (topicId: string) => {
@@ -289,42 +292,23 @@ export default function Page() {
   
   // Handle keyword selection
   const handleKeywordSelect = async (keyword: string, page: number = 1) => {
+    // Update URL instead of directly fetching data
+    const params = new URLSearchParams(searchParams);
+    
     // Toggle keyword selection if already selected
     if (selectedKeyword === keyword) {
-      setSelectedKeyword(null);
-      setKeywordQuestions([]);
-      setCurrentPage(1);
-      setTotalPages(1);
-      setTotalResults(0);
-      return;
+      params.delete('q');
+    } else {
+      params.set('q', keyword);
+      params.set('page', page.toString());
     }
     
-    setSelectedKeyword(keyword);
-    setCurrentPage(page);
-    setLoadingKeywordQuestions(true);
+    // Build the new URL and navigate
+    const newUrl = `${pathname}?${params.toString()}`;
+    router.push(newUrl);
     
-    try {
-      // Fetch questions for the selected keyword
-      let url = `/api/questions/keyword?keyword=${encodeURIComponent(keyword)}&page=${page}`;
-      if (selectedTopic) {
-        url += `&domain=${selectedTopic}`;
-      }
-      
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setKeywordQuestions(data.questions || []);
-        setTotalPages(data.totalPages || 1);
-        setTotalResults(data.questions?.length || 0);
-      }
-    } catch (error) {
-      console.error(`Error fetching questions for keyword ${keyword}:`, error);
-      setKeywordQuestions([]);
-      setTotalPages(1);
-      setTotalResults(0);
-    } finally {
-      setLoadingKeywordQuestions(false);
-    }
+    // The useEffect with the keywordParam dependency will handle the actual data fetching
+    return;
   };
   
   // Handle difficulty selection
@@ -349,7 +333,7 @@ export default function Page() {
         setDifficultyQuestions(filteredQuestions);
       } else {
         // Otherwise fetch from API
-        let url = `/api/questions/difficulty?level=${difficulty}`;
+        let url = `/api/questions/difficulty?difficulty=${difficulty}`;
         if (selectedTopic) {
           url += `&domain=${selectedTopic}`;
         }
@@ -371,7 +355,13 @@ export default function Page() {
   // Handle page change for pagination
   const handlePageChange = (newPage: number) => {
     if (selectedKeyword && newPage >= 1 && newPage <= totalPages) {
-      handleKeywordSelect(selectedKeyword, newPage);
+      // Update URL with new page number
+      const params = new URLSearchParams(searchParams);
+      params.set('page', newPage.toString());
+      
+      // Build the new URL and navigate
+      const newUrl = `${pathname}?${params.toString()}`;
+      router.push(newUrl);
     }
   };
   
@@ -382,20 +372,53 @@ export default function Page() {
       setSelectedTopic(domain);
       loadTopicCategories(domain);
     
-      // If keyword is provided in URL, apply filter
+      // If keyword is provided in URL, fetch related questions
       if (keywordParam) {
-        handleKeywordSelect(keywordParam, parseInt(pageParam || '1'));
+        setSelectedKeyword(keywordParam);
+        setCurrentPage(parseInt(pageParam || '1'));
+        setLoadingKeywordQuestions(true);
+        
+        fetchKeywordQuestions(keywordParam, parseInt(pageParam || '1'))
+          .then(data => {
+            if (data) {
+              setKeywordQuestions(data.questions || []);
+              setTotalPages(data.pagination?.totalPages || 1);
+              setTotalResults(data.pagination?.totalCount || 0);
+            }
+          })
+          .finally(() => {
+            setLoadingKeywordQuestions(false);
+          });
+      } else {
+        // Clear keyword-related state if no keyword in URL
+        setSelectedKeyword(null);
+        setKeywordQuestions([]);
       }
       
       // If difficulty is provided in URL, apply filter
       if (difficultyParam) {
         handleDifficultySelect(difficultyParam);
       }
-      
-      // If we have a highlighted question ID, we may need to load its parent category
-      // This would require additional logic to determine which category contains the question
     }
-  }, [domain, keywordParam, difficultyParam, pageParam]); // Add domain as a dependency
+  }, [domain, keywordParam, difficultyParam, pageParam]); // Dependencies
+  
+  // Helper function to fetch keyword questions
+  const fetchKeywordQuestions = async (keyword: string, page: number = 1) => {
+    try {
+      let url = `/api/questions/keywords?keyword=${encodeURIComponent(keyword)}&page=${page}`;
+      if (selectedTopic) {
+        url += `&domain=${selectedTopic}`;
+      }
+      
+      const response = await fetch(url);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error(`Error fetching questions for keyword ${keyword}:`, error);
+    }
+    return null;
+  };
   
   // Clear filters when topic changes
   useEffect(() => {

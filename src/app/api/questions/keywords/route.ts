@@ -68,7 +68,17 @@ export async function GET(request: NextRequest) {
         countQuery = supabaseServer
           .from('questions')
           .select(`
-            id
+            id,
+            categories:category_id (
+              id,
+              name,
+              topic_id,
+              topics (
+                id,
+                name,
+                domain
+              )
+            )
           `, { count: 'exact', head: true })
           .contains('keywords', [keyword.toLowerCase()])
           .in('categories.topic_id', topicIds);
