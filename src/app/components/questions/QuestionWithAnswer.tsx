@@ -207,29 +207,29 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
                       if (categoryData?.topic_id) {
                         console.log(`Category ${question.category_id} belongs to topic/subtopic ${categoryData.topic_id}`);
 
-                      // If we found a topic_id, refresh its progress too
-                      setTimeout(() => {
-                        console.log(`Refreshing progress for category's topic/subtopic ${categoryData.topic_id}`);
-                        fetch(`/api/user/progress/subtopic-progress?subtopicId=${categoryData.topic_id}&_t=${Date.now()}`, {
-                          method: 'GET',
-                          headers: {
-                            'Cache-Control': 'no-cache',
-                          },
-                        }).then(response => response.json())
-                          .then(data => {
-                            console.log(`Forced refresh of topic/subtopic ${categoryData.topic_id} progress:`, data);
-                            // Dispatch an event to notify components that subtopic progress has been updated
-                            window.dispatchEvent(new CustomEvent('subtopicProgressUpdated', {
-                              detail: {
-                                subtopicId: categoryData.topic_id,
-                                progress: data,
-                                timestamp: Date.now()
-                              }
-                            }));
-                          }).catch(err => {
-                            console.error(`Error refreshing topic/subtopic ${categoryData.topic_id} progress:`, err);
-                          });
-                      }, 1000);
+                        // If we found a topic_id, refresh its progress too
+                        setTimeout(() => {
+                          console.log(`Refreshing progress for category's topic/subtopic ${categoryData.topic_id}`);
+                          fetch(`/api/user/progress/subtopic-progress?subtopicId=${categoryData.topic_id}&_t=${Date.now()}`, {
+                            method: 'GET',
+                            headers: {
+                              'Cache-Control': 'no-cache',
+                            },
+                          }).then(response => response.json())
+                            .then(data => {
+                              console.log(`Forced refresh of topic/subtopic ${categoryData.topic_id} progress:`, data);
+                              // Dispatch an event to notify components that subtopic progress has been updated
+                              window.dispatchEvent(new CustomEvent('subtopicProgressUpdated', {
+                                detail: {
+                                  subtopicId: categoryData.topic_id,
+                                  progress: data,
+                                  timestamp: Date.now()
+                                }
+                              }));
+                            }).catch(err => {
+                              console.error(`Error refreshing topic/subtopic ${categoryData.topic_id} progress:`, err);
+                            });
+                        }, 1000);
                       }
                     }
                   })
@@ -624,9 +624,13 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
             ) : error ? (
               <p className="text-red-600 dark:text-red-400">Error: {error}</p>
             ) : generatedAnswer ? (
-               <ReactMarkdown>{generatedAnswer}</ReactMarkdown>
+               <ReactMarkdown className="markdown-content">
+                 {generatedAnswer}
+               </ReactMarkdown>
             ) : hasPredefinedAnswer ? (
-               <ReactMarkdown>{question.answer_text || ''}</ReactMarkdown>
+               <ReactMarkdown className="markdown-content">
+                 {question.answer_text || ''}
+               </ReactMarkdown>
             ) : (
               <p className="italic text-gray-500">No pre-defined answer. Answer generation uses your preferred Groq model and API key (set in Account). You can customize the answer format via the prompt template in your Account Preferences.</p>
             )}
