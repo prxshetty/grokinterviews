@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
-  TopicTabs,
   SidebarFilters,
   ContentDisplay,
 } from '@/app/components/topic';
@@ -312,36 +311,83 @@ export default function Page() {
   };
   
   // Handle difficulty selection
-  const handleDifficultySelect = async (difficulty: string) => {
-    // Toggle difficulty selection if already selected
-    if (selectedDifficulty === difficulty) {
+  const handleDifficultySelect = async (difficulty: string, page: number = 1) => {
+    console.log(`handleDifficultySelect called with difficulty: ${difficulty}, current domain: ${domain}, page: ${page}`);
+    
+    // If difficulty is empty string, treat it as null (clearing the filter)
+    if (!difficulty) {
       setSelectedDifficulty(null);
       setDifficultyQuestions([]);
+      
+      // Remove difficulty from URL
+      const params = new URLSearchParams(searchParams);
+      params.delete('difficulty');
+      params.delete('page');
+      router.push(`${pathname}?${params.toString()}`);
       return;
     }
     
+    // Update URL with difficulty and page
+    const params = new URLSearchParams(searchParams);
+    params.set('difficulty', difficulty);
+    params.set('page', page.toString());
+    router.push(`${pathname}?${params.toString()}`);
+    
+    // Set loading state
     setSelectedDifficulty(difficulty);
     setLoadingDifficultyQuestions(true);
     
     try {
       // If a category is selected, filter its questions by difficulty
       if (selectedCategory && categoryDetails?.questions) {
+        console.log(`Filtering category questions by difficulty: ${difficulty}`);
         // Filter locally from already loaded questions
         const filteredQuestions = categoryDetails.questions.filter(q => 
           q.difficulty === difficulty
         );
+        console.log(`Found ${filteredQuestions.length} matching questions in category`);
         setDifficultyQuestions(filteredQuestions);
+        setTotalResults(filteredQuestions.length);
+        setTotalPages(1);
+        setCurrentPage(1);
       } else {
-        // Otherwise fetch from API
-        let url = `/api/questions/difficulty?difficulty=${difficulty}`;
-        if (selectedTopic) {
-          url += `&domain=${selectedTopic}`;
+        // Otherwise fetch from API ensuring domain is always included
+        const currentDomain = selectedTopic || domain;
+        if (!currentDomain) {
+          console.error("No domain selected for difficulty filter");
+          setDifficultyQuestions([]);
+          return;
         }
         
+        const url = `/api/questions/difficulty?difficulty=${difficulty}&domain=${currentDomain}&page=${page}`;
+        console.log(`Fetching questions with URL: ${url}`);
+        
         const response = await fetch(url);
+        console.log(`API response status: ${response.status}`);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log(`API returned ${data.questions?.length || 0} questions for difficulty "${difficulty}" in domain "${currentDomain}"`);
+          
+          if (data.questions && data.questions.length > 0) {
+            // Log the first question to verify domain matching
+            const firstQuestion = data.questions[0];
+            console.log(`First question: ID=${firstQuestion.id}, difficulty=${firstQuestion.difficulty}, domain=${firstQuestion.categories?.topics?.domain}`);
+          }
+          
           setDifficultyQuestions(data.questions || []);
+          
+          // Set pagination data
+          if (data.pagination) {
+            setCurrentPage(data.pagination.page);
+            setTotalPages(data.pagination.totalPages);
+            setTotalResults(data.pagination.totalCount);
+          }
+        } else {
+          console.error(`API error: ${response.statusText}`);
+          const errorData = await response.json();
+          console.error('Error details:', errorData);
+          setDifficultyQuestions([]);
         }
       }
     } catch (error) {
@@ -354,14 +400,28 @@ export default function Page() {
   
   // Handle page change for pagination
   const handlePageChange = (newPage: number) => {
+    // Don't do anything if we're already on this page
+    if (newPage === currentPage) return;
+    
     if (selectedKeyword && newPage >= 1 && newPage <= totalPages) {
-      // Update URL with new page number
+      // Update URL with new page number for keyword search
       const params = new URLSearchParams(searchParams);
       params.set('page', newPage.toString());
       
       // Build the new URL and navigate
       const newUrl = `${pathname}?${params.toString()}`;
       router.push(newUrl);
+    } else if (selectedDifficulty && newPage >= 1 && newPage <= totalPages) {
+      // Update URL with new page number for difficulty filter
+      const params = new URLSearchParams(searchParams);
+      params.set('page', newPage.toString());
+      
+      // Build the new URL and navigate
+      const newUrl = `${pathname}?${params.toString()}`;
+      router.push(newUrl);
+      
+      // Fetch new page of difficulty filtered questions
+      handleDifficultySelect(selectedDifficulty, newPage);
     }
   };
   
@@ -397,10 +457,15 @@ export default function Page() {
       
       // If difficulty is provided in URL, apply filter
       if (difficultyParam) {
-        handleDifficultySelect(difficultyParam);
+        const pageToFetch = parseInt(pageParam || '1');
+        handleDifficultySelect(difficultyParam, pageToFetch);
+      } else {
+        // Clear difficulty filter state if not in URL
+        setSelectedDifficulty(null);
+        setDifficultyQuestions([]);
       }
     }
-  }, [domain, keywordParam, difficultyParam, pageParam]); // Dependencies
+  }, [domain]); // Only re-run when domain changes
   
   // Helper function to fetch keyword questions
   const fetchKeywordQuestions = async (keyword: string, page: number = 1) => {
@@ -440,6 +505,17 @@ export default function Page() {
     }
   }, [selectedTopic]);
   
+  // Effect to load difficulty questions when URL parameters change
+  useEffect(() => {
+    if (difficultyParam && pageParam) {
+      const page = parseInt(pageParam);
+      if (page !== currentPage || !difficultyQuestions.length) {
+        console.log(`Loading page ${page} of questions with difficulty ${difficultyParam}`);
+        handleDifficultySelect(difficultyParam, page);
+      }
+    }
+  }, [difficultyParam, pageParam]);
+  
   return (
     <div className="bg-white dark:bg-black min-h-screen pt-4">
       {/* Component to save progress when navigating away */}
@@ -448,11 +524,7 @@ export default function Page() {
       <div className="w-full px-0">
         <div className="transition-opacity duration-300">
           <div className="p-0">
-            {/* Navigation tabs */}
-            <TopicTabs 
-              selectedTopic={selectedTopic} 
-              onTopicSelect={handleTopicClick} 
-            />
+            {/* Navigation tabs removed - now only using TopicNavWrapper from MainNavigation */}
             
             {/* Filters section - shown when a topic is selected */}
             {(selectedTopic || selectedCategory) && (
@@ -463,6 +535,8 @@ export default function Page() {
                 selectedDifficulty={selectedDifficulty}
                 onSelectKeyword={handleKeywordSelect}
                 onSelectDifficulty={handleDifficultySelect}
+                isLoadingKeyword={loadingKeywordQuestions}
+                isLoadingDifficulty={loadingDifficultyQuestions}
               />
             )}
             

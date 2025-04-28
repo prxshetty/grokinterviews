@@ -132,6 +132,7 @@ export default function CategoryDetailView({
       const baseUrl = pathname.split('/').slice(0, 3).join('/');
       const params = new URLSearchParams(searchParams);
       params.delete('difficulty');
+      params.delete('page'); // Also remove page parameter when clearing filter
       
       // Preserve other URL parameters
       const newUrl = `${baseUrl}?${params.toString()}`;
@@ -143,6 +144,7 @@ export default function CategoryDetailView({
       const baseUrl = pathname.split('/').slice(0, 3).join('/');
       const params = new URLSearchParams(searchParams);
       params.set('difficulty', difficulty);
+      params.set('page', '1'); // Reset to page 1 when applying new filter
       
       // Preserve other URL parameters
       const newUrl = `${baseUrl}?${params.toString()}`;
