@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
 import { motion } from 'framer-motion';
 import { DemoButton, AnswerDepthSliderSimple } from '../components/ui';
+import Image from 'next/image';
 
 // --- Define Groq Model Structure and List ---
 interface GroqModel {
@@ -59,13 +60,21 @@ const DEFAULT_GROQ_MODEL_ID = 'llama-3.1-8b-instant';
 type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown';
 type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 
+// Define a generic error type
+interface ApiError {
+  message: string;
+  details?: string;
+  code?: string;
+  [key: string]: unknown;
+}
+
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState('personal');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   // profile state is used in saveChanges, saveApiKey functions, and profile display
   const [profile, setProfile] = useState<UserProfile | null>(null);
   // preferences state is used in saveChanges function - needed for state management
-  const [_preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingApiKey, setSavingApiKey] = useState(false);
@@ -290,7 +299,7 @@ export default function AccountPage() {
 
       // Create the preferences object
       const preferencesData = {
-        user_id: user.id, // Make sure user_id is included for upsert
+        user_id: user.id as string, // Make sure user_id is included for upsert
         specific_model_id,
         preferred_model: 'groq', // Keep setting this for potential legacy use
         use_youtube_sources,
@@ -337,7 +346,7 @@ export default function AccountPage() {
       setPreferences(prev => {
         // Reconstruct preferences state from formData
         const updatedPreferences = {
-          ...(prev || { user_id: user.id }), // Keep existing fields like theme if they were loaded
+          ...(prev || { user_id: user.id as string }), // Keep existing fields like theme if they were loaded
           specific_model_id,
           use_youtube_sources,
           use_pdf_sources,
@@ -357,10 +366,11 @@ export default function AccountPage() {
 
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
 
-    } catch (error: any) {
-      console.error('Error updating profile/preferences:', error);
-      console.log('Error details:', JSON.stringify(error, null, 2));
-      setMessage({ type: 'error', text: error.message || 'Failed to save preferences. Please try again.' });
+    } catch (error) {
+      const err = error as ApiError;
+      console.error('Error updating profile/preferences:', err);
+      console.log('Error details:', JSON.stringify(err, null, 2));
+      setMessage({ type: 'error', text: err.message || 'Failed to save preferences. Please try again.' });
     } finally {
       setSaving(false);
     }
@@ -392,9 +402,10 @@ export default function AccountPage() {
 
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
 
-    } catch (error: any) {
-      console.error('Error saving API key:', error);
-      setMessage({ type: 'error', text: error.message || 'Failed to save API key. Please try again.' });
+    } catch (error) {
+      const err = error as ApiError;
+      console.error('Error saving API key:', err);
+      setMessage({ type: 'error', text: err.message || 'Failed to save API key. Please try again.' });
     } finally {
       setSavingApiKey(false);
     }
@@ -658,10 +669,12 @@ export default function AccountPage() {
                   <div className="relative mb-6">
                     <div className="w-32 h-32 rounded-full bg-black dark:bg-white flex items-center justify-center overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg">
                       {profile?.avatar_url ? (
-                        <img
+                        <Image
                           src={profile.avatar_url}
                           alt="Profile"
                           className="w-full h-full object-cover"
+                          width={128}
+                          height={128}
                         />
                       ) : (
                         <div className="text-4xl font-light text-white dark:text-black">

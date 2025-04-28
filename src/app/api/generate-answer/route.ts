@@ -27,8 +27,11 @@ type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 export async function POST(request: Request) {
   // 1. Read request body
   const { questionText, questionId } = await request.json();
-  // Use the correct approach for Next.js 15
+
+  // Create Supabase client with cookies
   const cookieStore = await cookies();
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
   // Validate input
@@ -198,7 +201,7 @@ export async function POST(request: Request) {
 
     // 8. Construct the final prompt based on preferences
     let promptSegments = [
-        `Please answer the following interview question:`, // Removed "concise" etc. - let depth control that.
+        `Please answer the following interview question strictly using the specified Markdown format (Headers: #, ##, ###; Emphasis: **bold**):`,
         `"${questionText}"`,
         `\nAdhere to the following preferences:`,
         `- Answer Format: ${preferences.format}`,

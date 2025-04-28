@@ -6,7 +6,10 @@ import supabaseServer from '@/utils/supabase-server';
 // GET: Retrieve user progress statistics
 export async function GET(_request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
   // Get the user session using Supabase auth
