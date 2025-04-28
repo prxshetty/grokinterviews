@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import { isQuestionCompleted } from '@/app/utils/progress';
 
 interface QuestionType {
   id: number;
@@ -45,6 +46,7 @@ export default function QuestionList({
   const [expandedQuestions, setExpandedQuestions] = useState<Record<number, boolean>>({});
   const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({});
   const [loadingAnswers, setLoadingAnswers] = useState<Record<number, boolean>>({});
+  const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -60,6 +62,45 @@ export default function QuestionList({
       fetchAnswerForQuestion(highlightedQuestionId);
     }
   }, [highlightedQuestionId]);
+  
+  // Check completion status of questions when they are loaded
+  useEffect(() => {
+    const checkCompletionStatus = async () => {
+      const completionStatus: Record<number, boolean> = {};
+      
+      // Check each question's completion status
+      for (const question of questions) {
+        if (question.id) {
+          try {
+            const isCompleted = await isQuestionCompleted(question.id);
+            completionStatus[question.id] = isCompleted;
+          } catch (error) {
+            console.error(`Error checking completion status for question ${question.id}:`, error);
+            completionStatus[question.id] = false;
+          }
+        }
+      }
+      
+      setCompletedQuestions(completionStatus);
+    };
+    
+    checkCompletionStatus();
+    
+    // Setup event listener for question completion events
+    const handleQuestionCompleted = (event: CustomEvent) => {
+      const { questionId } = event.detail;
+      setCompletedQuestions(prev => ({
+        ...prev,
+        [questionId]: true
+      }));
+    };
+    
+    window.addEventListener('questionCompleted', handleQuestionCompleted as EventListener);
+    
+    return () => {
+      window.removeEventListener('questionCompleted', handleQuestionCompleted as EventListener);
+    };
+  }, [questions]);
   
   // Function to fetch answer content from the API
   const fetchAnswerForQuestion = async (questionId: number) => {
@@ -268,29 +309,41 @@ export default function QuestionList({
                   id={`question-${question.id}`}
                 >
                   <div className="flex justify-between items-start cursor-pointer" onClick={() => toggleQuestion(question.id)}>
-                    <div className="flex-1 pr-4">
-                      <p className="font-medium text-gray-800 dark:text-gray-200">{question.question_text}</p>
-                      
-                      {/* Question metadata (difficulty, keywords) */}
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {question.difficulty && (
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            question.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
-                            question.difficulty === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
-                            'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                          }`}>
-                            {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
-                          </span>
-                        )}
+                    <div className="flex items-start flex-1 pr-4">
+                      {/* Completed question checkmark */}
+                      {completedQuestions[question.id] ? (
+                        <div className="mr-2 text-green-600 dark:text-green-400 flex-shrink-0 mt-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="mr-2 w-4 flex-shrink-0"></div>
+                      )}
+                      <div>
+                        <p className="font-medium text-gray-800 dark:text-gray-200">{question.question_text}</p>
                         
-                        {question.keywords && question.keywords.map((keyword, index) => (
-                          <span 
-                            key={index} 
-                            className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                          >
-                            {keyword}
-                          </span>
-                        ))}
+                        {/* Question metadata (difficulty, keywords) */}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {question.difficulty && (
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              question.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                              question.difficulty === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+                              'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                            }`}>
+                              {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
+                            </span>
+                          )}
+                          
+                          {question.keywords && question.keywords.map((keyword, index) => (
+                            <span 
+                              key={index} 
+                              className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                            >
+                              {keyword}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     
@@ -376,35 +429,47 @@ export default function QuestionList({
               onClick={() => toggleQuestion(question.id)}
             >
               <div className="flex justify-between items-start">
-                <div className="flex-1 pr-4">
-                  <p className="font-medium text-gray-800 dark:text-gray-200">{question.question_text}</p>
-                  
-                  {/* Question metadata */}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {question.categories?.name && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                        {question.categories.name}
-                      </span>
-                    )}
+                <div className="flex items-start flex-1 pr-4">
+                  {/* Completed question checkmark */}
+                  {completedQuestions[question.id] ? (
+                    <div className="mr-2 text-green-600 dark:text-green-400 flex-shrink-0 mt-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="mr-2 w-4 flex-shrink-0"></div>
+                  )}
+                  <div>
+                    <p className="font-medium text-gray-800 dark:text-gray-200">{question.question_text}</p>
                     
-                    {question.difficulty && (
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        question.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
-                        question.difficulty === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
-                        'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                      }`}>
-                        {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
-                      </span>
-                    )}
-                    
-                    {question.keywords && question.keywords.map((keyword, index) => (
-                      <span 
-                        key={index} 
-                        className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
+                    {/* Question metadata */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {question.categories?.name && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                          {question.categories.name}
+                        </span>
+                      )}
+                      
+                      {question.difficulty && (
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          question.difficulty === 'beginner' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                          question.difficulty === 'intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+                          'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                        }`}>
+                          {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
+                        </span>
+                      )}
+                      
+                      {question.keywords && question.keywords.map((keyword, index) => (
+                        <span 
+                          key={index} 
+                          className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 
