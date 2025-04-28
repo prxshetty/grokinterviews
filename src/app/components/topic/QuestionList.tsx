@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
 interface QuestionType {
   id: number;
@@ -177,20 +178,10 @@ export default function QuestionList({
   const formatAnswer = (answerText: string) => {
     if (!answerText) return null;
     
-    // Split into paragraphs and render each one
-    const paragraphs = answerText.split('\n\n');
-    if (paragraphs.length > 1) {
-      return (
-        <>
-          {paragraphs.map((paragraph, index) => (
-            <p key={index} className="mb-4">{paragraph}</p>
-          ))}
-        </>
-      );
-    }
-    
-    // Single paragraph
-    return <p>{answerText}</p>;
+    // Use ReactMarkdown to render the markdown content
+    return (
+      <ReactMarkdown>{answerText}</ReactMarkdown>
+    );
   };
   
   const toggleQuestion = (questionId: number) => {

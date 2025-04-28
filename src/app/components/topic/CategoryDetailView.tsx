@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 import QuestionList from './QuestionList';
 
 // Import types
@@ -304,8 +305,8 @@ export default function CategoryDetailView({
         </div>
         
         {subtopicDetails.content && (
-          <div className="mb-6 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md">
-            <p>{subtopicDetails.content}</p>
+          <div className="mb-6 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md prose dark:prose-invert max-w-none">
+            <ReactMarkdown>{subtopicDetails.content}</ReactMarkdown>
           </div>
         )}
 
@@ -366,8 +367,8 @@ export default function CategoryDetailView({
       
       {/* Description if available */}
       {categoryDetails?.content && (
-        <div className="mb-6 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md">
-          <p>{categoryDetails.content}</p>
+        <div className="mb-6 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md prose dark:prose-invert max-w-none">
+          <ReactMarkdown>{categoryDetails.content}</ReactMarkdown>
         </div>
       )}
       
@@ -386,9 +387,9 @@ export default function CategoryDetailView({
                 >
                   <h3 className="font-medium mb-2">{subtopic.label}</h3>
                   {subtopic.content && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      {subtopic.content}
-                    </p>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose dark:prose-invert max-w-none">
+                      <ReactMarkdown>{subtopic.content}</ReactMarkdown>
+                    </div>
                   )}
                 </div>
               ))}
