@@ -45,7 +45,7 @@ export default function TopicNav({ onTopicSelect, selectedTopic }: TopicNavProps
               type="button"
               onClick={() => handleTopicClick(topic.id)}
               className={`px-5 py-2 text-sm md:text-base font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap
-                ${effectiveSelectedTopic === topic.id || (index === 0 && !effectiveSelectedTopic)
+                ${effectiveSelectedTopic === topic.id
                   ? "bg-black text-white dark:bg-black" 
                   : "bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"}
               `}

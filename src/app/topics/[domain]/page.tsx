@@ -204,12 +204,6 @@ export default function Page() {
     console.log('topics/page - Setting selectedCategory to:', categoryId);
     setSelectedCategory(categoryId);
 
-    // For ML topics, we need to set the selectedTopic to 'ml'
-    if (!selectedTopic) {
-      console.log('topics/page - Setting selectedTopic to ml for ML topics');
-      setSelectedTopic('ml');
-    }
-
     await loadCategoryDetails(categoryId);
   };
   
@@ -218,15 +212,17 @@ export default function Page() {
     console.log('topics/page - loadCategoryDetails called with:', categoryId);
     console.log('topics/page - Current selectedTopic:', selectedTopic);
 
-    if (!selectedTopic) {
-      console.log('topics/page - No topic selected, setting to ml');
-      setSelectedTopic('ml');
-    }
-
     setLoadingSections(true); // Set loading state for sections
     try {
-      // Ensure selectedTopic is not null
-      const topicId = selectedTopic || 'ml';
+      // Use the current selectedTopic without defaulting to 'ml'
+      const topicId = selectedTopic;
+      
+      // If no topic is selected, we cannot proceed
+      if (!topicId) {
+        console.error('No topic selected, cannot load category details');
+        setLoadingSections(false);
+        return;
+      }
 
       // Check if this is a section header ID (format: header-123)
       if (categoryId.startsWith('header-')) {
@@ -326,10 +322,9 @@ export default function Page() {
   const handleDifficultySelect = async (difficulty: string, page: number = 1) => {
     console.log(`handleDifficultySelect called with difficulty: ${difficulty}, current domain: ${domain}, page: ${page}`);
     
-    // Validate domain first to prevent errors
-    const currentDomain = selectedTopic || domain;
-    if (!currentDomain || currentDomain === 'topics') {
-      console.error("No valid domain selected for difficulty filter");
+    // We need a selected topic to filter by difficulty
+    if (!selectedTopic) {
+      console.error("No topic selected for difficulty filter");
       return;
     }
     
@@ -370,15 +365,8 @@ export default function Page() {
         setTotalPages(1);
         setCurrentPage(1);
       } else {
-        // Otherwise fetch from API ensuring domain is always included
-        if (!currentDomain || currentDomain === 'topics') {
-          console.error("No valid domain selected for difficulty filter");
-          setDifficultyQuestions([]);
-          setLoadingDifficultyQuestions(false);
-          return;
-        }
-        
-        const url = `/api/questions/difficulty?difficulty=${difficulty}&domain=${currentDomain}&page=${page}`;
+        // Otherwise fetch from API using the selected topic
+        const url = `/api/questions/difficulty?difficulty=${difficulty}&domain=${selectedTopic}&page=${page}`;
         console.log(`Fetching questions with URL: ${url}`);
         
         const response = await fetch(url);
@@ -386,7 +374,7 @@ export default function Page() {
         
         if (response.ok) {
           const data = await response.json();
-          console.log(`API returned ${data.questions?.length || 0} questions for difficulty "${difficulty}" in domain "${currentDomain}"`);
+          console.log(`API returned ${data.questions?.length || 0} questions for difficulty "${difficulty}" in domain "${selectedTopic}"`);
           
           if (data.questions && data.questions.length > 0) {
             // Log the first question to verify domain matching
