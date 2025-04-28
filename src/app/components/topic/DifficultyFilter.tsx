@@ -5,13 +5,15 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 interface DifficultyFilterProps {
   selectedTopic: string | null;
   selectedDifficulty: string | null;
-  onSelectDifficulty: (difficulty: string) => void;
+  onSelectDifficulty: (difficulty: string, page: number) => void;
+  isLoading?: boolean;
 }
 
 export default function DifficultyFilter({
   selectedTopic,
   selectedDifficulty,
-  onSelectDifficulty
+  onSelectDifficulty,
+  isLoading = false
 }: DifficultyFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -25,53 +27,69 @@ export default function DifficultyFilter({
   ];
   
   const handleDifficultyClick = (difficulty: string) => {
-    // Call the parent handler
-    onSelectDifficulty(difficulty);
+    if (!selectedTopic) {
+      console.error("No topic selected for difficulty filter");
+      return;
+    }
     
-    // Update URL for deep linking
-    if (selectedTopic) {
-      // Keep only path segments up to the domain
-      const baseUrl = pathname.split('/').slice(0, 3).join('/');
-      
-      // Create a new URL with the difficulty parameter
-      const params = new URLSearchParams(searchParams);
-      
-      if (selectedDifficulty === difficulty) {
-        // If clicking the same difficulty, clear it
-        params.delete('difficulty');
-      } else {
-        // Otherwise set the new difficulty
-        params.set('difficulty', difficulty);
-        // Reset page to 1 when changing difficulty
-        params.set('page', '1');
+    // First, handle toggling off the current difficulty
+    if (selectedDifficulty === difficulty) {
+      // Clear the difficulty parameter
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('difficulty');
+      params.delete('page');
+      router.push(`${pathname}?${params.toString()}`);
+      onSelectDifficulty('', 1); // Fix: Pass empty string and page 1 to clear
+    } else {
+      // Set the new difficulty and page 1
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('difficulty', difficulty);
+      params.set('page', '1'); // Always start at page 1 when changing difficulty
+      // Always include domain parameter if available
+      if (!params.has('domain') && selectedTopic) {
+        params.set('domain', selectedTopic);
       }
-      
-      // Build the new URL
-      const newUrl = `${baseUrl}?${params.toString()}`;
-      router.push(newUrl);
+      router.push(`${pathname}?${params.toString()}`);
+      onSelectDifficulty(difficulty, 1); // Pass difficulty and page 1
     }
   };
   
   return (
     <div>
-      <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
-        Filter by Difficulty
+      <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300 flex items-center">
+        Filter by Difficulty 
+        {isLoading && (
+          <span className="ml-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em]"></span>
+        )}
       </h3>
       <div className="flex flex-wrap gap-2">
         {difficulties.map((difficulty) => (
-          <span
+          <button
             key={difficulty.id}
             onClick={() => handleDifficultyClick(difficulty.id)}
-            className={`px-3 py-1 ${
-              selectedDifficulty === difficulty.id 
-              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700' 
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            } text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors`}
+            disabled={isLoading || !selectedTopic}
+            title={!selectedTopic ? "Select a topic first" : ""}
+            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors
+              ${selectedDifficulty === difficulty.id 
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-md border-2 border-gray-400 dark:border-gray-600' 
+                : 'bg-white text-black dark:bg-black dark:text-white border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'}
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+              ${!selectedTopic ? 'opacity-40 cursor-not-allowed' : ''}
+            `}
           >
             {difficulty.label}
-          </span>
+          </button>
         ))}
       </div>
+      
+      {/* Show count of returned questions if available */}
+      {isLoading ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading questions...</p>
+      ) : selectedDifficulty && !isLoading ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          Showing {selectedDifficulty} difficulty questions
+        </p>
+      ) : null}
     </div>
   );
 } 

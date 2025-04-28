@@ -5,7 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
 import { Pagination } from '../ui';
 import QuestionList from './QuestionList';
-import CategoryDetailView from './CategoryDetailView';
+import { CategoryDetailView } from './';
 
 // Import necessary types
 interface QuestionType {
@@ -133,25 +133,42 @@ export default function ContentDisplay({
         </div>
         
         <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          Showing {difficultyQuestions.length} questions
-          {totalPages > 1 && (
-            <span> (Page {currentPage} of {totalPages})</span>
+          {difficultyQuestions.length > 0 ? (
+            <>
+              Showing {difficultyQuestions.length} of {totalResults} questions
+              {totalPages > 1 && (
+                <span> (Page {currentPage} of {totalPages})</span>
+              )}
+            </>
+          ) : (
+            <div className="p-8 text-center">
+              <p className="text-base text-gray-700 dark:text-gray-300 mb-2">
+                No {selectedDifficulty} difficulty questions found for {selectedTopic?.toUpperCase()}.
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Try selecting a different difficulty level or topic.
+              </p>
+            </div>
           )}
         </div>
         
-        <QuestionList 
-          questions={difficultyQuestions} 
-          highlightedQuestionId={highlightedQuestionId}
-          groupByCategory={true}
-        />
-        
-        {totalPages > 1 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
-        )}
+        {difficultyQuestions.length > 0 ? (
+          <>
+            <QuestionList 
+              questions={difficultyQuestions} 
+              highlightedQuestionId={highlightedQuestionId}
+              groupByCategory={true}
+            />
+            
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+              />
+            )}
+          </>
+        ) : null}
       </div>
     );
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { KeywordFilter } from './index';
+import { KeywordFilter, DifficultyFilter } from './index';
 import { getDomainKeywords } from '@/app/utils';
 
 interface SidebarFiltersProps {
@@ -10,6 +10,8 @@ interface SidebarFiltersProps {
   selectedDifficulty: string | null;
   onSelectKeyword: (keyword: string) => void;
   onSelectDifficulty: (difficulty: string) => void;
+  isLoadingKeyword?: boolean;
+  isLoadingDifficulty?: boolean;
 }
 
 export default function SidebarFilters({
@@ -18,7 +20,9 @@ export default function SidebarFilters({
   selectedKeyword,
   selectedDifficulty,
   onSelectKeyword,
-  onSelectDifficulty
+  onSelectDifficulty,
+  isLoadingKeyword = false,
+  isLoadingDifficulty = false
 }: SidebarFiltersProps) {
   // Only show the filters when a topic is selected
   if (!selectedTopic) {
@@ -30,12 +34,19 @@ export default function SidebarFilters({
 
   return (
     <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-      <div className="w-full">
+      <div className="w-full space-y-6">
         <KeywordFilter 
           selectedTopic={selectedTopic}
           selectedKeyword={selectedKeyword}
           keywordsList={keywords}
           onSelectKeyword={onSelectKeyword}
+        />
+        
+        <DifficultyFilter
+          selectedTopic={selectedTopic}
+          selectedDifficulty={selectedDifficulty}
+          onSelectDifficulty={onSelectDifficulty}
+          isLoading={isLoadingDifficulty}
         />
       </div>
     </div>

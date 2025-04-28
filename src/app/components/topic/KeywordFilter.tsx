@@ -52,17 +52,18 @@ export default function KeywordFilter({
       </h3>
       <div className="flex flex-wrap gap-2">
         {keywordsList.map((tag) => (
-          <span
+          <button
             key={tag}
-            className={`px-3 py-1 ${
-              selectedKeyword === tag 
-              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700' 
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-            } text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors`}
+            type="button"
             onClick={() => handleKeywordClick(tag)}
+            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors
+              ${selectedKeyword === tag 
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow border border-gray-300 dark:border-gray-700' 
+                : 'bg-white text-black dark:bg-black dark:text-white border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'}
+            `}
           >
             {tag}
-          </span>
+          </button>
         ))}
       </div>
     </div>
