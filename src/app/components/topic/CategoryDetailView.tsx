@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import QuestionList from './QuestionList';
+import ProgressBar from '../ui/ProgressBar';
+import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted } from '@/app/utils/progress';
 
 // Import types
 interface QuestionType {
@@ -83,6 +85,23 @@ export default function CategoryDetailView({
   );
   const [filteredQuestions, setFilteredQuestions] = useState<QuestionType[]>([]);
   
+  // Progress tracking states
+  const [categoryProgress, setCategoryProgress] = useState<{
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  } | null>(null);
+  
+  const [subtopicProgress, setSubtopicProgress] = useState<{
+    categoriesCompleted: number;
+    totalCategories: number;
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  } | null>(null);
+  
+  const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
+  
   // Check if this is section/header or specific topic
   const isSectionHeader = categoryId.startsWith('header-');
   const hasSubtopics = categoryDetails?.subtopics && Object.keys(categoryDetails.subtopics).length > 0;
@@ -122,6 +141,76 @@ export default function CategoryDetailView({
     const difficultyParam = searchParams.get('difficulty');
     setSelectedDifficulty(difficultyParam);
   }, [searchParams]);
+  
+  // Fetch progress data for category and subtopic
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        // For categories, fetch their progress data
+        if (categoryId && !categoryId.startsWith('header-')) {
+          const numericId = parseInt(categoryId.replace('topic-', ''));
+          if (!isNaN(numericId)) {
+            console.log(`Fetching progress for category ID: ${numericId}`);
+            const progress = await fetchCategoryProgress(numericId, true);
+            setCategoryProgress(progress);
+          }
+        }
+        
+        // For subtopics, fetch their progress
+        if (selectedSubtopic) {
+          const numericId = parseInt(selectedSubtopic.replace('topic-', ''));
+          if (!isNaN(numericId)) {
+            console.log(`Fetching progress for subtopic ID: ${numericId}`);
+            const progress = await fetchSubtopicProgress(numericId, true);
+            setSubtopicProgress(progress);
+          }
+        }
+        
+        // Update completed questions tracking
+        const questions = filteredQuestions.length > 0 ? filteredQuestions : (categoryDetails?.questions || []);
+        
+        // Check each question's completion status
+        const completionStatus: Record<number, boolean> = {};
+        for (const question of questions) {
+          if (question.id) {
+            try {
+              const isCompleted = await isQuestionCompleted(question.id);
+              completionStatus[question.id] = isCompleted;
+            } catch (error) {
+              console.error(`Error checking completion status for question ${question.id}:`, error);
+              completionStatus[question.id] = false;
+            }
+          }
+        }
+        setCompletedQuestions(completionStatus);
+      } catch (error) {
+        console.error('Error fetching progress data:', error);
+      }
+    };
+    
+    fetchProgress();
+    
+    // Listen for question completion events
+    const handleQuestionCompleted = (event: CustomEvent) => {
+      const { questionId } = event.detail;
+      // Update the completed questions state
+      setCompletedQuestions(prev => ({
+        ...prev,
+        [questionId]: true
+      }));
+      
+      // Refresh progress data after a short delay to allow the server to update
+      setTimeout(() => {
+        fetchProgress();
+      }, 1000);
+    };
+    
+    window.addEventListener('questionCompleted', handleQuestionCompleted as EventListener);
+    
+    return () => {
+      window.removeEventListener('questionCompleted', handleQuestionCompleted as EventListener);
+    };
+  }, [categoryId, selectedSubtopic, categoryDetails?.questions, filteredQuestions]);
   
   // Handle difficulty selection
   const handleDifficultySelect = (difficulty: string) => {
@@ -310,6 +399,26 @@ export default function CategoryDetailView({
           </div>
         )}
 
+        {/* Progress bar for subtopic */}
+        {subtopicProgress && (
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</h3>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {subtopicProgress.questionsCompleted}/{subtopicProgress.totalQuestions} questions completed
+              </span>
+            </div>
+            <ProgressBar 
+              progress={subtopicProgress.completionPercentage}
+              completed={subtopicProgress.questionsCompleted}
+              total={subtopicProgress.totalQuestions}
+              height="md"
+              showText={true}
+              className={subtopicDetails.label}
+            />
+          </div>
+        )}
+
         {/* Difficulty filter */}
         {subtopicDetails.questions && subtopicDetails.questions.length > 0 && renderDifficultyFilter()}
 
@@ -318,7 +427,22 @@ export default function CategoryDetailView({
           <div>
             {Object.values(questionsByCategory).map((category, index) => (
               <div key={index} className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">{category.name}</h2>
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-xl font-semibold">{category.name}</h2>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <ProgressBar
+                    progress={(category.questions.filter(q => completedQuestions[q.id]).length / category.questions.length) * 100}
+                    completed={category.questions.filter(q => completedQuestions[q.id]).length}
+                    total={category.questions.length}
+                    height="md"
+                    showText={false}
+                    className={category.name}
+                  />
+                </div>
                 <QuestionList 
                   questions={category.questions} 
                   highlightedQuestionId={highlightedQuestionId}
@@ -403,7 +527,29 @@ export default function CategoryDetailView({
       {/* Show questions if available */}
       {hasQuestions && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Questions</h2>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-semibold">Questions</h2>
+            {categoryProgress && (
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed
+              </span>
+            )}
+          </div>
+          
+          {/* Progress bar for category */}
+          {categoryProgress && (
+            <div className="mb-4">
+              <ProgressBar
+                progress={categoryProgress.completionPercentage}
+                completed={categoryProgress.questionsCompleted}
+                total={categoryProgress.totalQuestions}
+                height="md"
+                showText={false}
+                className={categoryDetails?.label || 'category'}
+              />
+            </div>
+          )}
+          
           {filteredQuestions.length > 0 ? (
             <QuestionList 
               questions={filteredQuestions} 
