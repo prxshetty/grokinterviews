@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+
+interface KeywordItem {
+  keyword: string;
+  occurrence_count: number;
+}
 
 interface KeywordFilterProps {
   selectedTopic: string | null;
   selectedKeyword: string | null;
-  keywordsList: string[];
+  keywordsList: KeywordItem[];
   onSelectKeyword: (keyword: string) => void;
 }
 
@@ -14,32 +18,22 @@ export default function KeywordFilter({
   selectedTopic, 
   selectedKeyword, 
   keywordsList, 
-  onSelectKeyword 
+  onSelectKeyword
 }: KeywordFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const handleKeywordClick = (keyword: string) => {
-    // Call the parent handler for the keyword selection
     onSelectKeyword(keyword);
-    
-    // Update URL for deep linking
     if (selectedTopic) {
-      // Create a new URL with the keyword parameter
       const params = new URLSearchParams(searchParams);
-      
       if (selectedKeyword === keyword) {
-        // If clicking the same keyword, clear it
         params.delete('q');
       } else {
-        // Otherwise set the new keyword
         params.set('q', keyword);
-        // Reset page to 1 when changing keywords
         params.set('page', '1');
       }
-      
-      // Build the new URL - use the full pathname
       const newUrl = `${pathname}?${params.toString()}`;
       router.push(newUrl);
     }
@@ -48,21 +42,22 @@ export default function KeywordFilter({
   return (
     <div>
       <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
-        Filter by Keywords
+        Popular Keywords
       </h3>
       <div className="flex flex-wrap gap-2">
-        {keywordsList.map((tag) => (
+        {keywordsList.map((item) => (
           <button
-            key={tag}
+            key={item.keyword}
             type="button"
-            onClick={() => handleKeywordClick(tag)}
+            onClick={() => handleKeywordClick(item.keyword)}
             className={`px-3 py-1 text-xs font-medium rounded-full transition-colors
-              ${selectedKeyword === tag 
+              ${selectedKeyword === item.keyword 
                 ? 'bg-black text-white dark:bg-white dark:text-black shadow border border-gray-300 dark:border-gray-700' 
                 : 'bg-white text-black dark:bg-black dark:text-white border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'}
             `}
           >
-            {tag}
+            <span>{item.keyword}</span>
+            <span className="ml-1 text-xs opacity-70">({item.occurrence_count})</span>
           </button>
         ))}
       </div>
