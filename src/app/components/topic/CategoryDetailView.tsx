@@ -100,6 +100,15 @@ export default function CategoryDetailView({
     completionPercentage: number;
   } | null>(null);
   
+  // Update type for subtopicsProgress to include category counts
+  const [subtopicsProgress, setSubtopicsProgress] = useState<Record<string, {
+    categoriesCompleted: number;
+    totalCategories: number;
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  }>>({});
+  
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
   
   // Check if this is section/header or specific topic
@@ -166,6 +175,30 @@ export default function CategoryDetailView({
           }
         }
         
+        // For all subtopics in the grid, fetch their progress
+        if (categoryDetails?.subtopics) {
+          const subtopicIds = Object.keys(categoryDetails.subtopics)
+            .filter(id => id.startsWith('topic-'));
+          
+          const progressData: Record<string, any> = {};
+          
+          // Fetch progress for each subtopic using fetchSubtopicProgress
+          for (const id of subtopicIds) {
+            try {
+              const numericId = parseInt(id.replace('topic-', ''));
+              if (!isNaN(numericId)) {
+                // Use fetchSubtopicProgress to get category-based progress
+                const progress = await fetchSubtopicProgress(numericId, false); // false to not fetch detailed question data
+                progressData[id] = progress;
+              }
+            } catch (error) {
+              console.error(`Error fetching progress for subtopic ${id}:`, error);
+            }
+          }
+          
+          setSubtopicsProgress(progressData);
+        }
+        
         // Update completed questions tracking
         const questions = filteredQuestions.length > 0 ? filteredQuestions : (categoryDetails?.questions || []);
         
@@ -210,7 +243,7 @@ export default function CategoryDetailView({
     return () => {
       window.removeEventListener('questionCompleted', handleQuestionCompleted as EventListener);
     };
-  }, [categoryId, selectedSubtopic, categoryDetails?.questions, filteredQuestions]);
+  }, [categoryId, selectedSubtopic, categoryDetails?.subtopics, categoryDetails?.questions, filteredQuestions]);
   
   // Handle difficulty selection
   const handleDifficultySelect = (difficulty: string) => {
@@ -510,6 +543,30 @@ export default function CategoryDetailView({
                   onClick={() => handleSubtopicSelect(id)}
                 >
                   <h3 className="font-medium mb-2">{subtopic.label}</h3>
+                  
+                  {/* Add progress bar for each subtopic */}
+                  {subtopicsProgress[id] && (
+                    <div className="mt-2 mb-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {subtopicsProgress[id].categoriesCompleted}/{subtopicsProgress[id].totalCategories} categories completed
+                        </span>
+                      </div>
+                      <ProgressBar
+                        progress={
+                          subtopicsProgress[id].totalCategories > 0 
+                          ? (subtopicsProgress[id].categoriesCompleted / subtopicsProgress[id].totalCategories) * 100
+                          : 0
+                        }
+                        completed={subtopicsProgress[id].categoriesCompleted}
+                        total={subtopicsProgress[id].totalCategories}
+                        height="sm"
+                        showText={false}
+                        className={subtopic.label}
+                      />
+                    </div>
+                  )}
+                  
                   {subtopic.content && (
                     <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose dark:prose-invert max-w-none">
                       <ReactMarkdown>{subtopic.content}</ReactMarkdown>

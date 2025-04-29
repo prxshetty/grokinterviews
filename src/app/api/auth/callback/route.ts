@@ -7,7 +7,10 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code');
 
   if (code) {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Exchange the code for a session
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
