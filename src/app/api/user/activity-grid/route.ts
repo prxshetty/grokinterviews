@@ -5,7 +5,10 @@ import { cookies } from 'next/headers';
 // GET: Retrieve user activity aggregated by date for the activity grid
 export async function GET(request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
   // Get the user session using Supabase auth
