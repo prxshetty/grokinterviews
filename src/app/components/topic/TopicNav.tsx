@@ -30,6 +30,20 @@ export default function TopicNav({ onTopicSelect, selectedTopic }: TopicNavProps
   }, [selectedTopic]);
 
   function handleTopicClick(topicId: string) {
+    // If clicking the same topic that is already selected, force a complete refresh
+    if (effectiveSelectedTopic === topicId) {
+      // Dispatch the resetCategorySelection event first to reset any category state
+      window.dispatchEvent(new CustomEvent('resetCategorySelection', {
+        detail: { domain: topicId }
+      }));
+      
+      // Force a full refresh of the topic page to reset all states
+      // We can also use router.replace instead of direct page navigation for a cleaner UX
+      router.replace(`/topics/${topicId}`);
+      return;
+    }
+
+    // Normal navigation for switching between topics
     setInternalSelectedTopic(topicId);
     onTopicSelect(topicId);
     // Navigate to the correct /topics/[domain] page

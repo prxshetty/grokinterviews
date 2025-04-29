@@ -110,6 +110,7 @@ export default function CategoryDetailView({
   }>>({});
   
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
+  const [isSubtopicProgressLoading, setIsSubtopicProgressLoading] = useState(false);
   
   // Check if this is section/header or specific topic
   const isSectionHeader = categoryId.startsWith('header-');
@@ -175,29 +176,43 @@ export default function CategoryDetailView({
           }
         }
         
-        // For all subtopics in the grid, fetch their progress
+        // --- Fetch progress for all subtopics in parallel ---
         if (categoryDetails?.subtopics) {
-          const subtopicIds = Object.keys(categoryDetails.subtopics)
-            .filter(id => id.startsWith('topic-'));
+          setIsSubtopicProgressLoading(true);
+          const subtopicEntries = Object.entries(categoryDetails.subtopics)
+            .filter(([id]) => id.startsWith('topic-'));
           
-          const progressData: Record<string, any> = {};
-          
-          // Fetch progress for each subtopic using fetchSubtopicProgress
-          for (const id of subtopicIds) {
+          const progressPromises = subtopicEntries.map(async ([id, subtopic]) => {
             try {
               const numericId = parseInt(id.replace('topic-', ''));
               if (!isNaN(numericId)) {
                 // Use fetchSubtopicProgress to get category-based progress
                 const progress = await fetchSubtopicProgress(numericId, false); // false to not fetch detailed question data
-                progressData[id] = progress;
+                return { id, progress };
               }
             } catch (error) {
               console.error(`Error fetching progress for subtopic ${id}:`, error);
+              // Return null or a specific error indicator if needed
+              return { id, progress: null }; 
             }
-          }
+            return { id, progress: null }; // Return null if numericId is NaN or other issues
+          });
+
+          // Wait for all promises to resolve
+          const results = await Promise.all(progressPromises);
+          
+          // Aggregate results into the state object
+          const progressData: Record<string, any> = {};
+          results.forEach(result => {
+            if (result && result.progress) {
+              progressData[result.id] = result.progress;
+            }
+          });
           
           setSubtopicsProgress(progressData);
+          setIsSubtopicProgressLoading(false);
         }
+        // --- End parallel fetching ---
         
         // Update completed questions tracking
         const questions = filteredQuestions.length > 0 ? filteredQuestions : (categoryDetails?.questions || []);
@@ -238,10 +253,75 @@ export default function CategoryDetailView({
       }, 1000);
     };
     
+    // Listen for subtopic progress update events - allows faster progress bar updates
+    const handleSubtopicProgressUpdated = (event: CustomEvent) => {
+      const { subtopicId, progress } = event.detail;
+      
+      // Check if this update is relevant for currently selected subtopic
+      if (selectedSubtopic && subtopicId && selectedSubtopic === `topic-${subtopicId}`) {
+        console.log(`Updating progress for currently selected subtopic: ${subtopicId}`, progress);
+        setSubtopicProgress(progress);
+      }
+      
+      // Update in the subtopics progress collection if relevant
+      if (categoryDetails?.subtopics && subtopicId) {
+        const topicKey = `topic-${subtopicId}`;
+        if (topicKey in (categoryDetails.subtopics || {})) {
+          console.log(`Updating progress for subtopic in grid: ${topicKey}`, progress);
+          setSubtopicsProgress(prev => ({
+            ...prev,
+            [topicKey]: progress
+          }));
+        }
+      }
+    };
+    
+    // Handle domain subtopics progress updates for section-level refreshes
+    const handleDomainSubtopicsProgressUpdated = (event: CustomEvent) => {
+      const { subtopics, questionInfo } = event.detail;
+      
+      if (!subtopics || !categoryDetails?.subtopics) return;
+      
+      // Update any matching subtopics in our current view
+      let updatedProgress = { ...subtopicsProgress };
+      let isUpdated = false;
+      
+      Object.entries(subtopics).forEach(([subtopicId, progress]) => {
+        const topicKey = `topic-${subtopicId}`;
+        if (topicKey in (categoryDetails.subtopics || {})) {
+          updatedProgress[topicKey] = progress as {
+            categoriesCompleted: number;
+            totalCategories: number;
+            questionsCompleted: number;
+            totalQuestions: number;
+            completionPercentage: number;
+          };
+          isUpdated = true;
+        }
+      });
+      
+      if (isUpdated) {
+        console.log('Updating multiple subtopics progress from domain event');
+        setSubtopicsProgress(updatedProgress);
+      }
+      
+      // If the category of the completed question matches current category, update its progress too
+      if (questionInfo?.categoryId && categoryId && categoryId === `topic-${questionInfo.categoryId}`) {
+        console.log('Refreshing category progress due to related question completion');
+        fetchCategoryProgress(questionInfo.categoryId, true)
+          .then(progress => setCategoryProgress(progress))
+          .catch(error => console.error('Failed to refresh category progress:', error));
+      }
+    };
+    
     window.addEventListener('questionCompleted', handleQuestionCompleted as EventListener);
+    window.addEventListener('subtopicProgressUpdated', handleSubtopicProgressUpdated as EventListener);
+    window.addEventListener('domainSubtopicsProgressUpdated', handleDomainSubtopicsProgressUpdated as EventListener);
     
     return () => {
       window.removeEventListener('questionCompleted', handleQuestionCompleted as EventListener);
+      window.removeEventListener('subtopicProgressUpdated', handleSubtopicProgressUpdated as EventListener);
+      window.removeEventListener('domainSubtopicsProgressUpdated', handleDomainSubtopicsProgressUpdated as EventListener);
     };
   }, [categoryId, selectedSubtopic, categoryDetails?.subtopics, categoryDetails?.questions, filteredQuestions]);
   
@@ -281,7 +361,21 @@ export default function CategoryDetailView({
     const segments = pathname.split('/');
     if (segments.length >= 3) {
       const domain = segments[2];
-      router.push(`/topics/${domain}`);
+      
+      // Instead of preserving parameters, force a complete refresh of the domain page
+      // by using router.replace and setting a clean URL
+      const newUrl = `/topics/${domain}`;
+      
+      console.log('Force refreshing domain page:', newUrl);
+      
+      // Dispatch a custom event to notify parent components that we're going back to the main page
+      // This will allow them to reset their state
+      window.dispatchEvent(new CustomEvent('resetCategorySelection', {
+        detail: { domain }
+      }));
+      
+      // Use replace to avoid adding to history stack
+      router.replace(newUrl);
     } else {
       // Fallback in case URL structure isn't as expected
       router.back();
@@ -533,48 +627,62 @@ export default function CategoryDetailView({
       {hasRealSubtopics && categoryDetails?.subtopics && (
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Topics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(categoryDetails.subtopics)
-              .filter(([id]) => id.startsWith('topic-'))
-              .map(([id, subtopic]) => (
-                <div 
-                  key={id} 
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => handleSubtopicSelect(id)}
-                >
-                  <h3 className="font-medium mb-2">{subtopic.label}</h3>
-                  
-                  {/* Add progress bar for each subtopic */}
-                  {subtopicsProgress[id] && (
-                    <div className="mt-2 mb-3">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {subtopicsProgress[id].categoriesCompleted}/{subtopicsProgress[id].totalCategories} categories completed
-                        </span>
+          {isSubtopicProgressLoading ? (
+            // Loading indicator
+            <div className="w-full text-center py-6">
+              <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
+              <p className="mt-2 text-sm text-gray-500">Loading topic progress...</p>
+            </div>
+          ) : (
+            // Actual grid
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(categoryDetails.subtopics)
+                .filter(([id]) => id.startsWith('topic-'))
+                .map(([id, subtopic]) => (
+                  <div 
+                    key={id} 
+                    className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleSubtopicSelect(id)}
+                  >
+                    <h3 className="font-medium mb-2">{subtopic.label}</h3>
+                    
+                    {/* Add progress bar for each subtopic */}
+                    {subtopicsProgress[id] ? ( // Check if progress data exists
+                      <div className="mt-2 mb-3">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {subtopicsProgress[id].categoriesCompleted}/{subtopicsProgress[id].totalCategories} categories completed
+                          </span>
+                        </div>
+                        <ProgressBar
+                          progress={
+                            subtopicsProgress[id].totalCategories > 0 
+                            ? (subtopicsProgress[id].categoriesCompleted / subtopicsProgress[id].totalCategories) * 100
+                            : 0
+                          }
+                          completed={subtopicsProgress[id].categoriesCompleted}
+                          total={subtopicsProgress[id].totalCategories}
+                          height="sm"
+                          showText={false}
+                          className={subtopic.label}
+                        />
                       </div>
-                      <ProgressBar
-                        progress={
-                          subtopicsProgress[id].totalCategories > 0 
-                          ? (subtopicsProgress[id].categoriesCompleted / subtopicsProgress[id].totalCategories) * 100
-                          : 0
-                        }
-                        completed={subtopicsProgress[id].categoriesCompleted}
-                        total={subtopicsProgress[id].totalCategories}
-                        height="sm"
-                        showText={false}
-                        className={subtopic.label}
-                      />
-                    </div>
-                  )}
-                  
-                  {subtopic.content && (
-                    <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose dark:prose-invert max-w-none">
-                      <ReactMarkdown>{subtopic.content}</ReactMarkdown>
-                    </div>
-                  )}
-                </div>
-              ))}
-          </div>
+                    ) : (
+                      // Placeholder or message if progress data is loading or missing
+                      <div className="mt-2 mb-3 h-5"> {/* Maintain layout height */}
+                         <span className="text-xs text-gray-400 dark:text-gray-500">Progress loading...</span>
+                      </div>
+                    )}
+                    
+                    {subtopic.content && (
+                      <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose dark:prose-invert max-w-none">
+                        <ReactMarkdown>{subtopic.content}</ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       )}
       

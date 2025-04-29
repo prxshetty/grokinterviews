@@ -10,8 +10,8 @@ type Props = {
 
 // Page-specific context provider for passing the domain safely
 export default async function DomainLayout({ children, params }: Props) {
-  // Decode the domain parameter
-  const domain = decodeURIComponent(params.domain);
+  // Decode the domain parameter directly from the awaited props
+  const domain = decodeURIComponent((await params).domain);
   
   // Domain validation - ensure only valid domains can be accessed
   const validDomains = ['dsa', 'ml', 'webdev', 'ai', 'sdesign'];

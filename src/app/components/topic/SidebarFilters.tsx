@@ -9,7 +9,7 @@ interface SidebarFiltersProps {
   selectedKeyword: string | null;
   selectedDifficulty: string | null;
   onSelectKeyword: (keyword: string) => void;
-  onSelectDifficulty: (difficulty: string) => void;
+  onSelectDifficulty: (difficulty: string, page?: number) => void;
   isLoadingKeyword?: boolean;
   isLoadingDifficulty?: boolean;
 }
@@ -29,19 +29,18 @@ export default function SidebarFilters({
     return null;
   }
 
-  // Get the keywords for the current domain/topic
-  const keywords = getDomainKeywords(selectedTopic);
+  // Get all keywords for the current domain/topic (no pagination)
+  const keywords = getDomainKeywords(selectedTopic, 1, 0); // pageSize=0 returns all
 
   return (
-    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-      <div className="w-full space-y-6">
+    <div className="px-4 pb-4 pt-0">
+      <div className="w-full space-y-4">
         <KeywordFilter 
           selectedTopic={selectedTopic}
           selectedKeyword={selectedKeyword}
           keywordsList={keywords}
           onSelectKeyword={onSelectKeyword}
         />
-        
         <DifficultyFilter
           selectedTopic={selectedTopic}
           selectedDifficulty={selectedDifficulty}
