@@ -278,9 +278,14 @@ export default function CategoryDetailView({
     
     // Handle domain subtopics progress updates for section-level refreshes
     const handleDomainSubtopicsProgressUpdated = (event: CustomEvent) => {
+      console.log('[handleDomainSubtopicsProgressUpdated] Event received:', event.detail); // Log the entire event detail
+      
       const { subtopics, questionInfo } = event.detail;
       
-      if (!subtopics || !categoryDetails?.subtopics) return;
+      if (!subtopics || !categoryDetails?.subtopics) {
+         console.log('[handleDomainSubtopicsProgressUpdated] Skipping: No subtopics in event or categoryDetails.');
+         return;
+      }
       
       // Update any matching subtopics in our current view
       let updatedProgress = { ...subtopicsProgress };
@@ -289,6 +294,7 @@ export default function CategoryDetailView({
       Object.entries(subtopics).forEach(([subtopicId, progress]) => {
         const topicKey = `topic-${subtopicId}`;
         if (topicKey in (categoryDetails.subtopics || {})) {
+          console.log(`[handleDomainSubtopicsProgressUpdated] Updating progress for ${topicKey} with:`, progress); // Log the specific progress object being applied
           updatedProgress[topicKey] = progress as {
             categoriesCompleted: number;
             totalCategories: number;
@@ -297,20 +303,24 @@ export default function CategoryDetailView({
             completionPercentage: number;
           };
           isUpdated = true;
+        } else {
+           console.log(`[handleDomainSubtopicsProgressUpdated] Skipping update for ${topicKey}: Not found in current categoryDetails.subtopics`);
         }
       });
       
       if (isUpdated) {
-        console.log('Updating multiple subtopics progress from domain event');
+        console.log('[handleDomainSubtopicsProgressUpdated] Applying updated subtopicsProgress:', updatedProgress); // Log the final object before setting state
         setSubtopicsProgress(updatedProgress);
+      } else {
+         console.log('[handleDomainSubtopicsProgressUpdated] No relevant subtopics were updated.');
       }
       
       // If the category of the completed question matches current category, update its progress too
       if (questionInfo?.categoryId && categoryId && categoryId === `topic-${questionInfo.categoryId}`) {
-        console.log('Refreshing category progress due to related question completion');
+        console.log('[handleDomainSubtopicsProgressUpdated] Refreshing category progress due to related question completion:', questionInfo.categoryId);
         fetchCategoryProgress(questionInfo.categoryId, true)
           .then(progress => setCategoryProgress(progress))
-          .catch(error => console.error('Failed to refresh category progress:', error));
+          .catch(error => console.error('[handleDomainSubtopicsProgressUpdated] Failed to refresh category progress:', error));
       }
     };
     

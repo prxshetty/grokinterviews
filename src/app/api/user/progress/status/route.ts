@@ -3,10 +3,24 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import supabaseServer from '@/utils/supabase-server';
 
+// Define cache control headers for different scenarios
+const CACHE_HEADERS = {
+  short: {
+    'Cache-Control': 'public, max-age=10, s-maxage=15', // Cache for 10 seconds
+  },
+  medium: {
+    'Cache-Control': 'public, max-age=60, s-maxage=120', // Cache for 1 minute
+  },
+  long: {
+    'Cache-Control': 'public, max-age=300, s-maxage=600', // Cache for 5 minutes
+  }
+};
+
 // GET: Retrieve status of a specific question for the current user
 export async function GET(request: NextRequest) {
   // Use the Next.js route handler client for authentication
   const cookieStore = await cookies();
+  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
@@ -36,53 +50,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'unknown', error: 'Question ID is required' }, { status: 400 });
     }
 
-    // Get the status for this question - handle multiple records by getting the most recent one
-    // First try to find any record with status = 'completed'
-    console.log(`Checking completion status for question ${questionId}`);
-    const { data: completedData, error: completedError } = await supabaseServer
-      .from('user_activity')
-      .select('status, created_at, activity_type')
+    // Single optimized query - check user_progress directly instead of user_activity
+    // This is more efficient as it only has one row per user/question
+    const { data: progressData, error: progressError } = await supabaseServer
+      .from('user_progress')
+      .select('status, updated_at')
       .eq('user_id', userId)
       .eq('question_id', questionId)
-      .eq('status', 'completed')
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .single();
 
-    if (!completedError && completedData && completedData.length > 0) {
-      console.log(`Found a completed record for question ${questionId}:`, completedData[0]);
-      return NextResponse.json({
-        status: 'completed',
-        isBookmarked: false,
-        timestamp: Date.now()
-      });
-    } else {
-      console.log(`No completed record found for question ${questionId}`);
-      if (completedError) {
-        console.error(`Error fetching completed records:`, completedError);
-      }
-    }
-
-    // If no completed record is found, check for any record
-    const { data, error } = await supabaseServer
-      .from('user_activity')
-      .select('status, created_at, activity_type')
-      .eq('user_id', userId)
-      .eq('question_id', questionId)
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error('Error fetching question status:', error);
+    if (progressError && progressError.code !== 'PGRST116') { // PGRST116 = not found, which is normal
+      console.error('Error fetching question status:', progressError);
       return NextResponse.json({ status: 'unknown', error: 'Failed to fetch question status' }, { status: 500 });
     }
 
-    // Return the status or 'unknown' if no record exists
-    // Since we're now getting an array with one item (or empty array), handle accordingly
-    const latestRecord = data && data.length > 0 ? data[0] : null;
+    let responseData = {
+      status: progressData?.status || 'unknown',
+      isBookmarked: progressData?.status === 'bookmarked',
+      timestamp: Date.now()
+    };
 
-    return NextResponse.json({
-      status: latestRecord?.status || 'unknown',
-      isBookmarked: latestRecord?.status === 'bookmarked'
+    // If the status is 'completed', we can cache it longer (unlikely to change)
+    // For other statuses, use shorter cache duration
+    const cacheHeaders = progressData?.status === 'completed' ? 
+                        CACHE_HEADERS.medium : 
+                        CACHE_HEADERS.short;
+
+    return NextResponse.json(responseData, { 
+      status: 200,
+      headers: cacheHeaders
     });
 
   } catch (error) {
