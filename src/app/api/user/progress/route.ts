@@ -206,127 +206,170 @@ export async function GET(_request: NextRequest) {
 export async function POST(request: NextRequest) {
   // Use the Next.js route handler client for authentication
   const cookieStore = await cookies();
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
+  // @ts-ignore
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
-  // Get the user session using Supabase auth
+  // Get user session
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
-    } else if (session?.user) {
-      userId = session.user.id;
-      console.log('Found user ID from session for POST:', userId);
-    }
-  } catch (error) {
-    console.error('Error getting user session:', error);
-    // Continue with anonymous access
+    if (sessionError) throw sessionError;
+    if (!session?.user) throw new Error('User not authenticated');
+    userId = session.user.id;
+  } catch (error: any) {
+    console.error('Session Error:', error.message);
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
   try {
-    // If no user ID was found, return success without saving
-    if (!userId) {
-      return NextResponse.json({ success: true, message: 'Not logged in, progress not saved' });
+    const { questionId, status, topicId, categoryId } = await request.json();
+
+    // Validate required fields for user_progress
+    if (!questionId || !status || !topicId || !categoryId) {
+       console.error('Missing required fields for progress update:', { questionId, status, topicId, categoryId });
+      return NextResponse.json({ error: 'Question ID, status, Topic ID, and Category ID are required' }, { status: 400 });
     }
-    const { questionId, status } = await request.json();
-
-    if (!questionId || !status) {
-      return NextResponse.json({ error: 'Question ID and status are required' }, { status: 400 });
-    }
-
-    // First, get the topic_id for this question by following the relationships
-    // 1. Get the question to find its category_id
-    const { data: questionData, error: questionError } = await supabaseServer
-      .from('questions')
-      .select('category_id')
-      .eq('id', questionId)
-      .single();
-
-    if (questionError) {
-      console.error('Error fetching question:', questionError);
-      return NextResponse.json({ error: 'Failed to fetch question information' }, { status: 500 });
-    }
-
-    if (!questionData || !questionData.category_id) {
-      return NextResponse.json({ error: 'Question not found or has no category' }, { status: 404 });
-    }
-
-    // 2. Get the category to find its topic_id
-    const { data: categoryData, error: categoryError } = await supabaseServer
-      .from('categories')
-      .select('topic_id')
-      .eq('id', questionData.category_id)
-      .single();
-
-    if (categoryError) {
-      console.error('Error fetching category:', categoryError);
-      return NextResponse.json({ error: 'Failed to fetch category information' }, { status: 500 });
-    }
-
-    if (!categoryData || !categoryData.topic_id) {
-      return NextResponse.json({ error: 'Category not found or has no topic' }, { status: 404 });
-    }
-
-    const topicId = categoryData.topic_id;
     
-    // Determine activity type based on status
-    const activity_type = status === 'completed' ? 'question_completed' :
-                         status === 'viewed' ? 'question_viewed' :
-                         status === 'bookmarked' ? 'question_bookmarked' : 'user_activity';
-                         
-    // Create metadata
-    const metadata = {
-      status,
-      timestamp: new Date().toISOString()
-    };
+    console.log(`Updating user_progress for Q:${questionId} to ${status} (Topic:${topicId}, Cat:${categoryId}) for User:${userId}`);
+
+    // Upsert the progress record in the user_progress table
+    const { error: userProgressUpsertError } = await supabaseServer
+      .from('user_progress')
+      .upsert(
+        {
+          user_id: userId,
+          question_id: questionId,
+          topic_id: topicId,      // Now provided by client
+          category_id: categoryId,  // Now provided by client
+          status: status,
+          updated_at: new Date().toISOString() // Ensure update timestamp is set
+        },
+        {
+          onConflict: 'user_id, question_id', // Assumes unique constraint exists on user_progress
+          // Explicitly set ignoreDuplicates to false to ensure UPDATE on conflict
+          ignoreDuplicates: false
+        }
+      );
+
+    if (userProgressUpsertError) {
+      // Specific log for user_progress failure
+      console.error(`Failed to upsert into user_progress table for user ${userId}, question ${questionId}.`);
+      // Log the full error object for debugging details
+      console.error('Raw user_progress upsertError object:', userProgressUpsertError);
+
+      // Log specific constraint violation errors if they occur for user_progress itself
+      if (userProgressUpsertError.code === '23503') { // foreign key violation
+         console.error('Foreign key violation on user_progress. Check if topic_id/category_id/question_id exist.');
+      }
+      // We don't expect 23505 here normally due to ON CONFLICT, but log if it happens.
+      if (userProgressUpsertError.code === '23505') {
+         console.error('Unique constraint (23505) reported during user_progress upsert. Investigate concurrency or ON CONFLICT.');
+      }
+      // Return a generic error, avoiding potentially misleading details from the raw error object
+      return NextResponse.json({ error: 'Failed initial user progress status update.' }, { status: 500 });
+    }
+
+    // Additionally, log the activity in user_activity (no conflict check needed for logs)
+    try {
+      const { error: logError } = await supabaseServer
+        .from('user_activity')
+        .insert({
+          user_id: userId,
+          question_id: questionId,
+          topic_id: topicId,
+          category_id: categoryId,
+          status: status, // Log the status being set
+          activity_type: status === 'completed' ? 'question_completed' : 
+                         status === 'viewed' ? 'question_viewed' : 
+                         status === 'bookmarked' ? 'question_bookmarked' : 'progress_update',
+          created_at: new Date().toISOString(),
+          // We can fetch domain later if needed for analytics enrichment
+        });
+
+      if (logError) {
+        console.warn('Failed to log user activity:', logError.message);
+        // Don't fail the request, logging is secondary
+      }
+    } catch (logCatchError: any) {
+      console.warn('Exception during activity logging:', logCatchError.message);
+    }
     
-    // Use the RPC function to update user progress
-    // This bypasses materialized view permission issues
-    const result = await supabaseServer.rpc('update_user_progress', {
-      p_user_id: userId,
-      p_question_id: questionId,
-      p_topic_id: topicId,
-      p_category_id: questionData.category_id,
-      p_status: status,
-      p_activity_type: activity_type,
-      p_metadata: metadata
-    });
+    // Get domain and section_name for progress recalculation queue
+    try {
+      // Get the domain and section_name for the given topic ID
+      const { data: topicData, error: topicError } = await supabaseServer
+        .from('topics')
+        .select('domain, section_name')
+        .eq('id', topicId)
+        .single();
+      
+      if (topicError) {
+        console.warn(`Failed to get topic data for recalculation queue: ${topicError.message}`);
+      } else if (topicData) {
+        const queueRecord = {
+            user_id: userId,
+            question_id: questionId,
+            category_id: categoryId,
+            topic_id: topicId,
+            domain: topicData.domain || 'unknown',
+            section_name: topicData.section_name || 'unknown',
+            created_at: new Date().toISOString(),
+            processed_at: null // Reset processed_at to ensure it's picked up by the next recalculation
+        };
 
-    if (result.error) {
-      console.error('Error updating user progress:', result.error);
-      return NextResponse.json({ error: 'Failed to update user progress' }, { status: 500 });
+        // Try inserting first
+        const { error: insertError } = await supabaseServer
+            .from('progress_recalculation_queue')
+            .insert(queueRecord);
+
+        if (insertError) {
+            // If it's the unique constraint violation (23505), try updating the existing record
+            if (insertError.code === '23505') {
+                console.warn(`Queue insert failed (23505), attempting update for user ${userId}, question ${questionId}.`);
+                const { error: updateError } = await supabaseServer
+                    .from('progress_recalculation_queue')
+                    .update({ // Update relevant fields, especially processed_at to ensure reprocessing
+                        category_id: categoryId,
+                        topic_id: topicId,
+                        domain: topicData.domain || 'unknown',
+                        section_name: topicData.section_name || 'unknown',
+                        created_at: new Date().toISOString(), // Keep created_at timestamp fresh
+                        processed_at: null
+                    })
+                    .eq('user_id', userId)
+                    .eq('question_id', questionId);
+
+                if (updateError) {
+                    // Log update errors but don't fail the main request
+                    console.error(`Failed to update recalculation queue after insert conflict: ${updateError.message}`);
+                } else {
+                    console.log(`Successfully updated recalculation queue entry for user ${userId}, question ${questionId}.`);
+                }
+            } else {
+                // Log other insert errors as warnings
+                console.warn(`Failed to insert into recalculation queue: ${insertError.message}`);
+            }
+        } else {
+             console.log(`Successfully inserted into recalculation queue for user ${userId}, question ${questionId}.`);
+        }
+      }
+    } catch (recalcError: any) {
+      console.warn(`Error during recalculation queue handling: ${recalcError.message}`);
+      // Don't fail the main request for background process issues
     }
+    
 
-    // Debug log to see the result
-    console.log('Progress updated successfully via RPC:', {
-      userId,
-      questionId,
-      status,
-      topicId,
-      categoryId: questionData.category_id
-    });
-
-    // Get the domain for this topic (for logging purposes)
-    const { data: topicData, error: topicError } = await supabaseServer
-      .from('topics')
-      .select('domain')
-      .eq('id', topicId)
-      .single();
-
-    if (topicError) {
-      console.error('Error fetching topic domain:', topicError);
-      // Continue anyway, this is not critical
-    } else {
-      console.log('Topic domain:', topicData?.domain);
-    }
-
+    console.log(`Successfully updated user_progress for question ${questionId} to ${status}`);
     return NextResponse.json({ success: true });
 
-  } catch (error) {
-    console.error('Error updating user progress:', error);
-    return NextResponse.json({ error: 'Failed to update user progress' }, { status: 500 });
+  } catch (error: any) {
+    // This is the final catch-all for the entire POST request
+    console.error('Outer catch: Error processing progress update request:', error);
+    // Handle JSON parsing errors or other unexpected issues
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+    // Return a generic server error message
+    return NextResponse.json({ error: 'Server error during progress update.', details: error?.message || 'Unknown error' }, { status: 500 });
   }
 }

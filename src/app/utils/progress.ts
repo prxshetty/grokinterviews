@@ -26,10 +26,16 @@ export const markQuestionAsViewed = async (questionId: number): Promise<void> =>
 /**
  * Marks a question as completed
  * @param questionId The ID of the completed question
+ * @param topicId The ID of the topic this question belongs to
+ * @param categoryId The ID of the category this question belongs to
  */
-export const markQuestionAsCompleted = async (questionId: number): Promise<boolean> => {
+export const markQuestionAsCompleted = async (
+  questionId: number, 
+  topicId: number, 
+  categoryId: number
+): Promise<boolean> => {
   try {
-    console.log(`Calling API to mark question ${questionId} as completed`);
+    console.log(`Calling API to mark question ${questionId} (Topic: ${topicId}, Cat: ${categoryId}) as completed`);
     const response = await fetch('/api/user/progress', {
       method: 'POST',
       headers: {
@@ -38,6 +44,8 @@ export const markQuestionAsCompleted = async (questionId: number): Promise<boole
       body: JSON.stringify({
         questionId,
         status: 'completed',
+        topicId,     // Pass topicId
+        categoryId   // Pass categoryId
       }),
     });
 

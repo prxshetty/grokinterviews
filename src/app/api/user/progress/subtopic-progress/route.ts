@@ -5,8 +5,9 @@ import supabaseServer from '@/utils/supabase-server';
 
 // GET: Retrieve progress for a specific subtopic
 export async function GET(request: NextRequest) {
-  // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
+  // Await cookies() first, then pass a function returning the store
+  const cookieStore = await cookies(); 
+  // @ts-ignore - Supabase helper type expects Promise, but runtime needs resolved store with Next 15 async cookies
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
@@ -83,32 +84,34 @@ export async function GET(request: NextRequest) {
     // Get all question IDs
     const questionIds = questions.map(q => q.id);
 
-    // Get all completed questions for this user
-    const { data: completedData, error: completedError } = await supabaseServer
-      .from('user_activity')
-      .select('question_id, category_id')
+    // Get all completed questions for this user within the specific subtopic's questions
+    // Querying user_progress instead of user_activity for potentially more canonical state
+    const { data: completedProgress, error: completedError } = await supabaseServer
+      .from('user_progress') // Changed from user_activity
+      .select('question_id, category_id') // Ensure category_id is selected if needed later
       .eq('user_id', userId)
       .eq('status', 'completed')
-      .in('question_id', questionIds);
+      .in('question_id', questionIds); // Filter by questions in this subtopic
 
     if (completedError) {
-      console.error('Error fetching completed questions:', completedError);
+      console.error('Error fetching completed questions from user_progress:', completedError);
       return NextResponse.json({ error: 'Failed to fetch completed questions' }, { status: 500 });
     }
 
-    // Count unique completed questions
-    const uniqueCompletedQuestions = new Set();
-    completedData?.forEach(item => {
+    // Count unique completed questions from the fetched progress data
+    const uniqueCompletedQuestionIds = new Set<number>(); // Explicitly type the set
+    completedProgress?.forEach(item => {
       if (item.question_id) {
-        uniqueCompletedQuestions.add(item.question_id);
+        uniqueCompletedQuestionIds.add(item.question_id);
       }
     });
-    const questionsCompleted = uniqueCompletedQuestions.size;
+    const questionsCompleted = uniqueCompletedQuestionIds.size;
 
-    console.log(`User has completed ${questionsCompleted}/${totalQuestions} questions in subtopic ${subtopicId}`);
+    // Log the count accurately based on user_progress
+    console.log(`User has completed ${questionsCompleted}/${totalQuestions} questions in subtopic ${subtopicId} (from user_progress)`);
 
-    // Group questions by category
-    const questionsByCategory = {};
+    // Group questions by category ID
+    const questionsByCategory: { [key: number]: number[] } = {}; // Type the index signature
     questions.forEach(q => {
       if (!questionsByCategory[q.category_id]) {
         questionsByCategory[q.category_id] = [];
@@ -119,50 +122,57 @@ export async function GET(request: NextRequest) {
     // Calculate how many categories are "completed" (all questions completed)
     let categoriesCompleted = 0;
 
-    // For each category, check if all questions are completed
-    for (const categoryId of categoryIds) {
-      const categoryQuestions = questionsByCategory[categoryId] || [];
+    // For each category ID associated with the subtopic
+    for (const categoryIdStr in questionsByCategory) {
+        const categoryId = parseInt(categoryIdStr, 10);
+        if (isNaN(categoryId)) continue; // Skip if parsing fails
 
-      if (categoryQuestions.length === 0) continue;
+        const categoryQuestionIds = questionsByCategory[categoryId] || [];
+        const totalQuestionsInCategory = categoryQuestionIds.length;
 
-      // Count how many questions in this category are completed
-      let categoryCompletedCount = 0;
-      categoryQuestions.forEach(questionId => {
-        if (uniqueCompletedQuestions.has(questionId)) {
-          categoryCompletedCount++;
+        // Skip empty categories
+        if (totalQuestionsInCategory === 0) {
+            console.log(`Skipping category ${categoryId}: No questions found.`);
+            continue;
         }
-      });
 
-      // If all questions are completed, increment the counter
-      if (categoryCompletedCount === categoryQuestions.length) {
-        categoriesCompleted++;
-        // Category is fully completed
-      } else {
-        // Category is partially completed
-      }
+        // Count how many questions in this category are in the completed set
+        let categoryCompletedCount = 0;
+        categoryQuestionIds.forEach(questionId => {
+            if (uniqueCompletedQuestionIds.has(questionId)) {
+                categoryCompletedCount++;
+            }
+        });
+
+        console.log(`Category ${categoryId}: ${categoryCompletedCount}/${totalQuestionsInCategory} questions completed.`);
+
+        // If all questions in the category are completed, increment the category counter
+        if (categoryCompletedCount === totalQuestionsInCategory) {
+            categoriesCompleted++;
+            console.log(`Category ${categoryId} is fully completed.`);
+        }
     }
 
     // Calculate completion percentage based primarily on category completion
     let completionPercentage = 0;
-
     if (totalCategories > 0) {
-      // For other subtopics, calculate progress based on the number of completed categories
+      // Use category completion for percentage
       completionPercentage = Math.round((categoriesCompleted / totalCategories) * 100);
-      // Calculate progress based on completed categories
-
-      // If all categories are completed, ensure it shows 100%
-      if (categoriesCompleted === totalCategories) {
-        completionPercentage = 100;
-        // All categories are completed
-      }
+      console.log(`Calculating percentage based on categories: ${categoriesCompleted}/${totalCategories}`);
     } else if (totalQuestions > 0) {
-      // Fallback to question-based progress if no categories are defined
+      // Fallback to question-based progress if no categories exist
       completionPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
-      // Using question-based progress as fallback
+      console.log(`Calculating percentage based on questions (fallback): ${questionsCompleted}/${totalQuestions}`);
+    }
+    
+    // Ensure 100% if all categories are done (and there are categories)
+    if (totalCategories > 0 && categoriesCompleted === totalCategories) {
+      completionPercentage = 100;
+      console.log("Setting percentage to 100% as all categories are complete.");
     }
 
-    // Log a summary instead of detailed information
-    console.log(`Subtopic ${subtopicId} progress: ${questionsCompleted}/${totalQuestions} questions, ${categoriesCompleted}/${totalCategories} categories, ${completionPercentage}% complete`);
+    // Log a summary with updated calculation source
+    console.log(`Subtopic ${subtopicId} progress (calculated live): ${questionsCompleted}/${totalQuestions} questions, ${categoriesCompleted}/${totalCategories} categories, ${completionPercentage}% complete`);
 
     return NextResponse.json({
       categoriesCompleted,
