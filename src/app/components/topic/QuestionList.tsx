@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
+import { ResourceList } from '../questions/ResourceList';
 import { isQuestionCompleted, markQuestionAsCompleted } from '@/app/utils/progress';
 
 interface QuestionType {
@@ -448,6 +449,13 @@ export default function QuestionList({
              </svg>
            </div>
         </div>
+
+        {/* --- Add Resource List Here --- */}
+        {isExpanded && question.id && (
+          <div className="px-4 pt-3 pb-1 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
+            <ResourceList questionId={question.id} />
+          </div>
+        )}
         
         {/* Expanded Answer Section */}
         {isExpanded && (
