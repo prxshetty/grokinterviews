@@ -6,7 +6,7 @@ import supabaseServer from '@/utils/supabase-server';
 // GET: Retrieve progress for a specific subtopic
 export async function GET(request: NextRequest) {
   // Await cookies() first, then pass a function returning the store
-  const cookieStore = await cookies(); 
+  const cookieStore = await cookies();
   // @ts-ignore - Supabase helper type expects Promise, but runtime needs resolved store with Next 15 async cookies
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
@@ -137,20 +137,20 @@ export async function GET(request: NextRequest) {
         }
 
         // Count how many questions in this category are in the completed set
-        let categoryCompletedCount = 0;
+      let categoryCompletedCount = 0;
         categoryQuestionIds.forEach(questionId => {
             if (uniqueCompletedQuestionIds.has(questionId)) {
-                categoryCompletedCount++;
-            }
-        });
+          categoryCompletedCount++;
+        }
+      });
 
         console.log(`Category ${categoryId}: ${categoryCompletedCount}/${totalQuestionsInCategory} questions completed.`);
 
         // If all questions in the category are completed, increment the category counter
         if (categoryCompletedCount === totalQuestionsInCategory) {
-            categoriesCompleted++;
+        categoriesCompleted++;
             console.log(`Category ${categoryId} is fully completed.`);
-        }
+      }
     }
 
     // Calculate completion percentage based primarily on category completion
