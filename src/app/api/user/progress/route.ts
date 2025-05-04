@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
           status: status, // Log the status being set
           activity_type: status === 'completed' ? 'question_completed' : 
                          status === 'viewed' ? 'question_viewed' : 
-                         status === 'bookmarked' ? 'question_bookmarked' : 'progress_update',
+                         'progress_update',
           created_at: new Date().toISOString(),
           // We can fetch domain later if needed for analytics enrichment
         });

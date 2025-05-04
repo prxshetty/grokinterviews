@@ -68,23 +68,39 @@ export const markQuestionAsCompleted = async (
  * Toggles bookmark status for a question
  * @param questionId The ID of the question to bookmark/unbookmark
  * @param isBookmarked Whether to bookmark (true) or unbookmark (false)
+ * @param topicId The ID of the topic this question belongs to
+ * @param categoryId The ID of the category this question belongs to
  * @returns Promise resolving to the success status
  */
-export const toggleQuestionBookmark = async (questionId: number, isBookmarked: boolean): Promise<boolean> => {
+export const toggleQuestionBookmark = async (
+  questionId: number,
+  isBookmarked: boolean,
+  topicId: number,
+  categoryId: number
+): Promise<boolean> => {
   try {
-    const response = await fetch('/api/user/progress', {
+    const response = await fetch('/api/user/bookmarks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         questionId,
-        status: isBookmarked ? 'bookmarked' : 'viewed', // Set to 'bookmarked' or back to 'viewed'
+        isBookmarked: isBookmarked,
+        topicId,
+        categoryId,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update bookmark status');
+      let errorDetails = 'Unknown error';
+      try {
+        const errorData = await response.json();
+        errorDetails = errorData.details || errorData.error || JSON.stringify(errorData);
+      } catch (e) {
+        errorDetails = response.statusText;
+      }
+      throw new Error(`Failed to update bookmark status: ${response.status} - ${errorDetails}`);
     }
 
     const result = await response.json();
