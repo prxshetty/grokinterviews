@@ -253,17 +253,19 @@ export function ResourceList({ questionId }: ResourceListProps) {
 
   return (
     <div className="mt-2 mb-4">
-      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Resources:</h3>
-      <div className="space-y-4">
+      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Additional Resources:</h3>
+      {/* Use CSS Grid for dynamic columns */}
+      <div className={`grid gap-x-6 gap-y-4`} style={{ gridTemplateColumns: `repeat(${resourceTypes.length}, minmax(0, 1fr))` }}>
         {resourceTypes.map(type => {
           const typeResources = getResourcesByType(type);
           if (typeResources.length === 0) return null;
 
           return (
-            <div key={type} className="mb-2">
-              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center">
+            // Each type becomes a grid item
+            <div key={type}>
+              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center mb-1.5">
                 {getResourceTypeIcon(type)}
-                <span className="ml-1">{getResourceTypeLabel(type)}</span>
+                <span className="ml-1.5">{getResourceTypeLabel(type)}</span>
               </h4>
               <ul className="mt-1 space-y-1">
                 {typeResources.map(resource => (
