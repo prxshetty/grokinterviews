@@ -1,2 +1,2 @@
-export { default as QuestionContentDisplay } from './QuestionContentDisplay';
-export { default as MarkdownHeaderTree } from './MarkdownHeaderTree';
+export * from './MarkdownHeaderTree';
+// export { default as QuestionContentDisplay } from './QuestionContentDisplay'; // Removed
