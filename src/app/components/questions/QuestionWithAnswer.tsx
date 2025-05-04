@@ -431,6 +431,8 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
             <div className="mr-2" onClick={(e) => e.stopPropagation()}>
               <BookmarkButton
                 questionId={question.id}
+                topicId={question.topic_id || 0}
+                categoryId={question.category_id || 0}
                 initialIsBookmarked={isBookmarked}
                 onBookmarkChange={setIsBookmarked}
               />
