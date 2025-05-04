@@ -12,6 +12,8 @@ interface Bookmark {
   topicName: string;
   categoryId: number;
   categoryName: string;
+  domain: string | null;
+  sectionName: string | null;
   createdAt: string;
   updatedAt: string;
   timeAgo: string;
@@ -105,7 +107,10 @@ export default function BookmarksPage() {
                           </p>
                           <span className="text-xs text-gray-500 dark:text-gray-400">{bookmark.timeAgo}</span>
                         </div>
-                        <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
+                          {bookmark.domain && <span>[{bookmark.domain.toUpperCase()}]</span>}
+                          {bookmark.sectionName && <span>{bookmark.sectionName}</span>}
+                          <span>&gt;</span>
                           <span>{bookmark.categoryName}</span>
                         </div>
                         <div className="mt-2">

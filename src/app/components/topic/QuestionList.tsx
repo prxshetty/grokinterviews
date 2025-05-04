@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { ResourceList } from '../questions/ResourceList';
 import { isQuestionCompleted, markQuestionAsCompleted } from '@/app/utils/progress';
+import { BookmarkButton } from '../questions/BookmarkButton';
 
 interface QuestionType {
   id: number;
@@ -439,15 +440,43 @@ export default function QuestionList({
               {question.question_text}
             </span>
           </div>
-          {/* Expansion Arrow */}
-          <div className="text-gray-400">
-             <svg
-               className={`h-5 w-5 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-               fill="none" viewBox="0 0 24 24" stroke="currentColor"
-             >
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-             </svg>
-           </div>
+          {/* Right side: Buttons and Arrow */}
+          <div className="flex items-center space-x-2 flex-shrink-0"> {/* Adjusted classes */}
+            {/* Bookmark Button */}
+            {question.id && question.category_id && question.categories?.topic_id && ( // Add null checks
+                 <div onClick={(e) => e.stopPropagation()}> {/* Added stopPropagation */}
+                     <BookmarkButton
+                       questionId={question.id}
+                       topicId={question.categories.topic_id} // Pass topicId
+                       categoryId={question.category_id}     // Pass categoryId
+                     />
+                 </div>
+             )}
+            {/* Difficulty Badge (Keep original content) */}
+            {question.difficulty && (
+              <span
+                className={`px-2 py-0.5 text-xs font-medium rounded-full border ${ 
+                  question.difficulty === 'beginner' ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300' : 
+                  question.difficulty === 'intermediate' ? 'border-yellow-300 bg-yellow-50 text-yellow-700 dark:border-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300' : 
+                  'border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300'
+                }`}
+              >
+                {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
+              </span>
+            )}
+            {/* Expand/Collapse Icon (Keep original content) */}
+            <div className="text-gray-400"> {/* Ensure icon is wrapped */} 
+               <svg
+                 xmlns="http://www.w3.org/2000/svg"
+                 className={`h-5 w-5 text-gray-500 dark:text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+               >
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+               </svg>
+             </div>
+          </div>
         </div>
 
         {/* --- Add Resource List Here --- */}

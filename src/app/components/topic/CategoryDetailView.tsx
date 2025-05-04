@@ -530,12 +530,6 @@ export default function CategoryDetailView({
           </button>
         </div>
         
-        {subtopicDetails.content && (
-          <div className="mb-6 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md prose dark:prose-invert max-w-none">
-            <ReactMarkdown>{subtopicDetails.content}</ReactMarkdown>
-          </div>
-        )}
-
         {/* Progress bar for subtopic */}
         {subtopicProgress && (
           <div className="mb-6">
@@ -625,13 +619,6 @@ export default function CategoryDetailView({
           Back to Categories
         </button>
       </div>
-      
-      {/* Description if available */}
-      {categoryDetails?.content && (
-        <div className="mb-6 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md prose dark:prose-invert max-w-none">
-          <ReactMarkdown>{categoryDetails.content}</ReactMarkdown>
-        </div>
-      )}
       
       {/* If the category has subtopics, show them */}
       {hasRealSubtopics && categoryDetails?.subtopics && (
