@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         use_paper_sources,
         use_website_sources,
         use_book_sources,
-        use_expert_opinion_sources,
+        use_image_sources,
         preferred_answer_format,
         preferred_answer_depth,
         include_code_snippets,
@@ -92,7 +92,8 @@ export async function POST(request: Request) {
 
     if (preferencesError) {
       console.error('Preferences Fetch Error:', preferencesError.message);
-      return NextResponse.json({ error: 'Failed to fetch user preferences' }, { status: 500 });
+      // Log the error but attempt to continue with defaults
+      // return NextResponse.json({ error: 'Failed to fetch user preferences' }, { status: 500 });
     }
 
     // 4. Check required Groq settings & get preferences
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
     const use_paper_sources = preferencesData?.use_paper_sources ?? true;
     const use_website_sources = preferencesData?.use_website_sources ?? true;
     const use_book_sources = preferencesData?.use_book_sources ?? false;
-    const use_expert_opinion_sources = preferencesData?.use_expert_opinion_sources ?? false;
+    const use_image_sources = preferencesData?.use_image_sources ?? false;
     const preferred_answer_format = preferencesData?.preferred_answer_format || 'markdown';
     const preferred_answer_depth = preferencesData?.preferred_answer_depth || 'standard';
     const include_code_snippets = preferencesData?.include_code_snippets ?? true;
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
         use_paper: use_paper_sources,
         use_website: use_website_sources,
         use_book: use_book_sources,
-        use_expert_opinion: use_expert_opinion_sources,
+        use_image: use_image_sources,
         format: preferred_answer_format as AnswerFormat,
         depth: preferred_answer_depth as AnswerDepth,
         include_code: include_code_snippets,
@@ -158,9 +159,9 @@ export async function POST(request: Request) {
         youtube: preferences.use_youtube,
         pdf: preferences.use_pdf,
         paper: preferences.use_paper,
-        website: preferences.use_website, // Assuming 'website' type exists in resources
-        book: preferences.use_book,       // Assuming 'book' type exists
-        expert_opinion: preferences.use_expert_opinion, // Assuming 'expert_opinion' type exists
+        website: preferences.use_website,
+        book: preferences.use_book,
+        image: preferences.use_image,
         note: true, // Always include notes if they exist?
         // code_snippet: true // [REMOVED] - Code snippets are generated, not fetched
         // Add mappings for other resource_types if needed
@@ -172,7 +173,7 @@ export async function POST(request: Request) {
       return filteredResources
         .filter(r => r.resource_type === type)
         .map(r => {
-          if (type === 'youtube' || type === 'paper' || type === 'website' || type === 'pdf' || type === 'book' || type === 'expert_opinion') {
+          if (['youtube', 'paper', 'website', 'pdf', 'book', 'image'].includes(type)) {
             const title = r.title || (r.url ? new URL(r.url).hostname : 'Link');
             const link = r.url ? `(${r.url})` : '';
             let text = `- [${title}]${link}`;
@@ -193,7 +194,7 @@ export async function POST(request: Request) {
       pdfs: formatResources('pdf'),
       websites: formatResources('website'),
       books: formatResources('book'),
-      expert_opinions: formatResources('expert_opinion'),
+      images: formatResources('image'),
       notes: formatResources('note'),
       // code_snippets: formatResources('code_snippet'), // [REMOVED]
       // Add other types as needed
@@ -245,7 +246,7 @@ export async function POST(request: Request) {
     if (formattedData.pdfs) resourceSegments.push(`**Relevant PDFs:**\n${formattedData.pdfs}`);
     if (formattedData.websites) resourceSegments.push(`**Relevant Websites:**\n${formattedData.websites}`);
     if (formattedData.books) resourceSegments.push(`**Relevant Books:**\n${formattedData.books}`);
-    if (formattedData.expert_opinions) resourceSegments.push(`**Relevant Expert Opinions:**\n${formattedData.expert_opinions}`);
+    if (formattedData.images) resourceSegments.push(`**Relevant Images:**\n${formattedData.images}`);
     if (formattedData.notes) resourceSegments.push(`**Additional Notes:**\n${formattedData.notes}`);
 
     if (resourceSegments.length > 0) {
