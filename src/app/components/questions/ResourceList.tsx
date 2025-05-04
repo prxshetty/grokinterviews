@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import Image from 'next/image';
 
 interface Resource {
   id: number;
@@ -11,6 +12,7 @@ interface Resource {
   url: string;
   description: string | null;
   relevance_score: number;
+  previewUrl?: string;
 }
 
 interface ResourceListProps {
@@ -27,14 +29,14 @@ export function ResourceList({ questionId }: ResourceListProps) {
     use_paper_sources: boolean;
     use_website_sources: boolean;
     use_book_sources: boolean;
-    use_expert_opinion_sources: boolean;
+    use_image_sources: boolean;
   }>({
     use_youtube_sources: true,
     use_pdf_sources: true,
     use_paper_sources: true,
     use_website_sources: true,
     use_book_sources: false,
-    use_expert_opinion_sources: false,
+    use_image_sources: false,
   });
 
   const supabase = createClientComponentClient();
@@ -48,7 +50,7 @@ export function ResourceList({ questionId }: ResourceListProps) {
 
         const { data, error } = await supabase
           .from('user_preferences')
-          .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_expert_opinion_sources')
+          .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources')
           .eq('user_id', session.user.id)
           .maybeSingle();
 
@@ -64,7 +66,7 @@ export function ResourceList({ questionId }: ResourceListProps) {
             use_paper_sources: data.use_paper_sources ?? true,
             use_website_sources: data.use_website_sources ?? true,
             use_book_sources: data.use_book_sources ?? false,
-            use_expert_opinion_sources: data.use_expert_opinion_sources ?? false,
+            use_image_sources: data.use_image_sources ?? false,
           });
         }
       } catch (err) {
@@ -95,7 +97,7 @@ export function ResourceList({ questionId }: ResourceListProps) {
           userPreferences.use_paper_sources ? 'paper' : null,
           userPreferences.use_website_sources ? 'website' : null,
           userPreferences.use_book_sources ? 'book' : null,
-          userPreferences.use_expert_opinion_sources ? 'expert' : null,
+          userPreferences.use_image_sources ? 'image' : null,
         ].filter(Boolean) as string[];
 
         if (typesToInclude.length === 0) {
@@ -116,7 +118,35 @@ export function ResourceList({ questionId }: ResourceListProps) {
           setError('Failed to load resources. Please try again later.');
           setResources([]);
         } else {
-          setResources(data || []);
+          // Process data to add previewUrl
+          const processedData = data?.map(resource => {
+            let previewUrl: string | undefined = undefined;
+            if (resource.type === 'video' && resource.url) {
+              try {
+                const url = new URL(resource.url);
+                let videoId: string | null = null;
+                if (url.hostname === 'youtu.be') {
+                  videoId = url.pathname.substring(1);
+                } else if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com') {
+                  videoId = url.searchParams.get('v');
+                }
+                if (videoId) {
+                  previewUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                }
+              } catch (e) {
+                console.error('Error parsing video URL:', e);
+              }
+            } else if (resource.type === 'website' && resource.url) {
+              try {
+                  // Use Google's favicon service for better reliability
+                  previewUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(resource.url)}`;
+              } catch (e) {
+                  console.error('Error processing website URL for favicon:', e);
+              }
+            }
+            return { ...resource, previewUrl };
+          }) || [];
+          setResources(processedData);
         }
       } catch (err) {
         console.error('Error in fetchResources:', err);
@@ -237,12 +267,23 @@ export function ResourceList({ questionId }: ResourceListProps) {
               </h4>
               <ul className="mt-1 space-y-1">
                 {typeResources.map(resource => (
-                  <li key={resource.id} className="text-sm">
+                  <li key={resource.id} className="text-sm flex items-center space-x-2">
+                    {resource.previewUrl && (
+                      <Image
+                        src={resource.previewUrl}
+                        alt={`${resource.title} preview`}
+                        width={resource.type === 'video' ? 64 : 16}
+                        height={resource.type === 'video' ? 36 : 16}
+                        className={`flex-shrink-0 rounded ${resource.type === 'website' ? '' : 'object-cover'}`}
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        unoptimized={resource.type === 'website'}
+                      />
+                    )}
                     <a
                       href={resource.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline truncate block"
+                      className="text-blue-600 dark:text-blue-400 hover:underline truncate flex-grow min-w-0"
                       title={resource.title}
                     >
                       {resource.title}

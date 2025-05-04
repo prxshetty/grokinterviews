@@ -43,7 +43,7 @@ interface UserPreferences {
   use_paper_sources?: boolean;
   use_website_sources?: boolean;
   use_book_sources?: boolean;
-  use_expert_opinion_sources?: boolean;
+  use_image_sources?: boolean;
   preferred_answer_format?: AnswerFormat;
   preferred_answer_depth?: AnswerDepth;
   include_code_snippets?: boolean; // Whether to include code examples in answers
@@ -111,7 +111,7 @@ export default function AccountPage() {
     use_paper_sources: true,
     use_website_sources: true,
     use_book_sources: false, // Default off for less common sources
-    use_expert_opinion_sources: false, // Default off
+    use_image_sources: false,
     preferred_answer_format: 'markdown' as AnswerFormat, // Default format
     preferred_answer_depth: 'standard' as AnswerDepth, // Default depth
     include_code_snippets: true, // Default to including code snippets
@@ -186,7 +186,7 @@ export default function AccountPage() {
           use_paper_sources: preferencesData.use_paper_sources ?? true,
           use_website_sources: preferencesData.use_website_sources ?? true,
           use_book_sources: preferencesData.use_book_sources ?? false,
-          use_expert_opinion_sources: preferencesData.use_expert_opinion_sources ?? false,
+          use_image_sources: preferencesData.use_image_sources ?? false,
           preferred_answer_format: (preferencesData.preferred_answer_format || 'markdown') as AnswerFormat,
           preferred_answer_depth: (preferencesData.preferred_answer_depth || 'standard') as AnswerDepth,
           include_code_snippets: preferencesData.include_code_snippets ?? true,
@@ -266,7 +266,7 @@ export default function AccountPage() {
       use_paper_sources,
       use_website_sources,
       use_book_sources,
-      use_expert_opinion_sources,
+      use_image_sources,
       preferred_answer_format,
       preferred_answer_depth,
       include_code_snippets,
@@ -307,7 +307,7 @@ export default function AccountPage() {
         use_paper_sources,
         use_website_sources,
         use_book_sources,
-        use_expert_opinion_sources,
+        use_image_sources,
         preferred_answer_format,
         preferred_answer_depth,
         include_code_snippets,
@@ -353,7 +353,7 @@ export default function AccountPage() {
           use_paper_sources,
           use_website_sources,
           use_book_sources,
-          use_expert_opinion_sources,
+          use_image_sources,
           preferred_answer_format,
           preferred_answer_depth,
           include_code_snippets,
@@ -953,10 +953,10 @@ export default function AccountPage() {
                           { id: 'use_paper_sources', name: 'Papers', tag: 'Research', description: 'Academic research papers' },
                           { id: 'use_website_sources', name: 'Websites', tag: 'Articles', description: 'Relevant web articles' },
                           { id: 'use_book_sources', name: 'Books', tag: 'References', description: 'Amazon book links' },
-                          { id: 'use_expert_opinion_sources', name: 'Expert Opinion', tag: 'Coming Soon', description: 'Twitter citations to concepts' }
+                          { id: 'use_image_sources', name: 'Visual Guides', tag: 'Diagrams', description: 'Articles with diagrams & illustrations' }
                         ].map((source) => {
                           const isSelected = formData[source.id as keyof typeof formData] as boolean;
-                          const isComingSoon = source.id === 'use_expert_opinion_sources';
+                          const isComingSoon = false; // None are coming soon currently
                           return (
                             <div
                               key={source.id}
@@ -1231,7 +1231,7 @@ export default function AccountPage() {
                           .filter(Boolean)
                           .join(', ') || 'None'}
                       </p>
-                      <p><span className="font-medium">Sources:</span> {(Object.keys(formData) as Array<keyof typeof formData>)
+                      <p><span className="font-medium">Sources:</span> {(['use_youtube_sources', 'use_pdf_sources', 'use_paper_sources', 'use_website_sources', 'use_book_sources', 'use_image_sources'] as Array<keyof typeof formData>)
                         .filter(key => key.startsWith('use_') && formData[key as keyof typeof formData] === true)
                         .map(key => key.replace('use_','').replace('_sources','').replace('_', ' '))
                         .join(', ') || 'None selected'}</p>
