@@ -3,12 +3,10 @@
 import { useState } from "react"
 import { LoaderCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-// Update props to extend standard button attributes
 interface DemoButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   buttonText: string;
   loadingText?: string;
-  isLoading?: boolean; // Add back isLoading to allow parent control
+  isLoading?: boolean; 
 }
 
 export function DemoButton({
@@ -18,13 +16,14 @@ export function DemoButton({
   children,
   onClick, // Use standard onClick
   disabled,
+  isLoading: controlledIsLoading, // Destructure isLoading and rename it
   ...props // Pass rest of the props down
 }: DemoButtonProps) {
   // Internal loading state
   const [internalLoading, setInternalLoading] = useState(false);
 
-  // Determine final loading state
-  const isLoading = props.isLoading ?? internalLoading;
+  // Determine final loading state using the renamed prop
+  const isLoading = controlledIsLoading ?? internalLoading;
 
   const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     if (onClick) {

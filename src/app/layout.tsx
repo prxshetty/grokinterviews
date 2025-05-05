@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { TopicDataProvider, Footer, MainNavigation } from './components';
 import { janelotus, playfairDisplay } from './fonts';
+import { Toaster } from 'sonner';
 
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({
           </div>
           <Footer />
         </TopicDataProvider>
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
