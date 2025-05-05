@@ -516,7 +516,7 @@ export default function CategoryDetailView({
     return (
       <div className="p-4 animate-fadeIn">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-semibold">
             {subtopicDetails.label}
           </h1>
           <button
@@ -559,7 +559,7 @@ export default function CategoryDetailView({
             {Object.values(questionsByCategory).map((category, index) => (
               <div key={index} className="mb-8">
                 <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-xl font-semibold">{category.name}</h2>
+                  <h2 className="text-xl font-medium">{category.name}</h2>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
                   </span>
@@ -585,7 +585,7 @@ export default function CategoryDetailView({
         ) : filteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
           <div>
-            <h2 className="text-xl font-semibold mb-4">Questions</h2>
+            <h2 className="text-xl font-medium mb-4">Questions</h2>
             <QuestionList 
               questions={filteredQuestions} 
               highlightedQuestionId={highlightedQuestionId}
@@ -606,7 +606,7 @@ export default function CategoryDetailView({
     <div className="p-4 animate-fadeIn">
       {/* Title and back button */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-2xl font-semibold">
           {categoryDetails?.label}
         </h1>
         <button
@@ -623,7 +623,7 @@ export default function CategoryDetailView({
       {/* If the category has subtopics, show them */}
       {hasRealSubtopics && categoryDetails?.subtopics && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Topics</h2>
+          <h2 className="text-xl font-medium mb-4">Topics</h2>
           {isSubtopicProgressLoading ? (
             // Loading indicator
             <div className="w-full text-center py-6">
@@ -631,51 +631,46 @@ export default function CategoryDetailView({
               <p className="mt-2 text-sm text-gray-500">Loading topic progress...</p>
             </div>
           ) : (
-            // Actual grid
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            // Card-based grid layout for subtopics
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               {Object.entries(categoryDetails.subtopics)
                 .filter(([id]) => id.startsWith('topic-'))
                 .map(([id, subtopic]) => (
-                  <div 
-                    key={id} 
-                    className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
+                  <div
+                    key={id}
                     onClick={() => handleSubtopicSelect(id)}
+                    className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer flex flex-col justify-between h-full"
                   >
-                    <h3 className="font-medium mb-2">{subtopic.label}</h3>
-                    
-                    {/* Add progress bar for each subtopic */}
-                    {subtopicsProgress[id] ? ( // Check if progress data exists
-                      <div className="mt-2 mb-3">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {subtopicsProgress[id].categoriesCompleted}/{subtopicsProgress[id].totalCategories} categories completed
-                          </span>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3 text-gray-900 dark:text-white truncate">{subtopic.label}</h3>
+                    </div>
+                    {/* Progress bar section */}
+                    <div className="mt-auto pt-2">
+                      {subtopicsProgress[id] && subtopicsProgress[id].totalCategories > 0 ? (
+                        <>
+                          <div className="flex justify-between items-center mb-1 text-xs text-gray-500 dark:text-gray-400">
+                            <span>Progress</span>
+                            <span>
+                              {subtopicsProgress[id].categoriesCompleted}/{subtopicsProgress[id].totalCategories} Categories
+                            </span>
+                          </div>
+                          <ProgressBar
+                            progress={
+                              (subtopicsProgress[id].categoriesCompleted / subtopicsProgress[id].totalCategories) * 100
+                            }
+                            completed={subtopicsProgress[id].categoriesCompleted}
+                            total={subtopicsProgress[id].totalCategories}
+                            height="sm"
+                            showText={false} // Text is shown above
+                            className={subtopic.label}
+                          />
+                        </>
+                      ) : (
+                        <div className="h-5 mt-3"> {/* Placeholder to maintain layout */}
+                          <span className="text-xs text-gray-400 dark:text-gray-500">Progress not available</span>
                         </div>
-                        <ProgressBar
-                          progress={
-                            subtopicsProgress[id].totalCategories > 0 
-                            ? (subtopicsProgress[id].categoriesCompleted / subtopicsProgress[id].totalCategories) * 100
-                            : 0
-                          }
-                          completed={subtopicsProgress[id].categoriesCompleted}
-                          total={subtopicsProgress[id].totalCategories}
-                          height="sm"
-                          showText={false}
-                          className={subtopic.label}
-                        />
-                      </div>
-                    ) : (
-                      // Placeholder or message if progress data is loading or missing
-                      <div className="mt-2 mb-3 h-5"> {/* Maintain layout height */}
-                         <span className="text-xs text-gray-400 dark:text-gray-500">Progress loading...</span>
-                      </div>
-                    )}
-                    
-                    {subtopic.content && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose dark:prose-invert max-w-none">
-                        <ReactMarkdown>{subtopic.content}</ReactMarkdown>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 ))}
             </div>
@@ -690,7 +685,7 @@ export default function CategoryDetailView({
       {hasQuestions && (
         <div>
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-semibold">Questions</h2>
+            <h2 className="text-xl font-medium">Questions</h2>
             {categoryProgress && (
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed
