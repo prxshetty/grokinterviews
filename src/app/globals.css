@@ -439,3 +439,33 @@ button:focus {
 .dark .markdown-content h3 {
   color: #9ca3af;
 }
+
+/* Custom Toast Timer Bar */
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Target the toast container using its data attribute */
+[data-sonner-toast]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px; /* Height of the timer bar */
+  background-color: #34d399; /* Default: Tailwind emerald-400 (for light mode) */
+  animation: shrink 5s linear forwards; /* Adjust 5s if default duration changes */
+  border-bottom-left-radius: inherit; /* Match toast corner radius */
+  border-bottom-right-radius: inherit; /* Match toast corner radius */
+}
+
+/* Dark mode override for the timer bar color */
+.dark [data-sonner-toast]::after {
+  background-color: #10b981; /* Dark Mode: Tailwind emerald-500 */
+}
+
+/* Ensure toast container allows absolute positioning of pseudo-element */
+[data-sonner-toast] {
+  position: relative; /* Needed for the absolute positioning of ::after */
+  overflow: hidden; /* Keep the timer bar contained */
+}
