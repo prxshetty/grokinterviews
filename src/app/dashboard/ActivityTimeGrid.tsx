@@ -255,4 +255,4 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
       )}
     </div>
   );
-}
+} 

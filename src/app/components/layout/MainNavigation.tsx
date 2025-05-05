@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { TopicNav, TopicNavWrapper } from '../topic';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { motion } from 'framer-motion';
 import { LogOut, Moon, Sun, User, LayoutDashboard } from 'lucide-react';
 import {
   DropdownMenu,
@@ -15,7 +13,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+} from '@/app/components/ui/dropdown-menu';
+import { TopicNav, TopicNavWrapper } from '../topics-ui';
 
 interface UserProfile {
   id: string;
@@ -44,8 +43,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     setMounted(true);
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
-
-
 
     // Check if user is logged in
     const checkUser = async () => {
@@ -196,10 +193,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <motion.button
+                  <button
                     className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                   >
                     <span>
                       {profile?.full_name || profile?.username || user.email.split('@')[0]}
@@ -212,7 +207,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                     >
                       <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
                     </svg>
-                  </motion.button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md overflow-hidden animate-in fade-in-80 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
                   <DropdownMenuLabel className="text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10">
