@@ -1,8 +1,7 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import DashboardNav from '../../components/ui/DashboardNav';
+import DashboardNav from '../DashboardNav';
+
 
 interface Activity {
   id: string;
