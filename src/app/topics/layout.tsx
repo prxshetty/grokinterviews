@@ -13,20 +13,12 @@ export default function TopicsLayout({
   children: React.ReactNode;
   params: { domain: string };
 }) {
-  // Check if we're on the main topics page (URL is just /topics)
-  const isTopicsLandingPage = params.domain === 'topics' || !params.domain;
-  
-  // Only validate domains for specific topic pages, not the main topics page
-  if (!isTopicsLandingPage) {
-    // Domain validation - ensure only valid domains can be accessed
-    const validDomains = ['dsa', 'ml', 'webdev', 'ai', 'sdesign', 'topics'];
-    if (!validDomains.includes(params.domain)) {
-      notFound();
-    }
-  }
+  // Removed domain validation logic - it's handled in the [domain] layout
+  // Removed isTopicsLandingPage check as validation is moved
 
   return (
-    <div data-domain={params.domain}>
+    // Removed data-domain attribute from this wrapper div
+    <div> 
       {children}
     </div>
   );
