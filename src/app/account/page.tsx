@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
-import { motion } from 'framer-motion';
 import { DemoButton } from '../components/ui';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -81,22 +80,6 @@ export default function AccountPage() {
   const [savingApiKey, setSavingApiKey] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
-
-  // Effect to initialize cursor position
-  useEffect(() => {
-    // Wait for DOM to be ready
-    setTimeout(() => {
-      const activeTabElement = document.querySelector(`[data-tab="${activeTab}"]`) as HTMLElement;
-      if (activeTabElement) {
-        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-        if (cursor) {
-          cursor.style.width = `${activeTabElement.getBoundingClientRect().width}px`;
-          cursor.style.left = `${activeTabElement.offsetLeft}px`;
-          cursor.style.opacity = '1';
-        }
-      }
-    }, 100);
-  }, [activeTab]);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -404,6 +387,7 @@ export default function AccountPage() {
           onClick={saveChanges}
           isLoading={saving}
           buttonText="Save Changes"
+          className="bg-emerald-500 hover:bg-emerald-600 text-black dark:text-white border-none focus:ring-emerald-400 px-3.5 py-1.5 text-sm"
         >
           Save Changes
         </DemoButton>
@@ -422,65 +406,16 @@ export default function AccountPage() {
             <nav className="relative">
               <ul
                 className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-white/20 dark:bg-black/20 backdrop-blur-sm p-1"
-                onMouseLeave={() => {
-                  // Reset cursor to active tab position when mouse leaves
-                  const activeTabElement = document.querySelector(`[data-tab="${activeTab}"]`) as HTMLElement;
-                  if (activeTabElement) {
-                    const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                    if (cursor) {
-                      cursor.style.width = `${activeTabElement.getBoundingClientRect().width}px`;
-                      cursor.style.left = `${activeTabElement.offsetLeft}px`;
-                      cursor.style.opacity = '1';
-                    }
-                  }
-                }}
               >
-                {/* Animated Background Cursor */}
-                <motion.li
-                  className="nav-cursor absolute z-0 h-9 rounded-full bg-gray-100 dark:bg-gray-800"
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: 1
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30
-                  }}
-                />
-
                 {/* Personal Information Tab */}
                 <li
                   data-tab="personal"
                   className="relative z-10 block cursor-pointer"
-                  onMouseEnter={(e) => {
-                    // Only apply hover effect if this isn't the active tab
-                    if (activeTab !== 'personal') {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                      if (cursor) {
-                        cursor.style.width = `${rect.width}px`;
-                        cursor.style.left = `${e.currentTarget.offsetLeft}px`;
-                        cursor.style.opacity = '1';
-                      }
-                    }
-                  }}
                 >
                   <button
-                    onClick={(e) => {
-                      setActiveTab('personal');
-                      // Update cursor position immediately for smoother transition
-                      const parentElement = e.currentTarget.parentElement as HTMLElement;
-                      if (parentElement) {
-                        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                        if (cursor) {
-                          cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
-                          cursor.style.left = `${parentElement.offsetLeft}px`;
-                          cursor.style.opacity = '1';
-                        }
-                      }
-                    }}
-                    className={`px-4 py-2 text-sm font-medium block ${activeTab === 'personal' ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'}`}
+                    onClick={() => setActiveTab('personal')}
+                    // Apply TopicNav styling
+                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'personal' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
                     Personal
                   </button>
@@ -490,34 +425,11 @@ export default function AccountPage() {
                 <li
                   data-tab="ai-settings"
                   className="relative z-10 block cursor-pointer"
-                  onMouseEnter={(e) => {
-                    // Only apply hover effect if this isn't the active tab
-                    if (activeTab !== 'ai-settings') {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                      if (cursor) {
-                        cursor.style.width = `${rect.width}px`;
-                        cursor.style.left = `${e.currentTarget.offsetLeft}px`;
-                        cursor.style.opacity = '1';
-                      }
-                    }
-                  }}
                 >
                   <button
-                    onClick={(e) => {
-                      setActiveTab('ai-settings');
-                      // Update cursor position immediately for smoother transition
-                      const parentElement = e.currentTarget.parentElement as HTMLElement;
-                      if (parentElement) {
-                        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                        if (cursor) {
-                          cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
-                          cursor.style.left = `${parentElement.offsetLeft}px`;
-                          cursor.style.opacity = '1';
-                        }
-                      }
-                    }}
-                    className={`px-4 py-2 text-sm font-medium block ${activeTab === 'ai-settings' ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'}`}
+                    onClick={() => setActiveTab('ai-settings')}
+                    // Apply TopicNav styling
+                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'ai-settings' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
                     AI Settings
                   </button>
@@ -527,34 +439,11 @@ export default function AccountPage() {
                 <li
                   data-tab="answer-preferences"
                   className="relative z-10 block cursor-pointer"
-                  onMouseEnter={(e) => {
-                    // Only apply hover effect if this isn't the active tab
-                    if (activeTab !== 'answer-preferences') {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                      if (cursor) {
-                        cursor.style.width = `${rect.width}px`;
-                        cursor.style.left = `${e.currentTarget.offsetLeft}px`;
-                        cursor.style.opacity = '1';
-                      }
-                    }
-                  }}
                 >
                   <button
-                    onClick={(e) => {
-                      setActiveTab('answer-preferences');
-                      // Update cursor position immediately for smoother transition
-                      const parentElement = e.currentTarget.parentElement as HTMLElement;
-                      if (parentElement) {
-                        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                        if (cursor) {
-                          cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
-                          cursor.style.left = `${parentElement.offsetLeft}px`;
-                          cursor.style.opacity = '1';
-                        }
-                      }
-                    }}
-                    className={`px-4 py-2 text-sm font-medium block ${activeTab === 'answer-preferences' ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'}`}
+                    onClick={() => setActiveTab('answer-preferences')}
+                    // Apply TopicNav styling
+                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'answer-preferences' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
                     Answer Preferences
                   </button>
@@ -786,6 +675,7 @@ export default function AccountPage() {
                           onClick={saveApiKey}
                           isLoading={savingApiKey}
                           buttonText="Save API Key"
+                          className="bg-emerald-500 hover:bg-emerald-600 text-black dark:text-white border-none focus:ring-emerald-400 px-3.5 py-1.5 text-sm"
                         >
                           Save API Key
                         </DemoButton>

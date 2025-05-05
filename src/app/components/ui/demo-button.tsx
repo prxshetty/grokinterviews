@@ -63,8 +63,8 @@ export function DemoButton({
     >
       {isLoading && (
         <span className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80">
-          <LoaderCircle className="h-5 w-5 animate-spin text-indigo-600 dark:text-indigo-400" />
-          <span className="ml-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+          <LoaderCircle className="h-4 w-4 animate-spin text-gray-800 dark:text-gray-200" />
+          <span className="ml-2 text-sm font-medium text-gray-800 dark:text-gray-200">
             {loadingText}
           </span>
         </span>
