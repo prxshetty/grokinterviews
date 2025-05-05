@@ -3,9 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
+  TopicCategoryGrid,
+  CategoryDetailView,
   SidebarFilters,
-  ContentDisplay,
-} from '@/app/components/topic';
+  TopicDataProvider,
+  ContentDisplay
+} from '@/app/components/topics-ui';
 import ProgressSaver from '@/app/components/utils/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
 import { useTopicData } from '@/app/hooks';
