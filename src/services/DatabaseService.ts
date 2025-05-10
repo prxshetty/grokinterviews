@@ -843,6 +843,80 @@ class DatabaseService {
       }
     };
   }
+
+  /**
+   * Get a specific topic by its domain and slug.
+   * @param domain The domain of the topic (e.g., 'ml')
+   * @param slug The slug of the topic.
+   */
+  async getTopicByDomainAndSlug(domain: string, slug: string): Promise<Topic | null> {
+    console.log(`DatabaseService.getTopicByDomainAndSlug - Called with domain: ${domain}, slug: ${slug}`);
+    // This method is likely server-side only as it uses direct Supabase access.
+    if (isBrowser) {
+      console.warn('DatabaseService.getTopicByDomainAndSlug - Attempted to call from browser. This method might need an API endpoint for client-side usage.');
+      // Potentially call an API endpoint if one exists or is created for this purpose.
+      // For now, returning null or throwing an error for browser context.
+      return null; 
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('*')
+        .eq('domain', domain)
+        .eq('slug', slug)
+        .single(); // Expects a single record
+
+      if (error) {
+        if (error.code === 'PGRST116') { // PostgREST error for "Searched item was not found"
+          console.log(`DatabaseService.getTopicByDomainAndSlug - Topic not found for domain '${domain}', slug '${slug}'`);
+          return null;
+        }
+        console.error('Error fetching topic by domain and slug:', error);
+        throw error;
+      }
+      return data as Topic | null;
+    } catch (error) {
+      console.error('Failed to fetch topic by domain and slug directly:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get a specific category by its parent topic_id and its own slug.
+   * @param topicId The ID of the parent topic.
+   * @param slug The slug of the category.
+   */
+  async getCategoryByTopicIdAndSlug(topicId: number, slug: string): Promise<Category | null> {
+    console.log(`DatabaseService.getCategoryByTopicIdAndSlug - Called with topicId: ${topicId}, slug: ${slug}`);
+    // This method is likely server-side only.
+    if (isBrowser) {
+      console.warn('DatabaseService.getCategoryByTopicIdAndSlug - Attempted to call from browser. This method might need an API endpoint.');
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('topic_id', topicId)
+        .eq('slug', slug)
+        .single(); // Expects a single record
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log(`DatabaseService.getCategoryByTopicIdAndSlug - Category not found for topicId '${topicId}', slug '${slug}'`);
+          return null;
+        }
+        console.error('Error fetching category by topic_id and slug:', error);
+        throw error;
+      }
+      return data as Category | null;
+    } catch (error) {
+      console.error('Failed to fetch category by topic_id and slug directly:', error);
+      return null;
+    }
+  }
 }
 
 export default new DatabaseService();

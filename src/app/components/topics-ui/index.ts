@@ -12,3 +12,5 @@ export { default as QuestionList } from './QuestionList';
 export { default as ContentDisplay } from './ContentDisplay';
 export { default as CategoryDetailView } from './CategoryDetailView';
 export { default as SidebarFilters } from './SidebarFilters';
+export { default as DomainNav } from './DomainNav';
+export { default as DomainNavWrapper } from './DomainNavWrapper';

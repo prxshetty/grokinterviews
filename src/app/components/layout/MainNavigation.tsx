@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu';
-import { TopicNav, TopicNavWrapper } from '../topics-ui';
+import { DomainNav, DomainNavWrapper } from '../topics-ui';
 
 interface UserProfile {
   id: string;
@@ -273,13 +273,13 @@ export default function MainNavigation({ children }: { children: React.ReactNode
         <div className="topic-navigation w-full sticky top-12 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-md px-0 mt-0 border-b border-gray-200 dark:border-gray-800">
           {pathname === '/topics' ? (
             <div className="w-full">
-              <TopicNav 
-                onTopicSelect={(topicId) => router.push(`/topics/${topicId}`)}
-                selectedTopic={null}
+              <DomainNav 
+                onDomainSelect={(domainId: string) => router.push(`/topics/${domainId}`)}
+                selectedDomain={null}
               />
             </div>
           ) : (
-            <TopicNavWrapper />
+            <DomainNavWrapper />
           )}
         </div>
       )}

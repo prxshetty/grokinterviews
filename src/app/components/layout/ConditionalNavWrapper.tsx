@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { TopicNavWrapper } from '../topics-ui';
+import { DomainNavWrapper } from '../topics-ui';
 import React from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -16,10 +16,10 @@ export default function ConditionalNavWrapper({
 
   return (
     <>
-      {/* Render TopicNavWrapper on all topics pages */}
+      {/* Render DomainNavWrapper on all topics pages */}
       {isTopicsPage ? (
         <>
-          <TopicNavWrapper />
+          <DomainNavWrapper />
           <main className="w-full px-8 py-8">
             {children}
           </main>

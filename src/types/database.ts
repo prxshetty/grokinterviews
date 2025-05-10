@@ -1,32 +1,34 @@
 // Database types for Supabase tables
 
 export interface Topic {
-  id: number;
+  id: string;
   name: string;
-  slug: string;
+  slug?: string;
   description?: string;
   domain: string;
+  section_name?: string;
   created_at: string;
   updated_at?: string;
 }
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   description?: string;
-  topic_id: number;
+  topic_id: string;
   created_at: string;
   updated_at?: string;
+  order?: number;
 }
 
 export interface Question {
-  id: number;
+  id: string;
   question_text: string;
   answer_text?: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  keywords: string[];
-  category_id: number;
+  keywords?: string[];
+  category_id: string;
   created_at: string;
   updated_at?: string;
 }

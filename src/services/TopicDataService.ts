@@ -792,6 +792,73 @@ class TopicDataService {
       categoryDetails: {}
     };
   }
+
+  /**
+   * Gets detailed content for a specific topic (category) identified by domain, section slug, and topic slug.
+   * @param domain The domain of the topic (e.g., 'ml', 'ai')
+   * @param sectionSlug The slug of the parent section (maps to a specific topic.slug)
+   * @param topicSlug The slug of the specific topic (maps to a specific category.slug)
+   */
+  async getSpecificTopicContent(domain: string, sectionSlug: string, topicSlug: string): Promise<TopicItem | null> {
+    const cacheKey = `specific-topic-${domain}-${sectionSlug}-${topicSlug}`;
+    if (this.cache.categoryDetails && this.cache.categoryDetails[cacheKey]) {
+      console.log(`TopicDataService: Using cached data for ${cacheKey}`);
+      return this.cache.categoryDetails[cacheKey] as TopicItem;
+    }
+
+    console.log(`TopicDataService: Fetching content for ${domain}/${sectionSlug}/${topicSlug}`);
+
+    try {
+      // Step 1: Get topic_id from domain and sectionSlug
+      const topicRecord = await DatabaseService.getTopicByDomainAndSlug(domain, sectionSlug);
+      if (!topicRecord) {
+        console.warn(`TopicDataService: No topic found for domain '${domain}' and section slug '${sectionSlug}'`);
+        return null;
+      }
+      const topicId = topicRecord.id;
+
+      // Step 2: Get category_id from topic_id and topicSlug
+      const categoryRecord = await DatabaseService.getCategoryByTopicIdAndSlug(topicId, topicSlug);
+      if (!categoryRecord) {
+        console.warn(`TopicDataService: No category found for topic_id '${topicId}' and topic slug '${topicSlug}'`);
+        return null;
+      }
+      const categoryId = categoryRecord.id; 
+      const categoryName = categoryRecord.name;
+      const categoryDescription = categoryRecord.description;
+
+      // Step 3: Fetch category questions using the actual categoryId (UUID)
+      const categoryWithQuestions = await DatabaseService.getCategoryWithQuestions(categoryId);
+
+      let formattedTopicItem: TopicItem = {
+        id: categoryId, 
+        label: categoryName,
+        content: categoryDescription || '',
+        questions: [],
+        subtopics: {}, 
+      };
+
+      if (categoryWithQuestions && categoryWithQuestions.questions) {
+        formattedTopicItem.questions = categoryWithQuestions.questions.map((q: Question) => ({
+          ...q, 
+        }));
+      }
+      
+      // TODO: Fetch and merge any supplementary markdown/API content if needed.
+
+      if (!this.cache.categoryDetails) {
+        this.cache.categoryDetails = {};
+      }
+      this.cache.categoryDetails[cacheKey] = formattedTopicItem;
+      console.log(`TopicDataService: Cached content for ${cacheKey}`);
+      
+      return formattedTopicItem;
+
+    } catch (error) {
+      console.error(`TopicDataService: Error fetching specific topic content for ${domain}/${sectionSlug}/${topicSlug}:`, error);
+      return null;
+    }
+  }
 }
 
 export default new TopicDataService();
