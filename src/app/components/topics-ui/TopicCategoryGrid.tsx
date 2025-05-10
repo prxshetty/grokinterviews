@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import styles from './TopicCategoryGrid.module.css';
 import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
@@ -297,13 +298,52 @@ export default function TopicCategoryGrid({
     displayItems = []; // Fallback to empty array
   }
 
-  // Split items into three columns for better layout
-  // Ensure displayItems is an array before slicing
-  const safeDisplayItems = Array.isArray(displayItems) ? displayItems : [];
-  const itemsPerColumn = Math.ceil(safeDisplayItems.length / 3);
-  const firstColumn = safeDisplayItems.slice(0, itemsPerColumn);
-  const secondColumn = safeDisplayItems.slice(itemsPerColumn, itemsPerColumn * 2);
-  const thirdColumn = safeDisplayItems.slice(itemsPerColumn * 2);
+  const itemsToRender = displayItems || []; // Ensure itemsToRender is always an array
+  const itemsPerColumn = Math.ceil(itemsToRender.length / 3);
+  const firstColumn = itemsToRender.slice(0, itemsPerColumn);
+  const secondColumn = itemsToRender.slice(itemsPerColumn, itemsPerColumn * 2);
+  const thirdColumn = itemsToRender.slice(itemsPerColumn * 2);
+
+  // Helper to render a single item
+  const renderItem = (item: DisplayItem, index: number, originalIndex: number) => {
+    const itemContent = (
+      <div
+        className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
+        role="button"
+        tabIndex={0}
+        onKeyPress={(e) => e.key === 'Enter' && (level === 'section' && domain && item.id ? null : handleItemSelect(item.id))}
+        onClick={() => (level === 'section' && domain && item.id ? null : handleItemSelect(item.id))}
+        style={{ cursor: (level === 'section' && domain && item.id) || onSelectItem || onSelectCategory ? 'pointer' : 'default' }}
+      >
+        <div className={styles.categoryNumber}>{formatIndex(originalIndex)}</div>
+        <div className={styles.categoryContent}>
+          <div className={styles.categoryLabel}>{item.label}</div>
+          <div className={styles.progressBar}>
+            <ProgressBar
+              progress={item.progress?.completionPercentage ?? 0}
+              completed={item.progress?.questionsCompleted ?? 0}
+              total={item.progress?.totalQuestions ?? 0}
+              height="md"
+              showText={false}
+              className={item.label}
+            />
+          </div>
+        </div>
+        <div className={styles.expandIcon}>
+          {expandedItemId === item.id ? '−' : '+'}
+        </div>
+      </div>
+    );
+
+    if (level === 'section' && domain && item.id) {
+      return (
+        <Link href={`/topics/${domain}/${item.id}`} passHref legacyBehavior>
+          <a className={styles.gridLink}>{itemContent}</a>
+        </Link>
+      );
+    }
+    return itemContent;
+  };
 
   // Show loading state (controlled by parent)
   if (isLoading) {
@@ -329,7 +369,7 @@ export default function TopicCategoryGrid({
   }
 
   // Show message if no items are available
-  if (safeDisplayItems.length === 0) {
+  if (itemsToRender.length === 0) {
      return (
       <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
         <div className="col-span-3 text-center py-4 text-gray-500 dark:text-gray-400">
@@ -339,42 +379,13 @@ export default function TopicCategoryGrid({
     );
   }
 
-
   return (
     <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
       {/* First column */}
       <div className={styles.gridColumn}>
         {firstColumn.map((item, index) => (
           <div key={item.id}>
-            <div
-              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
-              onClick={() => handleItemSelect(item.id)}
-              role="button"
-              tabIndex={0} // Make it focusable
-              onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)} // Keyboard accessible
-            >
-              <div className={styles.categoryNumber}>{formatIndex(index)}</div>
-              <div className={styles.categoryContent}>
-                <div className={styles.categoryLabel}>{item.label}</div>
-                <div className={styles.progressBar}>
-                  <ProgressBar
-                    progress={item.progress?.completionPercentage ?? 0}
-                    completed={item.progress?.questionsCompleted ?? 0}
-                    total={item.progress?.totalQuestions ?? 0}
-                    height="md"
-                    showText={false}
-                    className={item.label} // Pass the section name as a className
-                  />
-                  {/* Optional: Debug text to show progress percentage */}
-                  {/* <div className="text-xs text-gray-500 mt-1">
-                    {item.progress ? `${item.progress.completionPercentage}%` : '0%'}
-                  </div> */}
-                </div>
-              </div>
-              <div className={styles.expandIcon}>
-                {expandedItemId === item.id ? '−' : '+'} {/* Changed minus sign */}
-              </div>
-            </div>
+            {renderItem(item, index, index)}
           </div>
         ))}
       </div>
@@ -383,35 +394,7 @@ export default function TopicCategoryGrid({
       <div className={styles.gridColumn}>
         {secondColumn.map((item, index) => (
           <div key={item.id}>
-            <div
-              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
-              onClick={() => handleItemSelect(item.id)}
-               role="button"
-               tabIndex={0}
-               onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
-            >
-              <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn)}</div>
-              <div className={styles.categoryContent}>
-                <div className={styles.categoryLabel}>{item.label}</div>
-                <div className={styles.progressBar}>
-                  <ProgressBar
-                    progress={item.progress?.completionPercentage ?? 0}
-                    completed={item.progress?.questionsCompleted ?? 0}
-                    total={item.progress?.totalQuestions ?? 0}
-                    height="md"
-                    showText={false}
-                    className={item.label} // Pass the section name as a className
-                  />
-                   {/* Optional: Debug text */}
-                   {/* <div className="text-xs text-gray-500 mt-1">
-                    {item.progress ? `${item.progress.completionPercentage}%` : '0%'}
-                  </div> */}
-                </div>
-              </div>
-              <div className={styles.expandIcon}>
-                {expandedItemId === item.id ? '−' : '+'}
-              </div>
-            </div>
+            {renderItem(item, index, index + itemsPerColumn)}
           </div>
         ))}
       </div>
@@ -420,35 +403,7 @@ export default function TopicCategoryGrid({
       <div className={styles.gridColumn}>
         {thirdColumn.map((item, index) => (
           <div key={item.id}>
-            <div
-              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
-              onClick={() => handleItemSelect(item.id)}
-               role="button"
-               tabIndex={0}
-               onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
-            >
-              <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn * 2)}</div>
-              <div className={styles.categoryContent}>
-                <div className={styles.categoryLabel}>{item.label}</div>
-                 <div className={styles.progressBar}>
-                  <ProgressBar
-                    progress={item.progress?.completionPercentage ?? 0}
-                    completed={item.progress?.questionsCompleted ?? 0}
-                    total={item.progress?.totalQuestions ?? 0}
-                    height="md"
-                    showText={false}
-                    className={item.label} // Pass the section name as a className
-                  />
-                   {/* Optional: Debug text */}
-                   {/* <div className="text-xs text-gray-500 mt-1">
-                    {item.progress ? `${item.progress.completionPercentage}%` : '0%'}
-                  </div> */}
-                </div>
-              </div>
-              <div className={styles.expandIcon}>
-                {expandedItemId === item.id ? '−' : '+'}
-              </div>
-            </div>
+            {renderItem(item, index, index + itemsPerColumn * 2)}
           </div>
         ))}
       </div>

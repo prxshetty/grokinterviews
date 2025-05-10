@@ -9,37 +9,81 @@ interface SectionPageProps {
   };
 }
 
-async function getSectionDetails(domainSlug: string, sectionTopicId: string): Promise<{parentTopic: Topic | null, categories: Category[]}> {
-  // 1. Get the parent Topic by domain and its id (which is sectionTopicId)
-  const { data: topicData, error: topicError } = await supabaseServer
-    .from('topics')
-    .select('id, name, domain, section_name, created_at') // Select specific, known-to-exist fields
-    .eq('domain', domainSlug)
-    .eq('id', sectionTopicId) // Changed from 'slug' to 'id'
-    .single();
+// It's recommended to move this to a shared utils file (e.g., src/utils/slugify.ts)
+function slugify(text: string): string {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')      // Corrected regex
+    .replace(/[^\w-]+/g, '') // Corrected regex
+    .replace(/--+/g, '-');
+}
 
-  if (topicError || !topicData) {
-    console.error('Error fetching parent topic:', topicError);
+async function getSectionDetails(domainSlug: string, sectionSlugFromParams: string): Promise<{parentTopic: Topic | null, categories: Category[]}> {
+  // 1. Get all topics for the domain
+  const { data: allTopicsInDomain, error: topicsError } = await supabaseServer
+    .from('topics')
+    .select('id, name, domain, section_name, created_at') // Select necessary fields
+    .eq('domain', domainSlug);
+
+  if (topicsError || !allTopicsInDomain) {
+    console.error('Error fetching topics for domain in getSectionDetails:', topicsError);
     return { parentTopic: null, categories: [] };
   }
-  const parentTopic = topicData as Topic;
 
-  // 2. Get categories for this parent Topic
+  // Find the parent topic by matching slugified section_name
+  const parentTopic = allTopicsInDomain.find(topic => 
+    topic.section_name && slugify(topic.section_name) === sectionSlugFromParams
+  );
+
+  if (!parentTopic) {
+    console.error(`Parent topic not found for domain '${domainSlug}' and section slug '${sectionSlugFromParams}' by matching slugified topic.section_name.`);
+    // Fallback: Attempt to match against slugified topic.name if no match on section_name
+    // This is a heuristic. The definitive source of the slug should be clarified.
+    const parentTopicByName = allTopicsInDomain.find(topic =>
+      topic.name && slugify(topic.name) === sectionSlugFromParams
+    );
+    if (!parentTopicByName) {
+      console.error(`Parent topic also not found for domain '${domainSlug}' and section slug '${sectionSlugFromParams}' by matching slugified topic.name.`);
+      return { parentTopic: null, categories: [] };
+    }
+    // If found by name, use it
+    console.log(`Found parent topic by slugified topic.name: ${parentTopicByName.name}`);
+    // 2. Get categories for this parent Topic (found by name)
+    const { data: categoriesDataByName, error: categoriesErrorByName } = await supabaseServer
+      .from('categories')
+      .select('*') 
+      .eq('topic_id', parentTopicByName.id)
+      .order('name');
+
+    if (categoriesErrorByName) {
+      console.error('Error fetching categories for topic (found by name):', categoriesErrorByName);
+      return { parentTopic: parentTopicByName, categories: [] };
+    }
+    return { parentTopic: parentTopicByName, categories: (categoriesDataByName as Category[]) || [] };
+  }
+  
+  console.log(`Found parent topic by slugified topic.section_name: ${parentTopic.section_name}, ID: ${parentTopic.id}`);
+
+  // 2. Get categories for this parent Topic (found by section_name)
   const { data: categoriesData, error: categoriesError } = await supabaseServer
     .from('categories')
-    .select('*') // Select all fields for the Category type
+    .select('*') 
     .eq('topic_id', parentTopic.id)
-    .order('name'); // Or by 'order' if that field is used and populated
+    .order('name');
 
   if (categoriesError) {
-    console.error('Error fetching categories for topic:', categoriesError);
+    console.error('Error fetching categories for topic (found by section_name):', categoriesError);
     return { parentTopic, categories: [] };
   }
   return { parentTopic, categories: (categoriesData as Category[]) || [] };
 }
 
-export default async function SectionPage({ params }: SectionPageProps) {
-  console.log('[SectionPage] Received params:', params);
+export default async function SectionPage({ params: paramsPromise }: SectionPageProps) {
+  const params = await paramsPromise;
+  console.log('[SectionPage] Received resolved params:', params);
   const { domain, section } = params;
   const { parentTopic, categories } = await getSectionDetails(domain, section);
 

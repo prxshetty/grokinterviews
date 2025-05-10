@@ -87,13 +87,11 @@ export default async function DomainPage({ params }: DomainPageProps) {
   }));
 
   // Callback for when a section is selected - for future navigation to section-specific page
-  const handleSelectSection = (sectionId: string) => {
-    // sectionId here will be the slugified name
-    console.log(`Selected section ID (slug): ${sectionId}, Domain: ${domain}`);
-    // Potentially navigate: router.push(`/topics/${domain}/${sectionId}`);
-    // For now, TopicCategoryGrid might handle its own link generation if items have hrefs,
-    // or we can enhance this handler. The grid itself creates links.
-  };
+  // const handleSelectSection = (sectionId: string) => {
+  //   // sectionId here will be the slugified name
+  //   console.log(`Selected section ID (slug): ${sectionId}, Domain: ${domain}`);
+  //   // Potentially navigate: router.push(`/topics/${domain}/${sectionId}`);
+  // };
 
 
   return (
@@ -106,7 +104,7 @@ export default async function DomainPage({ params }: DomainPageProps) {
         items={displayItems}
         level="section"
         domain={domain}
-        // onSelectItem={handleSelectSection} // The grid handles navigation via Link components internally
+        // onSelectItem={handleSelectSection} // Removed as the grid now handles its own navigation for sections
       />
     </div>
   );
