@@ -46,15 +46,32 @@ export default async function DomainPage({ params }: DomainPageProps) {
   const domain = params.domain;
   const topicsForDomain = await getTopicsForDomain(domain);
 
-  const uniqueSectionNames = Array.from(
-    new Set(
-      topicsForDomain
-        .map(topic => topic.section_name)
-        .filter((name): name is string => !!name && name.trim() !== '')
-    )
-  ).sort();
+  // 1. Filter topics with valid section names and map to { sectionName, createdAt }
+  const sectionsWithCreationTime = topicsForDomain
+    .filter(topic => !!topic.section_name && topic.section_name.trim() !== '')
+    .map(topic => ({
+      sectionName: topic.section_name as string,
+      createdAt: new Date(topic.created_at), // Ensure created_at is a Date object
+    }));
 
-  if (uniqueSectionNames.length === 0) {
+  // 2. Group by sectionName and find the earliest createdAt for each section
+  const sectionMap = new Map<string, Date>();
+  for (const item of sectionsWithCreationTime) {
+    const existingDate = sectionMap.get(item.sectionName);
+    if (!existingDate || item.createdAt < existingDate) {
+      sectionMap.set(item.sectionName, item.createdAt);
+    }
+  }
+
+  // 3. Convert map to array of { sectionName, createdAt } and sort by createdAt
+  const sortedSections = Array.from(sectionMap.entries())
+    .map(([sectionName, createdAt]) => ({ sectionName, createdAt }))
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()); // Ascending
+
+  // 4. Extract the sorted section names
+  const finalSortedSectionNames = sortedSections.map(s => s.sectionName);
+
+  if (finalSortedSectionNames.length === 0) {
     return (
       <div className="container mx-auto p-4 text-center">
         <h1 className="text-2xl font-bold capitalize">{domain}</h1>
@@ -63,9 +80,9 @@ export default async function DomainPage({ params }: DomainPageProps) {
     );
   }
 
-  // Prepare items for the TopicCategoryGrid
-  const displayItems: DisplayItem[] = uniqueSectionNames.map((sectionName) => ({
-    id: slugify(sectionName), // Using slugified section name as ID for consistency if needed by grid for navigation
+  // Prepare items for the TopicCategoryGrid using the sorted section names
+  const displayItems: DisplayItem[] = finalSortedSectionNames.map((sectionName) => ({
+    id: slugify(sectionName), // Using slugified section name as ID
     label: sectionName,
   }));
 
