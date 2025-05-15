@@ -5,12 +5,16 @@ import { toggleQuestionBookmark } from '@/app/utils/progress';
 
 interface BookmarkButtonProps {
   questionId: number;
+  topicId: number;
+  categoryId: number;
   initialIsBookmarked?: boolean;
   onBookmarkChange?: (isBookmarked: boolean) => void;
 }
 
 export function BookmarkButton({ 
   questionId, 
+  topicId,
+  categoryId,
   initialIsBookmarked = false,
   onBookmarkChange 
 }: BookmarkButtonProps) {
@@ -25,8 +29,8 @@ export function BookmarkButton({
       const newBookmarkState = !isBookmarked;
       setIsBookmarked(newBookmarkState);
       
-      // Call API to update bookmark status
-      await toggleQuestionBookmark(questionId, newBookmarkState);
+      // Call API to update bookmark status, passing topicId and categoryId
+      await toggleQuestionBookmark(questionId, newBookmarkState, topicId, categoryId);
       
       // Notify parent component if callback provided
       if (onBookmarkChange) {

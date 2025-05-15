@@ -3,10 +3,25 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import supabaseServer from '@/utils/supabase-server';
 
+// Define cache control headers for different scenarios
+const CACHE_HEADERS = {
+  short: {
+    'Cache-Control': 'public, max-age=10, s-maxage=15', // Cache for 10 seconds
+  },
+  medium: {
+    'Cache-Control': 'public, max-age=60, s-maxage=120', // Cache for 1 minute
+  },
+  long: {
+    'Cache-Control': 'public, max-age=300, s-maxage=600', // Cache for 5 minutes
+  }
+};
+
 // GET: Retrieve status of a specific question for the current user
 export async function GET(request: NextRequest) {
   // Use the Next.js route handler client for authentication
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
 
   // Get the user session using Supabase auth
@@ -35,23 +50,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'unknown', error: 'Question ID is required' }, { status: 400 });
     }
 
-    // Get the status for this question
-    const { data, error } = await supabaseServer
+    // Single optimized query - check user_progress directly instead of user_activity
+    // This is more efficient as it only has one row per user/question
+    const { data: progressData, error: progressError } = await supabaseServer
       .from('user_progress')
-      .select('status')
+      .select('status, updated_at')
       .eq('user_id', userId)
       .eq('question_id', questionId)
-      .maybeSingle();
+      .single();
 
-    if (error) {
-      console.error('Error fetching question status:', error);
+    if (progressError && progressError.code !== 'PGRST116') { // PGRST116 = not found, which is normal
+      console.error('Error fetching question status:', progressError);
       return NextResponse.json({ status: 'unknown', error: 'Failed to fetch question status' }, { status: 500 });
     }
 
-    // Return the status or 'unknown' if no record exists
-    return NextResponse.json({ 
-      status: data?.status || 'unknown',
-      isBookmarked: data?.status === 'bookmarked'
+    let responseData = {
+      status: progressData?.status || 'unknown',
+      isBookmarked: progressData?.status === 'bookmarked',
+      timestamp: Date.now()
+    };
+
+    // If the status is 'completed', we can cache it longer (unlikely to change)
+    // For other statuses, use shorter cache duration
+    const cacheHeaders = progressData?.status === 'completed' ? 
+                        CACHE_HEADERS.medium : 
+                        CACHE_HEADERS.short;
+
+    return NextResponse.json(responseData, { 
+      status: 200,
+      headers: cacheHeaders
     });
 
   } catch (error) {

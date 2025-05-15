@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { motion } from 'framer-motion';
-import { DemoButton, AnswerDepthSliderSimple } from '../components/ui';
+import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
+import { DemoButton } from '../components/ui';
+import Image from 'next/image';
+import { toast } from 'sonner';
 
 // --- Define Groq Model Structure and List ---
 interface GroqModel {
@@ -42,7 +43,7 @@ interface UserPreferences {
   use_paper_sources?: boolean;
   use_website_sources?: boolean;
   use_book_sources?: boolean;
-  use_expert_opinion_sources?: boolean;
+  use_image_sources?: boolean;
   preferred_answer_format?: AnswerFormat;
   preferred_answer_depth?: AnswerDepth;
   include_code_snippets?: boolean; // Whether to include code examples in answers
@@ -59,35 +60,26 @@ const DEFAULT_GROQ_MODEL_ID = 'llama-3.1-8b-instant';
 type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown';
 type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 
+// Define a generic error type
+interface ApiError {
+  message: string;
+  details?: string;
+  code?: string;
+  [key: string]: unknown;
+}
+
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState('personal');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   // profile state is used in saveChanges, saveApiKey functions, and profile display
   const [profile, setProfile] = useState<UserProfile | null>(null);
   // preferences state is used in saveChanges function - needed for state management
-  const [_preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingApiKey, setSavingApiKey] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
   const router = useRouter();
   const supabase = createClientComponentClient();
-
-  // Effect to initialize cursor position
-  useEffect(() => {
-    // Wait for DOM to be ready
-    setTimeout(() => {
-      const activeTabElement = document.querySelector(`[data-tab="${activeTab}"]`) as HTMLElement;
-      if (activeTabElement) {
-        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-        if (cursor) {
-          cursor.style.width = `${activeTabElement.getBoundingClientRect().width}px`;
-          cursor.style.left = `${activeTabElement.offsetLeft}px`;
-          cursor.style.opacity = '1';
-        }
-      }
-    }, 100);
-  }, [activeTab]);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -102,7 +94,7 @@ export default function AccountPage() {
     use_paper_sources: true,
     use_website_sources: true,
     use_book_sources: false, // Default off for less common sources
-    use_expert_opinion_sources: false, // Default off
+    use_image_sources: false,
     preferred_answer_format: 'markdown' as AnswerFormat, // Default format
     preferred_answer_depth: 'standard' as AnswerDepth, // Default depth
     include_code_snippets: true, // Default to including code snippets
@@ -177,7 +169,7 @@ export default function AccountPage() {
           use_paper_sources: preferencesData.use_paper_sources ?? true,
           use_website_sources: preferencesData.use_website_sources ?? true,
           use_book_sources: preferencesData.use_book_sources ?? false,
-          use_expert_opinion_sources: preferencesData.use_expert_opinion_sources ?? false,
+          use_image_sources: preferencesData.use_image_sources ?? false,
           preferred_answer_format: (preferencesData.preferred_answer_format || 'markdown') as AnswerFormat,
           preferred_answer_depth: (preferencesData.preferred_answer_depth || 'standard') as AnswerDepth,
           include_code_snippets: preferencesData.include_code_snippets ?? true,
@@ -195,18 +187,16 @@ export default function AccountPage() {
     checkUser();
   }, [supabase, router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { // Added HTMLTextAreaElement
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    if (message.text) setMessage({ type: '', text: '' });
   };
 
   const handleApiKeyInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setApiKeyInput(e.target.value);
-    if (message.text) setMessage({ type: '', text: '' });
   };
 
   // Specific handler for checkbox/toggle switches
@@ -216,7 +206,6 @@ export default function AccountPage() {
       ...prev,
       [name]: checked
     }));
-    if (message.text) setMessage({ type: '', text: '' });
   };
 
   // Specific handler for answer depth slider
@@ -229,172 +218,147 @@ export default function AccountPage() {
       ...prev,
       preferred_answer_depth: depth
     }));
-    if (message.text) setMessage({ type: '', text: '' });
   };
 
   // Saves Full Name, Username (to profiles) AND Model/Answer Prefs (to user_preferences)
   const saveChanges = async () => {
     if (!user) {
       console.error('No user found. User must be authenticated to save changes.');
-      setMessage({ type: 'error', text: 'You must be signed in to save changes.' });
+      toast.error('You must be signed in to save changes.');
       return;
     }
 
     setSaving(true);
-    setMessage({ type: '', text: '' });
 
     // Log the current user and form data for debugging
-    console.log('Current user:', user);
-    console.log('Form data to save:', formData);
-
-    // Destructure all fields from the combined form data
-    const {
-      full_name,
-      username,
-      specific_model_id,
-      use_youtube_sources,
-      use_pdf_sources,
-      use_paper_sources,
-      use_website_sources,
-      use_book_sources,
-      use_expert_opinion_sources,
-      preferred_answer_format,
-      preferred_answer_depth,
-      include_code_snippets,
-      include_latex_formulas,
-      custom_formatting_instructions
-    } = formData;
+    console.log("Saving changes for user:", user.id);
+    console.log("Form data:", formData);
 
     try {
-      // 1. Update profile table (full_name, username)
-      console.log('Updating profile for user ID:', user.id);
-      const { data: profileData, error: profileUpdateError } = await supabase
+      // 1. Upsert Profile Data (full_name, username)
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          full_name,
-          username,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
-        .select();
+        .upsert({
+          id: user.id,
+          full_name: formData.full_name,
+          username: formData.username,
+          updated_at: new Date().toISOString(), // Ensure updated_at is set
+        }, { onConflict: 'id' }); // Upsert based on the user ID
 
-      if (profileUpdateError) {
-        console.error('Profile update error:', profileUpdateError);
-        throw profileUpdateError;
+      if (profileError) {
+        console.error('Error saving profile:', profileError);
+        toast.error(`Failed to save profile: ${profileError.message}`);
+        // Optionally re-throw or handle differently
+        return; // Stop if profile save fails
       }
 
-      console.log('Profile updated successfully:', profileData);
+      // Log success after profile upsert
+      console.log("Profile data upserted successfully.");
 
-      // 2. Upsert user_preferences table (model, answer prefs)
-      console.log('Upserting preferences for user ID:', user.id);
-
-      // Create the preferences object
-      const preferencesData = {
-        user_id: user.id, // Make sure user_id is included for upsert
-        specific_model_id,
-        preferred_model: 'groq', // Keep setting this for potential legacy use
-        use_youtube_sources,
-        use_pdf_sources,
-        use_paper_sources,
-        use_website_sources,
-        use_book_sources,
-        use_expert_opinion_sources,
-        preferred_answer_format,
-        preferred_answer_depth,
-        include_code_snippets,
-        include_latex_formulas,
-        custom_formatting_instructions,
-        updated_at: new Date().toISOString(), // Update timestamp here too
+      // 2. Upsert Preferences Data
+      const preferenceDataToSave: Partial<UserPreferences> = {
+        user_id: user.id, // Ensure user_id is included
+        specific_model_id: formData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
+        use_youtube_sources: formData.use_youtube_sources,
+        use_pdf_sources: formData.use_pdf_sources,
+        use_paper_sources: formData.use_paper_sources,
+        use_website_sources: formData.use_website_sources,
+        use_book_sources: formData.use_book_sources,
+        use_image_sources: formData.use_image_sources,
+        preferred_answer_format: formData.preferred_answer_format,
+        preferred_answer_depth: formData.preferred_answer_depth,
+        include_code_snippets: formData.include_code_snippets,
+        include_latex_formulas: formData.include_latex_formulas,
+        custom_formatting_instructions: formData.custom_formatting_instructions || null,
+        // Add other preference fields as needed, ensure updated_at is handled by DB or trigger
       };
 
-      console.log('Preferences data to upsert:', preferencesData);
+       // Log the data being sent to user_preferences
+      console.log("Attempting to upsert preferences:", preferenceDataToSave);
 
-      const { data: upsertedData, error: preferencesUpsertError } = await supabase
+
+      const { error: preferencesError } = await supabase
         .from('user_preferences')
-        .upsert(preferencesData, {
-           onConflict: 'user_id' // Specify the conflict column for upsert
-        })
-        .select();
+        .upsert(preferenceDataToSave, { onConflict: 'user_id' }); // Upsert based on user_id
 
-      if (preferencesUpsertError) {
-        console.error('Preferences upsert error:', preferencesUpsertError);
-        throw preferencesUpsertError;
+      if (preferencesError) {
+        console.error('Error saving preferences:', preferencesError);
+        toast.error(`Failed to save preferences: ${preferencesError.message}`);
+        // Optionally rollback profile changes or notify user differently
+        return; // Stop if preference save fails
       }
 
-      console.log('Preferences upserted successfully:', upsertedData);
+      // Log success after preference upsert
+      console.log("User preferences upserted successfully.");
 
-      console.log('All database operations completed successfully');
-      setMessage({ type: 'success', text: 'Preferences saved successfully.' });
-
-      // Update local state after successful saves
-      setProfile(prev => {
-        if (!prev) return null;
-        const updatedProfile = { ...prev, full_name, username };
-        console.log('Updated profile state:', updatedProfile);
-        return updatedProfile;
-      });
-
+      // Update local state ONLY after successful DB operations
+      setProfile(prev => prev ? { ...prev, full_name: formData.full_name, username: formData.username } : null);
       setPreferences(prev => {
-        // Reconstruct preferences state from formData
-        const updatedPreferences = {
-          ...(prev || { user_id: user.id }), // Keep existing fields like theme if they were loaded
-          specific_model_id,
-          use_youtube_sources,
-          use_pdf_sources,
-          use_paper_sources,
-          use_website_sources,
-          use_book_sources,
-          use_expert_opinion_sources,
-          preferred_answer_format,
-          preferred_answer_depth,
-          include_code_snippets,
-          include_latex_formulas,
-          custom_formatting_instructions,
+        const base: UserPreferences = prev || { // Provide a full default UserPreferences object if prev is null
+            user_id: user.id,
+            specific_model_id: DEFAULT_GROQ_MODEL_ID, // Ensure required fields have defaults
+            // Add defaults for ALL other potentially missing fields in UserPreferences if prev is null
+            use_youtube_sources: true,
+            use_pdf_sources: true,
+            use_paper_sources: true,
+            use_website_sources: true,
+            use_book_sources: false,
+            use_image_sources: false,
+            preferred_answer_format: 'markdown',
+            preferred_answer_depth: 'standard',
+            include_code_snippets: true,
+            include_latex_formulas: false,
+            custom_formatting_instructions: null,
+            theme: 'system', // Assuming a default theme might exist or needed
+            email_notifications: true // Assuming a default
         };
-        console.log('Updated preferences state:', updatedPreferences);
-        return updatedPreferences;
-      });
+        return {
+            ...base, // Spread the base (either previous state or default)
+            ...preferenceDataToSave, // Spread the saved data (might overwrite some base fields)
+            // Ensure specific_model_id is string | null, not undefined, falling back to base's value
+            specific_model_id: preferenceDataToSave.specific_model_id ?? base.specific_model_id
+        };
+    });
 
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      toast.success('Settings saved successfully!'); // Show success toast
+
 
     } catch (error: any) {
-      console.error('Error updating profile/preferences:', error);
-      console.log('Error details:', JSON.stringify(error, null, 2));
-      setMessage({ type: 'error', text: error.message || 'Failed to save preferences. Please try again.' });
+      console.error('Unexpected error during saveChanges:', error);
+      toast.error(`An unexpected error occurred: ${error.message || 'Please try again.'}`);
     } finally {
       setSaving(false);
     }
   };
 
-  // Saves only the Custom API Key (Groq Key) - Stays targeting profiles table
+  // Saves only the Custom API Key to profiles table
   const saveApiKey = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('No user found. Cannot save API key.');
+      toast.error('You must be signed in to save the API key.');
+      return;
+    }
+
     setSavingApiKey(true);
-    setMessage({ type: '', text: '' });
 
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({
-          custom_api_key: apiKeyInput.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ custom_api_key: apiKeyInput || null }) // Use null if input is empty
         .eq('id', user.id);
 
-      if (error) throw error;
-
-      setMessage({ type: 'success', text: 'API Key saved successfully.' });
-
-      setProfile(prev => {
-        if (!prev) return null;
-        return { ...prev, custom_api_key: apiKeyInput.trim() || null };
-      });
-
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-
+      if (error) {
+        console.error('Error saving API key:', error);
+        toast.error(`Failed to save API key: ${error.message}`);
+      } else {
+        console.log('API key saved successfully.');
+        // Update local profile state to reflect the change
+        setProfile(prev => prev ? { ...prev, custom_api_key: apiKeyInput || null } : null);
+        toast.success('API key saved successfully!'); // Show success toast
+      }
     } catch (error: any) {
-      console.error('Error saving API key:', error);
-      setMessage({ type: 'error', text: error.message || 'Failed to save API key. Please try again.' });
+      console.error('Unexpected error saving API key:', error);
+      toast.error(`An unexpected error occurred: ${error.message || 'Please try again.'}`);
     } finally {
       setSavingApiKey(false);
     }
@@ -418,10 +382,12 @@ export default function AccountPage() {
 
   const renderSaveChangesButton = () => {
     return (
-      <div className="mt-8 pt-5 border-t border-gray-200 dark:border-gray-800 flex justify-end">
+      <div className="mt-6 flex justify-end">
         <DemoButton
           onClick={saveChanges}
           isLoading={saving}
+          buttonText="Save Changes"
+          className="bg-emerald-500 hover:bg-emerald-600 text-black dark:text-white border-none focus:ring-emerald-400 px-3.5 py-1.5 text-sm"
         >
           Save Changes
         </DemoButton>
@@ -440,65 +406,16 @@ export default function AccountPage() {
             <nav className="relative">
               <ul
                 className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-white/20 dark:bg-black/20 backdrop-blur-sm p-1"
-                onMouseLeave={() => {
-                  // Reset cursor to active tab position when mouse leaves
-                  const activeTabElement = document.querySelector(`[data-tab="${activeTab}"]`) as HTMLElement;
-                  if (activeTabElement) {
-                    const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                    if (cursor) {
-                      cursor.style.width = `${activeTabElement.getBoundingClientRect().width}px`;
-                      cursor.style.left = `${activeTabElement.offsetLeft}px`;
-                      cursor.style.opacity = '1';
-                    }
-                  }
-                }}
               >
-                {/* Animated Background Cursor */}
-                <motion.li
-                  className="nav-cursor absolute z-0 h-9 rounded-full bg-gray-100 dark:bg-gray-800"
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: 1
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30
-                  }}
-                />
-
                 {/* Personal Information Tab */}
                 <li
                   data-tab="personal"
                   className="relative z-10 block cursor-pointer"
-                  onMouseEnter={(e) => {
-                    // Only apply hover effect if this isn't the active tab
-                    if (activeTab !== 'personal') {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                      if (cursor) {
-                        cursor.style.width = `${rect.width}px`;
-                        cursor.style.left = `${e.currentTarget.offsetLeft}px`;
-                        cursor.style.opacity = '1';
-                      }
-                    }
-                  }}
                 >
                   <button
-                    onClick={(e) => {
-                      setActiveTab('personal');
-                      // Update cursor position immediately for smoother transition
-                      const parentElement = e.currentTarget.parentElement as HTMLElement;
-                      if (parentElement) {
-                        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                        if (cursor) {
-                          cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
-                          cursor.style.left = `${parentElement.offsetLeft}px`;
-                          cursor.style.opacity = '1';
-                        }
-                      }
-                    }}
-                    className={`px-4 py-2 text-sm font-medium block ${activeTab === 'personal' ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'}`}
+                    onClick={() => setActiveTab('personal')}
+                    // Apply TopicNav styling
+                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'personal' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
                     Personal
                   </button>
@@ -508,34 +425,11 @@ export default function AccountPage() {
                 <li
                   data-tab="ai-settings"
                   className="relative z-10 block cursor-pointer"
-                  onMouseEnter={(e) => {
-                    // Only apply hover effect if this isn't the active tab
-                    if (activeTab !== 'ai-settings') {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                      if (cursor) {
-                        cursor.style.width = `${rect.width}px`;
-                        cursor.style.left = `${e.currentTarget.offsetLeft}px`;
-                        cursor.style.opacity = '1';
-                      }
-                    }
-                  }}
                 >
                   <button
-                    onClick={(e) => {
-                      setActiveTab('ai-settings');
-                      // Update cursor position immediately for smoother transition
-                      const parentElement = e.currentTarget.parentElement as HTMLElement;
-                      if (parentElement) {
-                        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                        if (cursor) {
-                          cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
-                          cursor.style.left = `${parentElement.offsetLeft}px`;
-                          cursor.style.opacity = '1';
-                        }
-                      }
-                    }}
-                    className={`px-4 py-2 text-sm font-medium block ${activeTab === 'ai-settings' ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'}`}
+                    onClick={() => setActiveTab('ai-settings')}
+                    // Apply TopicNav styling
+                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'ai-settings' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
                     AI Settings
                   </button>
@@ -545,34 +439,11 @@ export default function AccountPage() {
                 <li
                   data-tab="answer-preferences"
                   className="relative z-10 block cursor-pointer"
-                  onMouseEnter={(e) => {
-                    // Only apply hover effect if this isn't the active tab
-                    if (activeTab !== 'answer-preferences') {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                      if (cursor) {
-                        cursor.style.width = `${rect.width}px`;
-                        cursor.style.left = `${e.currentTarget.offsetLeft}px`;
-                        cursor.style.opacity = '1';
-                      }
-                    }
-                  }}
                 >
                   <button
-                    onClick={(e) => {
-                      setActiveTab('answer-preferences');
-                      // Update cursor position immediately for smoother transition
-                      const parentElement = e.currentTarget.parentElement as HTMLElement;
-                      if (parentElement) {
-                        const cursor = document.querySelector('.nav-cursor') as HTMLElement;
-                        if (cursor) {
-                          cursor.style.width = `${parentElement.getBoundingClientRect().width}px`;
-                          cursor.style.left = `${parentElement.offsetLeft}px`;
-                          cursor.style.opacity = '1';
-                        }
-                      }
-                    }}
-                    className={`px-4 py-2 text-sm font-medium block ${activeTab === 'answer-preferences' ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'}`}
+                    onClick={() => setActiveTab('answer-preferences')}
+                    // Apply TopicNav styling
+                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'answer-preferences' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
                     Answer Preferences
                   </button>
@@ -585,17 +456,6 @@ export default function AccountPage() {
 
           {/* Content Area */}
           <div className="w-full">
-            {/* Message Display Area */}
-            {message.text && (
-              <div className={`mb-6 p-3 rounded-md text-sm ${
-                message.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700/50' :
-                message.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700/50' :
-                'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/50'
-              }`}>
-                {message.text}
-              </div>
-            )}
-
             {/* Personal Information Section */}
             {activeTab === 'personal' && (
               <div className="flex gap-8">
@@ -658,10 +518,12 @@ export default function AccountPage() {
                   <div className="relative mb-6">
                     <div className="w-32 h-32 rounded-full bg-black dark:bg-white flex items-center justify-center overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg">
                       {profile?.avatar_url ? (
-                        <img
+                        <Image
                           src={profile.avatar_url}
                           alt="Profile"
                           className="w-full h-full object-cover"
+                          width={128}
+                          height={128}
                         />
                       ) : (
                         <div className="text-4xl font-light text-white dark:text-black">
@@ -812,6 +674,8 @@ export default function AccountPage() {
                         <DemoButton
                           onClick={saveApiKey}
                           isLoading={savingApiKey}
+                          buttonText="Save API Key"
+                          className="bg-emerald-500 hover:bg-emerald-600 text-black dark:text-white border-none focus:ring-emerald-400 px-3.5 py-1.5 text-sm"
                         >
                           Save API Key
                         </DemoButton>
@@ -940,10 +804,10 @@ export default function AccountPage() {
                           { id: 'use_paper_sources', name: 'Papers', tag: 'Research', description: 'Academic research papers' },
                           { id: 'use_website_sources', name: 'Websites', tag: 'Articles', description: 'Relevant web articles' },
                           { id: 'use_book_sources', name: 'Books', tag: 'References', description: 'Amazon book links' },
-                          { id: 'use_expert_opinion_sources', name: 'Expert Opinion', tag: 'Coming Soon', description: 'Twitter citations to concepts' }
+                          { id: 'use_image_sources', name: 'Visual Guides', tag: 'Diagrams', description: 'Articles with diagrams & illustrations' }
                         ].map((source) => {
                           const isSelected = formData[source.id as keyof typeof formData] as boolean;
-                          const isComingSoon = source.id === 'use_expert_opinion_sources';
+                          const isComingSoon = false; // None are coming soon currently
                           return (
                             <div
                               key={source.id}
@@ -954,7 +818,6 @@ export default function AccountPage() {
                                     ...prev,
                                     [source.id]: !isSelected
                                   }));
-                                  if (message.text) setMessage({ type: '', text: '' });
                                 }
                               }}
                             >
@@ -1005,7 +868,6 @@ export default function AccountPage() {
                                     ...prev,
                                     preferred_answer_format: format.id as AnswerFormat
                                   }));
-                                  if (message.text) setMessage({ type: '', text: '' });
                                 }}
                               >
                                 <div className="flex justify-between items-start">
@@ -1087,11 +949,27 @@ export default function AccountPage() {
 
                       {/* Answer Depth */}
                       <div className="mb-6">
-                        <AnswerDepthSliderSimple
-                          value={formData.preferred_answer_depth === 'brief' ? 1 : formData.preferred_answer_depth === 'standard' ? 2 : 3}
-                          onChange={handleAnswerDepthChange}
-                          className="mt-2"
-                        />
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="preferred_answer_depth" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Answer Depth
+                          </label>
+                          <select
+                            id="preferred_answer_depth"
+                            name="preferred_answer_depth"
+                            value={formData.preferred_answer_depth}
+                            onChange={(e) => {
+                              setFormData(prev => ({
+                                ...prev,
+                                preferred_answer_depth: e.target.value as AnswerDepth
+                              }));
+                            }}
+                            className="mt-1 block w-20 rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
+                          >
+                            <option value="brief">Brief</option>
+                            <option value="standard">Standard</option>
+                            <option value="comprehensive">Comprehensive</option>
+                          </select>
+                        </div>
                       </div>
                     </section>
 
@@ -1218,7 +1096,7 @@ export default function AccountPage() {
                           .filter(Boolean)
                           .join(', ') || 'None'}
                       </p>
-                      <p><span className="font-medium">Sources:</span> {(Object.keys(formData) as Array<keyof typeof formData>)
+                      <p><span className="font-medium">Sources:</span> {(['use_youtube_sources', 'use_pdf_sources', 'use_paper_sources', 'use_website_sources', 'use_book_sources', 'use_image_sources'] as Array<keyof typeof formData>)
                         .filter(key => key.startsWith('use_') && formData[key as keyof typeof formData] === true)
                         .map(key => key.replace('use_','').replace('_sources','').replace('_', ' '))
                         .join(', ') || 'None selected'}</p>

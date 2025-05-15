@@ -2,86 +2,77 @@
 
 import { useState } from "react"
 import { LoaderCircle } from "lucide-react"
-import { Button } from "@/app/components/ui/button"
 import { cn } from "@/lib/utils"
-
-interface DemoButtonProps {
-  onClick: () => Promise<void> | void
-  isLoading?: boolean
-  children?: React.ReactNode
-  className?: string
+interface DemoButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  buttonText: string;
+  loadingText?: string;
+  isLoading?: boolean; 
 }
 
-export function DemoButton({ 
-  onClick, 
-  isLoading = false, 
-  children = "Save", 
-  className 
+export function DemoButton({
+  buttonText,
+  loadingText = "Processing...",
+  className,
+  children,
+  onClick, // Use standard onClick
+  disabled,
+  isLoading: controlledIsLoading, // Destructure isLoading and rename it
+  ...props // Pass rest of the props down
 }: DemoButtonProps) {
-  const [localLoading, setLocalLoading] = useState(false);
-  
-  // Use either the provided loading state or the local one
-  const loading = isLoading || localLoading;
+  // Internal loading state
+  const [internalLoading, setInternalLoading] = useState(false);
 
-  const handleClick = async () => {
-    if (loading) return;
-    
-    setLocalLoading(true);
-    try {
-      await onClick();
-    } finally {
-      setLocalLoading(false);
+  // Determine final loading state using the renamed prop
+  const isLoading = controlledIsLoading ?? internalLoading;
+
+  const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (onClick) {
+      setInternalLoading(true);
+      try {
+        // Call the original onClick handler passed in props
+        const result = onClick(event);
+        // If the onClick handler returned a promise, await it
+        if (result !== undefined && typeof (result as any).then === 'function') {
+          await result;
+        }
+      } catch (error) {
+        console.error("Error during button click action:", error);
+        // Optionally handle error state here
+      } finally {
+        setInternalLoading(false);
+      }
+    } else {
+      // Handle cases where no onClick is provided, if necessary
+      console.warn("DemoButton clicked without an onClick handler.");
     }
   };
 
   return (
-    <Button
-      onClick={handleClick}
-      disabled={loading}
-      size="sm"
+    <button
+      type="button"
       className={cn(
-        "relative justify-center cursor-pointer inline-flex items-center text-center",
-        "ease-out duration-200 rounded-md outline-none transition-all outline-0",
-        "focus-visible:outline-4 focus-visible:outline-offset-1",
-        "!h-[26px] !px-2.5 !py-1 !text-xs",
-        "bg-[hsl(151.3deg_66.9%_66.9%)]",
-        "hover:bg-[hsl(156.5deg_86.5%_26.1%)]/90",
-        "dark:bg-[hsl(154.9deg_100%_19.2%)]",
-        "dark:hover:bg-[hsl(154.9deg_59.5%_70%)]/50",
-        "text-foreground",
-        "!border !border-[hsl(var(--brand-500)_/_0.75)]",
-        "dark:!border-[hsl(154.9deg_100%_19.2%)]/30",
-        "hover:!border-[hsl(156.5deg_86.5%_26.1%)]",
-        "dark:hover:!border-[hsl(154.9deg_59.5%_70%)]",
-        loading && [
-          "!pl-7",
-          "!bg-[hsl(156.5deg_86.5%_26.1%)]/90",
-          "dark:!bg-[hsl(154.9deg_59.5%_70%)]/50",
-          "!border-[hsl(156.5deg_86.5%_26.1%)]",
-          "dark:!border-[hsl(154.9deg_59.5%_70%)]"
-        ],
+        "relative inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-900",
+        {
+          "cursor-not-allowed opacity-50": isLoading || disabled,
+        },
         className
       )}
-      style={{
-        '--brand-500': '155.3deg 78.4% 40%'
-      } as React.CSSProperties}
+      onClick={handleClick}
+      disabled={isLoading || disabled}
+      {...props} // Spread remaining props
     >
-      <div className="flex items-center gap-1.5">
-        <div 
-          className={cn(
-            "absolute left-2.5 transition-all duration-200 ease-in-out opacity-0 -translate-x-2",
-            loading && "opacity-100 translate-x-0"
-          )}
-        >
-          <LoaderCircle
-            className="animate-spin"
-            size={12}
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-        </div>
-        <span>{children}</span>
-      </div>
-    </Button>
-  )
+      {isLoading && (
+        <span className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-800/80">
+          <LoaderCircle className="h-4 w-4 animate-spin text-gray-800 dark:text-gray-200" />
+          <span className="ml-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+            {loadingText}
+          </span>
+        </span>
+      )}
+      <span className={cn({ 'opacity-0': isLoading })}>{
+        // Use children if provided, otherwise use buttonText
+        children ?? buttonText
+      }</span>
+    </button>
+  );
 }

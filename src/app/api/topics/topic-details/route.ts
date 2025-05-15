@@ -184,10 +184,17 @@ export async function GET(request: NextRequest) {
     console.log(`API - Fetching details for topic ID: ${topicId}`);
 
     // First, get the topic details
+    // Handle 'topic-123' format by extracting the numeric part
+    let queryTopicId = topicId;
+    if (topicId.startsWith('topic-')) {
+      queryTopicId = topicId.replace('topic-', '');
+      console.log(`API - Extracted numeric ID ${queryTopicId} from ${topicId} for topic query`);
+    }
+
     const { data: topic, error: topicError } = await supabaseServer
       .from('topics')
       .select('*')
-      .eq('id', topicId)
+      .eq('id', queryTopicId)
       .single();
 
     if (topicError) {
@@ -212,7 +219,14 @@ export async function GET(request: NextRequest) {
     console.log(`API - Fetching categories for topic ID ${topicId}`);
 
     // Get categories directly using the numeric ID
-    const numericId = parseInt(topicId, 10);
+    // Handle 'topic-123' format by extracting the numeric part
+    let numericId;
+    if (topicId.startsWith('topic-')) {
+      numericId = parseInt(topicId.replace('topic-', ''), 10);
+      console.log(`API - Extracted numeric ID ${numericId} from ${topicId}`);
+    } else {
+      numericId = parseInt(topicId, 10);
+    }
 
     try {
       // Get categories
