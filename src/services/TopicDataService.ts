@@ -3,9 +3,20 @@
  * Client-side service for loading and managing topic data
  */
 
-import { TopicItem } from '@/utils/markdownParser';
 import DatabaseService from '@/services/DatabaseService';
 import { Topic, Category, Question } from '@/types/database';
+
+// Define TopicItem type directly in this file
+export type TopicItem = {
+  id?: string;
+  label: string;
+  content?: string;
+  questions?: Question[];
+  categoryId?: number;
+  subtopicId?: number;
+  subtopics?: Record<string, TopicItem>;
+  isGenerated?: boolean;
+};
 
 export type TopicTree = {
   [key: string]: {
@@ -24,12 +35,10 @@ class TopicDataService {
     topics: TopicTree | null;
     categories: Record<string, CategoryItem[]> | null;
     categoryDetails: Record<string, any>;
-    mlTopics: TopicTree | null;
   } = {
     topics: null,
     categories: null,
-    categoryDetails: {},
-    mlTopics: null
+    categoryDetails: {}
   };
 
   /**
@@ -478,51 +487,12 @@ class TopicDataService {
   }
 
   /**
-   * Gets ML topic data from the Python parser
-   */
-  async getMlTopicData(): Promise<TopicTree | null> {
-    console.log('TopicDataService.getMlTopicData - Called');
-    try {
-      // Try to get from cache first
-      if (this.cache.mlTopics) {
-        console.log('TopicDataService.getMlTopicData - Using cached data');
-        return this.cache.mlTopics;
-      }
-
-      // Fetch from ML parser API
-      console.log('TopicDataService.getMlTopicData - Fetching from ML parser API');
-      const response = await fetch('/api/topics/ml-parser');
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ML topic data: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('TopicDataService.getMlTopicData - Got data from ML parser API:', data);
-
-      // Update cache
-      this.cache.mlTopics = data;
-
-      return data;
-    } catch (error) {
-      console.error('Error loading ML topic data:', error);
-      return null;
-    }
-  }
-
-  /**
    * Gets topic data for a specific topic
    * @param topicId The ID of the topic to load
    */
   async getTopicData(topicId: string): Promise<TopicTree | null> {
     console.log('TopicDataService.getTopicData - Called with topicId:', topicId);
     try {
-      // Special case for ML topics - use the ML parser
-      if (topicId === 'ml') {
-        console.log('TopicDataService.getTopicData - Using ML parser for ML topics');
-        return await this.getMlTopicData();
-      }
-
       // Try to get from cache first
       if (this.cache.topics && this.cache.topics[topicId]) {
         console.log('TopicDataService.getTopicData - Using cached data');
@@ -655,16 +625,6 @@ class TopicDataService {
       if (this.cache.topics) {
         console.log('TopicDataService.getAllTopicData - Using cached data');
         return this.cache.topics;
-      }
-
-      // Get ML topics from the ML parser
-      let mlTopics: TopicTree | null = null;
-      try {
-        console.log('TopicDataService.getAllTopicData - Getting ML topics');
-        mlTopics = await this.getMlTopicData();
-        console.log('TopicDataService.getAllTopicData - Got ML topics:', mlTopics);
-      } catch (mlError) {
-        console.error('Error getting ML topics:', mlError);
       }
 
       // We need both the database structure and the markdown content
@@ -811,13 +771,6 @@ class TopicDataService {
         return data;
       }
 
-      // Merge ML topics if available
-      if (mlTopics) {
-        console.log('TopicDataService.getAllTopicData - Merging ML topics');
-        // Add ML topics to the merged topics
-        Object.assign(mergedTopics, mlTopics);
-      }
-
       // Update cache
       console.log('TopicDataService.getAllTopicData - Returning merged topics:', mergedTopics);
       this.cache.topics = mergedTopics;
@@ -829,8 +782,6 @@ class TopicDataService {
     }
   }
 
-
-
   /**
    * Clears the cache
    */
@@ -838,8 +789,7 @@ class TopicDataService {
     this.cache = {
       topics: null,
       categories: null,
-      categoryDetails: {},
-      mlTopics: null
+      categoryDetails: {}
     };
   }
 }

@@ -1,8 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { TopicNavWrapper } from '../topic';
+import { TopicNavWrapper } from '../topics-ui';
 import React from 'react';
+import Navbar from './Navbar';
+import Footer from './Footer';
 
 export default function ConditionalNavWrapper({
   children,

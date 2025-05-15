@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 
-// Selected key stats to highlight
+// Real statistics from the database
 const highlightedStats = [
-  { value: "720", description: "total questions across all topics" },
-  { value: "16,545", description: "monthly active users and visitors" },
-  { value: "84", description: "educational resources and guides" },
-  { value: "95%", description: "user satisfaction rate" },
-  { value: "42", description: "industry expert contributors" },
-  { value: "1,200+", description: "hours of interview prep content" }
+  { value: "81,499", description: "total questions across all topics" },
+  { value: "16,300", description: "categories covering essential interview topics" },
+  { value: "95,000+", description: "educational resources and references" },
+  { value: "2,394", description: "curated topics from 5 major domains" },
+  { value: "35,000+", description: "intermediate difficulty questions" },
+  { value: "30,600+", description: "advanced questions for experts" }
 ];
 
 // Note: We're using curated stats for the minimalist design
