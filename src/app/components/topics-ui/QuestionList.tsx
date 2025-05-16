@@ -250,101 +250,71 @@ export default function QuestionList({
     setLoadingAnswers(prev => ({ ...prev, [questionId]: true }));
     
     try {
-      console.log(`Fetching answer for question ID: ${questionId}`);
-      const response = await fetch(`/api/questions/answer?questionId=${questionId}`);
+      // Try to get the question text from our local state
+      const questionInState = questions.find(q => q.id === questionId);
       
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Check if we need to generate the answer via AI
-        if (data && data.needs_generation) {
-          console.log(`Question ${questionId} needs answer generation, fetching from Groq API...`);
-          
-          // Try to get the question text from our local state
-          let questionText = "";
-          const questionInState = questions.find(q => q.id === questionId);
-          
-          if (questionInState) {
-            questionText = questionInState.question_text;
-          } else {
-            // If not in local state, use the question text from the API response
-            console.log(`Question ${questionId} not found in local state, using API data`);
-            
-            if (data.question_text) {
-              questionText = data.question_text;
-            } else {
-              // If we don't have the question text from either source, show an error
-              throw new Error(`Unable to find question text for ID ${questionId}`);
-            }
-          }
-          
-          // Show loading message while we generate
-          setQuestionAnswers(prev => ({ 
-            ...prev, 
-            [questionId]: "Generating answer using AI. This may take a few moments..." 
-          }));
-          
-          // Call the generate-answer API
-          const generateResponse = await fetch('/api/generate-answer', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              questionText: questionText,
-              questionId: questionId,
-            }),
-          });
-          
-          if (generateResponse.ok) {
-            const generateData = await generateResponse.json();
-            
-            if (generateData.answer) {
-              console.log(`Successfully generated answer for question ${questionId}`);
-              setQuestionAnswers(prev => ({ 
-                ...prev, 
-                [questionId]: generateData.answer 
-              }));
-            } else if (generateData.message) {
-              // Handle case where generation failed but we have a message (e.g. missing API key)
-              console.warn(`Answer generation returned a message: ${generateData.message}`);
-              setQuestionAnswers(prev => ({ 
-                ...prev, 
-                [questionId]: generateData.message
-              }));
-            } else {
-              throw new Error('Empty response from answer generation API');
-            }
-          } else {
-            throw new Error(`Failed to generate answer: ${generateResponse.statusText}`);
-          }
-        } else if (data && data.answer_text) {
-          // We have a pre-stored answer in the database
-          console.log(`Successfully received answer for question ${questionId}`);
-          setQuestionAnswers(prev => ({ 
-            ...prev, 
-            [questionId]: data.answer_text 
-          }));
-        } else {
-          console.warn(`No answer text in response for question ${questionId}`);
-          setQuestionAnswers(prev => ({ 
-            ...prev, 
-            [questionId]: "No answer available for this question." 
-          }));
-        }
-      } else {
-        console.error(`Error fetching answer for question ${questionId}: ${response.statusText}`);
-        // Still provide a fallback answer instead of showing an error to the user
-        const fallbackAnswer = "We're currently preparing a detailed answer for this question.";
+      if (!questionInState || !questionInState.question_text) {
+        console.error(`Question text not found for ID: ${questionId}`);
         setQuestionAnswers(prev => ({ 
           ...prev, 
-          [questionId]: fallbackAnswer 
+          [questionId]: "Error: Question text not found." 
+        }));
+        setLoadingAnswers(prev => ({ ...prev, [questionId]: false }));
+        return;
+      }
+      const questionText = questionInState.question_text;
+
+      console.log(`Question ${questionId} needs answer generation, fetching from Groq API...`);
+      
+      // Show loading message while we generate
+      setQuestionAnswers(prev => ({ 
+        ...prev, 
+        [questionId]: "Generating answer using AI. This may take a few moments..." 
+      }));
+      
+      // Call the generate-answer API
+      const generateResponse = await fetch('/api/generate-answer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionText: questionText,
+          questionId: questionId,
+        }),
+      });
+      
+      if (generateResponse.ok) {
+        const generateData = await generateResponse.json();
+        
+        if (generateData.answer) {
+          console.log(`Successfully generated answer for question ${questionId}`);
+          setQuestionAnswers(prev => ({ 
+            ...prev, 
+            [questionId]: generateData.answer 
+          }));
+        } else if (generateData.message) {
+          // Handle case where generation failed but we have a message (e.g. missing API key)
+          console.warn(`Answer generation returned a message: ${generateData.message}`);
+          setQuestionAnswers(prev => ({ 
+            ...prev, 
+            [questionId]: generateData.message
+          }));
+        } else {
+          throw new Error('Empty response from answer generation API');
+        }
+      } else {
+        const errorData = await generateResponse.json().catch(() => ({ message: generateResponse.statusText }));
+        console.error(`Failed to generate answer: ${generateResponse.statusText}`, errorData);
+        setQuestionAnswers(prev => ({
+          ...prev,
+          [questionId]: `Error generating answer: ${errorData.message || generateResponse.statusText}`
         }));
       }
     } catch (error) {
       console.error(`Failed to fetch answer for question ${questionId}:`, error);
       // Use a fallback answer for better user experience
-      const fallbackAnswer = "We're currently preparing a detailed answer for this question.";
+      const fallbackAnswer = "We're currently preparing a detailed answer for this question. Please try again shortly.";
       setQuestionAnswers(prev => ({ 
         ...prev, 
         [questionId]: fallbackAnswer 

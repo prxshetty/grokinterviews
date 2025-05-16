@@ -134,7 +134,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             </div>
             <div className="flex items-center space-x-10 mx-auto absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-1 opacity-0">
               <div>Topics</div>
-              <div>Quizzes <span className="text-xs">COMING SOON</span></div>
+              <div>Quizzes</div>
               <div>Contact</div>
             </div>
             <div className="flex items-center space-x-4">
@@ -162,8 +162,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
           {/* Center Navigation Links - with border */}
           <div className="flex items-center absolute left-1/2 transform -translate-x-1/2 border border-gray-300 dark:border-gray-700 rounded-full px-5 py-1">
-            <Link 
-              href="/topics" 
+            <Link
+              href="/topics"
               className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4"
               onClick={(e) => {
                 // Reset any previously selected topic to ensure a clean state
@@ -178,9 +178,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
               Topics
             </Link>
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
-            <Link href="/quizzes" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4 flex items-center">
+            <Link href="/quizzes" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
               Quizzes
-              <span className="ml-1.5 text-xs px-1.5 py-0.5 bg-black/10 dark:bg-white/20 text-black/70 dark:text-white/80 rounded-sm font-medium">COMING SOON</span>
             </Link>
             <div className="h-4 w-px bg-gray-300 dark:bg-gray-700"></div>
             <Link href="/contact" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-4">
@@ -273,7 +272,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
         <div className="topic-navigation w-full sticky top-12 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-md px-0 mt-0 border-b border-gray-200 dark:border-gray-800">
           {pathname === '/topics' ? (
             <div className="w-full">
-              <TopicNav 
+              <TopicNav
                 onTopicSelect={(topicId) => router.push(`/topics/${topicId}`)}
                 selectedTopic={null}
               />
