@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createRouteHandlerClient, type SupabaseClient as AuthHelperSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
@@ -20,6 +20,73 @@ interface Resource {
 type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown';
 type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 
+// NEW HELPER FUNCTION
+async function fetchUserSetup(
+  supabase: AuthHelperSupabaseClient<any>, // Use the specific client type from auth-helpers
+  userId: string
+) {
+  // Fetch user profile
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('custom_api_key')
+    .eq('id', userId)
+    .single();
+
+  if (profileError) {
+    console.error('Profile Fetch Error:', profileError.message);
+    return { 
+      custom_api_key: null, 
+      specific_model_id: null, 
+      preferences: null,
+      errorResponse: NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 }) 
+    };
+  }
+  if (!profileData) {
+    return { 
+      custom_api_key: null, 
+      specific_model_id: null, 
+      preferences: null,
+      errorResponse: NextResponse.json({ error: 'User profile not found' }, { status: 404 }) 
+    };
+  }
+  const { custom_api_key } = profileData;
+
+  // Fetch user preferences
+  const { data: preferencesData, error: preferencesError } = await supabase
+    .from('user_preferences')
+    .select('specific_model_id, use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources, preferred_answer_format, preferred_answer_depth, include_code_snippets, include_latex_formulas, custom_formatting_instructions')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (preferencesError) {
+    console.error('Preferences Fetch Error:', preferencesError.message);
+    // Logged, but we proceed with defaults, so no errorResponse here.
+  }
+
+  const specific_model_id_fetched = preferencesData?.specific_model_id || null;
+  
+  const userPreferences = {
+    use_youtube: preferencesData?.use_youtube_sources ?? true,
+    use_pdf: preferencesData?.use_pdf_sources ?? true,
+    use_paper: preferencesData?.use_paper_sources ?? true,
+    use_website: preferencesData?.use_website_sources ?? true,
+    use_book: preferencesData?.use_book_sources ?? false,
+    use_image: preferencesData?.use_image_sources ?? false, 
+    format: (preferencesData?.preferred_answer_format || 'markdown') as AnswerFormat,
+    depth: (preferencesData?.preferred_answer_depth || 'standard') as AnswerDepth,
+    include_code: preferencesData?.include_code_snippets ?? true,
+    include_latex: preferencesData?.include_latex_formulas ?? false,
+    custom_instructions: preferencesData?.custom_formatting_instructions || null,
+  };
+
+  return { 
+    custom_api_key, 
+    specific_model_id: specific_model_id_fetched, 
+    preferences: userPreferences, 
+    errorResponse: null 
+  };
+}
+
 // Ensure this edge runtime is appropriate for your deployment environment
 // If using Node.js features, remove this line.
 // export const runtime = 'edge';
@@ -29,9 +96,7 @@ export async function POST(request: Request) {
   const { questionText, questionId } = await request.json();
 
   // Create Supabase client with cookies
-  const cookieStore = await cookies();
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
+  const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
   // Validate input
@@ -54,85 +119,50 @@ export async function POST(request: Request) {
 
     const userId = session.user.id;
 
-    // 3. Fetch the user's profile (for API Key)
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('custom_api_key') // Only select the API key here
-      .eq('id', userId)
-      .single();
+    // Fetch user setup (profile and preferences) using the helper
+    const userSetup = await fetchUserSetup(supabase, userId);
 
-    if (profileError) {
-      console.error('Profile Fetch Error:', profileError.message);
-      return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
+    if (userSetup.errorResponse) {
+      return userSetup.errorResponse;
     }
-    if (!profileData) {
-       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
-    }
-    const { custom_api_key } = profileData;
-
-    // 3b. Fetch user preferences (for model and answer settings)
-    const { data: preferencesData, error: preferencesError } = await supabase
-      .from('user_preferences')
-      .select(`
-        specific_model_id,
-        use_youtube_sources,
-        use_pdf_sources,
-        use_paper_sources,
-        use_website_sources,
-        use_book_sources,
-        use_image_sources,
-        preferred_answer_format,
-        preferred_answer_depth,
-        include_code_snippets,
-        include_latex_formulas,
-        custom_formatting_instructions
-      `)
-      .eq('user_id', userId) // Match based on user_id
-      .maybeSingle(); // Use maybeSingle as preferences might not exist yet
-
-    if (preferencesError) {
-      console.error('Preferences Fetch Error:', preferencesError.message);
-      // Log the error but attempt to continue with defaults
-      // return NextResponse.json({ error: 'Failed to fetch user preferences' }, { status: 500 });
+    
+    if (!userSetup.preferences) {
+        // This case should ideally not be hit if errorResponse is null and helper logic is correct
+        console.error('User preferences unexpectedly null after fetchUserSetup');
+        return NextResponse.json({ error: 'Internal server error processing user preferences' }, { status: 500 });
     }
 
-    // 4. Check required Groq settings & get preferences
-    // Use defaults if preferencesData is null or fields are missing
-    const specific_model_id = preferencesData?.specific_model_id;
-    const use_youtube_sources = preferencesData?.use_youtube_sources ?? true;
-    const use_pdf_sources = preferencesData?.use_pdf_sources ?? true;
-    const use_paper_sources = preferencesData?.use_paper_sources ?? true;
-    const use_website_sources = preferencesData?.use_website_sources ?? true;
-    const use_book_sources = preferencesData?.use_book_sources ?? false;
-    const use_image_sources = preferencesData?.use_image_sources ?? false;
-    const preferred_answer_format = preferencesData?.preferred_answer_format || 'markdown';
-    const preferred_answer_depth = preferencesData?.preferred_answer_depth || 'standard';
-    const include_code_snippets = preferencesData?.include_code_snippets ?? true;
-    const include_latex_formulas = preferencesData?.include_latex_formulas ?? false;
-    const custom_formatting_instructions = preferencesData?.custom_formatting_instructions || null;
-
-    // Define preferences object using fetched/defaulted values
-    const preferences = {
-        use_youtube: use_youtube_sources,
-        use_pdf: use_pdf_sources,
-        use_paper: use_paper_sources,
-        use_website: use_website_sources,
-        use_book: use_book_sources,
-        use_image: use_image_sources,
-        format: preferred_answer_format as AnswerFormat,
-        depth: preferred_answer_depth as AnswerDepth,
-        include_code: include_code_snippets,
-        include_latex: include_latex_formulas,
-        custom_instructions: custom_formatting_instructions,
-    };
-
+    const { custom_api_key, specific_model_id, preferences } = userSetup;
+    
     // Check for API Key and selected model ID
     if (!custom_api_key || !specific_model_id) {
-      let missingItems = [];
+      const missingItems = [];
       if (!custom_api_key) missingItems.push("Groq API key");
       if (!specific_model_id) missingItems.push("Groq model selection");
       const message = `Generation requires a ${missingItems.join(' and ')} to be configured in Account Preferences.`;
-      return NextResponse.json({ message: message, answer: null }, { status: 200 });
+      // Log activity for missing config before returning
+      try {
+        // Assuming questionId from request.json() is of a type compatible with the database.
+        // If questionId can be number or string, ensure DB schema for user_activity.question_id matches or cast appropriately.
+        const qId = typeof questionId === 'string' ? parseInt(questionId, 10) : questionId
+        if (Number.isNaN(qId) && questionId !== null) { // check if questionId was a non-numeric string
+             console.warn(`Invalid questionId format: ${questionId}, logging as null`)
+        }
+
+        await supabase.from('user_activity').insert({
+          user_id: userId,
+          activity_type: 'answer_generation_failed_config',
+          question_id: (Number.isNaN(qId) || questionId === null) ? null : qId, // Ensure it's number or null
+          metadata: { 
+            reason: 'missing_api_key_or_model', 
+            message,
+            question_text: questionText
+          },
+        });
+      } catch (logError: any) {
+        console.error('Error logging failed config activity:', logError.message);
+      }
+      return NextResponse.json({ message: message, answer: null, errorType: 'CONFIGURATION_ERROR' }, { status: 200 });
     }
 
     // 5. Fetch supplementary resources for the question
