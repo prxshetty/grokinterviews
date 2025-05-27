@@ -7,6 +7,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 // Import the new components
 import { QuestionHeader } from './QuestionHeader';
 import { AnswerDisplay } from './AnswerDisplay';
+import { ResourceList } from './ResourceList';
 
 // Define QuestionType locally based on usage in topics/page.tsx
 type QuestionType = {
@@ -22,9 +23,10 @@ type QuestionType = {
 interface QuestionWithAnswerProps {
   question: QuestionType;
   questionIndex: number;
+  isHighlighted?: boolean;
 }
 
-export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnswerProps) {
+export function QuestionWithAnswer({ question, questionIndex, isHighlighted = false }: QuestionWithAnswerProps) {
   // Initialize Supabase client
   const supabase = createClientComponentClient();
 
@@ -95,12 +97,17 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
       fetch('/api/user/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId: question.id, status: 'viewed' }),
+        body: JSON.stringify({ 
+          questionId: question.id, 
+          status: 'viewed',
+          topicId: question.topic_id || null,
+          categoryId: question.category_id || null
+        }),
       })
       .then(() => setIsViewed(true))
       .catch(err => console.error('Failed to mark question as viewed:', err));
     }
-  }, [isExpanded, isViewed, question.id]);
+  }, [isExpanded, isViewed, question.id, question.topic_id, question.category_id]);
 
   useEffect(() => {
     const answerIsReady = isExpanded && 
@@ -230,7 +237,14 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
   console.log(`Rendering QuestionWithAnswer for question ${question.id}, isCompleted=${isCompleted}`);
 
   return (
-    <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+    <div 
+      id={`question-${question.id}`}
+      className={`mb-4 p-4 rounded-lg shadow-sm border transition-all duration-300 ${
+        isHighlighted 
+          ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600 ring-2 ring-yellow-400/50' 
+          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+      }`}
+    >
       <QuestionHeader
         questionId={questionId}
         topicId={question.topic_id ?? null}
@@ -257,6 +271,9 @@ export function QuestionWithAnswer({ question, questionIndex }: QuestionWithAnsw
 
       {isExpanded && (
         <div id={`answer-content-q-${questionId}`} className="mt-4">
+          {/* Display additional resources first */}
+          <ResourceList questionId={questionId} />
+          
           <AnswerDisplay
             answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
             isLoading={isGenerating}
