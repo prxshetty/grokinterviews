@@ -282,4 +282,4 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
       </div>
     </div>
   );
-}
+} 

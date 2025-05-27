@@ -15,4 +15,4 @@ export default function TopicCarouselWrapper() {
       <ProjectsSection />
     </div>
   );
-}
+} 
