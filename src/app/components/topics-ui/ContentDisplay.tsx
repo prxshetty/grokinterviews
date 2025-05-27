@@ -4,17 +4,18 @@ import { useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
 import { Pagination } from '../ui';
-import QuestionList from './QuestionList';
+import { QuestionWithAnswer } from '@/app/components/questions';
 import { CategoryDetailView } from './';
 
 // Import necessary types
 interface QuestionType {
   id: number;
-  category_id: number;
   question_text: string;
-  answer_text?: string;
-  keywords?: string[];
-  difficulty?: string;
+  answer_text?: string | null;
+  keywords?: string[] | string | null;
+  difficulty?: string | null;
+  category_id?: number | null;
+  topic_id?: number | null;
   created_at?: string;
   categories?: {
     id: number;
@@ -154,11 +155,16 @@ export default function ContentDisplay({
         
         {difficultyQuestions.length > 0 ? (
           <>
-            <QuestionList 
-              questions={difficultyQuestions} 
-              highlightedQuestionId={highlightedQuestionId}
-              groupByCategory={true}
-            />
+            <div>
+              {difficultyQuestions.map((question, index) => (
+                <QuestionWithAnswer 
+                  key={question.id}
+                  question={question}
+                  questionIndex={index}
+                  isHighlighted={highlightedQuestionId === question.id}
+                />
+              ))}
+            </div>
             
             {totalPages > 1 && (
               <Pagination
@@ -211,11 +217,16 @@ export default function ContentDisplay({
           )}
         </div>
         
-        <QuestionList 
-          questions={keywordQuestions} 
-          highlightedQuestionId={highlightedQuestionId}
-          groupByCategory={true}
-        />
+        <div>
+          {keywordQuestions.map((question, index) => (
+            <QuestionWithAnswer 
+              key={question.id}
+              question={question}
+              questionIndex={index}
+              isHighlighted={highlightedQuestionId === question.id}
+            />
+          ))}
+        </div>
         
         {totalPages > 1 && (
           <Pagination

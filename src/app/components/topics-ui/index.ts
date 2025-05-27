@@ -5,7 +5,6 @@ export { default as TopicDataProvider, useTopicData } from './TopicDataProvider'
 export { default as TopicTabs } from './TopicTabs';
 export { default as KeywordFilter } from './KeywordFilter';
 export { default as DifficultyFilter } from './DifficultyFilter';
-export { default as QuestionList } from './QuestionList';
 export { default as ContentDisplay } from './ContentDisplay';
 export { default as CategoryDetailView } from './CategoryDetailView';
 export { default as SidebarFilters } from './SidebarFilters';

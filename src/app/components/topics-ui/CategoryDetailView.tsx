@@ -3,18 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import QuestionList from './QuestionList';
+import { QuestionWithAnswer } from '@/app/components/questions';
 import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted } from '@/app/utils/progress';
 
 // Import types
 interface QuestionType {
   id: number;
-  category_id: number;
   question_text: string;
-  answer_text?: string;
-  keywords?: string[];
-  difficulty?: string;
+  answer_text?: string | null;
+  keywords?: string[] | string | null;
+  difficulty?: string | null;
+  category_id?: number | null;
+  topic_id?: number | null;
   created_at?: string;
   categories?: {
     id: number;
@@ -574,11 +575,14 @@ export default function CategoryDetailView({
                     className={category.name}
                   />
                 </div>
-                <QuestionList 
-                  questions={category.questions} 
-                  highlightedQuestionId={highlightedQuestionId}
-                  groupByCategory={false}
-                />
+                {category.questions.map((question, index) => (
+                  <QuestionWithAnswer 
+                    key={question.id}
+                    question={question}
+                    questionIndex={index}
+                    isHighlighted={highlightedQuestionId === question.id}
+                  />
+                ))}
               </div>
             ))}
           </div>
@@ -586,11 +590,14 @@ export default function CategoryDetailView({
           // Fallback to simple question list if no category info
           <div>
             <h2 className="text-xl font-medium mb-4">Questions</h2>
-            <QuestionList 
-              questions={filteredQuestions} 
-              highlightedQuestionId={highlightedQuestionId}
-              groupByCategory={false}
-            />
+            {filteredQuestions.map((question, index) => (
+              <QuestionWithAnswer 
+                key={question.id}
+                question={question}
+                questionIndex={index}
+                isHighlighted={highlightedQuestionId === question.id}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -708,11 +715,16 @@ export default function CategoryDetailView({
           )}
           
           {filteredQuestions.length > 0 ? (
-            <QuestionList 
-              questions={filteredQuestions} 
-              highlightedQuestionId={highlightedQuestionId}
-              groupByCategory={false}
-            />
+            <div>
+              {filteredQuestions.map((question, index) => (
+                <QuestionWithAnswer 
+                  key={question.id}
+                  question={question}
+                  questionIndex={index}
+                  isHighlighted={highlightedQuestionId === question.id}
+                />
+              ))}
+            </div>
           ) : (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <p>{selectedDifficulty ? `No ${selectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
