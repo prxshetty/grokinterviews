@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
 
 interface KeywordItem {
   keyword: string;
@@ -24,7 +25,7 @@ export default function KeywordFilter({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handleKeywordClick = (keyword: string) => {
+  const handleKeywordClick = useCallback((keyword: string) => {
     onSelectKeyword(keyword);
     if (selectedTopic) {
       const params = new URLSearchParams(searchParams);
@@ -37,7 +38,7 @@ export default function KeywordFilter({
       const newUrl = `${pathname}?${params.toString()}`;
       router.push(newUrl);
     }
-  };
+  }, [onSelectKeyword, selectedTopic, selectedKeyword, searchParams, pathname, router]);
 
   return (
     <div>

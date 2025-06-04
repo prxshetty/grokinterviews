@@ -2,6 +2,8 @@
 topics/*
 .cursor
 augment-memory.md
+TOPICS_UI_OPTIMIZATION_PLAN.md        
+
 # dependencies
 /node_modules
 /.pnp

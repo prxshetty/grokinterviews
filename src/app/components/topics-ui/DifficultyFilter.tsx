@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
 
 interface DifficultyFilterProps {
   selectedTopic: string | null;
@@ -26,7 +27,7 @@ export default function DifficultyFilter({
     { id: 'advanced', label: 'Advanced' },
   ];
   
-  const handleDifficultyClick = (difficulty: string) => {
+  const handleDifficultyClick = useCallback((difficulty: string) => {
     if (!selectedTopic || selectedTopic === 'topics') {
       console.error("No valid topic selected for difficulty filter");
       return;
@@ -52,7 +53,7 @@ export default function DifficultyFilter({
       router.push(`${pathname}?${params.toString()}`);
       onSelectDifficulty(difficulty, 1); // Pass difficulty and page 1
     }
-  };
+  }, [selectedTopic, selectedDifficulty, searchParams, pathname, router, onSelectDifficulty]);
   
   return (
     <div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { QuestionWithAnswer } from '@/app/components/questions';
@@ -46,6 +46,8 @@ interface CategoryDetailViewProps {
   highlightedQuestionId?: number;
   selectedDifficulty?: string | null;
   onDifficultyChange?: (difficulty: string | null) => void;
+  domain?: string;
+  onBackToMainCategories?: () => void;
 }
 
 // Add these types for API response
@@ -75,7 +77,9 @@ export default function CategoryDetailView({
   categoryDetails,
   highlightedQuestionId,
   selectedDifficulty: propSelectedDifficulty,
-  onDifficultyChange
+  onDifficultyChange,
+  domain,
+  onBackToMainCategories
 }: CategoryDetailViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -120,29 +124,64 @@ export default function CategoryDetailView({
   const hasRealSubtopics = hasSubtopics && Object.keys(categoryDetails?.subtopics || {}).some(id => id.startsWith('topic-'));
   const hasQuestions = categoryDetails?.questions && categoryDetails.questions.length > 0;
 
-  // Available difficulty levels
-  const difficulties = [
+  // Memoize expensive calculations
+  
+  // Memoize the questions to filter based on selected subtopic
+  const questionsToFilter = useMemo(() => {
+    return selectedSubtopic && subtopicDetails?.questions 
+      ? subtopicDetails.questions 
+      : categoryDetails?.questions || [];
+  }, [selectedSubtopic, subtopicDetails?.questions, categoryDetails?.questions]);
+
+  // Memoize the filtered questions calculation
+  const memoizedFilteredQuestions = useMemo(() => {
+    if (!questionsToFilter || questionsToFilter.length === 0) return [];
+    
+    if (propSelectedDifficulty) {
+      return questionsToFilter.filter(q => q.difficulty === propSelectedDifficulty);
+    }
+    return questionsToFilter;
+  }, [questionsToFilter, propSelectedDifficulty]);
+
+  // Available difficulty levels - memoized since it's static
+  const difficulties = useMemo(() => [
     { id: 'beginner', label: 'Beginner' },
     { id: 'intermediate', label: 'Intermediate' },
     { id: 'advanced', label: 'Advanced' },
-  ];
-  
-  // Update filtered questions when difficulty or questions change
-  useEffect(() => {
-    const questionsToFilter = selectedSubtopic && subtopicDetails?.questions 
-      ? subtopicDetails.questions 
-      : categoryDetails?.questions;
+  ], []);
 
-    if (questionsToFilter) {
-      if (propSelectedDifficulty) {
-        setFilteredQuestions(questionsToFilter.filter(q => q.difficulty === propSelectedDifficulty));
-      } else {
-        setFilteredQuestions(questionsToFilter);
-      }
-    } else {
-      setFilteredQuestions([]);
+  // Memoize the expensive questionsByCategory grouping operation
+  const questionsByCategory = useMemo(() => {
+    const grouped: Record<number, { name: string; questions: QuestionType[] }> = {};
+    
+    if (filteredQuestions.length > 0) {
+      // Group questions by their category
+      filteredQuestions.forEach(question => {
+        if (question.categories) {
+          const categoryId = question.categories.id;
+          if (!grouped[categoryId]) {
+            grouped[categoryId] = { 
+              name: question.categories.name, 
+              questions: [] 
+            };
+          }
+          grouped[categoryId].questions.push(question);
+        }
+      });
     }
-  }, [propSelectedDifficulty, categoryDetails?.questions, subtopicDetails?.questions, selectedSubtopic]);
+    
+    return grouped;
+  }, [filteredQuestions]);
+
+  // Memoize check for grouped questions
+  const hasGroupedQuestions = useMemo(() => {
+    return Object.keys(questionsByCategory).length > 0;
+  }, [questionsByCategory]);
+
+  // Update filtered questions when calculation changes
+  useEffect(() => {
+    setFilteredQuestions(memoizedFilteredQuestions);
+  }, [memoizedFilteredQuestions]);
 
   // Fetch progress data for category and subtopic
   useEffect(() => {
@@ -327,95 +366,87 @@ export default function CategoryDetailView({
     };
   }, [categoryId, selectedSubtopic, categoryDetails?.subtopics, categoryDetails?.questions, filteredQuestions]);
   
-  // Handle back button click
-  const handleBackToMainCategories = () => {
-    // For deep linking, go back to the domain page
-    const segments = pathname.split('/');
-    if (segments.length >= 3) {
-      const domain = segments[2];
-      
-      // Instead of preserving parameters, force a complete refresh of the domain page
-      // by using router.replace and setting a clean URL
-      const newUrl = `/topics/${domain}`;
-      
-      console.log('Force refreshing domain page:', newUrl);
-      
-      // Dispatch a custom event to notify parent components that we're going back to the main page
-      // This will allow them to reset their state
-      window.dispatchEvent(new CustomEvent('resetCategorySelection', {
-        detail: { domain }
-      }));
-      
-      // Use replace to avoid adding to history stack
-      router.replace(newUrl);
+  // Memoize domain display name for dynamic labels
+  const domainDisplayName = useMemo(() => {
+    const domainMap: Record<string, string> = {
+      'ml': 'Machine Learning',
+      'ai': 'Artificial Intelligence', 
+      'webdev': 'Web Development',
+      'sdesign': 'System Design',
+      'dsa': 'Data Structures & Algorithms'
+    };
+    return domain ? domainMap[domain] || domain.toUpperCase() : 'Categories';
+  }, [domain]);
+
+  // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
+  const handleBackToMainCategories = useCallback(() => {
+    if (onBackToMainCategories) {
+      // Use the parent's handler which properly resets state
+      onBackToMainCategories();
     } else {
-      // Fallback in case URL structure isn't as expected
-      router.back();
+      // Fallback to URL manipulation (original implementation)
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.delete('category');
+      searchParams.delete('q'); // Clear question ID when going back
+      const newUrl = `${pathname}?${searchParams.toString()}`;
+      router.push(newUrl);
     }
-  };
+  }, [onBackToMainCategories, pathname, router]);
 
   // Handle subtopic selection
-  const handleSubtopicSelect = async (topicId: string) => {
-    // If already selected, toggle off
-    if (selectedSubtopic === topicId) {
-      setSelectedSubtopic(null);
-      setSubtopicDetails(null);
-      return;
-    }
-
-    setIsLoading(true);
-    setSelectedSubtopic(topicId);
-
+  const handleSubtopicSelect = useCallback(async (topicId: string) => {
     try {
-      // Fix the API endpoint - use /api/topics/topic-details instead of /api/topic-detail
-      const response = await fetch(`/api/topics/topic-details?topicId=${topicId}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch topic details: ${response.statusText}`);
-      }
-
-      const responseData = await response.json() as TopicResponse;
-      console.log('Topic API response:', responseData);
+      setIsLoading(true);
+      console.log(`Fetching details for subtopic: ${topicId}`);
       
-      // The API returns a different structure than what our component expects
-      // Transform the data to match the expected structure
-      if (responseData.topic && responseData.categories) {
-        // Create a properly formatted details object from the API response
-        const formattedDetails: TopicItem = {
-          id: responseData.topic.id.toString(),
-          label: responseData.topic.name,
-          content: responseData.topic.description || `Details for ${responseData.topic.name}`,
-          // Combine all questions from all categories
-          questions: responseData.categories.flatMap(category => 
-            (category.questions || []).map(q => ({
-              ...q,
-              // Add category information to each question for display
-              categories: {
-                id: category.id,
-                name: category.name,
-                topic_id: category.topic_id
-              }
-            }))
-          )
+      // Fetch the subtopic details
+      const topicNumericId = parseInt(topicId.replace('topic-', ''));
+      if (isNaN(topicNumericId)) {
+        console.error('Invalid topic ID format:', topicId);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Use 'topicId' parameter as expected by the API endpoint
+      const response = await fetch(`/api/topics/topic-details?topicId=${topicNumericId}`);
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to fetch subtopic details: ${response.status} ${response.statusText} - ${errorData}`);
+      }
+      
+      const data: TopicResponse = await response.json();
+      console.log('API Response for subtopic:', data);
+      
+      // Format the response into the expected TopicItem structure
+      if (data && data.topic) {
+        const formattedSubtopic: TopicItem = {
+          id: topicId,
+          label: data.topic.name,
+          content: data.topic.description || '', // Use description as content
+          questions: data.categories && data.categories.length > 0 
+            ? data.categories.flatMap(cat => cat.questions || [])
+            : [],
+          subtopicId: data.topic.id
         };
         
-        console.log('Formatted topic details:', formattedDetails);
-        setSubtopicDetails(formattedDetails);
+        console.log('Formatted subtopic data:', formattedSubtopic);
+        setSubtopicDetails(formattedSubtopic);
+        setSelectedSubtopic(topicId);
       } else {
-        throw new Error('Invalid response format from API');
+        console.error('Invalid subtopic data structure:', data);
       }
     } catch (error) {
-      console.error(`Error loading details for subtopic ${topicId}:`, error);
-      setSubtopicDetails(null);
+      console.error('Error fetching subtopic details:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Handle back to category from subtopic
-  const handleBackToCategory = () => {
+  const handleBackToCategory = useCallback(() => {
     setSelectedSubtopic(null);
     setSubtopicDetails(null);
-  };
+  }, []);
 
   // Render difficulty filter
   const renderDifficultyFilter = () => {
@@ -471,27 +502,6 @@ export default function CategoryDetailView({
 
   // If a subtopic is selected, show its details
   if (selectedSubtopic && subtopicDetails) {
-    // Group questions by category if the subtopicDetails has questions with category info
-    const questionsByCategory: Record<number, { name: string; questions: QuestionType[] }> = {};
-    
-    if (filteredQuestions.length > 0) {
-      // Group questions by their category
-      filteredQuestions.forEach(question => {
-        if (question.categories) {
-          const categoryId = question.categories.id;
-          if (!questionsByCategory[categoryId]) {
-            questionsByCategory[categoryId] = { 
-              name: question.categories.name, 
-              questions: [] 
-            };
-          }
-          questionsByCategory[categoryId].questions.push(question);
-        }
-      });
-    }
-    
-    const hasGroupedQuestions = Object.keys(questionsByCategory).length > 0;
-    
     return (
       <div className="p-4 animate-fadeIn">
         <div className="flex items-center justify-between mb-6">
@@ -601,7 +611,7 @@ export default function CategoryDetailView({
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to Categories
+          Back to {domainDisplayName}
         </button>
       </div>
       

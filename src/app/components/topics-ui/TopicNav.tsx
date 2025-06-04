@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const mainTopics = [
@@ -29,7 +29,7 @@ export default function TopicNav({ onTopicSelect, selectedTopic }: TopicNavProps
     if (selectedTopic !== undefined) setInternalSelectedTopic(selectedTopic);
   }, [selectedTopic]);
 
-  function handleTopicClick(topicId: string) {
+  const handleTopicClick = useCallback((topicId: string) => {
     // If clicking the same topic that is already selected, force a complete refresh
     if (effectiveSelectedTopic === topicId) {
       // Dispatch the resetCategorySelection event first to reset any category state
@@ -48,7 +48,7 @@ export default function TopicNav({ onTopicSelect, selectedTopic }: TopicNavProps
     onTopicSelect(topicId);
     // Navigate to the correct /topics/[domain] page
     router.push(`/topics/${topicId}`);
-  }
+  }, [effectiveSelectedTopic, router, onTopicSelect]);
 
   return (
     <nav className="w-full px-4 py-4">
