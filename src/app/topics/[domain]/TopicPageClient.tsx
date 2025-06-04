@@ -13,6 +13,7 @@ import ProgressSaver from '@/app/components/utils/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
 import { useTopicData } from '@/app/hooks';
 import { getDomainKeywords } from '@/app/utils';
+import { useFilterLogic } from '@/app/hooks/use-filter-logic.hook';
 
 // Import types (assuming these are defined elsewhere or can be moved here)
 interface QuestionType {
@@ -84,9 +85,17 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   // URL parameters
   const searchParams = useSearchParams();
   const pageParam = searchParams.get('page');
-  const keywordParam = searchParams.get('q');
-  const difficultyParam = searchParams.get('difficulty');
   const questionIdParam = searchParams.get('questionId');
+
+  // Use the new hook for filter logic
+  const {
+    selectedKeyword,
+    selectedDifficulty,
+    handleKeywordChange,
+    handleDifficultyChange,
+    clearKeywordFilter,
+    clearDifficultyFilter
+  } = useFilterLogic();
 
   const [selectedTopic, setSelectedTopic] = useState<string | null>(domain || null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -94,26 +103,6 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   const [categoryDetails, setCategoryDetails] = useState<TopicItem | null>(null);
   const [loadingCategories, setLoadingCategories] = useState<boolean>(false);
   const [loadingSections, setLoadingSections] = useState<boolean>(false);
-
-  // Update selectedTopic when domain changes
-  useEffect(() => {
-    if (domain && domain !== 'topics') {
-      setSelectedTopic(domain);
-      loadTopicCategories(domain);
-    } else {
-      // Reset to default state if we're at the topics landing page (not a specific domain)
-      setSelectedTopic(null);
-      setTopicCategories([]);
-      setCategoryDetails(null);
-      setSelectedCategory(null);
-
-      // Also clear any filters
-      setSelectedKeyword(null);
-      setKeywordQuestions([]);
-      setSelectedDifficulty(null);
-      setDifficultyQuestions([]);
-    }
-  }, [domain]);
 
   // Progress tracking states
   const [sectionProgressCache, setSectionProgressCache] = useState<Record<string, ProgressData>>({});
@@ -129,7 +118,6 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   }>>({});
 
   // Keyword filtering states
-  const [selectedKeyword, setSelectedKeyword] = useState<string | null>(keywordParam);
   const [keywordQuestions, setKeywordQuestions] = useState<QuestionType[]>([]);
   const [loadingKeywordQuestions, setLoadingKeywordQuestions] = useState<boolean>(false);
 
@@ -139,7 +127,6 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   const [totalResults, setTotalResults] = useState<number>(0);
 
   // Difficulty filtering states
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(difficultyParam);
   const [difficultyQuestions, setDifficultyQuestions] = useState<QuestionType[]>([]);
   const [loadingDifficultyQuestions, setLoadingDifficultyQuestions] = useState(false);
 
@@ -152,6 +139,30 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
 
   const router = useRouter();
   const pathname = usePathname();
+
+  // Update currentPage when pageParam changes (e.g., from hook resetting page on filter change)
+  useEffect(() => {
+    setCurrentPage(pageParam ? parseInt(pageParam) : 1);
+  }, [pageParam]);
+
+  // Fetch keyword questions when selectedKeyword or currentPage changes
+  useEffect(() => {
+    if (selectedKeyword && domain) {
+      fetchKeywordQuestions(selectedKeyword, currentPage);
+    } else {
+      setKeywordQuestions([]); // Clear questions if no keyword
+      // Optionally reset pagination if needed, though hook handles page reset in URL
+    }
+  }, [selectedKeyword, currentPage, domain]); // domain added as dependency
+
+  // Fetch difficulty questions when selectedDifficulty or currentPage changes
+  useEffect(() => {
+    if (selectedDifficulty && domain) {
+      fetchDifficultyQuestions(selectedDifficulty, currentPage);
+    } else {
+      setDifficultyQuestions([]); // Clear questions if no difficulty
+    }
+  }, [selectedDifficulty, currentPage, domain]); // domain added as dependency
 
   // Handle topic selection
   const handleTopicClick = async (topicId: string) => {
@@ -297,6 +308,9 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   const handleBackToMainCategories = () => {
     setSelectedCategory(null);
     setCategoryDetails(null);
+    const params = new URLSearchParams(searchParams);
+    params.delete('questionId');
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   // Preload subtopic progress data for a domain
@@ -305,167 +319,55 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     // This would be the fetchSectionProgress and related functions
   };
 
-  // Handle keyword selection
-  const handleKeywordSelect = async (keyword: string, page: number = 1) => {
-    // Update URL instead of directly fetching data
-    const params = new URLSearchParams(searchParams);
-
-    // Toggle keyword selection if already selected
-    if (selectedKeyword === keyword) {
-      params.delete('q');
-      params.delete('page');
-    } else {
-      params.set('q', keyword);
-      params.set('page', page.toString());
-    }
-
-    // Build the new URL and navigate
-    const newUrl = `${pathname}?${params.toString()}`;
-    router.push(newUrl);
-
-    // The useEffect with the keywordParam dependency will handle the actual data fetching
-    return;
-  };
-
-  // Handle difficulty selection
-  const handleDifficultySelect = async (difficulty: string, page: number = 1) => {
-    console.log(`handleDifficultySelect called with difficulty: ${difficulty}, current domain: ${domain}, page: ${page}`);
-
-    // We need a selected topic to filter by difficulty
-    if (!selectedTopic) {
-      console.error("No topic selected for difficulty filter");
-      return;
-    }
-
-    // If difficulty is empty string, treat it as null (clearing the filter)
-    if (!difficulty) {
-      setSelectedDifficulty(null);
-      setDifficultyQuestions([]);
-
-      // Remove difficulty from URL
-      const params = new URLSearchParams(searchParams);
-      params.delete('difficulty');
-      params.delete('page');
-      router.push(`${pathname}?${params.toString()}`);
-      return;
-    }
-
-    // Update URL with difficulty and page
-    const params = new URLSearchParams(searchParams);
-    params.set('difficulty', difficulty);
-    params.set('page', page.toString());
-    router.push(`${pathname}?${params.toString()}`);
-
-    // Set loading state
-    setSelectedDifficulty(difficulty);
-    setLoadingDifficultyQuestions(true);
-
+  const fetchKeywordQuestions = async (keyword: string, page: number = 1) => {
+    if (!domain) return; // Ensure domain is available
+    setLoadingKeywordQuestions(true);
     try {
-      // If a category is selected, filter its questions by difficulty
-      if (selectedCategory && categoryDetails?.questions) {
-        console.log(`Filtering category questions by difficulty: ${difficulty}`);
-        // Filter locally from already loaded questions
-        const filteredQuestions = categoryDetails.questions.filter(q =>
-          q.difficulty === difficulty
-        );
-        console.log(`Found ${filteredQuestions.length} matching questions in category`);
-        setDifficultyQuestions(filteredQuestions);
-        setTotalResults(filteredQuestions.length);
-        setTotalPages(1);
-        setCurrentPage(1);
-      } else {
-        // Otherwise fetch from API using the selected topic
-        const url = `/api/questions/difficulty?difficulty=${difficulty}&domain=${selectedTopic}&page=${page}`;
-        console.log(`Fetching questions with URL: ${url}`);
-
-        const response = await fetch(url);
-        console.log(`API response status: ${response.status}`);
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`API returned ${data.questions?.length || 0} questions for difficulty "${difficulty}" in domain "${selectedTopic}"`);
-
-          if (data.questions && data.questions.length > 0) {
-            // Log the first question to verify domain matching
-            const firstQuestion = data.questions[0];
-            console.log(`First question: ID=${firstQuestion.id}, difficulty=${firstQuestion.difficulty}, domain=${firstQuestion.categories?.topics?.domain}`);
-          }
-
-          setDifficultyQuestions(data.questions || []);
-
-          // Set pagination data
-          if (data.pagination) {
-            setCurrentPage(data.pagination.page);
-            setTotalPages(data.pagination.totalPages);
-            setTotalResults(data.pagination.totalCount);
-          }
-        } else {
-          console.error(`API error: ${response.statusText}`);
-          const errorData = await response.json();
-          console.error('Error details:', errorData);
-          setDifficultyQuestions([]);
-        }
+      const response = await fetch(
+        `/api/search?domain=${domain}&query=${encodeURIComponent(keyword)}&page=${page}`
+      );
+      if (!response.ok) throw new Error('Failed to fetch keyword questions');
+      const data = await response.json();
+      setKeywordQuestions(data.questions || []);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setTotalResults(data.pagination?.totalCount || 0);
+      if (data.questions?.length === 0 && page > 1) {
+        handlePageChange(1); // Corrected call
       }
     } catch (error) {
-      console.error(`Error fetching questions for difficulty ${difficulty}:`, error);
+      console.error('Error fetching keyword questions:', error);
+      setKeywordQuestions([]);
+      setTotalPages(1);
+      setTotalResults(0);
+    } finally {
+      setLoadingKeywordQuestions(false);
+    }
+  };
+
+  const fetchDifficultyQuestions = async (difficulty: string, page: number = 1) => {
+    if (!domain) return; // Ensure domain is available
+    setLoadingDifficultyQuestions(true);
+    try {
+      const response = await fetch(
+        `/api/questions/difficulty?domain=${domain}&difficulty=${difficulty}&page=${page}`
+      );
+      if (!response.ok) throw new Error('Failed to fetch difficulty questions');
+      const data = await response.json();
+      setDifficultyQuestions(data.questions || []);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setTotalResults(data.pagination?.totalCount || 0);
+      if (data.questions?.length === 0 && page > 1) {
+         handlePageChange(1); // Corrected call
+      }
+    } catch (error) {
+      console.error('Error fetching difficulty questions:', error);
       setDifficultyQuestions([]);
+      setTotalPages(1);
+      setTotalResults(0);
     } finally {
       setLoadingDifficultyQuestions(false);
     }
   };
-
-  // Helper function to fetch keyword questions
-  const fetchKeywordQuestions = async (keyword: string, page: number = 1) => {
-    try {
-      let url = `/api/questions/keywords?keyword=${encodeURIComponent(keyword)}&page=${page}`;
-      if (selectedTopic) {
-        url += `&domain=${selectedTopic}`;
-      }
-
-      console.log(`Fetching keyword questions with URL: ${url}`);
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`API returned ${data.questions?.length || 0} questions for keyword "${keyword}" (page ${page})`);
-        return data;
-      } else {
-        console.error(`API error: ${response.statusText}`);
-        const errorData = await response.json();
-        console.error('Error details:', errorData);
-      }
-    } catch (error) {
-      console.error(`Error fetching questions for keyword ${keyword} (page ${page}):`, error);
-    }
-    return null;
-  };
-
-  // Effect to load keyword questions when URL parameters change
-  useEffect(() => {
-    if (keywordParam && pageParam) {
-      const page = parseInt(pageParam);
-      if (page !== currentPage || !keywordQuestions.length) {
-        console.log(`Loading page ${page} of questions with keyword ${keywordParam}`);
-        setCurrentPage(page);
-        setSelectedKeyword(keywordParam);
-        setLoadingKeywordQuestions(true);
-        
-        fetchKeywordQuestions(keywordParam, page)
-          .then(data => {
-            if (data) {
-              setKeywordQuestions(data.questions || []);
-              setTotalPages(data.pagination?.totalPages || 1);
-              setTotalResults(data.pagination?.totalCount || 0);
-            }
-          })
-          .finally(() => {
-            setLoadingKeywordQuestions(false);
-          });
-      }
-    }
-  // Dependencies: Rerun when keyword or page param changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keywordParam, pageParam]);
 
   // Handle page change for pagination
   const handlePageChange = (newPage: number) => {
@@ -492,7 +394,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       router.push(newUrl);
 
       // Fetch new page of difficulty filtered questions
-      handleDifficultySelect(selectedDifficulty, newPage);
+      handleDifficultyChange(selectedDifficulty);
     }
   };
 
@@ -505,37 +407,14 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       setSelectedTopic(domain);
       loadTopicCategories(domain);
 
-      // If keyword is provided in URL, fetch related questions
-      if (keywordParam) {
-        setSelectedKeyword(keywordParam);
-        setCurrentPage(parseInt(pageParam || '1'));
-        setLoadingKeywordQuestions(true);
-
-        fetchKeywordQuestions(keywordParam, parseInt(pageParam || '1'))
-          .then(data => {
-            if (data) {
-              setKeywordQuestions(data.questions || []);
-              setTotalPages(data.pagination?.totalPages || 1);
-              setTotalResults(data.pagination?.totalCount || 0);
-            }
-          })
-          .finally(() => {
-            setLoadingKeywordQuestions(false);
-          });
-      } else {
-        // Clear keyword-related state if no keyword in URL
-        setSelectedKeyword(null);
-        setKeywordQuestions([]);
-      }
-
       // If difficulty is provided in URL, apply filter
-      if (difficultyParam) {
+      if (selectedDifficulty) {
         const pageToFetch = parseInt(pageParam || '1');
-        handleDifficultySelect(difficultyParam, pageToFetch);
+        // The pageToFetch is used by the useEffect watching selectedDifficulty and currentPage/pageParam
+        handleDifficultyChange(selectedDifficulty);
       } else {
         // Clear difficulty filter state if not in URL
-        setSelectedDifficulty(null);
-        setDifficultyQuestions([]);
+        handleDifficultyChange(null);
       }
     } else if (domain === 'topics') {
       // Special case for /topics - ensure no data is loaded
@@ -544,7 +423,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     }
   // Dependencies: Rerun when URL parameters change
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain, keywordParam, difficultyParam, pageParam]); // Depend on URL params
+  }, [domain, selectedDifficulty, pageParam]); // Depend on URL params
 
   // Handle reset category selection event from CategoryDetailView
   useEffect(() => {
@@ -571,67 +450,62 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     };
   }, [domain]); // Only re-add the listener if domain changes
 
-  // Clear filters when topic changes
+  // Handle highlighted question ID from URL
   useEffect(() => {
-    // Reset keyword state if topic changes
-    if (selectedKeyword) {
-      setSelectedKeyword(null);
-      setKeywordQuestions([]);
-      setCurrentPage(1);
-      setTotalPages(1);
-      setTotalResults(0);
+    const qId = searchParams.get('questionId');
+    setHighlightedQuestionId(qId ? parseInt(qId) : undefined);
+    if (qId) {
+      // If a questionId is in the URL, we might need to ensure the relevant category is selected.
+      // This logic can be complex: find which category the question belongs to, then select it.
+      // For now, just setting the highlight.
+      // Also, clear keyword/difficulty filters if a direct question link is followed?
+      // handleKeywordChange(null);
+      // handleDifficultyChange(null);
     }
+  }, [searchParams/*, handleKeywordChange, handleDifficultyChange*/]);
 
-    // Reset difficulty state if topic changes
-    if (selectedDifficulty) {
-      console.log(`Topic changed to ${selectedTopic}, clearing difficulty filter.`);
-      setSelectedDifficulty(null);
-      setDifficultyQuestions([]);
-      setLoadingDifficultyQuestions(false);
-    }
-  // Dependencies: Rerun when the selected topic changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTopic]);
-
-  // Effect to load difficulty questions when URL parameters change
+  // Initial data loading (e.g., topics for a domain)
   useEffect(() => {
-    if (difficultyParam && pageParam) {
-      const page = parseInt(pageParam);
-      if (page !== currentPage || !difficultyQuestions.length) {
-        console.log(`Loading page ${page} of questions with difficulty ${difficultyParam}`);
-        handleDifficultySelect(difficultyParam, page);
-      }
+    if (domain && domain !== 'topics') {
+      console.log(`Initial load for domain: ${domain}`);
+      handleTopicClick(domain);
     }
-  // Dependencies: Rerun when difficulty or page param changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficultyParam, pageParam]); // Add handleDifficultySelect if it's stable
+    // If there's a keyword or difficulty in the URL on initial load,
+    // the useEffects watching selectedKeyword/selectedDifficulty will trigger fetching.
+  }, [domain]); // Only re-run if domain changes (e.g. initial prop or layout update)
+
+  // Logic for when no specific view (category, keyword, difficulty) is active
+  const showTopicGrid = !selectedCategory && !selectedKeyword && !selectedDifficulty;
 
   return (
-    <div className="bg-white dark:bg-black min-h-screen">
-      {/* Component to save progress when navigating away */}
-      <ProgressSaver />
+    <TopicDataProvider>
+      <div className="flex flex-col lg:flex-row gap-0 min-h-screen">
+        <SidebarFilters
+          selectedTopic={selectedTopic}
+          selectedCategory={selectedCategory}
+          selectedKeyword={selectedKeyword}
+          selectedDifficulty={selectedDifficulty}
+          onSelectKeyword={handleKeywordChange}
+          onSelectDifficulty={handleDifficultyChange}
+        />
 
-      <div className="w-full px-0">
-        <div className="transition-opacity duration-300">
-          <div className="p-0">
-            {/* Navigation tabs removed - now only using TopicNavWrapper from MainNavigation */}
+        <main className="flex-grow p-0 md:p-0 lg:p-0 bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
+          {loadingSections && (
+            <div className="p-8 text-center">Loading sections...</div>
+          )}
 
-            {/* Filters section - only shown when a valid topic is explicitly selected */}
-            {selectedTopic && selectedTopic !== 'topics' && (
-              <SidebarFilters
-                selectedTopic={selectedTopic}
-                selectedCategory={selectedCategory}
-                selectedKeyword={selectedKeyword}
-                selectedDifficulty={selectedDifficulty}
-                onSelectKeyword={handleKeywordSelect}
-                onSelectDifficulty={handleDifficultySelect}
-                isLoadingKeyword={loadingKeywordQuestions}
-                isLoadingDifficulty={loadingDifficultyQuestions}
-              />
-            )}
+          {!loadingSections && showTopicGrid && (
+            <TopicCategoryGrid
+              categories={topicCategories}
+              onSelectCategory={handleCategorySelect}
+              isLoading={loadingCategories}
+              domain={domain} // Pass domain
+            />
+          )}
 
-            {/* Main content area */}
+          {!loadingSections && (selectedCategory || selectedKeyword || selectedDifficulty) && (
             <ContentDisplay
+              domain={domain} // Pass domain
               selectedTopic={selectedTopic}
               selectedCategory={selectedCategory}
               selectedKeyword={selectedKeyword}
@@ -641,18 +515,21 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
               keywordQuestions={keywordQuestions}
               difficultyQuestions={difficultyQuestions}
               loadingCategories={loadingCategories}
-              loadingSections={loadingSections}
+              loadingSections={loadingSections} // Or more specific loading for content area
               onSelectCategory={handleCategorySelect}
               currentPage={currentPage}
               totalPages={totalPages}
               totalResults={totalResults}
               onPageChange={handlePageChange}
-              domain={domain} // Pass domain down
               highlightedQuestionId={highlightedQuestionId}
+              clearKeywordFilter={clearKeywordFilter}
+              clearDifficultyFilter={clearDifficultyFilter}
+              onDifficultyChange={handleDifficultyChange}
             />
-          </div>
-        </div>
+          )}
+        </main>
       </div>
-    </div>
+      <ProgressSaver />
+    </TopicDataProvider>
   );
 } 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted } from '@/app/utils/progress';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -26,7 +26,8 @@ interface QuestionWithAnswerProps {
   isHighlighted?: boolean;
 }
 
-export function QuestionWithAnswer({ question, questionIndex, isHighlighted = false }: QuestionWithAnswerProps) {
+// Renaming original component and preparing for memoization
+function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = false }: QuestionWithAnswerProps) {
   // Initialize Supabase client
   const supabase = createClientComponentClient();
 
@@ -287,3 +288,6 @@ export function QuestionWithAnswer({ question, questionIndex, isHighlighted = fa
     </div>
   );
 }
+
+// Exporting the memoized component
+export const QuestionWithAnswer = memo(QuestionWithAnswerComponent);
