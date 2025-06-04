@@ -44,6 +44,8 @@ interface CategoryDetailViewProps {
   categoryId: string;
   categoryDetails: TopicItem | null;
   highlightedQuestionId?: number;
+  selectedDifficulty?: string | null;
+  onDifficultyChange?: (difficulty: string | null) => void;
 }
 
 // Add these types for API response
@@ -71,7 +73,9 @@ interface TopicResponse {
 export default function CategoryDetailView({
   categoryId,
   categoryDetails,
-  highlightedQuestionId
+  highlightedQuestionId,
+  selectedDifficulty: propSelectedDifficulty,
+  onDifficultyChange
 }: CategoryDetailViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -81,9 +85,6 @@ export default function CategoryDetailView({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
   const [subtopicDetails, setSubtopicDetails] = useState<TopicItem | null>(null);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
-    searchParams.get('difficulty')
-  );
   const [filteredQuestions, setFilteredQuestions] = useState<QuestionType[]>([]);
   
   // Progress tracking states
@@ -128,31 +129,21 @@ export default function CategoryDetailView({
   
   // Update filtered questions when difficulty or questions change
   useEffect(() => {
-    if (selectedSubtopic && subtopicDetails?.questions) {
-      // Apply filtering to subtopic questions
-      if (selectedDifficulty) {
-        setFilteredQuestions(subtopicDetails.questions.filter(q => q.difficulty === selectedDifficulty));
+    const questionsToFilter = selectedSubtopic && subtopicDetails?.questions 
+      ? subtopicDetails.questions 
+      : categoryDetails?.questions;
+
+    if (questionsToFilter) {
+      if (propSelectedDifficulty) {
+        setFilteredQuestions(questionsToFilter.filter(q => q.difficulty === propSelectedDifficulty));
       } else {
-        setFilteredQuestions(subtopicDetails.questions);
-      }
-    } else if (categoryDetails?.questions) {
-      // Apply filtering to category questions
-      if (selectedDifficulty) {
-        setFilteredQuestions(categoryDetails.questions.filter(q => q.difficulty === selectedDifficulty));
-      } else {
-        setFilteredQuestions(categoryDetails.questions);
+        setFilteredQuestions(questionsToFilter);
       }
     } else {
       setFilteredQuestions([]);
     }
-  }, [selectedDifficulty, categoryDetails?.questions, subtopicDetails?.questions, selectedSubtopic]);
+  }, [propSelectedDifficulty, categoryDetails?.questions, subtopicDetails?.questions, selectedSubtopic]);
 
-  // Watch for URL parameter changes
-  useEffect(() => {
-    const difficultyParam = searchParams.get('difficulty');
-    setSelectedDifficulty(difficultyParam);
-  }, [searchParams]);
-  
   // Fetch progress data for category and subtopic
   useEffect(() => {
     const fetchProgress = async () => {
@@ -336,36 +327,6 @@ export default function CategoryDetailView({
     };
   }, [categoryId, selectedSubtopic, categoryDetails?.subtopics, categoryDetails?.questions, filteredQuestions]);
   
-  // Handle difficulty selection
-  const handleDifficultySelect = (difficulty: string) => {
-    // Toggle difficulty selection if already selected
-    if (selectedDifficulty === difficulty) {
-      setSelectedDifficulty(null);
-      
-      // Update URL
-      const baseUrl = pathname.split('/').slice(0, 3).join('/');
-      const params = new URLSearchParams(searchParams);
-      params.delete('difficulty');
-      params.delete('page'); // Also remove page parameter when clearing filter
-      
-      // Preserve other URL parameters
-      const newUrl = `${baseUrl}?${params.toString()}`;
-      router.push(newUrl);
-    } else {
-      setSelectedDifficulty(difficulty);
-      
-      // Update URL
-      const baseUrl = pathname.split('/').slice(0, 3).join('/');
-      const params = new URLSearchParams(searchParams);
-      params.set('difficulty', difficulty);
-      params.set('page', '1'); // Reset to page 1 when applying new filter
-      
-      // Preserve other URL parameters
-      const newUrl = `${baseUrl}?${params.toString()}`;
-      router.push(newUrl);
-    }
-  };
-  
   // Handle back button click
   const handleBackToMainCategories = () => {
     // For deep linking, go back to the domain page
@@ -458,25 +419,42 @@ export default function CategoryDetailView({
 
   // Render difficulty filter
   const renderDifficultyFilter = () => {
+    if (!onDifficultyChange) return null; // Don't render if no handler is provided
+
     return (
       <div className="mb-6">
-        <h3 className="text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
-          Filter by Difficulty
-        </h3>
+        <h4 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Filter by Difficulty:</h4>
         <div className="flex flex-wrap gap-2">
-          {difficulties.map((difficulty) => (
-            <span
-              key={difficulty.id}
-              onClick={() => handleDifficultySelect(difficulty.id)}
-              className={`px-3 py-1 ${
-                selectedDifficulty === difficulty.id 
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700' 
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              } text-xs rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors`}
+          {difficulties.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => {
+                // If current difficulty is clicked again, clear the filter (toggle off)
+                // Otherwise, set the new difficulty
+                const newDifficulty = propSelectedDifficulty === d.id ? null : d.id;
+                onDifficultyChange(newDifficulty);
+              }}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors
+                ${propSelectedDifficulty === d.id
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
             >
-              {difficulty.label}
-            </span>
+              {d.label}
+            </button>
           ))}
+          {propSelectedDifficulty && (
+            <button
+              onClick={() => onDifficultyChange(null)} // Explicit clear button
+              className="px-3 py-1.5 text-xs font-medium rounded-full transition-colors text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-500 flex items-center"
+              title="Clear difficulty filter"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+              Clear
+            </button>
+          )}
         </div>
       </div>
     );
@@ -601,7 +579,7 @@ export default function CategoryDetailView({
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <p>{selectedDifficulty ? `No ${selectedDifficulty} questions available.` : 'No questions available for this topic.'}</p>
+            <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this topic.'}</p>
           </div>
         )}
       </div>
@@ -727,7 +705,7 @@ export default function CategoryDetailView({
             </div>
           ) : (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              <p>{selectedDifficulty ? `No ${selectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
+              <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
             </div>
           )}
         </div>

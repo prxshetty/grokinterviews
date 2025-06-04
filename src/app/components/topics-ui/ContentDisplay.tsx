@@ -64,6 +64,9 @@ interface ContentDisplayProps {
   onPageChange: (page: number) => void;
   domain: string;
   highlightedQuestionId?: number;
+  clearKeywordFilter?: () => void;
+  clearDifficultyFilter?: () => void;
+  onDifficultyChange?: (difficulty: string | null) => void;
 }
 
 export default function ContentDisplay({
@@ -84,6 +87,9 @@ export default function ContentDisplay({
   onPageChange,
   domain,
   highlightedQuestionId,
+  clearKeywordFilter,
+  clearDifficultyFilter,
+  onDifficultyChange,
 }: ContentDisplayProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -117,13 +123,7 @@ export default function ContentDisplay({
             )}
           </div>
           <button
-            onClick={() => {
-              // Reset difficulty filter in URL but maintain other parameters
-              const params = new URLSearchParams(searchParams);
-              params.delete('difficulty');
-              const newUrl = `${pathname}?${params.toString()}`;
-              router.push(newUrl);
-            }}
+            onClick={() => clearDifficultyFilter && clearDifficultyFilter()}
             className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -194,13 +194,7 @@ export default function ContentDisplay({
             )}
           </div>
           <button
-            onClick={() => {
-              // Reset keyword filter in URL but maintain other parameters
-              const params = new URLSearchParams(searchParams);
-              params.delete('q');
-              const newUrl = `${pathname}?${params.toString()}`;
-              router.push(newUrl);
-            }}
+            onClick={() => clearKeywordFilter && clearKeywordFilter()}
             className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -245,6 +239,8 @@ export default function ContentDisplay({
         categoryId={selectedCategory}
         categoryDetails={categoryDetails}
         highlightedQuestionId={highlightedQuestionId}
+        selectedDifficulty={selectedDifficulty}
+        onDifficultyChange={onDifficultyChange}
       />
     );
   }

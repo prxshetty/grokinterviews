@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import styles from './TopicCategoryGrid.module.css';
 import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
@@ -31,7 +31,8 @@ interface TopicCategoryGridProps {
   error?: string | null; // Optional error state controlled by parent
 }
 
-export default function TopicCategoryGrid({
+// Renaming original component
+function TopicCategoryGridComponent({
   items,
   categories,
   level = 'category',
@@ -248,210 +249,91 @@ export default function TopicCategoryGrid({
       }
     };
 
-    // Add the general listener
+    // Add event listeners
     window.addEventListener('questionCompleted', handleQuestionCompleted);
+    window.addEventListener('sectionProgressUpdated', handleSectionProgressUpdate);
 
-    // Add section listeners only if the level is 'section' and domain is provided
-    let sectionEventListeners: { eventName: string; handler: EventListener }[] = [];
-    if (level === 'section' && domain) {
-      const domainEventName = `sectionProgress:${domain}`;
-      console.log(`Setting up listener for domain event: ${domainEventName}`);
-      window.addEventListener(domainEventName, handleSectionProgressUpdate);
-      sectionEventListeners.push({ eventName: domainEventName, handler: handleSectionProgressUpdate });
-
-      // Also listen for specific section updates within this domain
-      const baseItems = items || categories || [];
-      if (baseItems && Array.isArray(baseItems)) {
-        baseItems.forEach(item => {
-          const sectionEventName = `sectionProgress:${domain}:${item.label}`;
-          console.log(`Setting up listener for section event: ${sectionEventName}`);
-          window.addEventListener(sectionEventName, handleSectionProgressUpdate);
-          sectionEventListeners.push({ eventName: sectionEventName, handler: handleSectionProgressUpdate });
-        });
-      }
-    }
-
-    // Cleanup function
+    // Clean up event listeners
     return () => {
-      // Clean up general event listener
       window.removeEventListener('questionCompleted', handleQuestionCompleted);
-
-      // Clean up section-specific listeners if they were added
-      sectionEventListeners.forEach(({ eventName, handler }) => {
-        console.log(`Removing listener for: ${eventName}`);
-        window.removeEventListener(eventName, handler);
-      });
+      window.removeEventListener('sectionProgressUpdated', handleSectionProgressUpdate);
     };
-    // Dependencies: items/categories structure might change, level, domain
-  }, [items, categories, level, domain]); // Removed topicId as it wasn't used in the effect for fetching
+  }, [items, categories, level, domain, topicId]); // Added topicId as it's used in some progress logic potentially
 
-  // Use the items with progress data
-  let displayItems = itemsWithProgress;
-
-  console.log(`TopicCategoryGrid - Rendering level: ${level}`);
-  console.log(`TopicCategoryGrid - Display items count: ${displayItems?.length || 0}`);
-
-  // Check if displayItems is defined and has a length property before using it
-  if (!displayItems || !Array.isArray(displayItems)) {
-    console.error('TopicCategoryGrid - displayItems is not an array:', displayItems);
-    displayItems = []; // Fallback to empty array
-  }
-
-  // Split items into three columns for better layout
-  // Ensure displayItems is an array before slicing
-  const safeDisplayItems = Array.isArray(displayItems) ? displayItems : [];
-  const itemsPerColumn = Math.ceil(safeDisplayItems.length / 3);
-  const firstColumn = safeDisplayItems.slice(0, itemsPerColumn);
-  const secondColumn = safeDisplayItems.slice(itemsPerColumn, itemsPerColumn * 2);
-  const thirdColumn = safeDisplayItems.slice(itemsPerColumn * 2);
-
-  // Show loading state (controlled by parent)
+  // Display loading or error state if applicable
   if (isLoading) {
     return (
-      <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
-        <div className="col-span-3 text-center py-4">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading {level}s...</p>
-        </div>
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500 dark:text-gray-400">Loading items...</p>
       </div>
     );
   }
 
-  // Show error state (controlled by parent)
   if (error) {
     return (
-      <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
-        <div className="col-span-3 text-center py-4 text-red-600 dark:text-red-400">
-          Error: {error}
-        </div>
+      <div className="flex justify-center items-center h-64">
+        <p className="text-red-500 dark:text-red-400">Error: {error}</p>
       </div>
     );
   }
 
-  // Show message if no items are available
-  if (safeDisplayItems.length === 0) {
-     return (
-      <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
-        <div className="col-span-3 text-center py-4 text-gray-500 dark:text-gray-400">
-          No {level}s found for this topic.
-        </div>
+  // Use itemsWithProgress if available, otherwise fallback to initial items/categories
+  const displayableItems = itemsWithProgress.length > 0 ? itemsWithProgress : (items || categories || []);
+
+  // Handle case where no items are available
+  if (!displayableItems || displayableItems.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-500 dark:text-gray-400">
+          No {level} available at the moment.
+        </p>
       </div>
     );
   }
-
 
   return (
-    <div className={`${styles.gridContainer} ${isDarkMode ? styles.darkMode : ''}`}>
-      {/* First column */}
-      <div className={styles.gridColumn}>
-        {firstColumn.map((item, index) => (
-          <div key={item.id}>
-            <div
-              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
-              onClick={() => handleItemSelect(item.id)}
-              role="button"
-              tabIndex={0} // Make it focusable
-              onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)} // Keyboard accessible
-            >
-              <div className={styles.categoryNumber}>{formatIndex(index)}</div>
-              <div className={styles.categoryContent}>
-                <div className={styles.categoryLabel}>{item.label}</div>
-                <div className={styles.progressBar}>
-                  <ProgressBar
-                    progress={item.progress?.completionPercentage ?? 0}
-                    completed={item.progress?.questionsCompleted ?? 0}
-                    total={item.progress?.totalQuestions ?? 0}
-                    height="md"
-                    showText={false}
-                    className={item.label} // Pass the section name as a className
-                  />
-                  {/* Optional: Debug text to show progress percentage */}
-                  {/* <div className="text-xs text-gray-500 mt-1">
-                    {item.progress ? `${item.progress.completionPercentage}%` : '0%'}
-                  </div> */}
-                </div>
-              </div>
-              <div className={styles.expandIcon}>
-                {expandedItemId === item.id ? '−' : '+'} {/* Changed minus sign */}
-              </div>
-            </div>
+    <div className={styles.gridContainer}>
+      {displayableItems.map((item, index) => (
+        <div
+          key={item.id || index} // Use index as fallback key if id is not present
+          className={`${
+            styles.gridItem
+          } group relative p-4 rounded-lg shadow-md transition-all duration-300 ease-in-out ${
+            selectedItemId === item.id ? styles.selectedItem : ''
+          } ${
+            isDarkMode ? styles.darkModeItem : styles.lightModeItem
+          } hover:shadow-xl focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
+          onClick={() => handleItemSelect(item.id)}
+          onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
+          tabIndex={0} // Make it focusable
+          role="button"
+          aria-pressed={selectedItemId === item.id}
+          aria-label={`Select ${item.label}`}
+        >
+          <div className={styles.itemHeader}>
+            <span className={styles.itemIndex}>{formatIndex(index)}</span>
+            <h3 className={styles.itemLabel}>{item.label}</h3>
           </div>
-        ))}
-      </div>
 
-      {/* Second column */}
-      <div className={styles.gridColumn}>
-        {secondColumn.map((item, index) => (
-          <div key={item.id}>
-            <div
-              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
-              onClick={() => handleItemSelect(item.id)}
-               role="button"
-               tabIndex={0}
-               onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
-            >
-              <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn)}</div>
-              <div className={styles.categoryContent}>
-                <div className={styles.categoryLabel}>{item.label}</div>
-                <div className={styles.progressBar}>
-                  <ProgressBar
-                    progress={item.progress?.completionPercentage ?? 0}
-                    completed={item.progress?.questionsCompleted ?? 0}
-                    total={item.progress?.totalQuestions ?? 0}
-                    height="md"
-                    showText={false}
-                    className={item.label} // Pass the section name as a className
-                  />
-                   {/* Optional: Debug text */}
-                   {/* <div className="text-xs text-gray-500 mt-1">
-                    {item.progress ? `${item.progress.completionPercentage}%` : '0%'}
-                  </div> */}
-                </div>
-              </div>
-              <div className={styles.expandIcon}>
-                {expandedItemId === item.id ? '−' : '+'}
-              </div>
+          {/* Progress Bar */}
+          {item.progress && (
+            <div className="mt-2">
+              <ProgressBar 
+                progress={item.progress.completionPercentage || 0} 
+                height="sm" // 'sm' corresponds to 'h-2'
+                showText={false} // Text is displayed in the <p> tag below
+                completed={item.progress.questionsCompleted}
+                total={item.progress.totalQuestions}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {item.progress.questionsCompleted} / {item.progress.totalQuestions} questions completed
+              </p>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Third column */}
-      <div className={styles.gridColumn}>
-        {thirdColumn.map((item, index) => (
-          <div key={item.id}>
-            <div
-              className={`${styles.categoryRow} ${selectedItemId === item.id ? styles.selected : ''}`}
-              onClick={() => handleItemSelect(item.id)}
-               role="button"
-               tabIndex={0}
-               onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
-            >
-              <div className={styles.categoryNumber}>{formatIndex(index + itemsPerColumn * 2)}</div>
-              <div className={styles.categoryContent}>
-                <div className={styles.categoryLabel}>{item.label}</div>
-                 <div className={styles.progressBar}>
-                  <ProgressBar
-                    progress={item.progress?.completionPercentage ?? 0}
-                    completed={item.progress?.questionsCompleted ?? 0}
-                    total={item.progress?.totalQuestions ?? 0}
-                    height="md"
-                    showText={false}
-                    className={item.label} // Pass the section name as a className
-                  />
-                   {/* Optional: Debug text */}
-                   {/* <div className="text-xs text-gray-500 mt-1">
-                    {item.progress ? `${item.progress.completionPercentage}%` : '0%'}
-                  </div> */}
-                </div>
-              </div>
-              <div className={styles.expandIcon}>
-                {expandedItemId === item.id ? '−' : '+'}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
+
+export default memo(TopicCategoryGridComponent);
