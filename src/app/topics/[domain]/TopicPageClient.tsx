@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   TopicCategoryGrid,
@@ -97,7 +97,11 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     clearDifficultyFilter
   } = useFilterLogic();
 
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(domain || null);
+  // Initialize selectedTopic properly based on domain availability
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(() => {
+    // Only set initial topic if domain is available and not 'topics'
+    return (initialDomain && initialDomain !== 'topics') ? initialDomain : null;
+  });
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
   const [categoryDetails, setCategoryDetails] = useState<TopicItem | null>(null);
@@ -164,71 +168,37 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     }
   }, [selectedDifficulty, currentPage, domain]); // domain added as dependency
 
-  // Handle topic selection
-  const handleTopicClick = async (topicId: string) => {
-    console.log('Topic clicked:', topicId);
+  // Handle page change for pagination
+  const handlePageChange = useCallback((newPage: number) => {
+    // Don't do anything if we're already on this page
+    if (newPage === currentPage) return;
 
-    // Set loading states
-    setLoadingSections(true);
+    if (selectedKeyword && newPage >= 1 && newPage <= totalPages) {
+      console.log(`Changing to page ${newPage} for keyword ${selectedKeyword}`);
+      // Update URL with new page number for keyword search
+      const params = new URLSearchParams(searchParams);
+      params.set('page', newPage.toString());
 
-    // Reset selected category if clicking on already selected topic
-    if (selectedTopic === topicId) {
-      setSelectedTopic(null);
-      setSelectedCategory(null);
-      setCategoryDetails(null);
-      setTopicCategories([]);
-      setLoadingSections(false);
-      return;
+      // Build the new URL and navigate
+      const newUrl = `${pathname}?${params.toString()}`;
+      router.push(newUrl);
+    } else if (selectedDifficulty && newPage >= 1 && newPage <= totalPages) {
+      console.log(`Changing to page ${newPage} for difficulty ${selectedDifficulty}`);
+      // Update URL with new page number for difficulty filter
+      const params = new URLSearchParams(searchParams);
+      params.set('page', newPage.toString());
+
+      // Build the new URL and navigate
+      const newUrl = `${pathname}?${params.toString()}`;
+      router.push(newUrl);
+
+      // Fetch new page of difficulty filtered questions
+      handleDifficultyChange(selectedDifficulty);
     }
-
-    // Set the selected topic and reset other states
-    setSelectedTopic(topicId);
-    setSelectedCategory(null);
-    setCategoryDetails(null);
-
-    // Load topic categories
-    await loadTopicCategories(topicId);
-
-    // Preload progress data for this domain
-    await preloadSubtopicProgressForDomain(topicId);
-
-    setLoadingSections(false);
-  };
-
-  // Load topic categories (sections)
-  const loadTopicCategories = async (topicId: string) => {
-    setLoadingCategories(true);
-    try {
-      // For the first level, we want to show section headers
-      const sectionHeaders = await TopicDataService.getSectionHeaders(topicId);
-      setTopicCategories(sectionHeaders);
-    } catch (error) {
-      console.error(`Error loading section headers for ${topicId}:`, error);
-      setTopicCategories([]);
-    } finally {
-      setLoadingCategories(false);
-    }
-  };
-
-  // Handle category selection
-  const handleCategorySelect = async (categoryId: string) => {
-    console.log('topics/page - handleCategorySelect called with:', categoryId);
-
-    if (categoryId === selectedCategory) {
-      console.log('topics/page - Same category selected, clearing selection');
-      setSelectedCategory(null);
-      setCategoryDetails(null);
-      return;
-    }
-
-    console.log('topics/page - Setting selectedCategory to:', categoryId);
-    setSelectedCategory(categoryId);
-
-    await loadCategoryDetails(categoryId);
-  };
+  }, [currentPage, selectedKeyword, selectedDifficulty, totalPages, searchParams, pathname, router, handleDifficultyChange]);
 
   // Load details for a selected category
-  const loadCategoryDetails = async (categoryId: string) => {
+  const loadCategoryDetails = useCallback(async (categoryId: string) => {
     console.log('topics/page - loadCategoryDetails called with:', categoryId);
     console.log('topics/page - Current selectedTopic:', selectedTopic);
 
@@ -302,24 +272,26 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     } finally {
       setLoadingSections(false);
     }
-  };
+  }, [selectedTopic]);
 
-  // Handle back button click
-  const handleBackToMainCategories = () => {
-    setSelectedCategory(null);
-    setCategoryDetails(null);
-    const params = new URLSearchParams(searchParams);
-    params.delete('questionId');
-    router.push(`${pathname}?${params.toString()}`);
-  };
+  // Handle category selection
+  const handleCategorySelect = useCallback(async (categoryId: string) => {
+    console.log('topics/page - handleCategorySelect called with:', categoryId);
 
-  // Preload subtopic progress data for a domain
-  const preloadSubtopicProgressForDomain = async (_domain: string) => {
-    // Implementation left as is from original page.tsx
-    // This would be the fetchSectionProgress and related functions
-  };
+    if (categoryId === selectedCategory) {
+      console.log('topics/page - Same category selected, clearing selection');
+      setSelectedCategory(null);
+      setCategoryDetails(null);
+      return;
+    }
 
-  const fetchKeywordQuestions = async (keyword: string, page: number = 1) => {
+    console.log('topics/page - Setting selectedCategory to:', categoryId);
+    setSelectedCategory(categoryId);
+
+    await loadCategoryDetails(categoryId);
+  }, [selectedCategory, loadCategoryDetails]);
+
+  const fetchKeywordQuestions = useCallback(async (keyword: string, page: number = 1) => {
     if (!domain) return; // Ensure domain is available
     setLoadingKeywordQuestions(true);
     try {
@@ -342,9 +314,9 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     } finally {
       setLoadingKeywordQuestions(false);
     }
-  };
+  }, [domain, handlePageChange]);
 
-  const fetchDifficultyQuestions = async (difficulty: string, page: number = 1) => {
+  const fetchDifficultyQuestions = useCallback(async (difficulty: string, page: number = 1) => {
     if (!domain) return; // Ensure domain is available
     setLoadingDifficultyQuestions(true);
     try {
@@ -367,36 +339,68 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     } finally {
       setLoadingDifficultyQuestions(false);
     }
-  };
+  }, [domain, handlePageChange]);
 
-  // Handle page change for pagination
-  const handlePageChange = (newPage: number) => {
-    // Don't do anything if we're already on this page
-    if (newPage === currentPage) return;
-
-    if (selectedKeyword && newPage >= 1 && newPage <= totalPages) {
-      console.log(`Changing to page ${newPage} for keyword ${selectedKeyword}`);
-      // Update URL with new page number for keyword search
-      const params = new URLSearchParams(searchParams);
-      params.set('page', newPage.toString());
-
-      // Build the new URL and navigate
-      const newUrl = `${pathname}?${params.toString()}`;
-      router.push(newUrl);
-    } else if (selectedDifficulty && newPage >= 1 && newPage <= totalPages) {
-      console.log(`Changing to page ${newPage} for difficulty ${selectedDifficulty}`);
-      // Update URL with new page number for difficulty filter
-      const params = new URLSearchParams(searchParams);
-      params.set('page', newPage.toString());
-
-      // Build the new URL and navigate
-      const newUrl = `${pathname}?${params.toString()}`;
-      router.push(newUrl);
-
-      // Fetch new page of difficulty filtered questions
-      handleDifficultyChange(selectedDifficulty);
+  // Load topic categories (sections)
+  const loadTopicCategories = useCallback(async (topicId: string) => {
+    setLoadingCategories(true);
+    try {
+      // For the first level, we want to show section headers
+      const sectionHeaders = await TopicDataService.getSectionHeaders(topicId);
+      setTopicCategories(sectionHeaders);
+    } catch (error) {
+      console.error(`Error loading section headers for ${topicId}:`, error);
+      setTopicCategories([]);
+    } finally {
+      setLoadingCategories(false);
     }
-  };
+  }, []);
+
+  // Preload subtopic progress data for a domain
+  const preloadSubtopicProgressForDomain = useCallback(async (_domain: string) => {
+    // Implementation left as is from original page.tsx
+    // This would be the fetchSectionProgress and related functions
+  }, []);
+
+  // Handle topic selection
+  const handleTopicClick = useCallback(async (topicId: string) => {
+    console.log('Topic clicked:', topicId);
+
+    // Set loading states
+    setLoadingSections(true);
+
+    // Reset selected category if clicking on already selected topic
+    if (selectedTopic === topicId) {
+      setSelectedTopic(null);
+      setSelectedCategory(null);
+      setCategoryDetails(null);
+      setTopicCategories([]);
+      setLoadingSections(false);
+      return;
+    }
+
+    // Set the selected topic and reset other states
+    setSelectedTopic(topicId);
+    setSelectedCategory(null);
+    setCategoryDetails(null);
+
+    // Load topic categories
+    await loadTopicCategories(topicId);
+
+    // Preload progress data for this domain
+    await preloadSubtopicProgressForDomain(topicId);
+
+    setLoadingSections(false);
+  }, [selectedTopic, loadTopicCategories, preloadSubtopicProgressForDomain]);
+
+  // Handle back button click
+  const handleBackToMainCategories = useCallback(() => {
+    setSelectedCategory(null);
+    setCategoryDetails(null);
+    const params = new URLSearchParams(searchParams);
+    params.delete('questionId');
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, router, pathname]);
 
   // Initialize and handle URL parameters
   useEffect(() => {
@@ -404,7 +408,12 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     // and is not the special 'topics' value (which should just show the landing page)
     if (domain && domain !== 'topics') {
       console.log(`Loading topic data for domain: ${domain}`);
-      setSelectedTopic(domain);
+      
+      // Only set selectedTopic if it's not already set to avoid conflicts
+      if (!selectedTopic || selectedTopic !== domain) {
+        setSelectedTopic(domain);
+      }
+      
       loadTopicCategories(domain);
 
       // If difficulty is provided in URL, apply filter
@@ -421,9 +430,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       console.log('On main topics page, not loading any specific topic data');
       setSelectedTopic(null);
     }
-  // Dependencies: Rerun when URL parameters change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain, selectedDifficulty, pageParam]); // Depend on URL params
+  }, [domain, selectedDifficulty, pageParam, selectedTopic, loadTopicCategories, handleDifficultyChange]); // Updated dependencies
 
   // Handle reset category selection event from CategoryDetailView
   useEffect(() => {
@@ -463,16 +470,6 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       // handleDifficultyChange(null);
     }
   }, [searchParams/*, handleKeywordChange, handleDifficultyChange*/]);
-
-  // Initial data loading (e.g., topics for a domain)
-  useEffect(() => {
-    if (domain && domain !== 'topics') {
-      console.log(`Initial load for domain: ${domain}`);
-      handleTopicClick(domain);
-    }
-    // If there's a keyword or difficulty in the URL on initial load,
-    // the useEffects watching selectedKeyword/selectedDifficulty will trigger fetching.
-  }, [domain]); // Only re-run if domain changes (e.g. initial prop or layout update)
 
   // Logic for when no specific view (category, keyword, difficulty) is active
   const showTopicGrid = !selectedCategory && !selectedKeyword && !selectedDifficulty;
@@ -525,6 +522,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
               clearKeywordFilter={clearKeywordFilter}
               clearDifficultyFilter={clearDifficultyFilter}
               onDifficultyChange={handleDifficultyChange}
+              onBackToMainCategories={handleBackToMainCategories}
             />
           )}
         </main>

@@ -1,3 +1,3 @@
 export * from './QuestionWithAnswer';
 export * from './BookmarkButton';
-export * from './ResourceList';
+// ResourceList is now lazy loaded internally in QuestionWithAnswer - not exported directly

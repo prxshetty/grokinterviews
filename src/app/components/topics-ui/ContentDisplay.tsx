@@ -67,6 +67,7 @@ interface ContentDisplayProps {
   clearKeywordFilter?: () => void;
   clearDifficultyFilter?: () => void;
   onDifficultyChange?: (difficulty: string | null) => void;
+  onBackToMainCategories?: () => void;
 }
 
 export default function ContentDisplay({
@@ -90,6 +91,7 @@ export default function ContentDisplay({
   clearKeywordFilter,
   clearDifficultyFilter,
   onDifficultyChange,
+  onBackToMainCategories,
 }: ContentDisplayProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -241,6 +243,8 @@ export default function ContentDisplay({
         highlightedQuestionId={highlightedQuestionId}
         selectedDifficulty={selectedDifficulty}
         onDifficultyChange={onDifficultyChange}
+        domain={domain}
+        onBackToMainCategories={onBackToMainCategories}
       />
     );
   }
