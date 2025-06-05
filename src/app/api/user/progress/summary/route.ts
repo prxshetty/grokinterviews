@@ -94,9 +94,9 @@ export async function GET(request: NextRequest) {
         completion_percentage: data.section_completion_percentage,
         questions_completed: 0, // Materialized view doesn't track individual questions
         total_questions: 0, // Materialized view doesn't track individual questions
-        completed_children: data.completed_subtopics,
-        partially_completed_children: data.partially_completed_subtopics,
-        total_children: data.total_subtopics,
+        completed_children: data.completed_children,
+        partially_completed_children: data.partially_completed_children,
+        total_children: data.total_children,
         timestamp: Date.now()
       };
 

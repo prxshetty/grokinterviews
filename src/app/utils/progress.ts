@@ -451,3 +451,75 @@ export const fetchProgressSummary = async (
     };
   }
 };
+
+/**
+ * Fetches progress data for all subtopics in a domain
+ * @param domain The domain (e.g., 'ml', 'ai', 'dsa')
+ * @param topicId Optional topic ID to filter by specific topic/section
+ * @param forceRefresh Whether to force a fresh fetch (bypass cache)
+ * @returns Promise resolving to domain subtopics progress data
+ */
+export const fetchDomainProgress = async (
+  domain: string,
+  topicId?: string,
+  forceRefresh: boolean = false
+): Promise<{
+  subtopics: Record<string, {
+    categoriesCompleted: number;
+    totalCategories: number;
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+    name: string;
+    section_name: string;
+  }>;
+  sectionProgress?: {
+    completionPercentage: number;
+    subtopicsCompleted: number;
+    partiallyCompletedSubtopics: number;
+    totalSubtopics: number;
+    questionsCompleted: number;
+    totalQuestions: number;
+  };
+  timestamp: number;
+}> => {
+  try {
+    console.log(`Fetching domain progress for ${domain}${topicId ? ` with topic ${topicId}` : ''}${forceRefresh ? ' (forced refresh)' : ''}`);
+
+    // Build the URL
+    let url = `/api/user/progress/domain-subtopics?domain=${domain}`;
+
+    if (topicId) {
+      url += `&topicId=${topicId}`;
+    }
+
+    // Add cache-busting parameter if forceRefresh is true
+    if (forceRefresh) {
+      url += `&_t=${Date.now()}`;
+    }
+
+    const response = await fetch(url, {
+      headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch domain progress data: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`Domain progress data for ${domain}:`, data);
+
+    return {
+      subtopics: data.subtopics || {},
+      sectionProgress: data.sectionProgress,
+      timestamp: data.timestamp || Date.now()
+    };
+  } catch (error) {
+    console.error(`Failed to fetch domain progress data for ${domain}:`, error);
+    return {
+      subtopics: {},
+      sectionProgress: undefined,
+      timestamp: Date.now()
+    };
+  }
+};
