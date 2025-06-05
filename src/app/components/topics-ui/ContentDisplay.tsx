@@ -301,7 +301,7 @@ export default function ContentDisplay({
   }
 }
 
-// Main topics with their corresponding colors - same as in page.tsx and TopicTabs.tsx
+// Main topics with their corresponding colors - same as in page.tsx
 const mainTopics = [
   { id: 'ml', label: 'Machine Learning', color: 'bg-blue-500' },
   { id: 'ai', label: 'Artificial Intelligence', color: 'bg-red-500' },

@@ -476,7 +476,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
 
   return (
     <TopicDataProvider>
-      <div className="flex flex-col lg:flex-row gap-0 min-h-screen">
+      <div className="flex flex-col gap-0 min-h-screen">
         <SidebarFilters
           selectedTopic={selectedTopic}
           selectedCategory={selectedCategory}
