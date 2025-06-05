@@ -130,26 +130,21 @@ function TopicCategoryGridComponent({
             } else if (level === 'section' && domain) {
               try {
                 console.log(`Fetching progress for section ${item.label} in domain ${domain}`);
-                // Use the summary API - removed cache busting timestamp and headers
-                const url = `/api/user/progress/summary?domain=${domain}&section=${encodeURIComponent(item.label)}&entityType=section`;
-                console.log(`Fetching progress from URL: ${url}`);
-
-                const response = await fetch(url); // Removed cache-disabling headers
-
-                console.log(`Progress API response status for ${item.label}:`, response.status);
-
+                const response = await fetch(`/api/user/progress/summary?domain=${domain}&section=${encodeURIComponent(item.label)}&entityType=section`);
+                
                 if (response.ok) {
                   const data = await response.json();
-                  console.log(`Progress summary for section ${item.label} in domain ${domain}:`, data);
+                  console.log(`Section progress response for ${item.label}:`, data);
 
-                  // Map the progress data to the expected format
+                  // For sections, use completed_children and total_children instead of questions
+                  // since sections track subtopic completion, not individual question completion
                   progress = {
-                    questionsCompleted: data.questions_completed || 0,
-                    totalQuestions: data.total_questions || 0,
+                    questionsCompleted: data.completed_children || 0,  // Number of subtopics completed
+                    totalQuestions: data.total_children || 0,          // Total number of subtopics
                     completionPercentage: data.completion_percentage || 0
                   };
 
-                  console.log(`Mapped progress for section ${item.label}:`, progress);
+                  console.log(`Mapped section progress for ${item.label}:`, progress);
                 } else {
                   // If the API call failed, fall back to the section progress endpoint
                   console.log(`Falling back to section progress endpoint for ${item.label}`);
@@ -331,7 +326,7 @@ function TopicCategoryGridComponent({
                 total={item.progress.totalQuestions}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {item.progress.questionsCompleted} / {item.progress.totalQuestions} questions completed
+                {item.progress.questionsCompleted} / {item.progress.totalQuestions} {level === 'section' ? 'subtopics' : 'questions'} completed
               </p>
             </div>
           )}

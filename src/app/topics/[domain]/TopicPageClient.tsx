@@ -14,6 +14,7 @@ import TopicDataService from '@/services/TopicDataService';
 import { useTopicData } from '@/app/hooks';
 import { getDomainKeywords } from '@/app/utils';
 import { useFilterLogic } from '@/app/hooks/use-filter-logic.hook';
+import { fetchDomainProgress } from '@/app/utils/progress';
 
 // Import types (assuming these are defined elsewhere or can be moved here)
 interface QuestionType {
@@ -357,10 +358,67 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   }, []);
 
   // Preload subtopic progress data for a domain
-  const preloadSubtopicProgressForDomain = useCallback(async (_domain: string) => {
-    // Implementation left as is from original page.tsx
-    // This would be the fetchSectionProgress and related functions
-  }, []);
+  const preloadSubtopicProgressForDomain = useCallback(async (topicId: string) => {
+    try {
+      console.log(`Preloading subtopic progress for domain ${domain} with topic ${topicId}`);
+      
+      // Fetch domain-wide progress data
+      const domainProgressData = await fetchDomainProgress(domain, topicId, true);
+      
+      if (domainProgressData && domainProgressData.subtopics) {
+        // Update subtopic progress state with the fetched data
+        const formattedSubtopicProgress: Record<string, {
+          progress: number,
+          completed: number,
+          total: number,
+          categoriesCompleted: number,
+          totalCategories: number
+        }> = {};
+
+        Object.entries(domainProgressData.subtopics).forEach(([subtopicId, data]) => {
+          formattedSubtopicProgress[subtopicId] = {
+            progress: data.completionPercentage,
+            completed: data.questionsCompleted,
+            total: data.totalQuestions,
+            categoriesCompleted: data.categoriesCompleted,
+            totalCategories: data.totalCategories
+          };
+        });
+
+        setSubtopicProgress(formattedSubtopicProgress);
+        console.log(`Updated subtopic progress cache for ${Object.keys(formattedSubtopicProgress).length} subtopics`);
+
+        // Also update section progress if available
+        if (domainProgressData.sectionProgress) {
+          const sectionData = domainProgressData.sectionProgress;
+          const sectionProgressUpdate: Record<string, ProgressData> = {};
+          
+          // Use the domain as the section key for now, or derive from topic data
+          const sectionKey = domain;
+          sectionProgressUpdate[sectionKey] = {
+            progress: sectionData.completionPercentage,
+            completed: sectionData.questionsCompleted,
+            total: sectionData.totalQuestions,
+            subtopicsCompleted: sectionData.subtopicsCompleted,
+            partiallyCompletedSubtopics: sectionData.partiallyCompletedSubtopics,
+            totalSubtopics: sectionData.totalSubtopics
+          };
+
+          setSectionProgress(prev => ({ ...prev, ...sectionProgressUpdate }));
+          setSectionProgressCache(prev => ({ ...prev, ...sectionProgressUpdate }));
+          console.log('Updated section progress cache');
+        }
+
+        // Emit a custom event to notify other components that progress has been preloaded
+        const event = new CustomEvent('domainProgressPreloaded', {
+          detail: { domain, topicId, progressData: domainProgressData }
+        });
+        window.dispatchEvent(event);
+      }
+    } catch (error) {
+      console.error(`Error preloading subtopic progress for domain ${domain}:`, error);
+    }
+  }, [domain]);
 
   // Handle topic selection
   const handleTopicClick = useCallback(async (topicId: string) => {
@@ -497,6 +555,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
               onSelectCategory={handleCategorySelect}
               isLoading={loadingCategories}
               domain={domain} // Pass domain
+              level="section" // Add the missing level prop - showing sections when domain is selected
             />
           )}
 
