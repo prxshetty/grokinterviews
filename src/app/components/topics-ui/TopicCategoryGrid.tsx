@@ -3,6 +3,7 @@
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useTopicData } from '@/app/hooks';
 import ProgressBar from '../ui/ProgressBar';
+import { IconHover3D } from '../ui/icon-3d-hover';
 import TopicDataService from '@/services/TopicDataService';
 import styles from './TopicCategoryGrid.module.css';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
@@ -293,45 +294,34 @@ function TopicCategoryGridComponent({
 
   return (
     <div className={styles.gridContainer}>
-      {displayableItems.map((item, index) => (
-        <div
-          key={item.id || index} // Use index as fallback key if id is not present
-          className={`${
-            styles.gridItem
-          } group relative p-4 rounded-lg shadow-md transition-all duration-300 ease-in-out ${
-            selectedItemId === item.id ? styles.selectedItem : ''
-          } ${
-            isDarkMode ? styles.darkModeItem : styles.lightModeItem
-          } hover:shadow-xl focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
-          onClick={() => handleItemSelect(item.id)}
-          onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
-          tabIndex={0} // Make it focusable
-          role="button"
-          aria-pressed={selectedItemId === item.id}
-          aria-label={`Select ${item.label}`}
-        >
-          <div className={styles.itemHeader}>
-            <span className={styles.itemIndex}>{formatIndex(index)}</span>
-            <h3 className={styles.itemLabel}>{item.label}</h3>
-          </div>
+      {displayableItems.map((item, index) => {
+        // Determine the text to display. Show total questions for topics/categories,
+        // and total subtopics for sections.
+        const total = item.progress?.totalQuestions ?? 0;
+        const completed = item.progress?.questionsCompleted ?? 0;
+        const progressText = level === 'section'
+          ? `${completed} / ${total} Subtopics`
+          : `${completed} / ${total} Questions`;
 
-          {/* Progress Bar */}
-          {item.progress && (
-            <div className="mt-2">
-              <ProgressBar 
-                progress={item.progress.completionPercentage || 0} 
-                height="sm" // 'sm' corresponds to 'h-2'
-                showText={false} // Text is displayed in the <p> tag below
-                completed={item.progress.questionsCompleted}
-                total={item.progress.totalQuestions}
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {item.progress.questionsCompleted} / {item.progress.totalQuestions} {level === 'section' ? 'subtopics' : 'questions'} completed
-              </p>
-            </div>
-          )}
-        </div>
-      ))}
+        return (
+          <div
+            key={item.id || index}
+            className={`${styles.gridItem} group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
+            onClick={() => handleItemSelect(item.id)}
+            onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
+            tabIndex={0}
+            role="button"
+            aria-pressed={selectedItemId === item.id}
+            aria-label={`Select ${item.label}`}
+          >
+            <IconHover3D
+              heading={item.label}
+              text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
+            />
+            <span className={styles.serialNumber}>{formatIndex(index)}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
