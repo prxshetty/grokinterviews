@@ -8,9 +8,13 @@
   --card-background: #f5f9fc;
   --text-color: #333333;
 
+  /* Variables for IconHover3D */
+  --background: 255 255 255;
+  --foreground: 0 0 0;
+
   /* TiltedScroll component variables */
   --border: 215.4 16.3% 46.9%;
-  --foreground: 222.2 47.4% 11.2%;
+  --foreground-hsl: 222.2 47.4% 11.2%;
   --muted: 210 40% 96.1%;
 
   /* Topic card colors */
@@ -35,8 +39,12 @@
 }
 
 .dark {
+  /* Variables for IconHover3D */
+  --background: 0 0 0;
+  --foreground: 255 255 255;
+
   --border: 217.2 32.6% 17.5%;
-  --foreground: 210 40% 98%;
+  --foreground-hsl: 210 40% 98%;
   --muted: 217.2 32.6% 17.5%;
 }
 

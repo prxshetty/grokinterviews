@@ -534,7 +534,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
 
   return (
     <TopicDataProvider>
-      <div className="flex flex-col gap-0 min-h-screen">
+      <div className="flex flex-col min-h-screen">
         <SidebarFilters
           selectedTopic={selectedTopic}
           selectedCategory={selectedCategory}
@@ -544,7 +544,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
           onSelectDifficulty={handleDifficultyChange}
         />
 
-        <main className="flex-grow p-0 md:p-0 lg:p-0 bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
+          <div className="flex-grow bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
           {loadingSections && (
             <div className="p-8 text-center">Loading sections...</div>
           )}
@@ -584,7 +584,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
               onBackToMainCategories={handleBackToMainCategories}
             />
           )}
-        </main>
+        </div>
       </div>
       <ProgressSaver />
     </TopicDataProvider>
