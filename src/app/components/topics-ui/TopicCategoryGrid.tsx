@@ -7,6 +7,7 @@ import { IconHover3D } from '../ui/icon-3d-hover';
 import TopicDataService from '@/services/TopicDataService';
 import styles from './TopicCategoryGrid.module.css';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 // Define the structure for items to be displayed
 interface DisplayItem {
@@ -267,9 +268,12 @@ function TopicCategoryGridComponent({
   // Display loading or error state if applicable
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-gray-500 dark:text-gray-400">Loading items...</p>
-      </div>
+      <LoadingSpinner 
+        size="lg" 
+        color="primary" 
+        text="Loading items..." 
+        centered={true}
+      />
     );
   }
 

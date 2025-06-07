@@ -1,11 +1,13 @@
 'use client';
 
+import React from 'react';
 import { useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
 import { Pagination } from '../ui';
 import { QuestionWithAnswer } from '@/app/components/questions';
 import { CategoryDetailView } from './';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 // Import necessary types
 interface QuestionType {
@@ -259,10 +261,12 @@ export default function ContentDisplay({
         {/* Main topic categories */}
         <div className="w-full">
           {loadingCategories || loadingSections ? (
-            <div className="w-full text-center py-6">
-              <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
-              <p className="mt-2 text-sm text-gray-500">Loading categories...</p>
-            </div>
+            <LoadingSpinner 
+              size="md" 
+              color="primary" 
+              text="Loading categories..." 
+              centered={true}
+            />
           ) : (
             <div className="w-full">
               {topicCategories.length > 0 ? (

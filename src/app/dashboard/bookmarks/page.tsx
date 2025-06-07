@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DashboardNav from '../DashboardNav';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 
 interface Bookmark {
@@ -72,7 +73,12 @@ export default function BookmarksPage() {
 
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
+          <LoadingSpinner 
+            size="lg" 
+            color="primary" 
+            text="Loading your bookmarks..."
+            centered={true}
+          />
         </div>
       ) : error ? (
         <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">

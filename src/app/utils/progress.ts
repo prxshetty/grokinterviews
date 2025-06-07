@@ -5,10 +5,78 @@
 /**
  * Marks a question as viewed
  * @param questionId The ID of the viewed question
+ * @param topicId The ID of the topic (will be fetched from category if not provided)
+ * @param categoryId The ID of the category
+ * @returns Promise resolving to boolean indicating success
  */
-export const markQuestionAsViewed = async (questionId: number): Promise<void> => {
+export const markQuestionAsViewed = async (
+  questionId: number,
+  topicId: number | null | undefined,
+  categoryId: number | null | undefined
+): Promise<boolean> => {
   try {
-    await fetch('/api/user/progress', {
+    // Validate that we have the required IDs
+    if (!questionId || !categoryId) {
+      console.error('Missing required fields: questionId and categoryId are required');
+      return false;
+    }
+
+    let finalTopicId = topicId;
+
+    // If topicId is missing, null, or 0, fetch it from the category
+    if (!finalTopicId || finalTopicId === 0) {
+      console.log(`Topic ID missing (${finalTopicId}), fetching from category ${categoryId}`);
+      
+      try {
+        const response = await fetch('/api/topics/categories', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Find the category and get its topic_id
+          if (data.categories && Array.isArray(data.categories)) {
+            const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
+            if (category && category.topic_id) {
+              finalTopicId = category.topic_id;
+              console.log(`Found topic ID ${finalTopicId} for category ${categoryId}`);
+            }
+          }
+        }
+      } catch (fetchError) {
+        console.error('Failed to fetch topic ID from category:', fetchError);
+      }
+
+      // If we still don't have a topic ID, try a different approach
+      if (!finalTopicId || finalTopicId === 0) {
+        console.log(`Still missing topic ID, trying direct category lookup for category ${categoryId}`);
+        try {
+          // Use the simple endpoint to get topic_id for this category
+          const categoryResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&getTopicOnly=true`);
+          if (categoryResponse.ok) {
+            const categoryData = await categoryResponse.json();
+            if (categoryData && categoryData.topicId) {
+              finalTopicId = categoryData.topicId;
+              console.log(`Found topic ID ${finalTopicId} via direct category lookup`);
+            }
+          }
+        } catch (directFetchError) {
+          console.error('Failed direct category lookup:', directFetchError);
+        }
+      }
+    }
+
+    // Final validation - ensure we have all required fields
+    if (!finalTopicId || finalTopicId === 0) {
+      console.error(`Unable to determine topic ID for category ${categoryId}. Cannot proceed with marking question as viewed.`);
+      return false;
+    }
+
+    console.log(`Calling API to mark question ${questionId} (Topic: ${finalTopicId}, Cat: ${categoryId}) as viewed`);
+    const response = await fetch('/api/user/progress', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -16,26 +84,100 @@ export const markQuestionAsViewed = async (questionId: number): Promise<void> =>
       body: JSON.stringify({
         questionId,
         status: 'viewed',
+        topicId: finalTopicId,     // Now guaranteed to be valid
+        categoryId: categoryId     // Now guaranteed to be valid
       }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API returned status ${response.status}:`, errorText);
+      throw new Error(`API returned status ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log(`API response for marking question ${questionId} as viewed:`, data);
+    return true;
   } catch (error) {
     console.error('Failed to mark question as viewed:', error);
+    return false;
   }
 };
 
 /**
- * Marks a question as completed
- * @param questionId The ID of the completed question
- * @param topicId The ID of the topic this question belongs to
- * @param categoryId The ID of the category this question belongs to
+ * Marks a question as completed in user progress
+ * @param questionId The ID of the question to mark as completed
+ * @param topicId The ID of the topic (will be fetched from category if not provided)
+ * @param categoryId The ID of the category
+ * @returns Promise resolving to boolean indicating success
  */
 export const markQuestionAsCompleted = async (
   questionId: number, 
-  topicId: number, 
-  categoryId: number
+  topicId: number | null | undefined, 
+  categoryId: number | null | undefined
 ): Promise<boolean> => {
   try {
-    console.log(`Calling API to mark question ${questionId} (Topic: ${topicId}, Cat: ${categoryId}) as completed`);
+    // Validate that we have the required IDs
+    if (!questionId || !categoryId) {
+      console.error('Missing required fields: questionId and categoryId are required');
+      return false;
+    }
+
+    let finalTopicId = topicId;
+
+    // If topicId is missing, null, or 0, fetch it from the category
+    if (!finalTopicId || finalTopicId === 0) {
+      console.log(`Topic ID missing (${finalTopicId}), fetching from category ${categoryId}`);
+      
+      try {
+        const response = await fetch('/api/topics/categories', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Find the category and get its topic_id
+          if (data.categories && Array.isArray(data.categories)) {
+            const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
+            if (category && category.topic_id) {
+              finalTopicId = category.topic_id;
+              console.log(`Found topic ID ${finalTopicId} for category ${categoryId}`);
+            }
+          }
+        }
+      } catch (fetchError) {
+        console.error('Failed to fetch topic ID from category:', fetchError);
+      }
+
+      // If we still don't have a topic ID, try a different approach
+      if (!finalTopicId || finalTopicId === 0) {
+        console.log(`Still missing topic ID, trying direct category lookup for category ${categoryId}`);
+        try {
+          // Use the simple endpoint to get topic_id for this category
+          const categoryResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&getTopicOnly=true`);
+          if (categoryResponse.ok) {
+            const categoryData = await categoryResponse.json();
+            if (categoryData && categoryData.topicId) {
+              finalTopicId = categoryData.topicId;
+              console.log(`Found topic ID ${finalTopicId} via direct category lookup`);
+            }
+          }
+        } catch (directFetchError) {
+          console.error('Failed direct category lookup:', directFetchError);
+        }
+      }
+    }
+
+    // Final validation - ensure we have all required fields
+    if (!finalTopicId || finalTopicId === 0) {
+      console.error(`Unable to determine topic ID for category ${categoryId}. Cannot proceed with progress update.`);
+      return false;
+    }
+
+    console.log(`Calling API to mark question ${questionId} (Topic: ${finalTopicId}, Cat: ${categoryId}) as completed`);
     const response = await fetch('/api/user/progress', {
       method: 'POST',
       headers: {
@@ -44,8 +186,8 @@ export const markQuestionAsCompleted = async (
       body: JSON.stringify({
         questionId,
         status: 'completed',
-        topicId,     // Pass topicId
-        categoryId   // Pass categoryId
+        topicId: finalTopicId,     // Now guaranteed to be valid
+        categoryId: categoryId     // Now guaranteed to be valid
       }),
     });
 

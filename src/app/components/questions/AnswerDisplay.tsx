@@ -1,7 +1,8 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { useEffect } from 'react';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 interface AnswerDisplayProps {
   answerText: string | null;
@@ -35,7 +36,7 @@ export function AnswerDisplay({
       >
         {isLoading ? (
           <div className="flex items-center space-x-2 text-gray-500">
-            <div className="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
+            <LoadingSpinner size="sm" color="muted" centered={false} />
             <span>Generating answer...</span>
           </div>
         ) : error ? (

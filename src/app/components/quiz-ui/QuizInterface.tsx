@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Check, X, Eye } from 'lucide-react';
+import { ArrowLeft, Check, X, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import ProgressSaver from '../utils/ProgressSaver';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 interface QuestionType {
   id: number;
@@ -133,9 +135,12 @@ export default function QuizInterface({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 dark:border-purple-400"></div>
-      </div>
+      <LoadingSpinner 
+        size="xl" 
+        color="primary" 
+        text="Loading quiz questions..." 
+        centered={true}
+      />
     );
   }
 
@@ -226,8 +231,8 @@ export default function QuizInterface({
         >
           {isGenerating ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white dark:border-black mr-2"></div>
-              Generating...
+              <LoadingSpinner size="sm" color="primary" centered={false} />
+              <span className="ml-2">Generating...</span>
             </>
           ) : showAnswer ? (
             <>
