@@ -38,7 +38,7 @@ function formatTimeAgo(date: Date): string {
 
 // GET: Retrieve user bookmarks from user_bookmarks table
 export async function GET(request: NextRequest) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   // @ts-ignore
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
 
 // POST: Add or remove a bookmark in user_bookmarks table
 export async function POST(request: NextRequest) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   // @ts-ignore
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   let userId = null;
@@ -188,6 +188,11 @@ export async function POST(request: NextRequest) {
 
     if (typeof questionId !== 'number' || typeof topicId !== 'number' || typeof categoryId !== 'number') {
        return NextResponse.json({ error: 'Invalid ID type provided' }, { status: 400 });
+    }
+
+    // Validate that IDs are positive (not 0 or negative)
+    if (questionId <= 0 || topicId <= 0 || categoryId <= 0) {
+      return NextResponse.json({ error: 'Invalid ID values: IDs must be positive numbers' }, { status: 400 });
     }
 
     if (isBookmarked) {

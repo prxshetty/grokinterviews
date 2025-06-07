@@ -40,7 +40,7 @@ function DashboardNav({ className = "" }: DashboardNavProps) {
   };
 
   return (
-    <div className={`flex justify-between items-center w-full ${className}`}>
+    <div className={`flex items-center w-full ${className}`}>
       <ul
         className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1"
         onMouseLeave={() => {
@@ -78,13 +78,6 @@ function DashboardNav({ className = "" }: DashboardNavProps) {
 
         <Cursor position={position} />
       </ul>
-      
-      <Link 
-        href="/topics" 
-        className="rounded-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black px-4 py-2 text-sm font-normal transition-colors"
-      >
-        Learning
-      </Link>
     </div>
   );
 }

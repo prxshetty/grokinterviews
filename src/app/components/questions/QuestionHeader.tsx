@@ -60,16 +60,18 @@ export function QuestionHeader({
 
       {/* Right side: Actions and Index */}
       <div className="flex items-center flex-shrink-0 space-x-2"> {/* Use space-x for consistent spacing */}
-        {/* Bookmark Button */}
-        <div onClick={handleBookmarkClick}> {/* Stop propagation */}
-          <BookmarkButton
-            questionId={questionId}
-            topicId={topicId || 0} // Ensure topicId and categoryId are numbers
-            categoryId={categoryId || 0}
-            initialIsBookmarked={isBookmarked}
-            onBookmarkChange={onBookmarkChange} // Pass the callback
-          />
-        </div>
+        {/* Bookmark Button - Show if we have at least a categoryId */}
+        {categoryId != null && (
+          <div onClick={handleBookmarkClick}> {/* Stop propagation */}
+            <BookmarkButton
+              questionId={questionId}
+              topicId={topicId}
+              categoryId={categoryId}
+              initialIsBookmarked={isBookmarked}
+              onBookmarkChange={onBookmarkChange} // Pass the callback
+            />
+          </div>
+        )}
         {/* Question Index */}
         <span className="text-xs text-gray-500 dark:text-gray-400">Q{questionIndex + 1}</span>
         {/* Expand/Collapse Icon */}
