@@ -296,7 +296,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
     >
       <QuestionHeader
         questionId={questionId}
-        topicId={question.topic_id ?? null}
+        topicId={question.categories?.topic_id ?? topicId ?? question.topic_id ?? null}
         categoryId={question.category_id ?? null}
         questionText={question.question_text}
         questionIndex={questionIndex}

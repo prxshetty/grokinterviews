@@ -5,7 +5,7 @@ import { toggleQuestionBookmark } from '@/app/utils/progress';
 
 interface BookmarkButtonProps {
   questionId: number;
-  topicId: number;
+  topicId: number | null;
   categoryId: number;
   initialIsBookmarked?: boolean;
   onBookmarkChange?: (isBookmarked: boolean) => void;
@@ -21,6 +21,32 @@ export function BookmarkButton({
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Helper function to get topicId from categoryId if needed
+  const getTopicId = async (): Promise<number | null> => {
+    if (topicId) return topicId;
+    
+    try {
+      const response = await fetch('/api/topics/categories', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.categories && Array.isArray(data.categories)) {
+          const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
+          if (category && category.topic_id) {
+            return category.topic_id;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch topic ID from category:', error);
+    }
+    
+    return null;
+  };
+
   // Handle bookmark toggle
   const handleToggleBookmark = async () => {
     setIsAnimating(true);
@@ -29,8 +55,15 @@ export function BookmarkButton({
       const newBookmarkState = !isBookmarked;
       setIsBookmarked(newBookmarkState);
       
+      // Get topicId if it's missing
+      const actualTopicId = await getTopicId();
+      
+      if (!actualTopicId) {
+        throw new Error('Could not determine topic ID for bookmarking');
+      }
+      
       // Call API to update bookmark status, passing topicId and categoryId
-      await toggleQuestionBookmark(questionId, newBookmarkState, topicId, categoryId);
+      await toggleQuestionBookmark(questionId, newBookmarkState, actualTopicId, categoryId);
       
       // Notify parent component if callback provided
       if (onBookmarkChange) {

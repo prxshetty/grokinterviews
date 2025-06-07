@@ -81,21 +81,21 @@ export default function BookmarksPage() {
               />
             </div>
           ) : error ? (
-            <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
               <p className="text-red-500 dark:text-red-400">{error}</p>
             </div>
           ) : bookmarks.length === 0 ? (
-            <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
-              <p className="text-gray-700 dark:text-gray-300">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
+              <p className="text-gray-600 dark:text-gray-400">
                 You don't have any bookmarked questions yet. Click the bookmark icon on questions to save them for later.
               </p>
             </div>
           ) : (
             <div className="space-y-8">
               {Object.entries(groupedBookmarks).map(([topicName, topicBookmarks]) => (
-                <div key={topicName} className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div key={topicName} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
                   <div className="bg-gray-50 dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">{topicName}</h2>
+                    <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100">{topicName}</h2>
                   </div>
                   <div className="divide-y divide-gray-200 dark:divide-gray-700">
                     {topicBookmarks.map(bookmark => (
@@ -113,7 +113,7 @@ export default function BookmarksPage() {
                               </p>
                               <span className="text-xs text-gray-500 dark:text-gray-400">{bookmark.timeAgo}</span>
                             </div>
-                            <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
+                            <div className="mt-1 flex items-center text-xs text-gray-600 dark:text-gray-400 space-x-2">
                               {bookmark.domain && <span>[{bookmark.domain.toUpperCase()}]</span>}
                               {bookmark.sectionName && <span>{bookmark.sectionName}</span>}
                               <span>&gt;</span>
