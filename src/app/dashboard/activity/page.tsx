@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import DashboardNav from '../DashboardNav';
 
 
@@ -107,66 +107,68 @@ export default function ActivityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-gray-800 dark:text-gray-200 p-8 pt-0">
-      {/* Top Bar - Below Main Navigation */}
-      <div className="sticky top-16 bg-white dark:bg-black py-4 z-40 border-b border-gray-200 dark:border-gray-800 mb-8">
-        <DashboardNav />
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex flex-col">
+          <div className="w-full flex-shrink-0 mb-8">
+            <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">
+              Recent Activity
+            </h2>
+            <Suspense fallback={<div className="text-center p-4">Loading Nav...</div>}>
+              <DashboardNav />
+            </Suspense>
+          </div>
 
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-medium text-gray-900 dark:text-white">
-          Recent Activity
-        </h1>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
-        </div>
-      ) : error ? (
-        <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
-          <p className="text-red-500 dark:text-red-400">{error}</p>
-        </div>
-      ) : activities.length === 0 ? (
-        <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
-          <p className="text-gray-700 dark:text-gray-300">
-            You don't have any activity yet. Start exploring topics and answering questions!
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(groupedActivities).map(([date, dateActivities]) => (
-            <div key={date} className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
-              <div className="bg-gray-50 dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">{date}</h2>
-              </div>
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {dateActivities.map(activity => (
-                  <div key={activity.id} className="p-6">
-                    <div className="flex items-start">
-                      {getActivityIcon(activity.activityType)}
-                      <div className="ml-4 flex-1">
-                        <div className="flex justify-between">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {activity.displayText}
-                          </p>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{activity.timeAgo}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                          <span>{activity.topicName}</span>
-                          <span className="mx-1">•</span>
-                          <span>{activity.categoryName}</span>
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
             </div>
-          ))}
+          ) : error ? (
+            <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
+              <p className="text-red-500 dark:text-red-400">{error}</p>
+            </div>
+          ) : activities.length === 0 ? (
+            <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
+              <p className="text-gray-700 dark:text-gray-300">
+                You don't have any activity yet. Start exploring topics and answering questions!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {Object.entries(groupedActivities).map(([date, dateActivities]) => (
+                <div key={date} className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+                  <div className="bg-gray-50 dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">{date}</h2>
+                  </div>
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {dateActivities.map(activity => (
+                      <div key={activity.id} className="p-6">
+                        <div className="flex items-start">
+                          {getActivityIcon(activity.activityType)}
+                          <div className="ml-4 flex-1">
+                            <div className="flex justify-between">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {activity.displayText}
+                              </p>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{activity.timeAgo}</span>
+                            </div>
+                            <div className="mt-1 flex items-center text-xs text-gray-500 dark:text-gray-400">
+                              <span>{activity.topicName}</span>
+                              <span className="mx-1">•</span>
+                              <span>{activity.categoryName}</span>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

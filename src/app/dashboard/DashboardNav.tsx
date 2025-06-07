@@ -18,16 +18,44 @@ function DashboardNav({ className = "" }: DashboardNavProps) {
   
   const pathname = usePathname();
 
+  // Check if any tab is active
+  const hasActiveTab = pathname === "/dashboard" || 
+                      pathname === "/dashboard/activity" || 
+                      pathname === "/dashboard/bookmarks";
+
+  // Function to get active tab element and set position
+  const setActiveTabPosition = () => {
+    if (!hasActiveTab) return;
+    
+    const activeTabElement = document.querySelector(`[data-tab-active="true"]`);
+    if (activeTabElement) {
+      const { width } = activeTabElement.getBoundingClientRect();
+      const left = (activeTabElement as HTMLElement).offsetLeft;
+      setPosition({
+        width,
+        opacity: 1,
+        left,
+      });
+    }
+  };
+
   return (
     <div className={`flex justify-between items-center w-full ${className}`}>
       <ul
-        className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-white/20 dark:bg-black/20 backdrop-blur-sm p-1"
-        onMouseLeave={() => setPosition((pv) => ({ ...pv, opacity: 0 }))}
+        className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1"
+        onMouseLeave={() => {
+          if (hasActiveTab) {
+            setActiveTabPosition();
+          } else {
+            setPosition((pv) => ({ ...pv, opacity: 0 }));
+          }
+        }}
       >
         <Tab 
           href="/dashboard" 
           setPosition={setPosition} 
           isActive={pathname === "/dashboard"}
+          position={position}
         >
           Dashboard
         </Tab>
@@ -35,6 +63,7 @@ function DashboardNav({ className = "" }: DashboardNavProps) {
           href="/dashboard/activity" 
           setPosition={setPosition}
           isActive={pathname === "/dashboard/activity"}
+          position={position}
         >
           Recent Activity
         </Tab>
@@ -42,6 +71,7 @@ function DashboardNav({ className = "" }: DashboardNavProps) {
           href="/dashboard/bookmarks" 
           setPosition={setPosition}
           isActive={pathname === "/dashboard/bookmarks"}
+          position={position}
         >
           Bookmarks
         </Tab>
@@ -51,7 +81,7 @@ function DashboardNav({ className = "" }: DashboardNavProps) {
       
       <Link 
         href="/topics" 
-        className="rounded-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm font-medium transition-colors"
+        className="rounded-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black px-4 py-2 text-sm font-normal transition-colors"
       >
         Learning
       </Link>
@@ -68,6 +98,7 @@ interface TabProps {
   }>>;
   href: string;
   isActive?: boolean;
+  position: { left: number; width: number; opacity: number };
 }
 
 const Tab = ({
@@ -75,24 +106,35 @@ const Tab = ({
   setPosition,
   href,
   isActive = false,
+  position,
 }: TabProps) => {
   const ref = useRef<HTMLLIElement>(null);
   
-  // Set initial position for active tab
   React.useEffect(() => {
     if (isActive && ref.current) {
       const { width } = ref.current.getBoundingClientRect();
-      setPosition({
-        width,
-        opacity: 1,
-        left: ref.current.offsetLeft,
-      });
+      const newLeft = ref.current.offsetLeft;
+
+      // Prevent re-animation when clicking a hovered tab
+      if (Math.abs(position.left - newLeft) > 1 || position.opacity === 0) {
+        setPosition({
+          width,
+          opacity: 1,
+          left: newLeft,
+        });
+      }
     }
-  }, [isActive, setPosition]);
+  }, [isActive, setPosition, position.left, position.opacity]);
   
+  const isUnderCursor =
+    ref.current &&
+    position.opacity === 1 &&
+    Math.abs(position.left - ref.current.offsetLeft) < 1;
+
   return (
     <li
       ref={ref}
+      data-tab-active={isActive}
       onMouseEnter={() => {
         if (!ref.current) return;
 
@@ -107,7 +149,11 @@ const Tab = ({
     >
       <Link 
         href={href}
-        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 block"
+        className={`relative block px-5 py-2 text-sm font-normal transition-colors ${
+          isUnderCursor
+            ? 'text-white dark:text-black'
+            : 'text-gray-700 dark:text-gray-300'
+        }`}
       >
         {children}
       </Link>
@@ -119,7 +165,7 @@ const Cursor = ({ position }: { position: any }) => {
   return (
     <motion.li
       animate={position}
-      className="absolute z-0 h-9 rounded-full bg-gray-100 dark:bg-gray-800"
+      className="absolute z-0 h-9 rounded-full bg-black dark:bg-white"
       transition={{
         type: "spring",
         stiffness: 300,
