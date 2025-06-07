@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import TopicDataService from '@/services/TopicDataService';
 import { QuizTopicNav } from '@/app/components/quiz-ui';
 import QuizInterface from '@/app/components/quiz-ui/QuizInterface';
+import LoadingSpinner from '@/app/components/ui/LoadingSpinner';
 
 // Define types
 type CategoryItem = {
@@ -310,7 +311,12 @@ export default function QuizPageClient({ initialDomain }: QuizPageClientProps) {
 
               {loadingCategories && (
                 <div className="flex items-center justify-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 dark:border-purple-400"></div>
+                  <LoadingSpinner 
+                    size="xl" 
+                    color="primary" 
+                    text="Loading quiz topics..."
+                    centered={true}
+                  />
                 </div>
               )}
             </div>

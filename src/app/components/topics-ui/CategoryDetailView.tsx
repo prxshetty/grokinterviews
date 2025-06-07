@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { QuestionWithAnswer } from '@/app/components/questions';
 import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted } from '@/app/utils/progress';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 // Import types
 interface QuestionType {
@@ -493,10 +494,12 @@ export default function CategoryDetailView({
   
   if (isLoading && !categoryDetails) {
     return (
-      <div className="w-full text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
-        <p className="mt-3 text-gray-500">Loading content...</p>
-      </div>
+      <LoadingSpinner 
+        size="lg" 
+        color="primary" 
+        text="Loading content..." 
+        centered={true}
+      />
     );
   }
 
@@ -621,10 +624,12 @@ export default function CategoryDetailView({
           <h2 className="text-xl font-medium mb-4">Topics</h2>
           {isSubtopicProgressLoading ? (
             // Loading indicator
-            <div className="w-full text-center py-6">
-              <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-gray-500 border-r-2 border-gray-500"></div>
-              <p className="mt-2 text-sm text-gray-500">Loading topic progress...</p>
-            </div>
+            <LoadingSpinner 
+              size="md" 
+              color="secondary" 
+              text="Loading topic progress..." 
+              centered={true}
+            />
           ) : (
             // Card-based grid layout for subtopics
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">

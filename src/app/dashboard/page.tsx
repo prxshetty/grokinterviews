@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProgressSaver from '../components/progress/ProgressSaver';
 import { ActivityGrid } from '../components/progress';
 import DashboardNav from './DashboardNav';
+import LoadingSpinner from '@/app/components/ui/LoadingSpinner';
 
 interface UserProfile {
   id: string;
@@ -395,12 +396,12 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 dark:border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading dashboard...</p>
-        </div>
-      </div>
+      <LoadingSpinner 
+        size="xl" 
+        color="primary" 
+        text="Loading dashboard..." 
+        fullScreen={true}
+      />
     );
   }
 

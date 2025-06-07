@@ -5,7 +5,7 @@ import { Category, Question } from '@/types/database';
 // Helper function to convert database categories to the legacy format
 function convertCategoriesToLegacyFormat(categories: Category[]) {
   return categories.map(category => ({
-    id: category.slug,
+    id: category.id.toString(),
     label: category.name
   }));
 }
@@ -74,16 +74,16 @@ export async function GET(request: NextRequest) {
               topicIdValue = topicData[0].id;
               console.log(`Resolved domain ${topicId} to topic ID ${topicIdValue}`);
             } else {
-              // Try as a slug
-              const { data: slugData, error: slugError } = await supabaseServer
+              // Try as a name instead of slug (since slug column doesn't exist)
+              const { data: nameData, error: nameError } = await supabaseServer
                 .from('topics')
                 .select('id')
-                .eq('slug', topicId)
+                .eq('name', topicId)
                 .limit(1);
 
-              if (!slugError && slugData && slugData.length > 0) {
-                topicIdValue = slugData[0].id;
-                console.log(`Resolved slug ${topicId} to topic ID ${topicIdValue}`);
+              if (!nameError && nameData && nameData.length > 0) {
+                topicIdValue = nameData[0].id;
+                console.log(`Resolved name ${topicId} to topic ID ${topicIdValue}`);
               }
             }
           }
@@ -159,41 +159,29 @@ export async function GET(request: NextRequest) {
       if (topicId && topicId !== 'any') {
         console.log(`Fetching categories for specific topic: ${topicId}`);
 
-        // Check if topicId is a number or a slug
+        // Check if topicId is a number or a name/domain
         let topicIdCondition;
         if (!isNaN(Number(topicId))) {
           // It's a number, use it directly
           topicIdCondition = { topic_id: topicId };
         } else {
-          // It's a slug, need to join with topics table
-          // First, get the topic ID from the slug
+          // It's a name or domain, need to join with topics table
+          // First, get the topic ID from the name or domain
           const { data: topic, error: topicError } = await supabaseServer
             .from('topics')
             .select('id')
-            .eq('slug', topicId)
-            .single();
+            .or(`name.eq.${topicId},domain.eq.${topicId}`)
+            .limit(1);
 
-          if (topicError) {
-            console.error(`Error fetching topic ID for slug ${topicId}:`, topicError);
-            // Try with domain instead
-            const { data: topicByDomain, error: domainError } = await supabaseServer
-              .from('topics')
-              .select('id')
-              .eq('domain', topicId)
-              .limit(1);
-
-            if (domainError || !topicByDomain || topicByDomain.length === 0) {
-              console.error(`Error fetching topic ID for domain ${topicId}:`, domainError);
-              return NextResponse.json(
-                { error: `Topic not found: ${topicId}` },
-                { status: 404 }
-              );
-            }
-
-            topicIdCondition = { topic_id: topicByDomain[0].id };
-          } else {
-            topicIdCondition = { topic_id: topic.id };
+          if (topicError || !topic || topic.length === 0) {
+            console.error(`Error fetching topic ID for ${topicId}:`, topicError);
+            return NextResponse.json(
+              { error: `Topic not found: ${topicId}` },
+              { status: 404 }
+            );
           }
+
+          topicIdCondition = { topic_id: topic[0].id };
         }
 
         // Get categories for this topic
@@ -228,7 +216,7 @@ export async function GET(request: NextRequest) {
         .from('topics')
         .select(`
           id,
-          slug,
+          domain,
           name,
           categories:categories(*)
         `)
@@ -239,11 +227,13 @@ export async function GET(request: NextRequest) {
         throw joinError;
       }
 
-      // Process the joined data
+      // Process the joined data - use domain as the key since that's what's used in the app
       const categoriesByTopic: Record<string, any[]> = {};
 
       for (const topic of joinData || []) {
-        categoriesByTopic[topic.slug] = convertCategoriesToLegacyFormat(topic.categories || []);
+        // Use domain as the key, fallback to name if domain is null
+        const key = topic.domain || topic.name;
+        categoriesByTopic[key] = convertCategoriesToLegacyFormat(topic.categories || []);
       }
 
       console.timeEnd('categories-query');

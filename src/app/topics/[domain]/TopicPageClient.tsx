@@ -15,6 +15,7 @@ import { useTopicData } from '@/app/hooks';
 import { getDomainKeywords } from '@/app/utils';
 import { useFilterLogic } from '@/app/hooks/use-filter-logic.hook';
 import { fetchDomainProgress } from '@/app/utils/progress';
+import LoadingSpinner from '@/app/components/ui/LoadingSpinner';
 
 // Import types (assuming these are defined elsewhere or can be moved here)
 interface QuestionType {
@@ -546,7 +547,12 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
 
           <div className="flex-grow bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
           {loadingSections && (
-            <div className="p-8 text-center">Loading sections...</div>
+            <LoadingSpinner 
+              size="lg" 
+              color="primary" 
+              text="Loading sections..." 
+              centered={true}
+            />
           )}
 
           {!loadingSections && showTopicGrid && (

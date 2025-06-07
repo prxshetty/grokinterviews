@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, memo, useMemo, useCallback, Suspense } from 'react';
-import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted } from '@/app/utils/progress';
+import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed } from '@/app/utils/progress';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import React from 'react';
 
@@ -134,18 +134,16 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
 
   useEffect(() => {
     if (isExpanded && !isViewed && question.id) {
-      fetch('/api/user/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          questionId: question.id, 
-          status: 'viewed',
-          topicId: question.topic_id || null,
-          categoryId: question.category_id || null
-        }),
-      })
-      .then(() => setIsViewed(true))
-      .catch(err => console.error('Failed to mark question as viewed:', err));
+      markQuestionAsViewed(question.id, question.topic_id, question.category_id)
+        .then((success) => {
+          if (success) {
+            setIsViewed(true);
+            console.log(`Question ${question.id} marked as viewed successfully`);
+          } else {
+            console.error(`Failed to mark question ${question.id} as viewed`);
+          }
+        })
+        .catch(err => console.error('Failed to mark question as viewed:', err));
     }
   }, [isExpanded, isViewed, question.id, question.topic_id, question.category_id]);
 
