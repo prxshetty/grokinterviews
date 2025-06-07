@@ -23,30 +23,32 @@ export default function ProgressSaver() {
         console.log('Saving completed questions:', completedQuestions);
 
         // Save each completed question to the database
-        for (const questionId of completedQuestions) {
+        for (const progress of completedQuestions) {
           try {
-            console.log(`Saving question ${questionId} as completed...`);
+            console.log(`Saving question ${progress.questionId} as completed...`);
             const response = await fetch('/api/user/progress', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                questionId,
+                questionId: progress.questionId,
                 status: 'completed',
+                topicId: progress.topicId,
+                categoryId: progress.categoryId,
               }),
             });
 
             if (!response.ok) {
               const errorText = await response.text();
-              console.error(`Error saving question ${questionId}:`, response.status, errorText);
+              console.error(`Error saving question ${progress.questionId}:`, response.status, errorText);
               continue; // Skip to the next question
             }
 
             const result = await response.json();
-            console.log(`Successfully saved question ${questionId} result:`, result);
+            console.log(`Successfully saved question ${progress.questionId} result:`, result);
           } catch (err) {
-            console.error(`Exception saving question ${questionId}:`, err);
+            console.error(`Exception saving question ${progress.questionId}:`, err);
           }
         }
 

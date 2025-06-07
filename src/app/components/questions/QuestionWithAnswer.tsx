@@ -47,16 +47,22 @@ type QuestionType = {
   difficulty?: string | null;
   category_id?: number | null;
   topic_id?: number | null;
+  categories?: { 
+    id: number;
+    name: string;
+    topic_id: number;
+  };
 };
 
 interface QuestionWithAnswerProps {
   question: QuestionType;
   questionIndex: number;
   isHighlighted?: boolean;
+  topicId?: number;
 }
 
 // Renaming original component and preparing for memoization
-function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = false }: QuestionWithAnswerProps) {
+function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = false, topicId }: QuestionWithAnswerProps) {
   // Initialize Supabase client
   const supabase = createClientComponentClient();
 
@@ -78,6 +84,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
   }, [question.answer_text]);
 
   const questionId = question.id;
+  const categoryId = question.categories?.id ?? question.category_id;
 
   // Memoize the displayed keywords string
   const displayedKeywords = useMemo(() => {
@@ -172,7 +179,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
 
       if (percentage >= 90 && !isCompleted && question.id) {
         console.log(`Scroll progress reached ${percentage}%, marking question ${question.id} as completed`);
-        markQuestionAsCompleted(question.id, question.topic_id || 0, question.category_id || 0)
+        markQuestionAsCompleted(question.id, topicId || 0, categoryId || 0)
           .then((success) => {
             if (success) {
               setIsCompleted(true);
@@ -187,14 +194,18 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
               } catch (storageError) { console.error('Error updating localStorage:', storageError); }
               try {
                 const completedSessionQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
-                 if (!completedSessionQuestions.includes(question.id)) {
-                    completedSessionQuestions.push(question.id);
+                 if (!completedSessionQuestions.some((q: any) => q.questionId === question.id)) {
+                    completedSessionQuestions.push({
+                      questionId: question.id,
+                      topicId: topicId,
+                      categoryId: categoryId,
+                    });
                     sessionStorage.setItem('completedQuestions', JSON.stringify(completedSessionQuestions));
                     console.log(`Added question ${question.id} to completedQuestions in sessionStorage`);
                  }
               } catch (storageError) { console.error('Error storing completed question in session storage:', storageError); }
               try {
-                window.dispatchEvent(new CustomEvent('questionCompleted', { detail: { questionId: question.id, categoryId: question.category_id, status: 'completed', timestamp: Date.now() } }));
+                window.dispatchEvent(new CustomEvent('questionCompleted', { detail: { questionId: question.id, topicId: topicId, categoryId: categoryId, status: 'completed', timestamp: Date.now() } }));
                 console.log('Dispatched questionCompleted event');
               } catch (eventError) { console.error('Error dispatching completion event:', eventError); }
             } else { console.error(`Failed to mark question ${question.id} as completed`); }
@@ -216,7 +227,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
       clearTimeout(initialTimer);
       if (answerElement) answerElement.removeEventListener('scroll', handleScroll);
     };
-  }, [isExpanded, question.id, question.topic_id, question.category_id, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text, isCompleted]);
+  }, [isExpanded, question.id, topicId, categoryId, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text, isCompleted]);
 
   useEffect(() => {
     if (isExpanded && !hasPredefinedAnswer && !generatedAnswer && !isGenerating && !error) {

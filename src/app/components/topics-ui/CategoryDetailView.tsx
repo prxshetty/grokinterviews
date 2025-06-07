@@ -153,7 +153,7 @@ export default function CategoryDetailView({
 
   // Memoize the expensive questionsByCategory grouping operation
   const questionsByCategory = useMemo(() => {
-    const grouped: Record<number, { name: string; questions: QuestionType[] }> = {};
+    const grouped: Record<number, { name: string; questions: QuestionType[], topic_id: number; }> = {};
     
     if (filteredQuestions.length > 0) {
       // Group questions by their category
@@ -163,7 +163,8 @@ export default function CategoryDetailView({
           if (!grouped[categoryId]) {
             grouped[categoryId] = { 
               name: question.categories.name, 
-              questions: [] 
+              questions: [],
+              topic_id: question.categories.topic_id
             };
           }
           grouped[categoryId].questions.push(question);
@@ -425,7 +426,14 @@ export default function CategoryDetailView({
           label: data.topic.name,
           content: data.topic.description || '', // Use description as content
           questions: data.categories && data.categories.length > 0 
-            ? data.categories.flatMap(cat => cat.questions || [])
+            ? data.categories.flatMap(cat => (cat.questions || []).map(q => ({
+                ...q,
+                categories: {
+                  id: cat.id,
+                  name: cat.name,
+                  topic_id: cat.topic_id
+                }
+              })))
             : [],
           subtopicId: data.topic.id
         };
@@ -572,6 +580,7 @@ export default function CategoryDetailView({
                     question={question}
                     questionIndex={index}
                     isHighlighted={highlightedQuestionId === question.id}
+                    topicId={category.topic_id}
                   />
                 ))}
               </div>
@@ -587,6 +596,7 @@ export default function CategoryDetailView({
                 question={question}
                 questionIndex={index}
                 isHighlighted={highlightedQuestionId === question.id}
+                topicId={subtopicDetails?.subtopicId ?? undefined}
               />
             ))}
           </div>
@@ -715,6 +725,7 @@ export default function CategoryDetailView({
                   question={question}
                   questionIndex={index}
                   isHighlighted={highlightedQuestionId === question.id}
+                  topicId={question.topic_id ?? undefined}
                 />
               ))}
             </div>

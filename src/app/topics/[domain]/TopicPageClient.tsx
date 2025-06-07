@@ -257,16 +257,33 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
 
         setCategoryDetails(sectionData);
       } else {
-        // This is a regular topic ID, fetch it directly
-        const response = await fetch(`/api/topic-detail?id=${categoryId.replace('topic-', '')}`);
+        // This is a regular topic ID, fetch it directly. The API returns the topic, its categories, and their questions
+        const response = await fetch(`/api/topics/topic-details?topicId=${categoryId.replace('topic-', '')}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch topic details: ${response.statusText}`);
         }
 
-        const topicDetail = await response.json();
-        console.log('Topic details:', topicDetail);
+        const topicDetailResponse = await response.json();
+        console.log('Topic details from API:', topicDetailResponse);
 
-        setCategoryDetails(topicDetail);
+        // Transform the API response to fit the TopicItem structure expected by CategoryDetailView
+        const formattedDetails: TopicItem = {
+            id: `topic-${topicDetailResponse.topic.id}`,
+            label: topicDetailResponse.topic.name,
+            content: topicDetailResponse.topic.description || '',
+            subtopics: topicDetailResponse.categories.reduce((acc: Record<string, TopicItem>, category: any) => {
+                acc[`category-${category.id}`] = {
+                    id: `category-${category.id}`,
+                    label: category.name,
+                    content: category.description || '',
+                    questions: category.questions || [],
+                    categoryId: category.id,
+                };
+                return acc;
+            }, {})
+        };
+
+        setCategoryDetails(formattedDetails);
       }
     } catch (error) {
       console.error(`Error loading details for category ${categoryId}:`, error);
