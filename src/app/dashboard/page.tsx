@@ -157,6 +157,11 @@ export default function DashboardPage() {
         const response = await fetch('/api/user/progress');
         if (response.ok) {
           const data = await response.json();
+          if (data.totalQuestions > 0) {
+            data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
+          } else {
+            data.completionPercentage = 0;
+          }
           setProgressData(data);
         } else {
           console.error('Failed to fetch progress data');
@@ -489,6 +494,11 @@ export default function DashboardPage() {
                         const progressResponse = await fetch('/api/user/progress');
                         if (progressResponse.ok) {
                           const data = await progressResponse.json();
+                          if (data.totalQuestions > 0) {
+                            data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
+                          } else {
+                            data.completionPercentage = 0;
+                          }
                           setProgressData(data);
                           console.log('Updated progress data:', data);
                         } else {
@@ -499,6 +509,11 @@ export default function DashboardPage() {
                         const progressResponse = await fetch('/api/user/progress');
                         if (progressResponse.ok) {
                           const data = await progressResponse.json();
+                          if (data.totalQuestions > 0) {
+                            data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
+                          } else {
+                            data.completionPercentage = 0;
+                          }
                           setProgressData(data);
                           console.log('Refreshed progress data:', data);
                           alert('Progress data refreshed');
@@ -529,12 +544,12 @@ export default function DashboardPage() {
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div
                   className="bg-purple-600 h-2 rounded-full"
-                  style={{ width: `${Math.max(0.5, progressData.completionPercentage)}%` }}
+                  style={{ width: `${Math.max(0.5, progressData.completionPercentage || 0)}%` }}
                 ></div>
                 </div>
               <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span>{progressData.completionPercentage.toFixed(1)}% completed</span>
-                <span>{(100 - progressData.completionPercentage).toFixed(1)}% remaining</span>
+                <span>{(100 - (progressData.completionPercentage || 0)).toFixed(1)}% remaining</span>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center">
