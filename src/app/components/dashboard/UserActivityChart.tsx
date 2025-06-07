@@ -3,7 +3,6 @@
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
-import { useIsMobile } from "@/hooks/use-mobile"
 import {
   Card,
   CardContent,
@@ -17,17 +16,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group"
 
 interface UserActivityData {
   date: string;
@@ -66,36 +54,10 @@ const defaultData: UserActivityData[] = [
 ]
 
 export function UserActivityChart({ data = defaultData, loading = false }: UserActivityChartProps) {
-  const isMobile = useIsMobile()
-  const [timeRange, setTimeRange] = React.useState("7d")
-
-  React.useEffect(() => {
-    if (isMobile) {
-      setTimeRange("7d")
-    }
-  }, [isMobile])
-
-  const filteredData = React.useMemo(() => {
-    if (!data || data.length === 0) return defaultData;
-    
-    const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
-    const today = new Date();
-    let daysToSubtract = 7;
-    if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "90d") {
-      daysToSubtract = 90;
-    }
-    
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
-    
-    return sortedData.filter((item) => {
-      const date = new Date(item.date);
-      return date >= startDate;
-    });
-  }, [data, timeRange]);
+  const chartData = React.useMemo(() => {
+    const sourceData = (data && data.length > 0) ? data : defaultData;
+    return [...sourceData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [data]);
 
   if (loading) {
     return (
@@ -106,7 +68,7 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           <div className="flex justify-center items-center h-[250px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
           </div>
         </CardContent>
       </Card>
@@ -115,59 +77,18 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
 
   return (
     <Card className="@container/card">
-      <CardHeader className="relative">
+      <CardHeader>
         <CardTitle>Activity Overview</CardTitle>
         <CardDescription>
-          <span className="@[540px]/card:block hidden">
-            Your learning activity over the selected period
-          </span>
-          <span className="@[540px]/card:hidden">Your activity</span>
+          Your learning activity over time.
         </CardDescription>
-        <div className="absolute right-4 top-4">
-          <ToggleGroup
-            type="single"
-            value={timeRange}
-            onValueChange={setTimeRange}
-            variant="outline"
-            className="@[767px]/card:flex hidden"
-          >
-            <ToggleGroupItem value="7d" className="h-8 px-2.5">
-              Last 7 days
-            </ToggleGroupItem>
-            <ToggleGroupItem value="30d" className="h-8 px-2.5">
-              Last 30 days
-            </ToggleGroupItem>
-            <ToggleGroupItem value="90d" className="h-8 px-2.5">
-              Last 3 months
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger
-              className="@[767px]/card:hidden flex w-40"
-              aria-label="Select a value"
-            >
-              <SelectValue placeholder="Last 7 days" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="7d" className="rounded-lg">
-                Last 7 days
-              </SelectItem>
-              <SelectItem value="30d" className="rounded-lg">
-                Last 30 days
-              </SelectItem>
-              <SelectItem value="90d" className="rounded-lg">
-                Last 3 months
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={filteredData}>
+          <AreaChart data={chartData}>
             <defs>
               <linearGradient id="fillQuestionsAnswered" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -194,13 +115,14 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
                 />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
             <XAxis
               dataKey="date"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
               tickFormatter={(value: string) => {
                 const date = new Date(value)
                 return date.toLocaleDateString("en-US", {
