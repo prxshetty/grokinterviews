@@ -76,7 +76,7 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 px-4 lg:px-6">
       {/* Questions Completed */}
-      <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
+      <Card className="@container/card shadow-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <CardHeader className="relative">
           <CardDescription>Questions Completed</CardDescription>
           <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
@@ -100,7 +100,7 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
       </Card>
 
       {/* Time Spent */}
-      <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
+      <Card className="@container/card shadow-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <CardHeader className="relative">
           <CardDescription>Time Spent Learning</CardDescription>
           <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
@@ -124,7 +124,7 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
       </Card>
 
       {/* Domains Solved */}
-      <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
+      <Card className="@container/card shadow-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <CardHeader className="relative">
           <CardDescription>Domains Explored</CardDescription>
           <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
@@ -148,7 +148,7 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
       </Card>
 
       {/* API Calls / AI Usage */}
-      <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
+      <Card className="@container/card shadow-sm bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
         <CardHeader className="relative">
           <CardDescription>AI Interactions</CardDescription>
           <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
