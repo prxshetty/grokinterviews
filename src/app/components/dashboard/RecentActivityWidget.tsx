@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { CheckCircle2, Eye, History, Activity, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
@@ -27,24 +28,11 @@ export default function RecentActivityWidget({ activityData }: RecentActivityWid
   const getActivityIcon = (activityType: string) => {
     switch (activityType) {
       case 'question_completed':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        );
+        return <CheckCircle2 className="size-4" />;
       case 'question_viewed':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-          </svg>
-        );
+        return <Eye className="size-4" />;
       default:
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-          </svg>
-        );
+        return <History className="size-4" />;
     }
   };
 
@@ -73,26 +61,20 @@ export default function RecentActivityWidget({ activityData }: RecentActivityWid
           </div>
                   ) : activityData.error ? (
             <div className="text-center py-8">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-purple-400 dark:text-purple-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <AlertCircle className="size-10 mx-auto text-purple-400 dark:text-purple-500 mb-3" />
               <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-2">{activityData.error}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Unable to load recent activity</p>
             </div>
         ) : activityData.activities.length === 0 ? (
           <div className="text-center py-8">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <Activity className="size-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">No activity yet</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Start learning to track your progress</p>
             <Link 
               href="/topics" 
               className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-md transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+              <ArrowRight className="size-4 mr-1" />
               Start Learning
             </Link>
           </div>

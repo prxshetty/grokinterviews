@@ -33,11 +33,11 @@ const chartConfig = {
     label: "Activity",
   },
   questionsAnswered: {
-    label: "Questions Answered",
+    label: "Q. Completed",
     color: "hsl(var(--chart-1))",
   },
   questionsViewed: {
-    label: "Questions Viewed",
+    label: "Q. Viewed",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
@@ -61,26 +61,24 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
 
   if (loading) {
     return (
-      <Card className="@container/card">
+      <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
         <CardHeader>
           <CardTitle>Activity Overview</CardTitle>
           <CardDescription>Your learning activity over time</CardDescription>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="flex justify-center items-center h-[250px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-          </div>
+          <div className="h-[250px] w-full animate-pulse rounded-lg bg-muted" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="@container/card">
+    <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
       <CardHeader>
         <CardTitle>Activity Overview</CardTitle>
         <CardDescription>
-          Your learning activity over time.
+          Your learning activity over time
         </CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
