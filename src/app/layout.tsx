@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { TopicDataProvider, Footer, MainNavigation } from './components';
+import { TopicDataProvider, Footer, MainNavigation } from '@/components';
 import { janelotus, playfairDisplay } from './fonts';
 import { Toaster } from 'sonner';
 

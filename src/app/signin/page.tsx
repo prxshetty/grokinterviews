@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './signin.module.css';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import MainNavigation from '../components/layout/MainNavigation';
+import MainNavigation from '@/components/layout/MainNavigation';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');

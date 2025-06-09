@@ -4,10 +4,11 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import ProgressSaver from '../components/progress/ProgressSaver';
-import { ActivityGrid } from '../components/progress';
+import ProgressSaver from '@/components/progress/ProgressSaver';
+import { ActivityGrid } from '@/components/progress';
+import { Calendar } from '@/components/ui/calendar';
 import DashboardNav from './DashboardNav';
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Component imports
 import { 
@@ -17,7 +18,7 @@ import {
   UserStatsWidget,
   UserActivityChart,
   MetricCards
-} from '../components/dashboard';
+} from '@/components/dashboard';
 
 interface UserProfile {
   id: string;
@@ -53,6 +54,8 @@ interface DomainStat {
 export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCalendarView, setShowCalendarView] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [progressData, setProgressData] = useState({
     questionsCompleted: 0,
     questionsViewed: 0,
@@ -272,7 +275,7 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json();
           // Transform the activity grid data to chart format
-          const chartData = data.map((item: any) => ({
+          const chartData = data.activityData.map((item: any) => ({
             date: item.date,
             questionsAnswered: item.count || 0,
             questionsViewed: Math.floor((item.count || 0) * 1.5) // Approximation, you might want to track this separately
@@ -390,12 +393,176 @@ export default function DashboardPage() {
           </h1>
         </div>
 
-        {/* Metric Cards - Section Cards Style */}
-        <div className="mb-8">
-          <MetricCards 
-            progressData={progressData}
-            userStats={userStats}
-          />
+        {/* Top Section: Metric Cards (2x2) + Calendar */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+          {/* Left: Metric Cards in 2x2 Grid */}
+          <div className="xl:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <MetricCards 
+                progressData={progressData}
+                userStats={userStats}
+              />
+            </div>
+          </div>
+
+          {/* Right: Calendar Activity Tracker */}
+          <div className="xl:col-span-1">
+            <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 h-full">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Activity Calendar
+                </h2>
+                <button
+                  onClick={() => setShowCalendarView(!showCalendarView)}
+                  className="px-3 py-1 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {showCalendarView ? 'Week View' : 'Calendar View'}
+                </button>
+              </div>
+              
+              {showCalendarView ? (
+                <div className="space-y-4">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    className="rounded-md border border-gray-200 dark:border-gray-700 w-full"
+                    modifiers={{
+                      lowActivity: (date: Date) => {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const dayData = activityChartData.data.find(item => item.date === dateStr);
+                        return Boolean(dayData && dayData.questionsAnswered >= 1 && dayData.questionsAnswered <= 2);
+                      },
+                      mediumActivity: (date: Date) => {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const dayData = activityChartData.data.find(item => item.date === dateStr);
+                        return Boolean(dayData && dayData.questionsAnswered >= 3 && dayData.questionsAnswered <= 5);
+                      },
+                      highActivity: (date: Date) => {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const dayData = activityChartData.data.find(item => item.date === dateStr);
+                        return Boolean(dayData && dayData.questionsAnswered >= 6);
+                      },
+                      noActivity: (date: Date) => {
+                        const dateStr = date.toISOString().split('T')[0];
+                        const dayData = activityChartData.data.find(item => item.date === dateStr);
+                        return Boolean(!dayData || dayData.questionsAnswered === 0);
+                      }
+                    }}
+                    modifiersStyles={{
+                      lowActivity: {
+                        backgroundColor: 'rgb(254 215 170)', // orange-200
+                        color: 'rgb(154 52 18)', // orange-800
+                        fontWeight: '500'
+                      },
+                      mediumActivity: {
+                        backgroundColor: 'rgb(251 146 60)', // orange-400
+                        color: 'white',
+                        fontWeight: '600'
+                      },
+                      highActivity: {
+                        backgroundColor: 'rgb(234 88 12)', // orange-600
+                        color: 'white',
+                        fontWeight: 'bold'
+                      },
+                      noActivity: {
+                        backgroundColor: 'transparent',
+                        color: 'rgb(156 163 175)', // gray-400
+                        opacity: '0.6'
+                      }
+                    }}
+                  />
+                  
+                  {/* Activity Legend */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-sm bg-gray-200 dark:bg-gray-600"></div>
+                      <span className="text-gray-600 dark:text-gray-400">None</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-sm bg-orange-200"></div>
+                      <span className="text-gray-600 dark:text-gray-400">1-2</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-sm bg-orange-400"></div>
+                      <span className="text-gray-600 dark:text-gray-400">3-5</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-sm bg-orange-600"></div>
+                      <span className="text-gray-600 dark:text-gray-400">6+</span>
+                    </div>
+                  </div>
+
+                  {/* Selected Date Details */}
+                  {selectedDate && (
+                    <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          {selectedDate.toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                        {(() => {
+                          const dateStr = selectedDate.toISOString().split('T')[0];
+                          const dayActivity = activityChartData.data.find(item => item.date === dateStr);
+                          if (dayActivity && dayActivity.questionsAnswered > 0) {
+                            let badgeColor = 'bg-gray-100 text-gray-800';
+                            let badgeText = 'None';
+                            
+                            if (dayActivity.questionsAnswered >= 6) {
+                              badgeColor = 'bg-orange-600 text-white';
+                              badgeText = 'High';
+                            } else if (dayActivity.questionsAnswered >= 3) {
+                              badgeColor = 'bg-orange-400 text-white';
+                              badgeText = 'Medium';
+                            } else if (dayActivity.questionsAnswered >= 1) {
+                              badgeColor = 'bg-orange-200 text-orange-800';
+                              badgeText = 'Low';
+                            }
+                            
+                            return (
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}>
+                                {badgeText}
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                              None
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      
+                      {(() => {
+                        const dateStr = selectedDate.toISOString().split('T')[0];
+                        const dayActivity = activityChartData.data.find(item => item.date === dateStr);
+                        return dayActivity && dayActivity.questionsAnswered > 0 ? (
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                              {dayActivity.questionsAnswered}
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              Questions Completed
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-2">
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                              No activity recorded
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <ActivityGrid />
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Activity Chart - Full Width */}
@@ -414,7 +581,6 @@ export default function DashboardPage() {
             <DomainCompletionWidget 
               domainStats={domainStats}
             />
-            <ActivityGrid />
           </div>
 
           {/* Right Column */}
