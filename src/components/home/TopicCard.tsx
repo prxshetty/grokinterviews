@@ -178,8 +178,11 @@ const getColorWithOpacity = (shade: string, opacity: number) => {
 export default function TopicCard({ topic, isActive, style, onClick }: TopicCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
+  // The active card shouldn't have a hover effect, it's already highlighted
+  const showHoverEffect = isHovered && !isActive;
+
   // Calculate the transform style with hover effect
-  const transformStyle = isHovered
+  const transformStyle = showHoverEffect
     ? `${style.transform?.toString() || ''} scale(1.05)`
     : style.transform;
 
@@ -193,7 +196,7 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
         group relative flex-shrink-0 w-[120px] h-[160px] md:w-[140px] md:h-[180px] rounded-xl overflow-hidden
         transition-all duration-300 ease-out cursor-pointer
         ${isActive ? 'z-10 shadow-xl' : 'z-0 shadow-lg'}
-        hover:z-20 hover:shadow-xl
+        ${showHoverEffect ? 'z-20 shadow-xl' : ''}
         backdrop-blur-md
       `}
       style={{
@@ -209,7 +212,7 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
 
       {/* Colored overlay with gradient */}
       <div
-        className="absolute inset-0 opacity-30 dark:opacity-40"
+        className={`absolute inset-0 transition-opacity duration-300 ${isActive ? 'opacity-50 dark:opacity-60' : 'opacity-30 dark:opacity-40'}`}
         style={{
           background: `radial-gradient(circle at center 40%,
                       ${getColorWithOpacity(topic.shade, 1)} 0%,
@@ -240,7 +243,7 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
       {/* Hover state overlay */}
       <div
         className={`absolute inset-0 bg-white dark:bg-white transition-all duration-300 ${
-          isHovered ? 'opacity-10' : 'opacity-0'
+          showHoverEffect ? 'opacity-10' : 'opacity-0'
         }`}
       ></div>
 
@@ -270,7 +273,7 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
         {/* Text content */}
         <div className="text-center mt-2">
           <h3 className="text-sm md:text-base font-medium">{topic.title}</h3>
-          {isHovered && (
+          {showHoverEffect && (
             <div className="mt-1 text-[10px] md:text-xs text-gray-400">{topic.subtitle}</div>
           )}
         </div>

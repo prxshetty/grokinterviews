@@ -10,6 +10,8 @@ export default function TopicCarousel() {
   const [isMounted, setIsMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const cardContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   // Set mounted state after component mounts and setup intersection observer
   useEffect(() => {
@@ -44,17 +46,26 @@ export default function TopicCarousel() {
 
   // Check if mobile on mount and window resize
   useEffect(() => {
-    const checkMobile = () => {
+    const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
+      if (cardContainerRef.current) {
+        setContainerWidth(cardContainerRef.current.offsetWidth);
+      }
     };
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    handleResize();
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    if (isVisible && cardContainerRef.current) {
+      setContainerWidth(cardContainerRef.current.offsetWidth);
+    }
+  }, [isVisible]);
 
   // Handle navigation to next card
   const handleNextCard = useCallback(() => {
@@ -114,19 +125,21 @@ export default function TopicCarousel() {
             AI Agents at your service.<br/>
             You decide your conceirge.<br/>
           </p>
-          <button className="mt-2 px-6 py-2 bg-gray-900 dark:bg-white/10 text-white text-sm rounded-full hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20">
-            Browse Questions
-          </button>
+          <a href="/topics" className="mt-2 px-6 py-2 bg-gray-900 dark:bg-white/10 text-white text-sm rounded-full hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 inline-block">
+            Browse Topics
+          </a>
         </div>
 
         {/* Cards in a perfect inverted arc */}
-        <div className="relative w-[800px] h-[300px] md:w-[1000px] md:h-[350px] mt-0 md:mt-0 transition-all duration-1000"
+        <div
+             ref={cardContainerRef}
+             className="relative w-[95%] max-w-[1000px] h-[300px] md:h-[350px] mt-0 md:mt-0 transition-all duration-1000"
              style={{
                transitionDelay: `${isVisible ? 300 : 0}ms`,
                opacity: isVisible ? 1 : 0,
                transform: isVisible ? 'translateY(0)' : 'translateY(40px)'
              }}>
-          {visibleTopics.map((topic, index) => {
+          {containerWidth > 0 && visibleTopics.map((topic, index) => {
             // Calculate position in a perfect arc
             const totalCards = visibleTopics.length;
             const visibleCards = Math.min(totalCards, 9); // Limit visible cards to avoid overcrowding
@@ -147,33 +160,36 @@ export default function TopicCarousel() {
             const maxCards = Math.floor(visibleCards / 2);
 
             // Arc parameters
-            const arcWidth = isMobile ? 750 : 950; // Width of the arc (increased for more spacing)
+            const arcWidth = containerWidth * 0.95; // Use 95% of container width for spacing
             const arcHeight = isMobile ? 100 : 120; // Height of the arc (adjusted for flatter curve)
 
             // Calculate x position using linear distribution with increased spacing
-            const x = spacedRelativeIndex * (arcWidth / (maxCards * 2));
+            const x = maxCards > 0 ? spacedRelativeIndex * (arcWidth / (maxCards * 2)) : 0;
 
             // Calculate y position using a parabola: y = a * x^2
             // Where 'a' is calculated to make y = arcHeight when x = ±(arcWidth/2)
             // Using positive arcHeight to inverse the curve (curve upward)
-            const a = arcHeight / Math.pow(arcWidth/2, 2);
+            const a = arcWidth > 0 ? arcHeight / Math.pow(arcWidth / 2, 2) : 0;
             const y = a * Math.pow(x, 2);
 
             const isActive = index === activeIndex;
 
             // Calculate z-index and scale based on vertical position
-            const normalizedY = y / arcHeight; // Will be between 0 and 1
+            const normalizedY = arcHeight > 0 ? y / arcHeight : 0; // Will be between 0 and 1
             const zIndex = Math.round((1 - normalizedY) * 100); // Higher values for cards at the bottom of the arc
-            const scale = isActive ? 1.05 : 0.9 + ((1 - normalizedY) * 0.1); // Larger scale for cards at the bottom
+
+            // Adjust y-position and scale for the active card to make it pop
+            const adjustedY = isActive ? y - 20 : y; // Raise active card
+            const scale = isActive ? 1.1 : 0.9 + ((1 - normalizedY) * 0.1); // Enlarge active card more
 
             // No rotation for better readability
             const rotationDeg = 0;
 
             // Calculate card style for positioning
             const cardStyle = {
-              transform: `translate(${x}px, ${y}px) rotate(${rotationDeg}deg) scale(${scale})`,
+              transform: `translate(${x}px, ${adjustedY}px) rotate(${rotationDeg}deg) scale(${scale})`,
               zIndex: zIndex,
-              opacity: 0.7 + ((1 - normalizedY) * 0.3), // More opaque for cards at the bottom of the arc
+              opacity: isActive ? 1 : 0.7 + ((1 - normalizedY) * 0.3), // Ensure active card is fully opaque
             };
 
             return (

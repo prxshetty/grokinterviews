@@ -20,8 +20,8 @@ export default function CompanyList() {
       ref={ref}
       className={`mt-20 mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
-      <h2 className="text-3xl md:text-4xl font-serif font-light tracking-tight leading-tight text-center mb-8">
-        Companies You Can Join With These Skills
+      <h2 className="text-2xl md:text-3xl font-normal text-center mb-8">
+        Contains questions for these companies
       </h2>
       <div className="w-full overflow-hidden">
         {/* Container with padding to ensure smooth transition */}

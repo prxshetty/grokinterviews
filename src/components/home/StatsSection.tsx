@@ -32,7 +32,7 @@ export default function StatsSection() {
           transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
         }}
       >
-        <h2 className="text-3xl md:text-4xl mb-6">Grok Interviews</h2>
+        <h2 className="text-3xl md:text-4xl mb-6 font-light">Grok Interviews</h2>
         <p className="text-base font-serif italic text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Curated by AI<br className="hidden md:block" /> Just for You.
         </p>
