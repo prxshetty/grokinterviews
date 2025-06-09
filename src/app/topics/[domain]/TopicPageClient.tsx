@@ -5,7 +5,6 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   TopicCategoryGrid,
   CategoryDetailView,
-  SidebarFilters,
   TopicDataProvider,
   ContentDisplay
 } from '@/components/topics-ui';
@@ -17,6 +16,7 @@ import { useFilterLogic } from '@/hooks/use-filter-logic.hook';
 import { fetchDomainProgress, fetchCategoryProgress } from '@/app/utils/progress';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
+import withAuth from '@/components/auth/withAuth';
 
 // Import types (assuming these are defined elsewhere or can be moved here)
 interface QuestionType {
@@ -83,7 +83,7 @@ interface TopicPageClientProps {
   initialDomain: string;
 }
 
-export default function TopicPageClient({ initialDomain }: TopicPageClientProps) {
+function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const [domain, setDomain] = useState<string>(initialDomain);
 
   // Get domain from data attribute set by layout component
@@ -573,14 +573,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   return (
     <TopicDataProvider>
       <div className="flex flex-col min-h-screen">
-        <SidebarFilters
-          selectedTopic={selectedTopic}
-          selectedCategory={selectedCategory}
-          selectedDifficulty={selectedDifficulty}
-          onSelectDifficulty={handleDifficultyChange}
-        />
-
-          <div className="flex-grow bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
+          <div className="flex-grow bg-white dark:bg-black transition-colors duration-300 ease-in-out">
             <ErrorBoundary>
               {isLoading.sections && (
                 <LoadingSpinner 
@@ -628,8 +621,10 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
               )}
             </ErrorBoundary>
           </div>
-        </div>
+      </div>
       <ProgressSaver />
     </TopicDataProvider>
   );
-} 
+}
+
+export default withAuth(TopicPageClient); 

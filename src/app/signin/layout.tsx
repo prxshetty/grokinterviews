@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import '../globals.css';
+import { BackgroundPathsOnly } from "@/components/home/background"
+import { type PropsWithChildren } from "react"
 
 export const metadata: Metadata = {
   title: "Sign In - Grok Interviews",
@@ -8,10 +10,18 @@ export const metadata: Metadata = {
 
 export default function SignInLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  // This layout doesn't need to add any additional elements
-  // since the root layout already provides the html and body elements
-  return children;
+}: PropsWithChildren) {
+  return (
+    <main
+      className="relative flex min-h-screen flex-col items-center justify-center 
+    bg-gradient-to-br from-white to-slate-50 dark:from-neutral-950 dark:to-neutral-900"
+    >
+      <BackgroundPathsOnly />
+      <div
+        className="from-primary/5 to-primary/10 absolute inset-0 -z-10 size-full 
+      bg-[radial-gradient(100%_100%_at_50%_0%,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0)_100%)]"
+      />
+      {children}
+    </main>
+  )
 }

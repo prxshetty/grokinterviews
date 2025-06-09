@@ -33,7 +33,7 @@ export function AnswerDisplay({
   isCompleted,
   setAnswerRef,
 }: AnswerDisplayProps) {
-  const toastId = useRef<string | number | undefined>();
+  const toastId = useRef<string | number | undefined>(undefined);
 
   useEffect(() => {
     if (isLoading) {
@@ -72,11 +72,10 @@ export function AnswerDisplay({
   } as React.CSSProperties;
 
   return (
-    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 relative">
-      <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Answer:</h5>
+    <div className="relative">
       <div
         ref={setAnswerRef}
-        className="text-gray-800 dark:text-gray-200 prose dark:prose-invert max-w-none max-h-[600px] overflow-y-auto pr-4 text-base mb-4 scrollbar-thin"
+        className="text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none h-[600px] overflow-y-auto pr-4 text-base leading-relaxed scrollbar-thin"
         style={scrollbarStyles}
       >
         <style>

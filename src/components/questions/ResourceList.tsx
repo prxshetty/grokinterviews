@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
+import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface Resource {
   id: number;
@@ -23,63 +24,11 @@ export function ResourceList({ questionId }: ResourceListProps) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userPreferences, setUserPreferences] = useState<{
-    use_youtube_sources: boolean;
-    use_pdf_sources: boolean;
-    use_paper_sources: boolean;
-    use_website_sources: boolean;
-    use_book_sources: boolean;
-    use_image_sources: boolean;
-  }>({
-    use_youtube_sources: true,
-    use_pdf_sources: true,
-    use_paper_sources: true,
-    use_website_sources: true,
-    use_book_sources: false,
-    use_image_sources: false,
-  });
 
   const supabase = createClientComponentClient();
 
-  // Fetch user preferences
   useEffect(() => {
-    const fetchUserPreferences = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return;
-
-        const { data, error } = await supabase
-          .from('user_preferences')
-          .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching user preferences:', error);
-          return;
-        }
-
-        if (data) {
-          setUserPreferences({
-            use_youtube_sources: data.use_youtube_sources ?? true,
-            use_pdf_sources: data.use_pdf_sources ?? true,
-            use_paper_sources: data.use_paper_sources ?? true,
-            use_website_sources: data.use_website_sources ?? true,
-            use_book_sources: data.use_book_sources ?? false,
-            use_image_sources: data.use_image_sources ?? false,
-          });
-        }
-      } catch (err) {
-        console.error('Error in fetchUserPreferences:', err);
-      }
-    };
-
-    fetchUserPreferences();
-  }, [supabase]);
-
-  // Fetch resources based on user preferences
-  useEffect(() => {
-    const fetchResources = async () => {
+    const fetchAllData = async () => {
       if (!questionId) {
         setLoading(false);
         return;
@@ -89,15 +38,51 @@ export function ResourceList({ questionId }: ResourceListProps) {
       setError(null);
 
       try {
-        // Create an array of types to include based on user preferences
+        // --- Part 1: Fetch user preferences ---
+        let currentPrefs = {
+          use_youtube_sources: true,
+          use_pdf_sources: true,
+          use_paper_sources: true,
+          use_website_sources: true,
+          use_book_sources: false,
+          use_image_sources: false,
+        };
+
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const { data: prefData, error: prefError } = await supabase
+              .from('user_preferences')
+              .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+
+            if (prefError) {
+              console.error('Error fetching user preferences:', prefError);
+            } else if (prefData) {
+              currentPrefs = {
+                use_youtube_sources: prefData.use_youtube_sources ?? true,
+                use_pdf_sources: prefData.use_pdf_sources ?? true,
+                use_paper_sources: prefData.use_paper_sources ?? true,
+                use_website_sources: prefData.use_website_sources ?? true,
+                use_book_sources: prefData.use_book_sources ?? false,
+                use_image_sources: prefData.use_image_sources ?? false,
+              };
+            }
+          }
+        } catch (err) {
+          console.error('Error in session/preference logic:', err);
+        }
+
+        // --- Part 2: Fetch resources based on preferences ---
         const typesToInclude = [
-          userPreferences.use_youtube_sources ? 'video' : null,
-          userPreferences.use_pdf_sources ? 'pdf' : null,
-          userPreferences.use_pdf_sources ? 'enhanced_pdf' : null,
-          userPreferences.use_paper_sources ? 'paper' : null,
-          userPreferences.use_website_sources ? 'website' : null,
-          userPreferences.use_book_sources ? 'book' : null,
-          userPreferences.use_image_sources ? 'image' : null,
+          currentPrefs.use_youtube_sources ? 'video' : null,
+          currentPrefs.use_pdf_sources ? 'pdf' : null,
+          currentPrefs.use_pdf_sources ? 'enhanced_pdf' : null,
+          currentPrefs.use_paper_sources ? 'paper' : null,
+          currentPrefs.use_website_sources ? 'website' : null,
+          currentPrefs.use_book_sources ? 'book' : null,
+          currentPrefs.use_image_sources ? 'image' : null,
         ].filter(Boolean) as string[];
 
         if (typesToInclude.length === 0) {
@@ -106,50 +91,47 @@ export function ResourceList({ questionId }: ResourceListProps) {
           return;
         }
 
-        const { data, error } = await supabase
+        const { data, error: resourceError } = await supabase
           .from('resources')
           .select('*')
           .eq('question_id', questionId)
           .in('type', typesToInclude)
           .order('relevance_score', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching resources:', error);
-          setError('Failed to load resources. Please try again later.');
-          setResources([]);
-        } else {
-          // Process data to add previewUrl
-          const processedData = data?.map(resource => {
-            let previewUrl: string | undefined = undefined;
-            if (resource.type === 'video' && resource.url) {
-              try {
-                const url = new URL(resource.url);
-                let videoId: string | null = null;
-                if (url.hostname === 'youtu.be') {
-                  videoId = url.pathname.substring(1);
-                } else if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com') {
-                  videoId = url.searchParams.get('v');
-                }
-                if (videoId) {
-                  previewUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-                }
-              } catch (e) {
-                console.error('Error parsing video URL:', e);
-              }
-            } else if (resource.type === 'website' && resource.url) {
-              try {
-                  // Use Google's favicon service for better reliability
-                  previewUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(resource.url)}`;
-              } catch (e) {
-                  console.error('Error processing website URL for favicon:', e);
-              }
-            }
-            return { ...resource, previewUrl };
-          }) || [];
-          setResources(processedData);
+        if (resourceError) {
+          throw resourceError;
         }
+
+        const processedData = data?.map(resource => {
+          let previewUrl: string | undefined = undefined;
+          if (resource.type === 'video' && resource.url) {
+            try {
+              const url = new URL(resource.url);
+              let videoId: string | null = null;
+              if (url.hostname === 'youtu.be') {
+                videoId = url.pathname.substring(1);
+              } else if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com') {
+                videoId = url.searchParams.get('v');
+              }
+              if (videoId) {
+                previewUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+              }
+            } catch (e) {
+              console.error('Error parsing video URL:', e);
+            }
+          } else if (resource.type === 'website' && resource.url) {
+            try {
+                previewUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(resource.url)}`;
+            } catch (e) {
+                console.error('Error processing website URL for favicon:', e);
+            }
+          }
+          return { ...resource, previewUrl };
+        }) || [];
+        setResources(processedData);
+
       } catch (err) {
-        console.error('Error in fetchResources:', err);
+        console.error('Error fetching resources data:', err);
         setError('An unexpected error occurred. Please try again later.');
         setResources([]);
       } finally {
@@ -157,8 +139,8 @@ export function ResourceList({ questionId }: ResourceListProps) {
       }
     };
 
-    fetchResources();
-  }, [questionId, userPreferences, supabase]);
+    fetchAllData();
+  }, [questionId, supabase]);
 
   // Function to group resources by type
   const getResourcesByType = (type: string) => {
@@ -168,9 +150,8 @@ export function ResourceList({ questionId }: ResourceListProps) {
   // Improved logic for no resources
   if (loading) {
     return (
-      <div className="text-center py-2">
-        <div className="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-gray-500 border-r-2 border-gray-500 mr-2"></div>
-        <span className="text-xs text-gray-500 dark:text-gray-400">Loading resources...</span>
+      <div className="flex justify-center items-center py-2">
+        <InlineLoadingSpinner text="Loading resources..." />
       </div>
     );
   }

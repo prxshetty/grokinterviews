@@ -226,27 +226,6 @@ export default function CategoryDetailView({
     }
   }, [currentSubtopicProgress]);
 
-  // Handle question completion events for optimistic updates
-  useEffect(() => {
-    const handleQuestionCompleted = (event: CustomEvent) => {
-      const { questionId } = event.detail;
-      setCompletedQuestions(prev => ({ ...prev, [questionId]: true }));
-    };
-
-    const handleQuestionCompletionFailed = (event: CustomEvent) => {
-      const { questionId } = event.detail;
-      setCompletedQuestions(prev => ({ ...prev, [questionId]: false }));
-    };
-
-    window.addEventListener('questionCompleted', handleQuestionCompleted as EventListener);
-    window.addEventListener('questionCompletionFailed', handleQuestionCompletionFailed as EventListener);
-
-    return () => {
-      window.removeEventListener('questionCompleted', handleQuestionCompleted as EventListener);
-      window.removeEventListener('questionCompletionFailed', handleQuestionCompletionFailed as EventListener);
-    };
-  }, []);
-
   // Fetch progress data for category and subtopic
   useEffect(() => {
     const controller = new AbortController();
@@ -401,6 +380,10 @@ export default function CategoryDetailView({
     onDifficultyChange(newDifficulty);
   }, [propSelectedDifficulty, onDifficultyChange]);
   
+  const handleCompletionChange = useCallback((questionId: number, status: boolean) => {
+    setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
+  }, []);
+
   if (isLoading && !categoryDetails) {
     return (
       <LoadingSpinner 
@@ -434,7 +417,7 @@ export default function CategoryDetailView({
         {/* Floating Settings for difficulty filter */}
         {subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
           <FloatingSettings
-            selectedDifficulty={propSelectedDifficulty}
+            selectedDifficulty={propSelectedDifficulty || null}
             onSelectDifficulty={handleDifficultySelect}
           />
         )}
@@ -443,14 +426,14 @@ export default function CategoryDetailView({
         {hasGroupedQuestions ? (
           <div>
             {Object.entries(questionsByCategory).map(([categoryId, category]) => (
-              <div key={categoryId} className="mb-8">
-                <div className="flex justify-between items-center mb-2">
+              <div key={categoryId} className="mb-12">
+                <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-light tracking-wide">{category.name}</h2>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
                   </span>
                 </div>
-                <div className="mb-4">
+                <div className="mb-6">
                   <ProgressBar
                     progress={(category.questions.filter(q => completedQuestions[q.id]).length / category.questions.length) * 100}
                     completed={category.questions.filter(q => completedQuestions[q.id]).length}
@@ -460,31 +443,37 @@ export default function CategoryDetailView({
                     className={category.name}
                   />
                 </div>
-                {category.questions.map((question, index) => (
-                  <QuestionWithAnswer 
-                    key={question.id}
-                    question={question}
-                    questionIndex={index}
-                    isHighlighted={highlightedQuestionId === question.id}
-                    topicId={category.topic_id}
-                  />
-                ))}
+                <div className="overflow-hidden">
+                  {category.questions.map((question, index) => (
+                    <QuestionWithAnswer 
+                      key={question.id}
+                      question={question}
+                      questionIndex={index}
+                      isHighlighted={highlightedQuestionId === question.id}
+                      topicId={category.topic_id}
+                      onCompletionChange={handleCompletionChange}
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         ) : memoizedFilteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
           <div>
-            <h2 className="text-2xl font-light tracking-wide mb-4">Questions</h2>
-            {memoizedFilteredQuestions.map((question, index) => (
-              <QuestionWithAnswer 
-                key={question.id}
-                question={question}
-                questionIndex={index}
-                isHighlighted={highlightedQuestionId === question.id}
-                topicId={subtopicDetails?.subtopicId ?? undefined}
-              />
-            ))}
+            <h2 className="text-2xl font-light tracking-wide mb-6">Questions</h2>
+            <div className="overflow-hidden">
+              {memoizedFilteredQuestions.map((question, index) => (
+                <QuestionWithAnswer 
+                  key={question.id}
+                  question={question}
+                  questionIndex={index}
+                  isHighlighted={highlightedQuestionId === question.id}
+                  topicId={subtopicDetails?.subtopicId ?? undefined}
+                  onCompletionChange={handleCompletionChange}
+                />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -539,8 +528,13 @@ export default function CategoryDetailView({
         </div>
       )}
       
-      {/* Show difficulty filter if we have questions */}
-      {hasQuestions && renderDifficultyFilter()}
+      {/* Floating Settings for difficulty filter */}
+      {hasQuestions && onDifficultyChange && (
+        <FloatingSettings
+          selectedDifficulty={propSelectedDifficulty || null}
+          onSelectDifficulty={handleDifficultySelect}
+        />
+      )}
       
       {/* Show questions if available */}
       {hasQuestions && (
@@ -555,7 +549,7 @@ export default function CategoryDetailView({
           </div>
           
           {memoizedFilteredQuestions.length > 0 ? (
-            <div>
+            <div className="overflow-hidden">
               {memoizedFilteredQuestions.map((question, index) => (
                 <QuestionWithAnswer 
                   key={question.id}
@@ -563,6 +557,7 @@ export default function CategoryDetailView({
                   questionIndex={index}
                   isHighlighted={highlightedQuestionId === question.id}
                   topicId={question.topic_id ?? undefined}
+                  onCompletionChange={handleCompletionChange}
                 />
               ))}
             </div>

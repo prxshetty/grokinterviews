@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, memo, useMemo, useCallback, Suspense } fro
 import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed } from '@/app/utils/progress';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import React from 'react';
+import { toast } from '@/hooks/use-toast';
 
 // Import the new components
 import { QuestionHeader } from './QuestionHeader';
@@ -59,10 +60,11 @@ interface QuestionWithAnswerProps {
   questionIndex: number;
   isHighlighted?: boolean;
   topicId?: number;
+  onCompletionChange?: (questionId: number, isCompleted: boolean) => void;
 }
 
 // Renaming original component and preparing for memoization
-function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = false, topicId }: QuestionWithAnswerProps) {
+function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = false, topicId, onCompletionChange }: QuestionWithAnswerProps) {
   // Initialize Supabase client
   const supabase = createClientComponentClient();
 
@@ -86,12 +88,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
   const questionId = question.id;
   const categoryId = question.categories?.id ?? question.category_id;
 
-  // Memoize the displayed keywords string
-  const displayedKeywords = useMemo(() => {
-    if (!question.keywords) return '';
-    if (Array.isArray(question.keywords)) return question.keywords.join(', ');
-    return question.keywords;
-  }, [question.keywords]);
+
 
   useEffect(() => {
     if (question.id) {
@@ -167,12 +164,13 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
     const calculateScrollProgress = () => {
       if (!answerElement) return;
       const totalHeight = answerElement.scrollHeight - answerElement.clientHeight;
+      let percentage: number;
       if (totalHeight <= 0) {
-        setScrollProgress(10);
-        return;
+        percentage = 100;
+      } else {
+        const scrollPosition = answerElement.scrollTop;
+        percentage = Math.min(Math.round((scrollPosition / totalHeight) * 100), 100);
       }
-      const scrollPosition = answerElement.scrollTop;
-      const percentage = Math.min(Math.round((scrollPosition / totalHeight) * 100), 100);
       setScrollProgress(percentage);
 
       console.log(`Question ${question.id} scroll progress: ${percentage}%, isCompleted: ${isCompleted}`);
@@ -182,12 +180,8 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
         
         // Optimistic UI update
         setIsCompleted(true);
-        try {
-          window.dispatchEvent(new CustomEvent('questionCompleted', { detail: { questionId: question.id, topicId: topicId, categoryId: categoryId, status: 'completed', timestamp: Date.now() } }));
-          console.log('Dispatched questionCompleted event optimistically');
-        } catch (eventError) {
-          console.error('Error dispatching completion event:', eventError);
-        }
+        onCompletionChange?.(question.id, true);
+        toast.success("Question marked as completed!");
 
         markQuestionAsCompleted(question.id, topicId || 0, categoryId || 0)
           .then((success) => {
@@ -217,22 +211,16 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
               console.error(`Failed to mark question ${question.id} as completed`);
               // Revert optimistic update on failure
               setIsCompleted(false);
-              try {
-                window.dispatchEvent(new CustomEvent('questionCompletionFailed', { detail: { questionId: question.id } }));
-              } catch (eventError) {
-                console.error('Error dispatching completion failed event:', eventError);
-              }
+              onCompletionChange?.(question.id, false);
+              toast.error("Failed to mark question as completed. Please try again.");
             }
           })
           .catch(err => {
             console.error('Failed to mark question as completed:', err);
             // Revert optimistic update on error
             setIsCompleted(false);
-            try {
-              window.dispatchEvent(new CustomEvent('questionCompletionFailed', { detail: { questionId: question.id } }));
-            } catch (eventError) {
-              console.error('Error dispatching completion failed event:', eventError);
-            }
+            onCompletionChange?.(question.id, false);
+            toast.error("An error occurred. Please try again.");
           });
       }
     };
@@ -250,7 +238,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
       clearTimeout(initialTimer);
       if (answerElement) answerElement.removeEventListener('scroll', handleScroll);
     };
-  }, [isExpanded, question.id, topicId, categoryId, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text, isCompleted]);
+  }, [isExpanded, question.id, topicId, categoryId, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text, isCompleted, onCompletionChange]);
 
   useEffect(() => {
     if (isExpanded && !hasPredefinedAnswer && !generatedAnswer && !isGenerating && !error) {
@@ -296,11 +284,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
     setIsBookmarked(newBookmarkStatus);
   }, []);
 
-  const displayKeywords = (keywords: string[] | string | null | undefined): string => {
-    if (!keywords) return '';
-    if (Array.isArray(keywords)) return keywords.join(', ');
-    return keywords; 
-  };
+
 
   const handleSetAnswerRef = useCallback((el: HTMLDivElement | null) => {
     answerRef.current = el;
@@ -311,53 +295,67 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
   return (
     <div 
       id={`question-${question.id}`}
-      className={`mb-4 p-4 rounded-lg shadow-sm border transition-all duration-300 ${
+      className={`border-t border-b border-gray-200 dark:border-gray-700 transition-all duration-200 ${
         isHighlighted 
-          ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600 ring-2 ring-yellow-400/50' 
-          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+          ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600' 
+          : 'bg-white dark:bg-gray-900'
       }`}
     >
-      <QuestionHeader
-        questionId={questionId}
-        topicId={question.categories?.topic_id ?? topicId ?? question.topic_id ?? null}
-        categoryId={question.category_id ?? null}
-        questionText={question.question_text}
-        questionIndex={questionIndex}
-        isCompleted={isCompleted}
-        isBookmarked={isBookmarked}
-        isExpanded={isExpanded}
-        onToggleExpansion={toggleExpansion}
-        onBookmarkChange={handleBookmarkChange} 
-      />
+      <div className="py-6 px-0">
+        <div className="flex items-center justify-between cursor-pointer" onClick={toggleExpansion}>
+          <h3 className="text-lg font-normal text-gray-900 dark:text-gray-100 pr-8 leading-relaxed">
+            {question.question_text}
+          </h3>
+          <div className="flex items-center space-x-3">
+            {/* Completion and bookmark indicators */}
+            <div className="flex items-center space-x-2">
+              {isCompleted && (
+                <div title="Completed">
+                  <svg 
+                    className="w-5 h-5 text-green-500" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {isBookmarked && (
+                <div className="w-2 h-2 bg-blue-500 rounded-full" title="Bookmarked"></div>
+              )}
+            </div>
+            
+            {/* Expand/collapse arrow */}
+            <svg 
+              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
 
-      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        <span className="inline-block bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 mr-2">
-          {question.difficulty || 'unspecified'} difficulty
-        </span>
-        {question.keywords && (
-          <span className="inline-block">
-            Keywords: {displayedKeywords}
-          </span>
+        {isExpanded && (
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+            {/* Display additional resources first */}
+            <React.Suspense fallback={<ResourceListSkeleton />}>
+              <ResourceList questionId={questionId} />
+            </React.Suspense>
+            
+            <AnswerDisplay
+              answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
+              isLoading={isGenerating}
+              error={error}
+              scrollProgress={scrollProgress}
+              isCompleted={isCompleted}
+              setAnswerRef={handleSetAnswerRef}
+            />
+          </div>
         )}
       </div>
-
-      {isExpanded && (
-        <div id={`answer-content-q-${questionId}`} className="mt-4">
-          {/* Display additional resources first */}
-          <React.Suspense fallback={<ResourceListSkeleton />}>
-            <ResourceList questionId={questionId} />
-          </React.Suspense>
-          
-          <AnswerDisplay
-            answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
-            isLoading={isGenerating}
-            error={error}
-            scrollProgress={scrollProgress}
-            isCompleted={isCompleted}
-            setAnswerRef={handleSetAnswerRef}
-          />
-        </div>
-      )}
     </div>
   );
 }

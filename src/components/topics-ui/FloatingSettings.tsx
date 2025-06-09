@@ -20,7 +20,7 @@ export default function FloatingSettings({
   onSelectDifficulty,
 }: FloatingSettingsProps) {
   return (
-    <div className="fixed top-30 right-4 z-40">
+    <div className="fixed top-20 right-4 z-40">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
