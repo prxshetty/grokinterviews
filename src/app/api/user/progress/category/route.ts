@@ -76,31 +76,34 @@ export async function GET(request: NextRequest) {
     // We need to handle potential duplicates in the user_activity table
     const { data: completedQuestionData, error: completedError } = await supabaseServer
       .from('user_activity')
-      .select('question_id')
+      .select('question_id', { count: 'exact' })
       .eq('user_id', userId)
       .eq('status', 'completed')
       .in('question_id', questionIdArray);
-
-    // Count unique completed questions
-    const uniqueCompletedQuestions = new Set();
-    completedQuestionData?.forEach(item => {
-      if (item.question_id) {
-        uniqueCompletedQuestions.add(item.question_id);
-      }
-    });
-    const questionsCompleted = uniqueCompletedQuestions.size;
-
+      
     if (completedError) {
       console.error('Error counting completed questions:', completedError);
       return NextResponse.json({ error: 'Failed to count completed questions' }, { status: 500 });
     }
 
-    // Calculate completion percentage
-    const completionPercentage = totalQuestions ? Math.round((questionsCompleted / totalQuestions) * 100) : 0;
+    // Since we are now using { count: 'exact' }, we should get the count from the response
+    // However, Supabase count may not be directly on the data object, so we need to be careful.
+    // A more reliable way is to get the count from the 'count' property of the response object if it exists.
+    // But since the structure may vary, let's process the returned data to be safe.
+
+    // Count unique completed questions from the returned data
+    const uniqueCompletedIds = new Set(completedQuestionData?.map(item => item.question_id).filter(id => id !== null));
+    const questionsCompleted = uniqueCompletedIds.size;
+    
+    // Calculate completion percentage, ensuring totalQuestions is not null
+    const finalTotalQuestions = totalQuestions ?? 0;
+    const completionPercentage = finalTotalQuestions > 0 
+      ? Math.round((questionsCompleted / finalTotalQuestions) * 100) 
+      : 0;
 
     return NextResponse.json({
-      questionsCompleted: questionsCompleted || 0,
-      totalQuestions: totalQuestions || 0,
+      questionsCompleted: questionsCompleted,
+      totalQuestions: finalTotalQuestions,
       completionPercentage,
       timestamp: Date.now() // Add timestamp to prevent caching
     });

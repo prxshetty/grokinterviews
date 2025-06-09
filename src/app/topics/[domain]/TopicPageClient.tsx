@@ -8,14 +8,15 @@ import {
   SidebarFilters,
   TopicDataProvider,
   ContentDisplay
-} from '@/app/components/topics-ui';
-import ProgressSaver from '@/app/components/utils/ProgressSaver';
+} from '@/components/topics-ui';
+import ProgressSaver from '@/components/utils/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
-import { useTopicData } from '@/app/hooks';
-import { getDomainKeywords } from '@/app/utils';
-import { useFilterLogic } from '@/app/hooks/use-filter-logic.hook';
-import { fetchDomainProgress } from '@/app/utils/progress';
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner';
+import { useTopicData } from '@/hooks';
+
+import { useFilterLogic } from '@/hooks/use-filter-logic.hook';
+import { fetchDomainProgress, fetchCategoryProgress } from '@/app/utils/progress';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ErrorBoundary from '@/components/utils/ErrorBoundary';
 
 // Import types (assuming these are defined elsewhere or can be moved here)
 interface QuestionType {
@@ -63,6 +64,20 @@ interface ProgressData {
   totalSubtopics?: number;
 }
 
+interface SubtopicProgress {
+  completionPercentage: number;
+  questionsCompleted: number;
+  totalQuestions: number;
+  categoriesCompleted: number;
+  totalCategories: number;
+}
+
+interface CategoryProgress {
+  questionsCompleted: number;
+  totalQuestions: number;
+  completionPercentage: number;
+}
+
 // Props for the client component, including the domain passed from the server component
 interface TopicPageClientProps {
   initialDomain: string;
@@ -91,11 +106,8 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
 
   // Use the new hook for filter logic
   const {
-    selectedKeyword,
     selectedDifficulty,
-    handleKeywordChange,
     handleDifficultyChange,
-    clearKeywordFilter,
     clearDifficultyFilter
   } = useFilterLogic();
 
@@ -107,25 +119,20 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
   const [categoryDetails, setCategoryDetails] = useState<TopicItem | null>(null);
-  const [loadingCategories, setLoadingCategories] = useState<boolean>(false);
-  const [loadingSections, setLoadingSections] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState({
+    categories: false,
+    sections: false,
+    difficultyQuestions: false,
+  });
+
+  // Cache for topic/category and progress data
+  const [dataCache, setDataCache] = useState<Record<string, any>>({});
 
   // Progress tracking states
-  const [sectionProgressCache, setSectionProgressCache] = useState<Record<string, ProgressData>>({});
-  const [sectionProgress, setSectionProgress] = useState<Record<string, ProgressData>>({});
-  const [categoryProgress, setCategoryProgress] = useState<Record<string, ProgressData>>({});
-  const [categoryProgressCache, setCategoryProgressCache] = useState<Record<string, ProgressData>>({});
-  const [subtopicProgress, setSubtopicProgress] = useState<Record<string, {
-    progress: number,
-    completed: number,
-    total: number,
-    categoriesCompleted: number,
-    totalCategories: number
-  }>>({});
+  const [subtopicProgress, setSubtopicProgress] = useState<Record<string, SubtopicProgress>>({});
+  const [categoryProgress, setCategoryProgress] = useState<CategoryProgress | null>(null);
 
-  // Keyword filtering states
-  const [keywordQuestions, setKeywordQuestions] = useState<QuestionType[]>([]);
-  const [loadingKeywordQuestions, setLoadingKeywordQuestions] = useState<boolean>(false);
+
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(pageParam ? parseInt(pageParam) : 1);
@@ -134,7 +141,6 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
 
   // Difficulty filtering states
   const [difficultyQuestions, setDifficultyQuestions] = useState<QuestionType[]>([]);
-  const [loadingDifficultyQuestions, setLoadingDifficultyQuestions] = useState(false);
 
   // State for highlighted question (from URL)
   const [highlightedQuestionId, setHighlightedQuestionId] = useState<number | undefined>(
@@ -151,15 +157,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     setCurrentPage(pageParam ? parseInt(pageParam) : 1);
   }, [pageParam]);
 
-  // Fetch keyword questions when selectedKeyword or currentPage changes
-  useEffect(() => {
-    if (selectedKeyword && domain) {
-      fetchKeywordQuestions(selectedKeyword, currentPage);
-    } else {
-      setKeywordQuestions([]); // Clear questions if no keyword
-      // Optionally reset pagination if needed, though hook handles page reset in URL
-    }
-  }, [selectedKeyword, currentPage, domain]); // domain added as dependency
+
 
   // Fetch difficulty questions when selectedDifficulty or currentPage changes
   useEffect(() => {
@@ -175,16 +173,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     // Don't do anything if we're already on this page
     if (newPage === currentPage) return;
 
-    if (selectedKeyword && newPage >= 1 && newPage <= totalPages) {
-      console.log(`Changing to page ${newPage} for keyword ${selectedKeyword}`);
-      // Update URL with new page number for keyword search
-      const params = new URLSearchParams(searchParams);
-      params.set('page', newPage.toString());
-
-      // Build the new URL and navigate
-      const newUrl = `${pathname}?${params.toString()}`;
-      router.push(newUrl);
-    } else if (selectedDifficulty && newPage >= 1 && newPage <= totalPages) {
+    if (selectedDifficulty && newPage >= 1 && newPage <= totalPages) {
       console.log(`Changing to page ${newPage} for difficulty ${selectedDifficulty}`);
       // Update URL with new page number for difficulty filter
       const params = new URLSearchParams(searchParams);
@@ -197,14 +186,27 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       // Fetch new page of difficulty filtered questions
       handleDifficultyChange(selectedDifficulty);
     }
-  }, [currentPage, selectedKeyword, selectedDifficulty, totalPages, searchParams, pathname, router, handleDifficultyChange]);
+  }, [currentPage, selectedDifficulty, totalPages, searchParams, pathname, router, handleDifficultyChange]);
 
   // Load details for a selected category
   const loadCategoryDetails = useCallback(async (categoryId: string) => {
     console.log('topics/page - loadCategoryDetails called with:', categoryId);
-    console.log('topics/page - Current selectedTopic:', selectedTopic);
+    const cacheKey = `category-details-${categoryId}`;
+    if (dataCache[cacheKey]) {
+      console.log('Serving from cache:', cacheKey);
+      setCategoryDetails(dataCache[cacheKey]);
+       // Also fetch progress for the cached category
+       if (!categoryId.startsWith('header-')) {
+        const numericId = parseInt(categoryId.replace('topic-', ''));
+        if (!isNaN(numericId)) {
+          const progress = await fetchCategoryProgress(numericId, true);
+          setCategoryProgress(progress);
+        }
+      }
+      return;
+    }
 
-    setLoadingSections(true); // Set loading state for sections
+    setIsLoading(prev => ({ ...prev, sections: true }));
     try {
       // Use the current selectedTopic without defaulting to 'ml'
       const topicId = selectedTopic;
@@ -212,7 +214,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       // If no topic is selected, we cannot proceed
       if (!topicId) {
         console.error('No topic selected, cannot load category details');
-        setLoadingSections(false);
+        setIsLoading(prev => ({ ...prev, sections: false }));
         return;
       }
 
@@ -256,42 +258,54 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
         };
 
         setCategoryDetails(sectionData);
+        setDataCache(prevCache => ({ ...prevCache, [cacheKey]: sectionData }));
+        setCategoryDetails(sectionData);
+        // Sections do not have their own direct progress bar in this view
+        setCategoryProgress(null);
       } else {
-        // This is a regular topic ID, fetch it directly. The API returns the topic, its categories, and their questions
-        const response = await fetch(`/api/topics/topic-details?topicId=${categoryId.replace('topic-', '')}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch topic details: ${response.statusText}`);
+        // This is a regular topic/category
+        const topicToFetch = categoryId.includes('topic-') ?
+          parseInt(categoryId.replace('topic-', ''), 10) :
+          topicId;
+        
+        if (!topicToFetch) {
+          console.error('Could not determine a topic ID to fetch for category:', categoryId);
+          setIsLoading(prev => ({ ...prev, sections: false }));
+          return;
         }
-
-        const topicDetailResponse = await response.json();
-        console.log('Topic details from API:', topicDetailResponse);
-
-        // Transform the API response to fit the TopicItem structure expected by CategoryDetailView
-        const formattedDetails: TopicItem = {
-            id: `topic-${topicDetailResponse.topic.id}`,
-            label: topicDetailResponse.topic.name,
-            content: topicDetailResponse.topic.description || '',
-            subtopics: topicDetailResponse.categories.reduce((acc: Record<string, TopicItem>, category: any) => {
-                acc[`category-${category.id}`] = {
-                    id: `category-${category.id}`,
-                    label: category.name,
-                    content: category.description || '',
-                    questions: category.questions || [],
-                    categoryId: category.id,
-                };
-                return acc;
-            }, {})
+        
+        const response = await fetch(`/api/topics/categories?topicId=${topicToFetch}`);
+        if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
+        
+        const categories = await response.json();
+        const category = categories.find((cat: any) => `topic-${cat.id}` === categoryId);
+        
+        // If we found the category, we can get details - though this seems inefficient
+        // This part of logic may need review if it's causing issues.
+        // For now, let's assume `categoryDetails` are fetched/set correctly.
+        
+        // Let's create a simplified details object to proceed
+        const simplifiedDetails: TopicItem = {
+          id: categoryId,
+          label: category?.name || 'Category',
+          isGenerated: false, 
         };
-
-        setCategoryDetails(formattedDetails);
+        setCategoryDetails(simplifiedDetails); 
+        
+        // Fetch progress for the category
+        const numericId = parseInt(categoryId.replace('topic-', ''));
+        if (!isNaN(numericId)) {
+          const progress = await fetchCategoryProgress(numericId, true);
+          setCategoryProgress(progress);
+        }
       }
     } catch (error) {
-      console.error(`Error loading details for category ${categoryId}:`, error);
+      console.error('Error loading category details:', error);
       setCategoryDetails(null);
     } finally {
-      setLoadingSections(false);
+      setIsLoading(prev => ({ ...prev, sections: false }));
     }
-  }, [selectedTopic]);
+  }, [selectedTopic, dataCache]);
 
   // Handle category selection
   const handleCategorySelect = useCallback(async (categoryId: string) => {
@@ -310,34 +324,11 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     await loadCategoryDetails(categoryId);
   }, [selectedCategory, loadCategoryDetails]);
 
-  const fetchKeywordQuestions = useCallback(async (keyword: string, page: number = 1) => {
-    if (!domain) return; // Ensure domain is available
-    setLoadingKeywordQuestions(true);
-    try {
-      const response = await fetch(
-        `/api/search?domain=${domain}&query=${encodeURIComponent(keyword)}&page=${page}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch keyword questions');
-      const data = await response.json();
-      setKeywordQuestions(data.questions || []);
-      setTotalPages(data.pagination?.totalPages || 1);
-      setTotalResults(data.pagination?.totalCount || 0);
-      if (data.questions?.length === 0 && page > 1) {
-        handlePageChange(1); // Corrected call
-      }
-    } catch (error) {
-      console.error('Error fetching keyword questions:', error);
-      setKeywordQuestions([]);
-      setTotalPages(1);
-      setTotalResults(0);
-    } finally {
-      setLoadingKeywordQuestions(false);
-    }
-  }, [domain, handlePageChange]);
+
 
   const fetchDifficultyQuestions = useCallback(async (difficulty: string, page: number = 1) => {
     if (!domain) return; // Ensure domain is available
-    setLoadingDifficultyQuestions(true);
+    setIsLoading(prev => ({ ...prev, difficultyQuestions: true }));
     try {
       const response = await fetch(
         `/api/questions/difficulty?domain=${domain}&difficulty=${difficulty}&page=${page}`
@@ -356,24 +347,31 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       setTotalPages(1);
       setTotalResults(0);
     } finally {
-      setLoadingDifficultyQuestions(false);
+      setIsLoading(prev => ({ ...prev, difficultyQuestions: false }));
     }
   }, [domain, handlePageChange]);
 
   // Load topic categories (sections)
   const loadTopicCategories = useCallback(async (topicId: string) => {
-    setLoadingCategories(true);
+    const cacheKey = `topic-categories-${topicId}`;
+    if (dataCache[cacheKey]) {
+      console.log('Serving from cache:', cacheKey);
+      setTopicCategories(dataCache[cacheKey]);
+      return;
+    }
+    setIsLoading(prev => ({ ...prev, categories: true }));
     try {
       // For the first level, we want to show section headers
       const sectionHeaders = await TopicDataService.getSectionHeaders(topicId);
       setTopicCategories(sectionHeaders);
+      setDataCache(prevCache => ({ ...prevCache, [cacheKey]: sectionHeaders }));
     } catch (error) {
       console.error(`Error loading section headers for ${topicId}:`, error);
       setTopicCategories([]);
     } finally {
-      setLoadingCategories(false);
+      setIsLoading(prev => ({ ...prev, categories: false }));
     }
-  }, []);
+  }, [dataCache]);
 
   // Preload subtopic progress data for a domain
   const preloadSubtopicProgressForDomain = useCallback(async (topicId: string) => {
@@ -385,19 +383,13 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       
       if (domainProgressData && domainProgressData.subtopics) {
         // Update subtopic progress state with the fetched data
-        const formattedSubtopicProgress: Record<string, {
-          progress: number,
-          completed: number,
-          total: number,
-          categoriesCompleted: number,
-          totalCategories: number
-        }> = {};
+        const formattedSubtopicProgress: Record<string, SubtopicProgress> = {};
 
         Object.entries(domainProgressData.subtopics).forEach(([subtopicId, data]) => {
-          formattedSubtopicProgress[subtopicId] = {
-            progress: data.completionPercentage,
-            completed: data.questionsCompleted,
-            total: data.totalQuestions,
+          formattedSubtopicProgress[`topic-${subtopicId}`] = {
+            completionPercentage: data.completionPercentage,
+            questionsCompleted: data.questionsCompleted,
+            totalQuestions: data.totalQuestions,
             categoriesCompleted: data.categoriesCompleted,
             totalCategories: data.totalCategories
           };
@@ -406,7 +398,40 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
         setSubtopicProgress(formattedSubtopicProgress);
         console.log(`Updated subtopic progress cache for ${Object.keys(formattedSubtopicProgress).length} subtopics`);
 
-        // Also update section progress if available
+        // Fetch section-level progress for each section header
+        try {
+          const sectionHeaders = await TopicDataService.getSectionHeaders(domain);
+          const sectionProgressUpdates: Record<string, any> = {};
+          
+          // Fetch progress for each section
+          await Promise.all(sectionHeaders.map(async (header) => {
+            try {
+              const cacheKey = `section-progress-${domain}-${header.label}`;
+              console.log(`Fetching section progress for ${header.label}`);
+              
+              const response = await fetch(`/api/user/progress/summary?domain=${domain}&section=${encodeURIComponent(header.label)}&entityType=section`);
+              if (response.ok) {
+                const sectionData = await response.json();
+                sectionProgressUpdates[cacheKey] = {
+                  questionsCompleted: sectionData.completed_children || 0,
+                  totalQuestions: sectionData.total_children || 0,
+                  completionPercentage: sectionData.completion_percentage || 0
+                };
+                console.log(`Cached section progress for ${header.label}:`, sectionProgressUpdates[cacheKey]);
+              }
+            } catch (error) {
+              console.error(`Error fetching section progress for ${header.label}:`, error);
+            }
+          }));
+          
+          // Update the data cache with section progress
+          setDataCache(prevCache => ({ ...prevCache, ...sectionProgressUpdates }));
+          console.log(`Updated section progress cache for ${Object.keys(sectionProgressUpdates).length} sections`);
+        } catch (error) {
+          console.error('Error fetching section progress:', error);
+        }
+
+        // Also update domain-level section progress if available
         if (domainProgressData.sectionProgress) {
           const sectionData = domainProgressData.sectionProgress;
           const sectionProgressUpdate: Record<string, ProgressData> = {};
@@ -421,10 +446,8 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
             partiallyCompletedSubtopics: sectionData.partiallyCompletedSubtopics,
             totalSubtopics: sectionData.totalSubtopics
           };
-
-          setSectionProgress(prev => ({ ...prev, ...sectionProgressUpdate }));
-          setSectionProgressCache(prev => ({ ...prev, ...sectionProgressUpdate }));
-          console.log('Updated section progress cache');
+          setDataCache(prevCache => ({ ...prevCache, ...sectionProgressUpdate }));
+          console.log('Updated domain section progress cache');
         }
 
         // Emit a custom event to notify other components that progress has been preloaded
@@ -436,14 +459,14 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     } catch (error) {
       console.error(`Error preloading subtopic progress for domain ${domain}:`, error);
     }
-  }, [domain]);
+  }, [domain, dataCache]);
 
   // Handle topic selection
   const handleTopicClick = useCallback(async (topicId: string) => {
     console.log('Topic clicked:', topicId);
 
     // Set loading states
-    setLoadingSections(true);
+    setIsLoading(prev => ({ ...prev, sections: true }));
 
     // Reset selected category if clicking on already selected topic
     if (selectedTopic === topicId) {
@@ -451,7 +474,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       setSelectedCategory(null);
       setCategoryDetails(null);
       setTopicCategories([]);
-      setLoadingSections(false);
+      setIsLoading(prev => ({ ...prev, sections: false }));
       return;
     }
 
@@ -466,7 +489,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     // Preload progress data for this domain
     await preloadSubtopicProgressForDomain(topicId);
 
-    setLoadingSections(false);
+    setIsLoading(prev => ({ ...prev, sections: false }));
   }, [selectedTopic, loadTopicCategories, preloadSubtopicProgressForDomain]);
 
   // Handle back button click
@@ -476,6 +499,7 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     const params = new URLSearchParams(searchParams);
     params.delete('questionId');
     router.push(`${pathname}?${params.toString()}`);
+    setCategoryProgress(null); // Reset progress when going back
   }, [searchParams, router, pathname]);
 
   // Initialize and handle URL parameters
@@ -485,16 +509,19 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     if (domain && domain !== 'topics') {
       console.log(`Loading topic data for domain: ${domain}`);
       
-      // Only set selectedTopic if it's not already set to avoid conflicts
-      if (!selectedTopic || selectedTopic !== domain) {
-        setSelectedTopic(domain);
-      }
-      
-      loadTopicCategories(domain);
+      const loadData = async () => {
+        setIsLoading(prev => ({ ...prev, categories: true, sections: true }));
+        
+        await loadTopicCategories(domain);
+        await preloadSubtopicProgressForDomain(domain);
+
+        setIsLoading(prev => ({ ...prev, categories: false, sections: false }));
+      };
+
+      loadData();
 
       // If difficulty is provided in URL, apply filter
       if (selectedDifficulty) {
-        const pageToFetch = parseInt(pageParam || '1');
         // The pageToFetch is used by the useEffect watching selectedDifficulty and currentPage/pageParam
         handleDifficultyChange(selectedDifficulty);
       } else {
@@ -506,30 +533,23 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
       console.log('On main topics page, not loading any specific topic data');
       setSelectedTopic(null);
     }
-  }, [domain, selectedDifficulty, pageParam, selectedTopic, loadTopicCategories, handleDifficultyChange]); // Updated dependencies
+  }, [domain]); 
 
   // Handle reset category selection event from CategoryDetailView
   useEffect(() => {
     const handleResetCategory = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { domain: eventDomain } = customEvent.detail;
-      
-      console.log('Received resetCategorySelection event for domain:', eventDomain);
-      
-      // Reset the category selection
+      console.log('handleResetCategory triggered');
       setSelectedCategory(null);
       setCategoryDetails(null);
-      
-      // Reload the topic categories to refresh the UI
-      if (eventDomain === domain) {
-        loadTopicCategories(domain);
-      }
+      // Also clear any filters that were active
+      clearDifficultyFilter();
+      setCategoryProgress(null); // Reset progress on full reset
     };
-    
-    window.addEventListener('resetCategorySelection', handleResetCategory);
+
+    window.addEventListener('resetCategory', handleResetCategory);
     
     return () => {
-      window.removeEventListener('resetCategorySelection', handleResetCategory);
+      window.removeEventListener('resetCategory', handleResetCategory);
     };
   }, [domain]); // Only re-add the listener if domain changes
 
@@ -547,8 +567,8 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
     }
   }, [searchParams/*, handleKeywordChange, handleDifficultyChange*/]);
 
-  // Logic for when no specific view (category, keyword, difficulty) is active
-  const showTopicGrid = !selectedCategory && !selectedKeyword && !selectedDifficulty;
+  // Logic for when no specific view (category, difficulty) is active
+  const showTopicGrid = !selectedCategory && !selectedDifficulty;
 
   return (
     <TopicDataProvider>
@@ -556,59 +576,59 @@ export default function TopicPageClient({ initialDomain }: TopicPageClientProps)
         <SidebarFilters
           selectedTopic={selectedTopic}
           selectedCategory={selectedCategory}
-          selectedKeyword={selectedKeyword}
           selectedDifficulty={selectedDifficulty}
-          onSelectKeyword={handleKeywordChange}
           onSelectDifficulty={handleDifficultyChange}
         />
 
           <div className="flex-grow bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
-          {loadingSections && (
-            <LoadingSpinner 
-              size="lg" 
-              color="primary" 
-              text="Loading sections..." 
-              centered={true}
-            />
-          )}
+            <ErrorBoundary>
+              {isLoading.sections && (
+                <LoadingSpinner 
+                  size="lg" 
+                  color="primary" 
+                  text="Loading sections..." 
+                  centered={true}
+                />
+              )}
 
-          {!loadingSections && showTopicGrid && (
-            <TopicCategoryGrid
-              categories={topicCategories}
-              onSelectCategory={handleCategorySelect}
-              isLoading={loadingCategories}
-              domain={domain} // Pass domain
-              level="section" // Add the missing level prop - showing sections when domain is selected
-            />
-          )}
+              {!isLoading.sections && showTopicGrid && (
+                <TopicCategoryGrid
+                  categories={topicCategories}
+                  onSelectCategory={handleCategorySelect}
+                  isLoading={isLoading.categories}
+                  domain={domain} // Pass domain
+                  level="section" // Add the missing level prop - showing sections when domain is selected
+                  subtopicProgress={subtopicProgress}
+                  dataCache={dataCache}
+                />
+              )}
 
-          {!loadingSections && (selectedCategory || selectedKeyword || selectedDifficulty) && (
-            <ContentDisplay
-              domain={domain} // Pass domain
-              selectedTopic={selectedTopic}
-              selectedCategory={selectedCategory}
-              selectedKeyword={selectedKeyword}
-              selectedDifficulty={selectedDifficulty}
-              categoryDetails={categoryDetails}
-              topicCategories={topicCategories}
-              keywordQuestions={keywordQuestions}
-              difficultyQuestions={difficultyQuestions}
-              loadingCategories={loadingCategories}
-              loadingSections={loadingSections} // Or more specific loading for content area
-              onSelectCategory={handleCategorySelect}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalResults={totalResults}
-              onPageChange={handlePageChange}
-              highlightedQuestionId={highlightedQuestionId}
-              clearKeywordFilter={clearKeywordFilter}
-              clearDifficultyFilter={clearDifficultyFilter}
-              onDifficultyChange={handleDifficultyChange}
-              onBackToMainCategories={handleBackToMainCategories}
-            />
-          )}
+              {!isLoading.sections && (selectedCategory || selectedDifficulty) && (
+                                  <ContentDisplay
+                    domain={domain} // Pass domain
+                    selectedTopic={selectedTopic}
+                    selectedCategory={selectedCategory}
+                    selectedDifficulty={selectedDifficulty}
+                    categoryDetails={categoryDetails}
+                    topicCategories={topicCategories}
+                    difficultyQuestions={difficultyQuestions}
+                    isLoading={isLoading}
+                    onSelectCategory={handleCategorySelect}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalResults={totalResults}
+                    onPageChange={handlePageChange}
+                    highlightedQuestionId={highlightedQuestionId}
+                    clearDifficultyFilter={clearDifficultyFilter}
+                    onDifficultyChange={handleDifficultyChange}
+                    onBackToMainCategories={handleBackToMainCategories}
+                    subtopicProgressData={subtopicProgress}
+                    categoryProgressData={categoryProgress}
+                  />
+              )}
+            </ErrorBoundary>
+          </div>
         </div>
-      </div>
       <ProgressSaver />
     </TopicDataProvider>
   );

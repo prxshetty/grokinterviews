@@ -1,59 +1,48 @@
 import Link from 'next/link';
-import { StatsSection, TopicCarousel, CompanyList, ProjectsSection, RandomHeadline } from './components';
+import {
+  StatsSection,
+  TopicCarousel,
+  CompanyList,
+  FeatureSection,
+} from '@/components/home';
 
 export default async function Home() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full pt-4 px-8 md:px-12 relative font-sans">
-      {/* Background for Hero Section */}
-      <div className="absolute inset-0 w-full h-screen overflow-hidden pointer-events-none z-0">
-        <div className="absolute inset-0 bg-white dark:bg-black">
-          {/* Light mode SVG background */}
-          <div className="absolute inset-0 block dark:hidden opacity-20">
-            <img
-              src="/bg/complete-bg.svg"
-              alt="Background Pattern"
-              className="absolute top-0 left-0 w-full h-full object-contain"
-            />
-          </div>
-          {/* Dark mode - Subtle radial gradient for depth */}
-          <div className="absolute inset-0 bg-gradient-radial from-gray-900 to-black opacity-30 hidden dark:block"></div>
-        </div>
-      </div>
-
       {/* Hero Section */}
-      <div className="hero-section relative z-10 flex flex-col md:flex-row justify-between items-center mt-24 md:mt-16">
-        <div className="w-full md:w-5/12 mb-8 md:mb-0">
-          <h1 className="text-3xl md:text-4xl mb-6 font-normal tracking-tight">Grok Interviews</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-            Browse interview questions by topic and find relevant questions for specific job roles.
-          </p>
-          <Link
-            href="/topics"
-            className="group inline-block mt-2 text-sm text-black dark:text-white relative"
-          >
-            <span className="relative inline-block">
-              Explore topics →
-              {/* Single underline */}
-              <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-black dark:bg-white transition-all duration-300 group-hover:w-full"></span>
-            </span>
-          </Link>
-        </div>
-
-        <div className="w-full md:w-7/12 flex justify-center md:justify-end items-center">
-          <div className="text-right">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.9] text-black dark:text-white">
-              <div>THE WAIT IS</div>
-              <div>OVER.</div>
-              <div>DOMINATE</div>
-              <div className="mt-4">NOW</div>
-            </h1>
+      <div className="hero-section relative z-10 flex flex-col justify-center items-start min-h-screen pt-24 md:pt-32">
+        <div className="w-full">
+          <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-light tracking-wide">
+            GrokInterviews
+          </h2>
+          <h1 className="text-5xl md:text-7xl mt-2 font-light tracking-tight leading-tight text-black dark:text-white">
+            Ace Your Tech Interview.
+          </h1>
+          <div className="mt-12 flex items-center gap-4">
+            <p className="text-lg text-gray-500 dark:text-gray-400">
+              Explore
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {['AI', 'ML', 'Web Dev','System Design', 'DSA'].map((domain) => (
+                <Link
+                  key={domain}
+                  href={`/topics/${domain.toLowerCase().replace(' ', '-')}`}
+                  className="group relative overflow-hidden rounded-full border border-blue-500 px-5 py-2 text-sm font-medium hover:bg-blue-500 dark:border-blue-400 dark:hover:bg-blue-400 transition-colors duration-200"
+                >
+                  <div className="flex flex-col transition-transform duration-300 ease-in-out transform group-hover:-translate-y-1/2 h-[20px] leading-[20px]">
+                    <span className="text-blue-500 dark:text-blue-400">{domain}</span>
+                    <span className="text-white dark:text-black">{domain}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Stats Section */}
-      <div className="mt-32 md:mt-40">
+      <div className="mt-16 md:mt-24">
         <StatsSection />
       </div>
 
@@ -70,9 +59,9 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Projects Section */}
+      {/* Feature Section */}
       <div className="mt-16 mb-24">
-        <ProjectsSection />
+        <FeatureSection />
       </div>
 
     </div>

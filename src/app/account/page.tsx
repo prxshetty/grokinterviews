@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
-import { DemoButton } from '../components/ui';
-import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { DemoButton } from '@/components/ui';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Image from 'next/image';
 import { toast } from 'sonner';
 

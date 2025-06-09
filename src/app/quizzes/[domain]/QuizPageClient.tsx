@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopicDataService from '@/services/TopicDataService';
-import { QuizTopicNav } from '@/app/components/quiz-ui';
-import QuizInterface from '@/app/components/quiz-ui/QuizInterface';
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner';
+import QuizInterface from '@/components/quiz-ui/QuizInterface';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Define types
 type CategoryItem = {
@@ -36,9 +35,10 @@ interface QuestionType {
 // Props for the client component
 interface QuizPageClientProps {
   initialDomain: string;
+  domainName: string;
 }
 
-export default function QuizPageClient({ initialDomain }: QuizPageClientProps) {
+export default function QuizPageClient({ initialDomain, domainName }: QuizPageClientProps) {
   const [domain, setDomain] = useState<string>(initialDomain);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(domain || null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
@@ -62,30 +62,6 @@ export default function QuizPageClient({ initialDomain }: QuizPageClientProps) {
       setQuizQuestions([]);
     }
   }, [domain]);
-
-  // Handle topic selection
-  const handleTopicSelect = async (topicId: string) => {
-    console.log('Topic selected:', topicId);
-
-    // If clicking the same topic that is already selected, force a complete refresh
-    if (selectedTopic === topicId) {
-      router.replace(`/quizzes/${topicId}`);
-      return;
-    }
-
-    // Set the selected topic
-    setSelectedTopic(topicId);
-
-    // Reset other states
-    setSelectedCategory(null);
-    setQuizQuestions([]);
-
-    // Load topic categories
-    await loadTopicCategories(topicId);
-
-    // Navigate to the correct /quizzes/[domain] page
-    router.push(`/quizzes/${topicId}`);
-  };
 
   // Load topic categories (sections)
   const loadTopicCategories = async (topicId: string) => {
@@ -247,82 +223,78 @@ export default function QuizPageClient({ initialDomain }: QuizPageClientProps) {
     }
   };
 
-  // Handle back button click
   const handleBackToTopics = () => {
     setSelectedCategory(null);
     setQuizQuestions([]);
   };
 
-  return (
-    <div className="bg-white dark:bg-black min-h-screen">
-      <div className="w-full px-0">
-        <div className="transition-opacity duration-300">
-          <div className="p-0">
-            {/* Topic Navigation - always show for domain selection */}
-            <div className="topic-navigation w-full sticky top-12 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-md px-0 mt-0 border-b border-gray-200 dark:border-gray-800">
-              <div className="w-full">
-                <QuizTopicNav
-                  onTopicSelect={handleTopicSelect}
-                  selectedTopic={selectedTopic}
-                />
-              </div>
-            </div>
-
-            {/* Main content area */}
-            <div className="container mx-auto px-4 md:px-6 py-8">
-              {selectedTopic && !selectedCategory && !loadingCategories && (
-                <div className="mb-8">
-                  <h2 className="text-2xl font-semibold mb-6 text-center">Select a Topic for Your Quiz</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {topicCategories.map((category) => (
-                      <div
-                        key={category.id}
-                        onClick={() => handleCategorySelect(category.id)}
-                        className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm hover:shadow-md"
-                      >
-                        <div className="flex items-center mb-3">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-black dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                          <h3 className="text-lg font-medium">{category.label}</h3>
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                          Test your knowledge with a quiz on this topic
-                        </p>
-                        <div className="mt-4 text-right">
-                          <span className="inline-block px-3 py-1 bg-black text-white dark:bg-white dark:text-black text-xs rounded-full">
-                            Start Quiz
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selectedTopic && selectedCategory && (
-                <QuizInterface
-                  questions={quizQuestions}
-                  isLoading={loadingQuestions}
-                  onBackClick={handleBackToTopics}
-                  topicName={topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Quiz'}
-                />
-              )}
-
-              {loadingCategories && (
-                <div className="flex items-center justify-center py-20">
-                  <LoadingSpinner 
-                    size="xl" 
-                    color="primary" 
-                    text="Loading quiz topics..."
-                    centered={true}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+  if (!selectedTopic) {
+    return (
+      <div className="text-center py-20">
+        <h1 className="text-2xl font-semibold mb-4">Select a Quiz Domain</h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Choose a domain from the navigation to start a quiz.
+        </p>
       </div>
-    </div>
+    );
+  }
+
+  if (selectedTopic && !selectedCategory) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+            {domainName} Quizzes
+          </h1>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+            Test your knowledge in {domainName}. Select a topic to begin.
+          </p>
+        </div>
+        {loadingCategories ? (
+          <div className="flex items-center justify-center py-20">
+            <LoadingSpinner 
+              size="xl" 
+              color="primary" 
+              text="Loading quiz topics..."
+              centered={true}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {topicCategories.map((category) => (
+              <div
+                key={category.id}
+                onClick={() => handleCategorySelect(category.id)}
+                className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm hover:shadow-md"
+              >
+                <div className="flex items-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-black dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <h3 className="text-lg font-medium">{category.label}</h3>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  Test your knowledge with a quiz on this topic
+                </p>
+                <div className="mt-4 text-right">
+                  <span className="inline-block px-3 py-1 bg-black text-white dark:bg-white dark:text-black text-xs rounded-full">
+                    Start Quiz
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <QuizInterface
+      questions={quizQuestions}
+      isLoading={loadingQuestions}
+      onBackClick={handleBackToTopics}
+      topicName={topicCategories.find(cat => cat.id === selectedCategory)?.label || 'Quiz'}
+    />
   );
 }

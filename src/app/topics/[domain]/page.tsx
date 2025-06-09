@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import TopicPageClient from './TopicPageClient'; // Import the new client component
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Define the expected props structure for the Server Component page
 interface PageProps {

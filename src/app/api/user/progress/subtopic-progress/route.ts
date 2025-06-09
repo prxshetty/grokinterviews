@@ -122,8 +122,8 @@ export async function GET(request: NextRequest) {
     // Calculate how many categories are "completed" (all questions completed)
     let categoriesCompleted = 0;
 
-    // For each category ID associated with the subtopic
-    for (const categoryIdStr in questionsByCategory) {
+    // Use Object.keys to iterate only over own properties of the questionsByCategory object
+    for (const categoryIdStr of Object.keys(questionsByCategory)) {
         const categoryId = parseInt(categoryIdStr, 10);
         if (isNaN(categoryId)) continue; // Skip if parsing fails
 
@@ -153,24 +153,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Calculate completion percentage based primarily on category completion
-    let completionPercentage = 0;
-    if (totalCategories > 0) {
-      // Use category completion for percentage
-      completionPercentage = Math.round((categoriesCompleted / totalCategories) * 100);
-      console.log(`Calculating percentage based on categories: ${categoriesCompleted}/${totalCategories}`);
-    } else if (totalQuestions > 0) {
-      // Fallback to question-based progress if no categories exist
-      completionPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
-      console.log(`Calculating percentage based on questions (fallback): ${questionsCompleted}/${totalQuestions}`);
-    }
+    // Calculate completion percentage based on question completion, not category completion.
+    const completionPercentage = totalQuestions > 0
+      ? Math.round((questionsCompleted / totalQuestions) * 100)
+      : 0;
     
-    // Ensure 100% if all categories are done (and there are categories)
-    if (totalCategories > 0 && categoriesCompleted === totalCategories) {
-      completionPercentage = 100;
-      console.log("Setting percentage to 100% as all categories are complete.");
-    }
-
     // Log a summary with updated calculation source
     console.log(`Subtopic ${subtopicId} progress (calculated live): ${questionsCompleted}/${totalQuestions} questions, ${categoriesCompleted}/${totalCategories} categories, ${completionPercentage}% complete`);
 

@@ -15,7 +15,7 @@ module.exports = {
         orange: {
           500: '#F84C1E',
         },
-        background: '#dfe3ec',
+        background: 'var(--background-color)',
         card: '#f5f9fc',
         border: 'hsl(var(--border))',
         foreground: 'hsl(var(--foreground))',
