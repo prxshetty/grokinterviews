@@ -53,7 +53,7 @@ export function QuestionHeader({
         ) : (
           <div className="mr-2 w-5 flex-shrink-0"></div> // Placeholder for alignment
         )}
-        <h4 className="font-medium text-gray-900 dark:text-white"> {/* Removed pr-4, handled by parent div */}
+        <h4 className="font-medium text-gray-900 dark:text-white whitespace-normal">
           {questionText || 'Question text not available'}
         </h4>
       </div>

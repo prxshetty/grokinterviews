@@ -33,7 +33,7 @@ export default function ProgressBar({
   // For display, if progress is very small but > 0, set a minimum width to make it visible
   const displayWidth = (safeProgress > 0 && safeProgress < 2) ? 2 : safeProgress;
   
-  const progressColor = 'bg-green-500 dark:bg-green-400';
+  const progressColor = 'bg-gray-900 dark:bg-gray-100';
 
   return (
     <div className={`flex items-center ${className}`}>

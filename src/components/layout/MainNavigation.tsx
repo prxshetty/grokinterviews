@@ -42,11 +42,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   const supabase = createClientComponentClient();
 
   const isTopicPage = pathname.startsWith('/topics');
-  const isQuizPage = pathname.startsWith('/quizzes');
   const isTopicDetailPage = isTopicPage && pathname !== '/topics';
-  const isQuizDetailPage = isQuizPage && pathname !== '/quizzes';
 
-  const extractDomainFromPath = (path: string, section: 'topics' | 'quizzes') => {
+  const extractDomainFromPath = (path: string, section: 'topics') => {
     const parts = path.split('/');
     if (parts.length >= 3 && parts[1] === section) {
       return parts[2];
@@ -130,17 +128,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     router.refresh();
   };
 
-  const quizzesDropdown = (
-    <div className="flex items-center">
-      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-        Quizzes
-      </span>
-      <sup className="ml-1 text-xs font-medium text-gray-500 dark:text-gray-400 opacity-75">
-        Coming Soon
-      </sup>
-    </div>
-  );
-
   const logoElement = (
     <Link href="/" className="flex items-center whitespace-nowrap">
       <span className="text-lg md:text-xl font-normal tracking-tight text-black dark:text-white">Grok Interviews</span>
@@ -177,6 +164,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             </Link>
 
             {user && (
+              <>
                 <Link
                   href="/dashboard"
                   className="flex items-center text-sm font-medium text-gray-700 transition-colors duration-300 hover:text-black dark:text-gray-300 dark:hover:text-white"
@@ -186,6 +174,13 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                     BETA
                   </sup>
                 </Link>
+                <Link
+                  href="/dashboard/activity"
+                  className="flex items-center text-sm font-medium text-gray-700 transition-colors duration-300 hover:text-black dark:text-gray-300 dark:hover:text-white"
+                >
+                  <span>Activity</span>
+                </Link>
+              </>
             )}
 
             <div
@@ -227,7 +222,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             </div>
 
             {isTopicPage && <div className="h-6 border-l border-gray-300 dark:border-gray-700" />}
-            {quizzesDropdown}
             
             <Link
               href="/about"
@@ -271,12 +265,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   <User className="mr-2 h-4 w-4" />
                   <span>Account</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/dashboard/bookmarks')} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-                  </svg>
-                  <span>Bookmarks</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleDarkMode} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
                   {isDarkMode ? (
                     <>
@@ -313,7 +301,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       </header>
 
       <div style={{ paddingTop: '80px' }}>
-        <main className={isTopicDetailPage || isQuizDetailPage ? "w-full px-8 py-8" : "w-full px-8"}>
+        <main className={isTopicDetailPage ? "w-full px-8 py-8" : "w-full px-8"}>
           {children}
         </main>
       </div>

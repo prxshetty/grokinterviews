@@ -395,6 +395,17 @@ export default function CategoryDetailView({
     );
   }
 
+  if (selectedSubtopic && isLoading) {
+    return (
+      <LoadingSpinner 
+        size="lg" 
+        color="primary" 
+        text="Loading topic questions..." 
+        centered={true}
+      />
+    )
+  }
+
   // If a subtopic is selected, show its details
   if (selectedSubtopic && subtopicDetails) {
     return (
@@ -403,32 +414,33 @@ export default function CategoryDetailView({
           <h1 className="text-4xl font-light tracking-tight md:text-5xl">
             {subtopicDetails.label}
           </h1>
-          <button
-            onClick={handleBackToCategory}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            title={`Back to ${categoryDetails?.label || 'Category'}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
+              <FloatingSettings
+                selectedDifficulty={propSelectedDifficulty || null}
+                onSelectDifficulty={handleDifficultySelect}
+                className="mr-2"
+              />
+            )}
+            <button
+              onClick={handleBackToCategory}
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              title={`Back to ${categoryDetails?.label || 'Category'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+          </div>
         </div>
         
-        {/* Floating Settings for difficulty filter */}
-        {subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
-          <FloatingSettings
-            selectedDifficulty={propSelectedDifficulty || null}
-            onSelectDifficulty={handleDifficultySelect}
-          />
-        )}
-
         {/* When we have questions grouped by categories */}
         {hasGroupedQuestions ? (
           <div>
             {Object.entries(questionsByCategory).map(([categoryId, category]) => (
               <div key={categoryId} className="mb-12">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-light tracking-wide">{category.name}</h2>
+                  <h2 className="text-4xl font-light tracking-tight md:text-2xl">{category.name}</h2>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
                   </span>
@@ -461,7 +473,7 @@ export default function CategoryDetailView({
         ) : memoizedFilteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
           <div>
-            <h2 className="text-2xl font-light tracking-wide mb-6">Questions</h2>
+            <h2 className="text-4xl font-light tracking-tight md:text-5xl mb-6">Questions</h2>
             <div className="overflow-hidden">
               {memoizedFilteredQuestions.map((question, index) => (
                 <QuestionWithAnswer 
@@ -492,15 +504,24 @@ export default function CategoryDetailView({
         <h1 className="text-4xl font-light tracking-tight md:text-5xl">
           {categoryDetails?.label}
         </h1>
-        <button
-          onClick={handleBackToMainCategories}
-          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          title={`Back to ${domain}`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          {hasQuestions && onDifficultyChange && (
+            <FloatingSettings
+              selectedDifficulty={propSelectedDifficulty || null}
+              onSelectDifficulty={handleDifficultySelect}
+              className="mr-2"
+            />
+          )}
+          <button
+            onClick={handleBackToMainCategories}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            title={`Back to ${domain}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+        </div>
       </div>
       
       {/* If the category has subtopics, show them */}
@@ -528,19 +549,11 @@ export default function CategoryDetailView({
         </div>
       )}
       
-      {/* Floating Settings for difficulty filter */}
-      {hasQuestions && onDifficultyChange && (
-        <FloatingSettings
-          selectedDifficulty={propSelectedDifficulty || null}
-          onSelectDifficulty={handleDifficultySelect}
-        />
-      )}
-      
       {/* Show questions if available */}
       {hasQuestions && (
         <div>
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-2xl font-light tracking-wide">Questions</h2>
+            <h2 className="text-4xl font-light tracking-tight md:text-5xl">Questions</h2>
             {categoryProgress && (
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed
