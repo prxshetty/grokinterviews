@@ -41,7 +41,7 @@ function convertQuestionsToLegacyFormat(questions: Question[], categoryName: str
 // This function has been removed as we're now using the database exclusively
 
 export async function GET(request: NextRequest) {
-  try {
+  try { // OUTERMOST TRY BLOCK
     const url = new URL(request.url);
     const categoryId = url.searchParams.get('categoryId');
     const topicId = url.searchParams.get('topicId');
@@ -117,6 +117,7 @@ export async function GET(request: NextRequest) {
           }
         } catch (dbError) {
           console.error(`Error fetching category from database for ${topicId}/${categoryId}:`, dbError);
+          // Do not rethrow here, let the code proceed to return 404 or 500 based on dbQuestions
         }
         console.timeEnd('category-query');
 
@@ -152,6 +153,7 @@ export async function GET(request: NextRequest) {
     }
 
     // If only topicId is provided or no parameters, return all categories
+    // This part also needs to be within the outermost try block
     try {
       console.time('categories-query');
 
@@ -160,44 +162,44 @@ export async function GET(request: NextRequest) {
         console.log(`Fetching categories for specific topic: ${topicId}`);
 
         // Check if topicId is a number or a name/domain
-        let topicIdCondition;
+        let topicIdResolved: string | number;
         if (!isNaN(Number(topicId))) {
           // It's a number, use it directly
-          topicIdCondition = { topic_id: topicId };
+          topicIdResolved = Number(topicId);
         } else {
-          // It's a name or domain, need to join with topics table
-          // First, get the topic ID from the name or domain
-          const { data: topic, error: topicError } = await supabaseServer
+          // It's a name or domain, need to get the numeric ID
+          const { data: topicData, error: topicError } = await supabaseServer
             .from('topics')
             .select('id')
             .or(`name.eq.${topicId},domain.eq.${topicId}`)
-            .limit(1);
+            .single(); // Use single() as we expect one or zero matches
 
-          if (topicError || !topic || topic.length === 0) {
+          if (topicError || !topicData) {
             console.error(`Error fetching topic ID for ${topicId}:`, topicError);
             return NextResponse.json(
               { error: `Topic not found: ${topicId}` },
               { status: 404 }
             );
           }
-
-          topicIdCondition = { topic_id: topic[0].id };
+          topicIdResolved = topicData.id;
         }
 
         // Get categories for this topic
         const { data: categories, error: categoriesError } = await supabaseServer
           .from('categories')
           .select('*')
-          .eq('topic_id', topicIdCondition.topic_id)
+          .eq('topic_id', topicIdResolved)
           .order('name');
 
         if (categoriesError) {
           console.error(`Error fetching categories for topic ${topicId}:`, categoriesError);
+          // This throw will be caught by the outer catch if not by an inner one
           throw categoriesError;
         }
 
         // Return categories for this topic
         const result: Record<string, any> = {};
+        // Ensure the key used in result matches the original topicId string if it was a name/domain
         result[topicId] = convertCategoriesToLegacyFormat(categories || []);
 
         console.timeEnd('categories-query');
@@ -242,17 +244,17 @@ export async function GET(request: NextRequest) {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache
         },
       });
-    } catch (error) {
-      console.error('Error fetching all categories:', error);
+    } catch (error) { // Inner catch for the all categories/specific topic part
+      console.error('Error processing categories request:', error);
       return NextResponse.json(
-        { error: 'Failed to load categories' },
+        { error: 'Failed to load categories', details: error instanceof Error ? error.message : String(error) },
         { status: 500 }
       );
     }
-  } catch (error) {
-    console.error('Error in categories API route:', error);
+  } catch (e) { // OUTERMOST CATCH BLOCK
+    console.error('Unhandled error in GET /api/topics/categories:', e);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'An unexpected server error occurred.', details: e instanceof Error ? e.message : String(e) },
       { status: 500 }
     );
   }
