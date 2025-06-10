@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, memo, useMemo, useCallback, Suspense } from 'react';
-import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed } from '@/app/utils/progress';
+import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed, toggleQuestionBookmark } from '@/app/utils/progress';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import React from 'react';
 import { toast } from '@/hooks/use-toast';
@@ -280,11 +280,42 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
     }
   };
 
-  const handleBookmarkChange = useCallback((newBookmarkStatus: boolean) => {
-    setIsBookmarked(newBookmarkStatus);
-  }, []);
+  const toggleBookmark = async () => {
+    const newBookmarkStatus = !isBookmarked;
+    setIsBookmarked(newBookmarkStatus); // Optimistic update
 
+    try {
+      const success = await toggleQuestionBookmark(
+        question.id,
+        newBookmarkStatus,
+        topicId || question.topic_id || 0,
+        categoryId || 0
+      );
 
+      if (success) {
+        if (newBookmarkStatus) {
+            toast.success("Bookmarked", {
+                description: "Question added to your bookmarks."
+            });
+        } else {
+            toast("Bookmark Removed", {
+                description: "Question removed from your bookmarks."
+            });
+        }
+      } else {
+        setIsBookmarked(!newBookmarkStatus); // Revert
+        toast.error("Failed to update bookmark", {
+            description: "Please try again."
+        });
+      }
+    } catch (error) {
+      setIsBookmarked(!newBookmarkStatus); // Revert
+      console.error("Failed to toggle bookmark:", error);
+      toast.error("An unexpected error occurred", {
+        description: "Please try again."
+      });
+    }
+  };
 
   const handleSetAnswerRef = useCallback((el: HTMLDivElement | null) => {
     answerRef.current = el;
@@ -302,48 +333,71 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
       }`}
     >
       <div className="py-6 px-0">
-        <div className="flex items-center justify-between cursor-pointer" onClick={toggleExpansion}>
-          <h3 className="text-lg font-normal text-gray-900 dark:text-gray-100 pr-8 leading-relaxed">
-            {question.question_text}
-          </h3>
-          <div className="flex items-center space-x-3">
-            {/* Completion and bookmark indicators */}
-            <div className="flex items-center space-x-2">
-              {isCompleted && (
-                <div title="Completed">
-                  <svg 
-                    className="w-5 h-5 text-green-500" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3 flex-grow min-w-0 cursor-pointer" onClick={toggleExpansion} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && toggleExpansion()}>
+            {isCompleted && (
+              <div title="Completed" className="flex-shrink-0">
+                <svg 
+                  className="w-5 h-5 text-green-500" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+            <h3 className="text-lg font-normal text-gray-900 dark:text-gray-100 pr-4 leading-relaxed whitespace-normal">
+              {question.question_text}
+            </h3>
+          </div>
+          
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            {/* Bookmark button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleBookmark();
+              }}
+              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+            >
+              {isBookmarked ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-3.125L5 18V4z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
               )}
-              {isBookmarked && (
-                <div className="w-2 h-2 bg-blue-500 rounded-full" title="Bookmarked"></div>
-              )}
-            </div>
+            </button>
             
             {/* Expand/collapse arrow */}
-            <svg 
-              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+            <button
+              onClick={toggleExpansion}
+              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-expanded={isExpanded}
+              aria-controls={`answer-${question.id}`}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+              <svg 
+                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {isExpanded && (
-          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
+          <div id={`answer-${question.id}`} className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
             {/* Display additional resources first */}
-            <React.Suspense fallback={<ResourceListSkeleton />}>
+            <Suspense fallback={<ResourceListSkeleton />}>
               <ResourceList questionId={questionId} />
-            </React.Suspense>
+            </Suspense>
             
             <AnswerDisplay
               answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}

@@ -36,9 +36,9 @@ export default async function Home() {
                   href={`/topics/${domain.toLowerCase().replace(' ', '-')}`}
                   className="group relative overflow-hidden rounded-full border border-blue-500 px-5 py-2 text-sm font-medium hover:bg-blue-500 dark:border-blue-400 dark:hover:bg-blue-400 transition-colors duration-200"
                 >
-                  <div className="flex flex-col transition-transform duration-300 ease-in-out transform group-hover:-translate-y-1/2 h-[20px] leading-[20px]">
-                    <span className="text-blue-500 dark:text-blue-400">{domain}</span>
-                    <span className="text-white dark:text-black">{domain}</span>
+                  <div className="flex flex-col h-[20px] leading-[20px]">
+                    <span className="text-blue-500 dark:text-blue-400 group-hover:hidden">{domain}</span>
+                    <span className="text-white dark:text-black hidden group-hover:inline">{domain}</span>
                   </div>
                 </Link>
               ))}

@@ -46,16 +46,16 @@ export default function BookmarksPage() {
     fetchBookmarks();
   }, []);
 
-  // Group bookmarks by topic
+  // Group bookmarks by domain
   const groupedBookmarks: Record<string, Bookmark[]> = {};
   bookmarks.forEach(bookmark => {
-    const topicName = bookmark.topicName || 'Other';
+    const domainName = bookmark.domain?.toUpperCase() || 'Other';
 
-    if (!groupedBookmarks[topicName]) {
-      groupedBookmarks[topicName] = [];
+    if (!groupedBookmarks[domainName]) {
+      groupedBookmarks[domainName] = [];
     }
 
-    groupedBookmarks[topicName].push(bookmark);
+    groupedBookmarks[domainName].push(bookmark);
   });
 
   return (
@@ -92,17 +92,17 @@ export default function BookmarksPage() {
             </div>
           ) : (
             <div className="space-y-8">
-              {Object.entries(groupedBookmarks).map(([topicName, topicBookmarks]) => (
-                <div key={topicName} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+              {Object.entries(groupedBookmarks).map(([domainName, domainBookmarks]) => (
+                <div key={domainName} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
                   <div className="bg-gray-50 dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100">{topicName}</h2>
+                    <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100">{domainName}</h2>
                   </div>
                   <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {topicBookmarks.map(bookmark => (
+                    {domainBookmarks.map(bookmark => (
                       <div key={bookmark.id} className="p-6">
                         <div className="flex items-start">
                           <div className="flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                               <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                             </svg>
                           </div>
@@ -122,7 +122,7 @@ export default function BookmarksPage() {
                             <div className="mt-2">
                               <Link
                                 href={`/topics?questionId=${bookmark.questionId}`}
-                                className="text-xs font-medium text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300"
+                                className="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                               >
                                 View Question
                               </Link>

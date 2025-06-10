@@ -495,3 +495,18 @@ button:focus {
   position: relative; /* Needed for the absolute positioning of ::after */
   overflow: hidden; /* Keep the timer bar contained */
 }
+
+/* Glassy effect for Sonner toast in light mode */
+.sonner-glassy-toast {
+  background: rgba(255,255,255,0.8) !important;
+  border: 1px solid rgba(229,231,235,0.8) !important; /* Tailwind border-gray-200/80 */
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: #111827 !important; /* Tailwind text-black */
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08), 0 1.5px 4px 0 rgba(0,0,0,0.03) !important;
+}
+
+/* Darker subtitle for glassy toast in light mode */
+.sonner-glassy-toast [data-description] {
+  color: #374151 !important; /* Tailwind gray-700 */
+}
