@@ -1,6 +1,8 @@
 'use client';
 
-export default function TopicsPage() {
+import withAuth from '@/components/auth/withAuth';
+
+function TopicsPage() {
   return (
     <div className="bg-white dark:bg-black min-h-screen">
       {/* Empty content area - the TopicNav is now provided by MainNavigation */}
@@ -12,3 +14,5 @@ export default function TopicsPage() {
     </div>
   );
 }
+
+export default withAuth(TopicsPage);

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface ActivityData {
   date: string;
@@ -154,9 +155,7 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
       </div>
 
       {loading ? (
-        <div className="h-auto flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
-        </div>
+        <LoadingSpinner />
       ) : error ? (
         <div className="h-auto flex items-center justify-center py-8 text-red-500 dark:text-red-400">
           {error}

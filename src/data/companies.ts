@@ -23,4 +23,20 @@ export const companies = [
     name: 'Microsoft',
     svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h8v8H3V3zm0 10h8v8H3v-8zM13 3h8v8h-8V3zm0 10h8v8h-8v-8z"/></svg>'
   },
+  {
+    name: 'Salesforce',
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M10.006 5.415a4.195 4.195 0 0 1 3.045-1.306c1.56 0 2.954.9 3.69 2.205c.63-.3 1.35-.45 2.1-.45c2.85 0 5.159 2.34 5.159 5.22s-2.31 5.22-5.176 5.22c-.345 0-.69-.044-1.02-.104a3.75 3.75 0 0 1-3.3 1.95c-.6 0-1.155-.15-1.65-.375A4.314 4.314 0 0 1 8.88 20.4a4.302 4.302 0 0 1-4.05-2.82c-.27.062-.54.076-.825.076c-2.204 0-4.005-1.8-4.005-4.05c0-1.5.811-2.805 2.01-3.51c-.255-.57-.39-1.2-.39-1.846c0-2.58 2.1-4.65 4.65-4.65c1.53 0 2.85.705 3.72 1.8"/></svg>'
+  },
+  {
+    name: 'Uber',
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="74" height="34" viewBox="0 0 28 24"><text x="2" y="18" font-size="12" font-family="Arial, Helvetica, sans-serif" fill="currentColor">Uber</text></svg>'
+  },
+  {
+    name: 'Lyft',
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="74" height="34" viewBox="0 0 22 24"><text x="2" y="18" font-size="12" font-family="Arial, Helvetica, sans-serif" fill="currentColor">Lyft</text></svg>'
+  },
+  {
+    name: 'Databricks',
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" width="74" height="34" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="4" fill="currentColor"/><rect x="6" y="6" width="12" height="3" fill="currentColor"/><rect x="8" y="15" width="8" height="3" fill="currentColor"/></svg>'
+  },
 ];

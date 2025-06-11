@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
-import { DemoButton } from '../components/ui';
+import { DemoButton } from '@/components/ui';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
@@ -372,10 +373,12 @@ export default function AccountPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600 dark:border-purple-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your account...</p>
-        </div>
+        <LoadingSpinner 
+          size="lg" 
+          color="primary" 
+          text="Loading your account..."
+          centered={true}
+        />
       </div>
     );
   }
@@ -396,7 +399,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black bg-gradient-to-br from-white to-gray-50 dark:from-black dark:to-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Content Container */}
         <div className="flex flex-col">

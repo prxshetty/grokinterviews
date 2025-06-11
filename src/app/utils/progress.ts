@@ -5,37 +5,77 @@
 /**
  * Marks a question as viewed
  * @param questionId The ID of the viewed question
+ * @param topicId The ID of the topic (will be fetched from category if not provided)
+ * @param categoryId The ID of the category
+ * @returns Promise resolving to boolean indicating success
  */
-export const markQuestionAsViewed = async (questionId: number): Promise<void> => {
-  try {
-    await fetch('/api/user/progress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        questionId,
-        status: 'viewed',
-      }),
-    });
-  } catch (error) {
-    console.error('Failed to mark question as viewed:', error);
-  }
-};
-
-/**
- * Marks a question as completed
- * @param questionId The ID of the completed question
- * @param topicId The ID of the topic this question belongs to
- * @param categoryId The ID of the category this question belongs to
- */
-export const markQuestionAsCompleted = async (
-  questionId: number, 
-  topicId: number, 
-  categoryId: number
+export const markQuestionAsViewed = async (
+  questionId: number,
+  topicId: number | null | undefined,
+  categoryId: number | null | undefined
 ): Promise<boolean> => {
   try {
-    console.log(`Calling API to mark question ${questionId} (Topic: ${topicId}, Cat: ${categoryId}) as completed`);
+    // Validate that we have the required IDs
+    if (!questionId || !categoryId) {
+      console.error('Missing required fields: questionId and categoryId are required');
+      return false;
+    }
+
+    let finalTopicId = topicId;
+
+    // If topicId is missing, null, or 0, fetch it from the category
+    if (!finalTopicId || finalTopicId === 0) {
+      console.log(`Topic ID missing (${finalTopicId}), fetching from category ${categoryId}`);
+      
+      try {
+        const response = await fetch('/api/topics/categories', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Find the category and get its topic_id
+          if (data.categories && Array.isArray(data.categories)) {
+            const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
+            if (category && category.topic_id) {
+              finalTopicId = category.topic_id;
+              console.log(`Found topic ID ${finalTopicId} for category ${categoryId}`);
+            }
+          }
+        }
+      } catch (fetchError) {
+        console.error('Failed to fetch topic ID from category:', fetchError);
+      }
+
+      // If we still don't have a topic ID, try a different approach
+      if (!finalTopicId || finalTopicId === 0) {
+        console.log(`Still missing topic ID, trying direct category lookup for category ${categoryId}`);
+        try {
+          // Use the simple endpoint to get topic_id for this category
+          const categoryResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&getTopicOnly=true`);
+          if (categoryResponse.ok) {
+            const categoryData = await categoryResponse.json();
+            if (categoryData && categoryData.topicId) {
+              finalTopicId = categoryData.topicId;
+              console.log(`Found topic ID ${finalTopicId} via direct category lookup`);
+            }
+          }
+        } catch (directFetchError) {
+          console.error('Failed direct category lookup:', directFetchError);
+        }
+      }
+    }
+
+    // Final validation - ensure we have all required fields
+    if (!finalTopicId || finalTopicId === 0) {
+      console.error(`Unable to determine topic ID for category ${categoryId}. Cannot proceed with marking question as viewed.`);
+      return false;
+    }
+
+    console.log(`Calling API to mark question ${questionId} (Topic: ${finalTopicId}, Cat: ${categoryId}) as viewed`);
     const response = await fetch('/api/user/progress', {
       method: 'POST',
       headers: {
@@ -43,9 +83,9 @@ export const markQuestionAsCompleted = async (
       },
       body: JSON.stringify({
         questionId,
-        status: 'completed',
-        topicId,     // Pass topicId
-        categoryId   // Pass categoryId
+        status: 'viewed',
+        topicId: finalTopicId,     // Now guaranteed to be valid
+        categoryId: categoryId     // Now guaranteed to be valid
       }),
     });
 
@@ -56,11 +96,154 @@ export const markQuestionAsCompleted = async (
     }
 
     const data = await response.json();
-    console.log(`API response for marking question ${questionId} as completed:`, data);
+    console.log(`API response for marking question ${questionId} as viewed:`, data);
+
+    // Clear the cache for this subtopic on success
+    if (finalTopicId) {
+      clearSubtopicProgressCache(finalTopicId);
+    }
+
     return true;
   } catch (error) {
-    console.error('Failed to mark question as completed:', error);
+    console.error('Failed to mark question as viewed:', error);
     return false;
+  }
+};
+
+/**
+ * Marks a question as completed in user progress
+ * @param questionId The ID of the question to mark as completed
+ * @param topicId The ID of the topic (will be fetched from category if not provided)
+ * @param categoryId The ID of the category
+ * @returns Promise resolving to boolean indicating success
+ */
+export const markQuestionAsCompleted = async (
+  questionId: number, 
+  topicId: number | null | undefined, 
+  categoryId: number | null | undefined
+): Promise<boolean> => {
+  let retries = 3;
+  let delay = 1000; // Start with 1 second
+
+  while (retries > 0) {
+    try {
+      // Validate that we have the required IDs
+      if (!questionId || !categoryId) {
+        console.error('Missing required fields: questionId and categoryId are required');
+        return false;
+      }
+
+      let finalTopicId = topicId;
+
+      // If topicId is missing, null, or 0, fetch it from the category
+      if (!finalTopicId || finalTopicId === 0) {
+        console.log(`Topic ID missing (${finalTopicId}), fetching from category ${categoryId}`);
+        
+        try {
+          const response = await fetch('/api/topics/categories', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Find the category and get its topic_id
+            if (data.categories && Array.isArray(data.categories)) {
+              const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
+              if (category && category.topic_id) {
+                finalTopicId = category.topic_id;
+                console.log(`Found topic ID ${finalTopicId} for category ${categoryId}`);
+              }
+            }
+          }
+        } catch (fetchError) {
+          console.error('Failed to fetch topic ID from category:', fetchError);
+        }
+
+        // If we still don't have a topic ID, try a different approach
+        if (!finalTopicId || finalTopicId === 0) {
+          console.log(`Still missing topic ID, trying direct category lookup for category ${categoryId}`);
+          try {
+            // Use the simple endpoint to get topic_id for this category
+            const categoryResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&getTopicOnly=true`);
+            if (categoryResponse.ok) {
+              const categoryData = await categoryResponse.json();
+              if (categoryData && categoryData.topicId) {
+                finalTopicId = categoryData.topicId;
+                console.log(`Found topic ID ${finalTopicId} via direct category lookup`);
+              }
+            }
+          } catch (directFetchError) {
+            console.error('Failed direct category lookup:', directFetchError);
+          }
+        }
+      }
+
+      // Final validation - ensure we have all required fields
+      if (!finalTopicId || finalTopicId === 0) {
+        console.error(`Unable to determine topic ID for category ${categoryId}. Cannot proceed with progress update.`);
+        return false;
+      }
+
+      console.log(`Calling API to mark question ${questionId} (Topic: ${finalTopicId}, Cat: ${categoryId}) as completed`);
+      const response = await fetch('/api/user/progress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          questionId,
+          status: 'completed',
+          topicId: finalTopicId,     // Now guaranteed to be valid
+          categoryId: categoryId     // Now guaranteed to be valid
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status >= 500) { // Only retry for server errors
+          throw new Error(`API returned status ${response.status}`);
+        }
+        const errorText = await response.text();
+        console.error(`API returned non-retriable status ${response.status}:`, errorText);
+        return false; // Don't retry for client-side errors (4xx)
+      }
+
+      const data = await response.json();
+      console.log(`API response for marking question ${questionId} as completed:`, data);
+      
+      // Clear the cache for this subtopic on success
+      if (finalTopicId) {
+        clearSubtopicProgressCache(finalTopicId);
+      }
+      
+      return true; // Success, exit loop
+    } catch (error) {
+      console.error(`Failed to mark question as completed, attempt ${4 - retries}:`, error);
+      retries--;
+      if (retries === 0) {
+        console.error('All retries failed.');
+        return false;
+      }
+      await new Promise(res => setTimeout(res, delay));
+      delay *= 2; // Exponential backoff
+    }
+  }
+  return false; // Should be unreachable
+};
+
+/**
+ * Clears the cached progress data for a specific subtopic.
+ * @param subtopicId The ID of the subtopic whose cache needs to be cleared.
+ */
+const clearSubtopicProgressCache = (subtopicId: number): void => {
+  const cacheKey = `subtopic-progress-${subtopicId}`;
+  try {
+    sessionStorage.removeItem(cacheKey);
+    console.log(`Cache cleared for subtopic ${subtopicId}`);
+  } catch (error) {
+    console.error(`Could not clear cache for subtopic ${subtopicId}:`, error);
   }
 };
 
@@ -449,5 +632,160 @@ export const fetchProgressSummary = async (
       total_children: 0,
       timestamp: Date.now()
     };
+  }
+};
+
+/**
+ * Fetches progress data for all subtopics in a domain
+ * @param domain The domain (e.g., 'ml', 'ai', 'dsa')
+ * @param topicId Optional topic ID to filter by specific topic/section
+ * @param forceRefresh Whether to force a fresh fetch (bypass cache)
+ * @returns Promise resolving to domain subtopics progress data
+ */
+export const fetchDomainProgress = async (
+  domain: string,
+  topicId?: string,
+  forceRefresh: boolean = false
+): Promise<{
+  subtopics: Record<string, {
+    categoriesCompleted: number;
+    totalCategories: number;
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+    name: string;
+    section_name: string;
+  }>;
+  sectionProgress?: {
+    completionPercentage: number;
+    subtopicsCompleted: number;
+    partiallyCompletedSubtopics: number;
+    totalSubtopics: number;
+    questionsCompleted: number;
+    totalQuestions: number;
+  };
+  timestamp: number;
+}> => {
+  try {
+    console.log(`Fetching domain progress for ${domain}${topicId ? ` with topic ${topicId}` : ''}${forceRefresh ? ' (forced refresh)' : ''}`);
+
+    // Build the URL
+    let url = `/api/user/progress/domain-subtopics?domain=${domain}`;
+
+    if (topicId) {
+      url += `&topicId=${topicId}`;
+    }
+
+    // Add cache-busting parameter if forceRefresh is true
+    if (forceRefresh) {
+      url += `&_t=${Date.now()}`;
+    }
+
+    const response = await fetch(url, {
+      headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch domain progress data: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`Domain progress data for ${domain}:`, data);
+
+    return {
+      subtopics: data.subtopics || {},
+      sectionProgress: data.sectionProgress,
+      timestamp: data.timestamp || Date.now()
+    };
+  } catch (error) {
+    console.error(`Failed to fetch domain progress data for ${domain}:`, error);
+    return {
+      subtopics: {},
+      sectionProgress: undefined,
+      timestamp: Date.now()
+    };
+  }
+};
+
+/**
+ * Clears all client-side cached progress data for a specific domain
+ * @param domain The domain to clear cache for (e.g., 'ml', 'ai', 'dsa')
+ */
+export const clearDomainProgressCache = (domain: string): void => {
+  try {
+    console.log(`Clearing all cached progress data for domain: ${domain}`);
+    
+    // Clear localStorage completed questions for the domain
+    try {
+      const completedQuestions = JSON.parse(localStorage.getItem('completedQuestions') || '[]');
+      // We can't easily filter by domain here since we only have question IDs
+      // So we'll clear all completed questions to be safe
+      localStorage.removeItem('completedQuestions');
+      console.log('Cleared localStorage completedQuestions');
+    } catch (error) {
+      console.error('Error clearing localStorage completedQuestions:', error);
+    }
+
+    // Clear sessionStorage completed questions for the domain
+    try {
+      const sessionCompletedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
+      // Filter out questions from the specified domain if we have domain info
+      // Otherwise clear all to be safe
+      sessionStorage.removeItem('completedQuestions');
+      console.log('Cleared sessionStorage completedQuestions');
+    } catch (error) {
+      console.error('Error clearing sessionStorage completedQuestions:', error);
+    }
+
+    // Clear all subtopic progress caches from sessionStorage
+    try {
+      const keys = Object.keys(sessionStorage);
+      const subtopicKeys = keys.filter(key => key.startsWith('subtopic-progress-'));
+      subtopicKeys.forEach(key => {
+        sessionStorage.removeItem(key);
+        console.log(`Cleared sessionStorage key: ${key}`);
+      });
+    } catch (error) {
+      console.error('Error clearing subtopic progress caches:', error);
+    }
+
+    // Clear section progress caches that might contain domain-specific data
+    try {
+      const keys = Object.keys(sessionStorage);
+      const sectionKeys = keys.filter(key => key.includes(`section-progress-${domain}`));
+      sectionKeys.forEach(key => {
+        sessionStorage.removeItem(key);
+        console.log(`Cleared sessionStorage key: ${key}`);
+      });
+    } catch (error) {
+      console.error('Error clearing section progress caches:', error);
+    }
+
+    // Clear category details caches
+    try {
+      const keys = Object.keys(sessionStorage);
+      const categoryKeys = keys.filter(key => key.startsWith('category-details-'));
+      categoryKeys.forEach(key => {
+        sessionStorage.removeItem(key);
+        console.log(`Cleared sessionStorage key: ${key}`);
+      });
+    } catch (error) {
+      console.error('Error clearing category details caches:', error);
+    }
+
+    // Dispatch a custom event to notify components to refresh their data
+    try {
+      const event = new CustomEvent('domainProgressCleared', {
+        detail: { domain }
+      });
+      window.dispatchEvent(event);
+      console.log(`Dispatched domainProgressCleared event for domain: ${domain}`);
+    } catch (error) {
+      console.error('Error dispatching domainProgressCleared event:', error);
+    }
+
+    console.log(`Successfully cleared all cached progress data for domain: ${domain}`);
+  } catch (error) {
+    console.error(`Error clearing domain progress cache for ${domain}:`, error);
   }
 };
