@@ -8,10 +8,22 @@
   --card-background: #f5f9fc;
   --text-color: #333333;
 
+  /* Variables for IconHover3D */
+  --background: 255 255 255;
+  --foreground: 0 0 0;
+
   /* TiltedScroll component variables */
   --border: 215.4 16.3% 46.9%;
-  --foreground: 222.2 47.4% 11.2%;
+  --foreground-hsl: 222.2 47.4% 11.2%;
   --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  /* Chart color variables for light mode */
+  --chart-1: 220 9% 46%;
+  --chart-2: 220 13% 69%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
 
   /* Topic card colors */
   --tw-red-600: #dc2626;
@@ -35,9 +47,23 @@
 }
 
 .dark {
+  --background-color: #000000;
+
+  /* Variables for IconHover3D */
+  --background: 0 0 0;
+  --foreground: 255 255 255;
+
   --border: 217.2 32.6% 17.5%;
-  --foreground: 210 40% 98%;
+  --foreground-hsl: 210 40% 98%;
   --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+
+  /* Chart color variables for dark mode */
+  --chart-1: 220 13% 69%;
+  --chart-2: 220 9% 46%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
 }
 
 body {
@@ -468,4 +494,19 @@ button:focus {
 [data-sonner-toast] {
   position: relative; /* Needed for the absolute positioning of ::after */
   overflow: hidden; /* Keep the timer bar contained */
+}
+
+/* Glassy effect for Sonner toast in light mode */
+.sonner-glassy-toast {
+  background: rgba(255,255,255,0.8) !important;
+  border: 1px solid rgba(229,231,235,0.8) !important; /* Tailwind border-gray-200/80 */
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: #111827 !important; /* Tailwind text-black */
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08), 0 1.5px 4px 0 rgba(0,0,0,0.03) !important;
+}
+
+/* Darker subtitle for glassy toast in light mode */
+.sonner-glassy-toast [data-description] {
+  color: #374151 !important; /* Tailwind gray-700 */
 }
