@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Resource {
   id: number;
@@ -24,65 +25,66 @@ export function ResourceList({ questionId }: ResourceListProps) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchUserPreferences = async () => {
+      let prefs = {
+        use_youtube_sources: true,
+        use_pdf_sources: true,
+        use_paper_sources: true,
+        use_website_sources: true,
+        use_book_sources: false,
+        use_image_sources: false,
+      };
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: prefData, error: prefError } = await supabase
+            .from('user_preferences')
+            .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+          if (prefError) {
+            console.error('Error fetching user preferences:', prefError);
+          } else if (prefData) {
+            prefs = {
+              use_youtube_sources: prefData.use_youtube_sources ?? true,
+              use_pdf_sources: prefData.use_pdf_sources ?? true,
+              use_paper_sources: prefData.use_paper_sources ?? true,
+              use_website_sources: prefData.use_website_sources ?? true,
+              use_book_sources: prefData.use_book_sources ?? false,
+              use_image_sources: prefData.use_image_sources ?? false,
+            };
+          }
+        }
+      } catch (err) {
+        console.error('Error in session/preference logic:', err);
+      }
+      setPreferencesLoaded(true);
+      return prefs;
+    };
+
+    const fetchResources = async (userPrefs: any) => {
       if (!questionId) {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       setError(null);
 
       try {
-        // --- Part 1: Fetch user preferences ---
-        let currentPrefs = {
-          use_youtube_sources: true,
-          use_pdf_sources: true,
-          use_paper_sources: true,
-          use_website_sources: true,
-          use_book_sources: false,
-          use_image_sources: false,
-        };
-
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            const { data: prefData, error: prefError } = await supabase
-              .from('user_preferences')
-              .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-
-            if (prefError) {
-              console.error('Error fetching user preferences:', prefError);
-            } else if (prefData) {
-              currentPrefs = {
-                use_youtube_sources: prefData.use_youtube_sources ?? true,
-                use_pdf_sources: prefData.use_pdf_sources ?? true,
-                use_paper_sources: prefData.use_paper_sources ?? true,
-                use_website_sources: prefData.use_website_sources ?? true,
-                use_book_sources: prefData.use_book_sources ?? false,
-                use_image_sources: prefData.use_image_sources ?? false,
-              };
-            }
-          }
-        } catch (err) {
-          console.error('Error in session/preference logic:', err);
-        }
-
-        // --- Part 2: Fetch resources based on preferences ---
         const typesToInclude = [
-          currentPrefs.use_youtube_sources ? 'video' : null,
-          currentPrefs.use_pdf_sources ? 'pdf' : null,
-          currentPrefs.use_pdf_sources ? 'enhanced_pdf' : null,
-          currentPrefs.use_paper_sources ? 'paper' : null,
-          currentPrefs.use_website_sources ? 'website' : null,
-          currentPrefs.use_book_sources ? 'book' : null,
-          currentPrefs.use_image_sources ? 'image' : null,
+          userPrefs.use_youtube_sources ? 'video' : null,
+          userPrefs.use_pdf_sources ? 'pdf' : null,
+          userPrefs.use_pdf_sources ? 'enhanced_pdf' : null,
+          userPrefs.use_paper_sources ? 'paper' : null,
+          userPrefs.use_website_sources ? 'website' : null,
+          userPrefs.use_book_sources ? 'book' : null,
+          userPrefs.use_image_sources ? 'image' : null,
         ].filter(Boolean) as string[];
 
         if (typesToInclude.length === 0) {
@@ -98,9 +100,7 @@ export function ResourceList({ questionId }: ResourceListProps) {
           .in('type', typesToInclude)
           .order('relevance_score', { ascending: false });
 
-        if (resourceError) {
-          throw resourceError;
-        }
+        if (resourceError) throw resourceError;
 
         const processedData = data?.map(resource => {
           let previewUrl: string | undefined = undefined;
@@ -113,17 +113,15 @@ export function ResourceList({ questionId }: ResourceListProps) {
               } else if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com') {
                 videoId = url.searchParams.get('v');
               }
-              if (videoId) {
-                previewUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-              }
+              if (videoId) previewUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
             } catch (e) {
               console.error('Error parsing video URL:', e);
             }
           } else if (resource.type === 'website' && resource.url) {
             try {
-                previewUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(resource.url)}`;
+              previewUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(resource.url)}`;
             } catch (e) {
-                console.error('Error processing website URL for favicon:', e);
+              console.error('Error processing website URL for favicon:', e);
             }
           }
           return { ...resource, previewUrl };
@@ -132,43 +130,53 @@ export function ResourceList({ questionId }: ResourceListProps) {
 
       } catch (err) {
         console.error('Error fetching resources data:', err);
-        setError('An unexpected error occurred. Please try again later.');
+        setError('An unexpected error occurred while fetching resources. Please try again later.');
         setResources([]);
       } finally {
         setLoading(false);
       }
     };
+    
+    fetchUserPreferences().then(prefs => {
+        fetchResources(prefs);
+    });
 
-    fetchAllData();
   }, [questionId, supabase]);
 
-  // Function to group resources by type
   const getResourcesByType = (type: string) => {
-    return resources.filter(resource => resource.type === type).slice(0, 3);
+    return resources.filter(resource => resource.type === type).slice(0, 10); // Show up to 10 resources for horizontal scroll
   };
 
-  // Improved logic for no resources
-  if (loading) {
+  if (!preferencesLoaded || loading) {
     return (
-      <div className="flex justify-center items-center py-2">
+      <div className="flex justify-center items-center py-4">
         <InlineLoadingSpinner text="Loading resources..." />
       </div>
     );
   }
 
   if (error) {
-     return <div className="text-red-600 dark:text-red-400 text-xs py-2">Error loading resources: {error}</div>;
+    return <div className="text-red-600 dark:text-red-400 text-sm py-3 px-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-600/30 rounded-md">{error}</div>;
   }
 
-  // Explicitly check if resources array is empty *after* loading and no error
   if (resources.length === 0) {
-    return null; // Keep it hidden if nothing found, as per original potential intent
+    return (
+        <div className="text-sm text-gray-500 dark:text-gray-400 py-3 px-4 bg-gray-50 dark:bg-gray-800/20 border border-gray-200 dark:border-gray-700/30 rounded-md">
+            No additional resources found based on your current preferences.
+        </div>
+    );
   }
 
-  // Get the available resource types from the resources
   const resourceTypes = Array.from(new Set(resources.map(resource => resource.type)));
+  // Prioritize 'video' type
+  if (resourceTypes.includes('video')) {
+    const index = resourceTypes.indexOf('video');
+    if (index > -1) {
+      resourceTypes.splice(index, 1);
+      resourceTypes.unshift('video');
+    }
+  }
 
-  // Map the resource type to a human-readable label
   const getResourceTypeLabel = (type: string) => {
     switch (type) {
       case 'video': return 'Videos';
@@ -182,7 +190,6 @@ export function ResourceList({ questionId }: ResourceListProps) {
     }
   };
 
-  // Get the icon for each resource type
   const getResourceTypeIcon = (type: string) => {
     switch (type) {
       case 'video':
@@ -232,52 +239,83 @@ export function ResourceList({ questionId }: ResourceListProps) {
     }
   };
 
-  return (
-    <div className="mt-2 mb-4">
-      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Additional Resources:</h3>
-      {/* Use CSS Grid for dynamic columns */}
-      <div className={`grid gap-x-6 gap-y-4`} style={{ gridTemplateColumns: `repeat(${resourceTypes.length}, minmax(0, 1fr))` }}>
-        {resourceTypes.map(type => {
-          const typeResources = getResourcesByType(type);
-          if (typeResources.length === 0) return null;
+  const renderHorizontalScrollResources = (type: string) => {
+    const typeResources = getResourcesByType(type);
+    if (typeResources.length === 0) return null;
 
-          return (
-            // Each type becomes a grid item
-            <div key={type}>
-              <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center mb-1.5">
-                {getResourceTypeIcon(type)}
-                <span className="ml-1.5">{getResourceTypeLabel(type)}</span>
-              </h4>
-              <ul className="mt-1 space-y-1">
-                {typeResources.map(resource => (
-                  <li key={resource.id} className="text-sm flex items-center space-x-2">
-                    {resource.previewUrl && (
-                      <Image
-                        src={resource.previewUrl}
-                        alt={`${resource.title} preview`}
-                        width={resource.type === 'video' ? 64 : 16}
-                        height={resource.type === 'video' ? 36 : 16}
-                        className={`flex-shrink-0 rounded ${resource.type === 'website' ? '' : 'object-cover'}`}
-                        onError={(e) => { e.currentTarget.style.display = 'none' }}
-                        unoptimized={resource.type === 'website'}
-                      />
+    return (
+      <div className="overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        <div className="flex space-x-4">
+          {typeResources.map(resource => (
+            <div key={resource.id} className="flex-shrink-0 w-64 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 group">
+              <a href={resource.url} target="_blank" rel="noopener noreferrer" className="block">
+                {resource.previewUrl && (
+                  <div className="relative w-full h-32 mb-2 rounded overflow-hidden">
+                    <Image
+                      src={resource.previewUrl}
+                      alt={`${resource.title} preview`}
+                      layout="fill"
+                      objectFit={resource.type === 'video' || resource.type === 'image' ? 'cover' : 'contain'}
+                      className={`transition-transform duration-300 group-hover:scale-105 ${resource.type === 'website' ? 'p-2' : '' }`}
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      unoptimized={resource.type === 'website'}
+                    />
+                     {resource.type === 'website' && !resource.previewUrl?.includes('google.com/s2/favicons') && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                           {getResourceTypeIcon(resource.type)}
+                        </div>
                     )}
-                    <a
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline truncate flex-grow min-w-0"
-                      title={resource.title}
-                    >
-                      {resource.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                )}
+                {!resource.previewUrl && resource.type !== 'website' && (
+                     <div className="w-full h-32 mb-2 rounded flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                        {getResourceTypeIcon(resource.type)}
+                     </div>
+                )}
+                <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate transition-colors">
+                  {resource.title}
+                </h5>
+                {resource.type !== 'image' && resource.description && (
+                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                    {resource.description}
+                  </p>
+                )}
+              </a>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="mt-4 mb-6">
+      <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">Additional Resources</h3>
+      {resourceTypes.length > 1 ? (
+        <Tabs defaultValue={resourceTypes.includes('video') ? 'video' : resourceTypes[0]} className="w-full">
+          <TabsList className="mb-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+            {resourceTypes.map(type => (
+              <TabsTrigger 
+                key={type} 
+                value={type} 
+                className="px-3 py-1.5 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-gray-950 data-[state=active]:shadow-sm data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 rounded-md"
+              >
+                <span className="mr-2">{getResourceTypeIcon(type)}</span>
+                {getResourceTypeLabel(type)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {resourceTypes.map(type => (
+            <TabsContent key={type} value={type} className="mt-0">
+              {renderHorizontalScrollResources(type)}
+            </TabsContent>
+          ))}
+        </Tabs>
+      ) : resourceTypes.length === 1 ? (
+        <div className="mt-1">
+          {renderHorizontalScrollResources(resourceTypes[0])}
+        </div>
+      ) : null }
     </div>
   );
-} 
+}

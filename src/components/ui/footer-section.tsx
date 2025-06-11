@@ -2,7 +2,7 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { FacebookIcon, FrameIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from 'lucide-react';
+import { FacebookIcon, FrameIcon, InstagramIcon, LinkedinIcon, YoutubeIcon, TwitterIcon } from 'lucide-react';
 import Link from 'next/link';
 
 interface FooterLink {
@@ -30,18 +30,26 @@ const footerLinks: FooterSection[] = [
 		label: 'Company',
 		links: [
 			{ title: 'About Us', href: '/about' },
-			{ title: 'Privacy Policy', href: '/privacy' },
-			{ title: 'Terms of Service', href: '/terms' },
-			{ title: 'Contact', href: '/contact' },
+			// { title: 'Privacy Policy', href: '/privacy' },
+			// { title: 'Terms of Service', href: '/terms' },
+			// { title: 'Contact', href: '/contact' },
 		],
 	},
+	// {
+	// 	label: 'Resources',
+	// 	links: [
+	// 		{ title: 'Blog', href: '/blog' },
+	// 		{ title: 'Help Center', href: '/help' },
+	// 		{ title: 'Documentation', href: '/docs' },
+	// 		{ title: 'API', href: '/api-docs' },
+	// 	],
+	// },
 	{
-		label: 'Resources',
+		label: 'Follow Us',
 		links: [
-			{ title: 'Blog', href: '/blog' },
-			{ title: 'Help Center', href: '/help' },
-			{ title: 'Documentation', href: '/docs' },
-			{ title: 'API', href: '/api-docs' },
+			{ title: 'Twitter', href: '#', icon: TwitterIcon },
+			{ title: 'LinkedIn', href: '#', icon: LinkedinIcon },
+			{ title: 'Instagram', href: '#', icon: InstagramIcon },
 		],
 	},
 ];
@@ -50,6 +58,17 @@ export function Footer() {
 	return (
 		<footer className="md:rounded-t-6xl relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-6 py-12 lg:py-16">
 			<div className="bg-foreground/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
+
+			{/* Branding Section */}
+			<div className="mb-10 flex flex-col items-center">
+				<Link
+					href="/"
+					className="flex items-center space-x-2 text-2xl md:text-3xl font-light tracking-tight text-center text-gray-800 dark:text-gray-200"
+				>
+					{/* <FrameIcon className="h-7 w-7" /> */}
+					<span>GrokInterviews</span>
+				</Link>
+			</div>
 
 			<div className="grid w-full grid-cols-2 gap-8 md:grid-cols-3">
 				{footerLinks.map((section, index) => (
@@ -75,6 +94,9 @@ export function Footer() {
 			</div>
 			<p className="text-muted-foreground mt-12 text-center text-sm">
 				© {new Date().getFullYear()} GrokInterviews. All rights reserved.
+			</p>
+			<p className="text-muted-foreground mt-2 text-center text-xs">
+				Made with ❤️ in a corner of the internet.
 			</p>
 		</footer>
 	);

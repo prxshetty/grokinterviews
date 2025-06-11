@@ -224,52 +224,55 @@ export async function POST(request: NextRequest) {
   try {
     const { questionId, status, topicId, categoryId } = await request.json();
 
+    console.log(
+      'Received progress update request:',
+      { questionId, status, topicId, categoryId },
+      `Types: questionId (${typeof questionId}), status (${typeof status}), topicId (${typeof topicId}), categoryId (${typeof categoryId})`
+    );
+
     // Validate required fields for user_progress
     if (!questionId || !status || !topicId || !categoryId) {
        console.error('Missing required fields for progress update:', { questionId, status, topicId, categoryId });
       return NextResponse.json({ error: 'Question ID, status, Topic ID, and Category ID are required' }, { status: 400 });
     }
     
-    console.log(`Updating user_progress for Q:${questionId} to ${status} (Topic:${topicId}, Cat:${categoryId}) for User:${userId}`);
+    console.log(`Attempting to update user_progress for Q:${questionId} to ${status} (Topic:${topicId}, Cat:${categoryId}) for User:${userId}`);
 
     // Upsert the progress record in the user_progress table
-    const { error: userProgressUpsertError } = await supabaseServer
+    const { data: upsertedData, error: userProgressUpsertError } = await supabaseServer
       .from('user_progress')
       .upsert(
         {
           user_id: userId,
           question_id: questionId,
-          topic_id: topicId,      // Now provided by client
-          category_id: categoryId,  // Now provided by client
+          topic_id: topicId,
+          category_id: categoryId,
           status: status,
-          updated_at: new Date().toISOString() // Ensure update timestamp is set
+          updated_at: new Date().toISOString()
         },
         {
-          onConflict: 'user_id, question_id', // Assumes unique constraint exists on user_progress
-          // Explicitly set ignoreDuplicates to false to ensure UPDATE on conflict
+          onConflict: 'user_id, question_id',
           ignoreDuplicates: false
         }
-      );
+      )
+      .select(); // Ensure we get the upserted/conflicting data back
 
     if (userProgressUpsertError) {
-      // Specific log for user_progress failure
-      console.error(`Failed to upsert into user_progress table for user ${userId}, question ${questionId}.`);
-      // Log the full error object for debugging details
-      console.error('Raw user_progress upsertError object:', userProgressUpsertError);
-
-      // Log specific constraint violation errors if they occur for user_progress itself
-      if (userProgressUpsertError.code === '23503') { // foreign key violation
-         console.error('Foreign key violation on user_progress. Check if topic_id/category_id/question_id exist.');
+      console.error('Error upserting user progress. Details:', JSON.stringify(userProgressUpsertError, null, 2));
+      // Check for specific PostgreSQL error codes
+      if (userProgressUpsertError.code === '22P02') { // invalid text representation (e.g., bad UUID format)
+        return NextResponse.json({ error: 'Invalid ID format. Topic ID and Category ID must be valid UUIDs.' }, { status: 400 });
       }
-      // We don't expect 23505 here normally due to ON CONFLICT, but log if it happens.
-      if (userProgressUpsertError.code === '23505') {
-         console.error('Unique constraint (23505) reported during user_progress upsert. Investigate concurrency or ON CONFLICT.');
+      if (userProgressUpsertError.code === '23503') { // foreign_key_violation
+        return NextResponse.json({ error: 'Invalid reference: The question, topic, or category does not exist.' }, { status: 400 });
       }
-      // Return a generic error, avoiding potentially misleading details from the raw error object
-      return NextResponse.json({ error: 'Failed initial user progress status update.' }, { status: 500 });
+      // Add more specific error checks as needed based on observation
+      return NextResponse.json({ error: 'Failed to update user progress in database.', details: userProgressUpsertError.message }, { status: 500 });
     }
 
-    // Additionally, log the activity in user_activity (no conflict check needed for logs)
+    console.log('Successfully upserted user progress:', upsertedData);
+
+    // Log the activity
     try {
       const { error: logError } = await supabaseServer
         .from('user_activity')
@@ -304,7 +307,7 @@ export async function POST(request: NextRequest) {
         .single();
       
       if (topicError) {
-        console.warn(`Failed to get topic data for recalculation queue: ${topicError.message}`);
+        console.warn('Failed to get topic data for recalculation queue. Error:', JSON.stringify(topicError, null, 2));
       } else if (topicData) {
         const queueRecord = {
             user_id: userId,
@@ -341,20 +344,20 @@ export async function POST(request: NextRequest) {
 
                 if (updateError) {
                     // Log update errors but don't fail the main request
-                    console.error(`Failed to update recalculation queue after insert conflict: ${updateError.message}`);
+                    console.error('Failed to update recalculation queue after insert conflict. Error:', JSON.stringify(updateError, null, 2));
                 } else {
                     console.log(`Successfully updated recalculation queue entry for user ${userId}, question ${questionId}.`);
                 }
             } else {
                 // Log other insert errors as warnings
-                console.warn(`Failed to insert into recalculation queue: ${insertError.message}`);
+                console.warn('Failed to insert into recalculation queue. Error:', JSON.stringify(insertError, null, 2));
             }
         } else {
              console.log(`Successfully inserted into recalculation queue for user ${userId}, question ${questionId}.`);
         }
       }
     } catch (recalcError: any) {
-      console.warn(`Error during recalculation queue handling: ${recalcError.message}`);
+      console.warn('Exception during recalculation queue handling. Error:', JSON.stringify(recalcError, null, 2));
       // Don't fail the main request for background process issues
     }
     
