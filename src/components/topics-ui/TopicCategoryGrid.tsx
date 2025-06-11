@@ -302,6 +302,21 @@ function TopicCategoryGridComponent({
     fetchProgress();
   }, [fetchProgress]);
 
+  // Define a mapping for domain abbreviations to full names
+  const domainNameMap: Record<string, string> = {
+    ai: 'Artificial Intelligence',
+    ml: 'Machine Learning',
+    'web-dev': 'Web Development',
+    'system-design': 'System Design',
+    dsa: 'Data Structures and Algorithms',
+  };
+
+  // Helper function to get the display name for the domain
+  const getDisplayDomainName = (domainKey: string): string => {
+    const lowerDomainKey = domainKey.toLowerCase();
+    return domainNameMap[lowerDomainKey] || domainKey.charAt(0).toUpperCase() + domainKey.slice(1);
+  };
+
   // Display loading or error state if applicable
   if (isLoading) {
     return (
@@ -326,6 +341,11 @@ function TopicCategoryGridComponent({
   if (!displayableItems || displayableItems.length === 0) {
     return (
       <div className="text-center py-10">
+        {domain && (
+          <h2 className="text-2xl md:text-3xl font-light tracking-tight mb-6 text-center text-gray-800 dark:text-gray-200">
+            {getDisplayDomainName(domain)}
+          </h2>
+        )}
         <p className="text-gray-500 dark:text-gray-400">
           No {level} available at the moment.
         </p>
@@ -334,35 +354,42 @@ function TopicCategoryGridComponent({
   }
 
   return (
-    <div className={styles.gridContainer}>
-      {displayableItems.map((item, index) => {
-        // Determine the text to display. Show total questions for topics/categories,
-        // and total subtopics for sections.
-        const total = item.progress?.totalQuestions ?? 0;
-        const completed = item.progress?.questionsCompleted ?? 0;
-        const progressText = level === 'section'
-          ? `${completed} / ${total} Subtopics`
-          : `${completed} / ${total} Questions`;
+    <div className="w-full">
+      {domain && (
+        <h2 className="text-2xl md:text-3xl font-light tracking-tight mb-6 text-center text-gray-800 dark:text-gray-200">
+          {getDisplayDomainName(domain)}
+        </h2>
+      )}
+      <div className={styles.gridContainer}>
+        {displayableItems.map((item, index) => {
+          // Determine the text to display. Show total questions for topics/categories,
+          // and total subtopics for sections.
+          const total = item.progress?.totalQuestions ?? 0;
+          const completed = item.progress?.questionsCompleted ?? 0;
+          const progressText = level === 'section'
+            ? `${completed} / ${total} Subtopics`
+            : `${completed} / ${total} Questions`;
 
-        return (
-          <div
-            key={item.id || index}
-            className={`${styles.gridItem} group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
-            onClick={() => handleItemSelect(item.id)}
-            onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
-            tabIndex={0}
-            role="button"
-            aria-pressed={selectedItemId === item.id}
-            aria-label={`Select ${item.label}`}
-          >
-            <IconHover3D
-              heading={item.label}
-              text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
-            />
-            <span className={styles.serialNumber}>{formatIndex(index)}</span>
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={item.id || index}
+              className={`${styles.gridItem} group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
+              onClick={() => handleItemSelect(item.id)}
+              onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
+              tabIndex={0}
+              role="button"
+              aria-pressed={selectedItemId === item.id}
+              aria-label={`Select ${item.label}`}
+            >
+              <IconHover3D
+                heading={item.label}
+                text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
+              />
+              <span className={styles.serialNumber}>{formatIndex(index)}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

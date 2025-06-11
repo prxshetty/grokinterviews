@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
-import { ProgressToast } from './ProgressToast';
 
 // A new skeleton component for the loading state.
 function AnswerSkeleton() {
@@ -29,37 +28,56 @@ export function AnswerDisplay({
   answerText,
   isLoading,
   error,
-  scrollProgress,
   isCompleted,
   setAnswerRef,
 }: AnswerDisplayProps) {
   const toastId = useRef<string | number | undefined>(undefined);
+  const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
+  const [contentIsScrollable, setContentIsScrollable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (answerText && scrollableContainerRef.current) {
+      Promise.resolve().then(() => {
+        if (scrollableContainerRef.current) {
+          const isScrollable = scrollableContainerRef.current.scrollHeight > scrollableContainerRef.current.clientHeight;
+          setContentIsScrollable(isScrollable);
+        }
+      });
+    } else if (!answerText) {
+      setContentIsScrollable(null);
+    }
+  }, [answerText]);
 
   useEffect(() => {
     if (isLoading) {
       if (!toastId.current) {
         toastId.current = toast.loading('Generating answer...');
       }
+      if (contentIsScrollable !== null) {
+        setContentIsScrollable(null);
+      }
     } else {
-      const id = toastId.current;
-      if (id) {
-        if (error) {
-          toast.error('Error Generating Answer', { id, description: error });
-          toastId.current = undefined;
-        } else if (answerText) {
-          if (isCompleted) {
-            toast.success('Answer reading completed!', { id, duration: 3000 });
-            toastId.current = undefined;
+      const activeToast = toastId.current;
+      if (activeToast) {
+        toast.dismiss(activeToast);
+        toastId.current = undefined;
+      }
+
+      if (error) {
+        toast.error('Error Generating Answer', { description: error });
+      } else if (answerText) {
+        if (contentIsScrollable !== null) {
+          if (contentIsScrollable === true) {
+            if (isCompleted) {
+              toast.success('Answer reading completed!', { duration: 3000 });
+            }
           } else {
-            toast(<ProgressToast scrollProgress={scrollProgress} />, { id, duration: Infinity });
+            toast.success('Answer reading completed!', { duration: 3000 });
           }
-        } else {
-          toast.dismiss(id);
-          toastId.current = undefined;
         }
       }
     }
-  }, [isLoading, error, answerText, isCompleted, scrollProgress]);
+  }, [isLoading, error, answerText, isCompleted, contentIsScrollable]);
 
   const scrollbarStyles = {
     '--scrollbar-track-color': '#f1f1f1',
@@ -74,7 +92,10 @@ export function AnswerDisplay({
   return (
     <div className="relative">
       <div
-        ref={setAnswerRef}
+        ref={(el) => {
+          scrollableContainerRef.current = el;
+          if (setAnswerRef) setAnswerRef(el);
+        }}
         className="text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none h-[600px] overflow-y-auto pr-4 text-base leading-relaxed scrollbar-thin"
         style={scrollbarStyles}
       >

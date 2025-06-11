@@ -47,17 +47,18 @@ export default async function Home() {
         </div>
       </div>
 
+      {/* Company List Section */}
+      <div className="mt-16">
+          <CompanyList />
+        </div>
+
       <div className="px-8 md:px-12">
         {/* Stats Section */}
         <div className="mt-16 md:mt-24">
           <StatsSection />
         </div>
 
-        {/* Company List Section */}
-        <div className="mt-16">
-          <CompanyList />
-        </div>
-
+        
         {/* Topic Carousel Section */}
         <div className="mt-24 mb-0">
           <h2 className="text-2xl md:text-3xl mb-8 text-center font-normal">Explore Topics</h2>
