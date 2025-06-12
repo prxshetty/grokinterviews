@@ -53,15 +53,15 @@ export async function getUserIdFromRequest(request: NextRequest): Promise<string
       return data?.user?.id || null;
     }
 
-    // If no authorization header, try to get the session
-    const { data: { session }, error } = await supabase.auth.getSession();
+    // If no authorization header, try to get the user
+    const { data: { user }, error } = await supabase.auth.getUser();
 
     if (error) {
-      console.error('Error getting session:', error);
+      console.error('Error getting user:', error);
       return null;
     }
 
-    return session?.user?.id || null;
+    return user?.id || null;
   } catch (error) {
     console.error('Error getting user ID:', error);
     return null;

@@ -1,84 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient(); // Use the new server client
+  let userId = null;
+
   try {
-    // Get the user ID from the session
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    let userId = null;
-
-    // Get the user session using Supabase auth
+    // Get the user using Supabase auth
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('Session Error:', sessionError.message);
-        return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-      } else if (session?.user) {
-        userId = session.user.id;
-      } else {
-        return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
-      }
-    } catch (error) {
-      console.error('Error getting user session:', error);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error('User not authenticated');
+      userId = user.id;
+      console.log('Found user ID from auth for update-all-sections:', userId);
+    } catch (error: any) {
+      console.error('Update-all-sections User/Auth Error:', error.message);
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
     }
 
-    // Get the domain from the query parameters
     const { searchParams } = new URL(request.url);
     const domain = searchParams.get('domain') || 'ml';
 
-    // Define the sections for the ML domain
     const mlSections = [
-      'Foundations of Machine Learning',
-      'Supervised Learning',
-      'Unsupervised Learning',
-      'Neural Networks',
-      'Model Evaluation',
-      'Mathematical Foundations',
-      'Data Preprocessing and Exploration',
-      'Advanced Regression Techniques',
-      'Classification Techniques',
-      'Decision Trees and Random Forests',
-      'Naive Bayes',
-      'Ensemble Methods',
-      'Validation Techniques',
-      'Clustering Algorithms',
-      'Dimensionality Reduction Techniques',
-      'Autoencoders',
-      'Neural Network Architectures',
-      'Advanced Deep Learning',
-      'Bayesian Methods',
-      'Markov Models',
-      'Sampling Methods',
-      'Optimization and Model Tuning',
-      'Feature Engineering',
-      'Time Series Analysis',
-      'Practical ML and Deployment',
-      'Emerging Trends'
+      'Foundations of Machine Learning', 'Supervised Learning', 'Unsupervised Learning',
+      'Neural Networks', 'Model Evaluation', 'Mathematical Foundations',
+      'Data Preprocessing and Exploration', 'Advanced Regression Techniques',
+      'Classification Techniques', 'Decision Trees and Random Forests', 'Naive Bayes',
+      'Ensemble Methods', 'Validation Techniques', 'Clustering Algorithms',
+      'Dimensionality Reduction Techniques', 'Autoencoders', 'Neural Network Architectures',
+      'Advanced Deep Learning', 'Bayesian Methods', 'Markov Models', 'Sampling Methods',
+      'Optimization and Model Tuning', 'Feature Engineering', 'Time Series Analysis',
+      'Practical ML and Deployment', 'Emerging Trends'
     ];
 
-    // Use the hardcoded sections for ML domain, or an empty array for other domains
     const sections = domain === 'ml' ? mlSections.map(name => ({ section_name: name })) : [];
-    const sectionsError = null;
+    // const sectionsError = null; // This was a placeholder, not needed
 
-    if (sectionsError) {
-      console.error('Error fetching sections:', sectionsError);
-      return NextResponse.json({ error: 'Failed to fetch sections' }, { status: 500 });
-    }
-
-    // Get unique section names
     const uniqueSections = [...new Set(sections.map(section => section.section_name))];
-    console.log(`Found ${uniqueSections.length} unique sections for domain ${domain}:`, uniqueSections);
-
-    // Update progress for each section
     const results = [];
+
     for (const sectionName of uniqueSections) {
-      // Check if the user has a record for this section
-      const { data: existingData, error: existingError } = await supabaseServer
+      const { data: existingData, error: existingError } = await supabase
         .from('user_progress_summary')
         .select('*')
         .eq('user_id', userId)
@@ -92,7 +54,6 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Generate random progress data for testing
       const completionPercentage = Math.floor(Math.random() * 100);
       const totalQuestions = Math.floor(Math.random() * 200) + 50;
       const questionsCompleted = Math.floor(totalQuestions * (completionPercentage / 100));
@@ -102,7 +63,7 @@ export async function GET(request: NextRequest) {
 
       if (existingData && existingData.length > 0) {
         // Update existing record
-        const { data: updateData, error: updateError } = await supabaseServer
+        const { error: updateError } = await supabase
           .from('user_progress_summary')
           .update({
             completion_percentage: completionPercentage,
@@ -130,10 +91,9 @@ export async function GET(request: NextRequest) {
         }
       } else {
         // Create new record
-        // Use the index in the array as the entity_id to avoid unique constraint violations
         const entityId = uniqueSections.indexOf(sectionName) + 1;
 
-        const { data: insertData, error: insertError } = await supabaseServer
+        const { error: insertError } = await supabase
           .from('user_progress_summary')
           .insert({
             user_id: userId,
@@ -172,8 +132,8 @@ export async function GET(request: NextRequest) {
       message: `Updated progress for ${results.length} sections in domain ${domain}`,
       results
     });
-  } catch (error) {
-    console.error('Error updating section progress:', error);
+  } catch (error: any) {
+    console.error('Error updating section progress:', error.message);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

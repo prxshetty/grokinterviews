@@ -1,36 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
+// import supabaseServer from '@/utils/supabase-server'; // To be removed
 
 // GET: Retrieve progress data for a specific category
 export async function GET(request: NextRequest) {
-  // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = await createClient(); // Use the new server client
   let userId = null;
 
-  // Get the user session using Supabase auth
+  // Get the user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
-      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-    } else if (session?.user) {
-      userId = session.user.id;
-    } else {
-      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
-    }
-  } catch (error) {
-    console.error('Error getting user session:', error);
-    return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    if (userError) throw userError;
+    if (!user) throw new Error('User not authenticated');
+    userId = user.id;
+    console.log('Found user ID from auth for progress/category:', userId); // Updated log
+  } catch (error: any) {
+    console.error('Progress/category User/Auth Error:', error.message); // Updated log
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
   try {
-    // Get the category ID from the query parameters
     const url = new URL(request.url);
     const categoryId = url.searchParams.get('categoryId');
 
@@ -38,8 +29,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
     }
 
-    // Get the total number of questions in this category
-    const { count: totalQuestions, error: countError } = await supabaseServer
+    const { count: totalQuestions, error: countError } = await supabase // Use session client
       .from('questions')
       .select('*', { count: 'exact', head: true })
       .eq('category_id', categoryId);
@@ -49,8 +39,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to count questions' }, { status: 500 });
     }
 
-    // First get the IDs of questions in this category
-    const { data: questionIds, error: questionIdsError } = await supabaseServer
+    const { data: questionIds, error: questionIdsError } = await supabase // Use session client
       .from('questions')
       .select('id')
       .eq('category_id', categoryId);
@@ -60,10 +49,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch question IDs' }, { status: 500 });
     }
 
-    // Extract just the IDs into an array
     const questionIdArray = questionIds.map(q => q.id);
 
-    // If there are no questions in this category, return zeros
     if (questionIdArray.length === 0) {
       return NextResponse.json({
         questionsCompleted: 0,
@@ -72,9 +59,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get the number of completed questions in this category
-    // We need to handle potential duplicates in the user_activity table
-    const { data: completedQuestionData, error: completedError } = await supabaseServer
+    const { data: completedQuestionData, error: completedError } = await supabase // Use session client
       .from('user_activity')
       .select('question_id', { count: 'exact' })
       .eq('user_id', userId)
@@ -86,16 +71,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to count completed questions' }, { status: 500 });
     }
 
-    // Since we are now using { count: 'exact' }, we should get the count from the response
-    // However, Supabase count may not be directly on the data object, so we need to be careful.
-    // A more reliable way is to get the count from the 'count' property of the response object if it exists.
-    // But since the structure may vary, let's process the returned data to be safe.
-
-    // Count unique completed questions from the returned data
     const uniqueCompletedIds = new Set(completedQuestionData?.map(item => item.question_id).filter(id => id !== null));
     const questionsCompleted = uniqueCompletedIds.size;
     
-    // Calculate completion percentage, ensuring totalQuestions is not null
     const finalTotalQuestions = totalQuestions ?? 0;
     const completionPercentage = finalTotalQuestions > 0 
       ? Math.round((questionsCompleted / finalTotalQuestions) * 100) 
@@ -105,7 +83,7 @@ export async function GET(request: NextRequest) {
       questionsCompleted: questionsCompleted,
       totalQuestions: finalTotalQuestions,
       completionPercentage,
-      timestamp: Date.now() // Add timestamp to prevent caching
+      timestamp: Date.now()
     });
 
   } catch (error) {

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/utils/supabase/client';
 import ProgressSaver from '@/components/progress/ProgressSaver';
 import { ActivityGrid } from '@/components/progress';
 import { Calendar } from '@/components/ui/calendar';
@@ -128,7 +128,6 @@ export default function DashboardPage() {
   });
 
   const router = useRouter();
-  const supabase = createClientComponentClient();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -138,22 +137,28 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    const supabase = createClient();
     const checkUserAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
+      setLoading(true);
+      const { data: { user } , error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error("Error fetching user or user not found for dashboard:", userError);
         router.push('/signin');
+        setLoading(false);
         return;
       }
 
       // Fetch user profile
-      const { data: profileData, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
-      if (error) {
-        console.error("Error fetching profile:", error);
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        setProfile(null);
       } else if (profileData) {
         setProfile(profileData);
       }
@@ -180,11 +185,11 @@ export default function DashboardPage() {
     };
 
     checkUserAndProfile();
-  }, [supabase, router]);
+  }, [router]);
 
   // Fetch additional data when loading is complete
   useEffect(() => {
-    if (loading) return;
+    if (loading || !profile) return;
 
     const fetchActivityData = async () => {
       setActivityData(prev => ({ ...prev, loading: true, error: null }));
@@ -305,7 +310,7 @@ export default function DashboardPage() {
     fetchUserStats();
     fetchDomainStats();
     fetchActivityChartData();
-  }, [loading]);
+  }, [loading, profile]);
 
   const refreshProgressData = async () => {
     try {

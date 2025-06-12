@@ -1,26 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
 // GET: Retrieve user statistics
 export async function GET(_request: NextRequest) {
-  // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = await createClient(); // Use the new server client
   let userId = null;
 
-  // Get the user session using Supabase auth
+  // Get the user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
 
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
+    if (userError) {
+      console.error('User fetch Error:', userError.message); // Updated log message
       return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-    } else if (session?.user) {
-      userId = session.user.id;
-      console.log('Found user ID from session for stats:', userId);
+    } else if (user) { // Check for user object
+      userId = user.id;
+      console.log('Found user ID for stats:', userId); // Updated log message
     } else {
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
@@ -30,12 +25,12 @@ export async function GET(_request: NextRequest) {
       totalTimeSpent: 0, // in minutes
       apiCallsMade: 0,
       bookmarksCount: 0,
-      lastActive: null,
+      lastActive: null as string | null, // Ensure type consistency
       questionsAnswered: 0,
       topicsExplored: 0,
       avgTimePerQuestion: 0,
       preferredModel: '',
-      joinDate: null
+      joinDate: null as string | null // Ensure type consistency
     };
 
     // 1. Get total time spent (estimate based on activity)
@@ -48,29 +43,20 @@ export async function GET(_request: NextRequest) {
     if (activityError) {
       console.error('Error fetching user activity for time calculation:', activityError);
     } else if (activityData && activityData.length > 0) {
-      // Calculate time spent based on activity timestamps
-      // This is an estimation - assumes average time between activities
       let totalMinutes = 0;
-      let lastTimestamp = null;
+      let lastTimestamp: Date | null = null; // Type for lastTimestamp
 
       for (let i = 0; i < activityData.length; i++) {
         const currentTime = new Date(activityData[i].created_at);
-
         if (lastTimestamp) {
           const diffMinutes = (currentTime.getTime() - lastTimestamp.getTime()) / (1000 * 60);
-
-          // Only count reasonable time gaps (less than 30 minutes)
           if (diffMinutes > 0 && diffMinutes < 30) {
             totalMinutes += diffMinutes;
           }
         }
-
         lastTimestamp = currentTime;
       }
-
       stats.totalTimeSpent = Math.round(totalMinutes);
-
-      // Set last active time
       if (activityData.length > 0) {
         stats.lastActive = activityData[activityData.length - 1].created_at;
       }
@@ -82,12 +68,8 @@ export async function GET(_request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('activity_type', 'answer_generated');
-
-    if (apiCallsError) {
-      console.error('Error counting API calls:', apiCallsError);
-    } else {
-      stats.apiCallsMade = apiCallsCount || 0;
-    }
+    if (apiCallsError) console.error('Error counting API calls:', apiCallsError);
+    else stats.apiCallsMade = apiCallsCount || 0;
 
     // 3. Count bookmarks
     const { count: bookmarksCount, error: bookmarksError } = await supabase
@@ -95,12 +77,8 @@ export async function GET(_request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'bookmarked');
-
-    if (bookmarksError) {
-      console.error('Error counting bookmarks:', bookmarksError);
-    } else {
-      stats.bookmarksCount = bookmarksCount || 0;
-    }
+    if (bookmarksError) console.error('Error counting bookmarks:', bookmarksError);
+    else stats.bookmarksCount = bookmarksCount || 0;
 
     // 4. Count questions answered
     const { count: questionsAnswered, error: questionsError } = await supabase
@@ -108,12 +86,8 @@ export async function GET(_request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'completed');
-
-    if (questionsError) {
-      console.error('Error counting completed questions:', questionsError);
-    } else {
-      stats.questionsAnswered = questionsAnswered || 0;
-    }
+    if (questionsError) console.error('Error counting completed questions:', questionsError);
+    else stats.questionsAnswered = questionsAnswered || 0;
 
     // 5. Count unique topics explored
     const { data: topicsData, error: topicsError } = await supabase
@@ -121,11 +95,8 @@ export async function GET(_request: NextRequest) {
       .select('topic_id')
       .eq('user_id', userId)
       .not('topic_id', 'is', null);
-
-    if (topicsError) {
-      console.error('Error fetching topics explored:', topicsError);
-    } else if (topicsData) {
-      // Count unique topic IDs
+    if (topicsError) console.error('Error fetching topics explored:', topicsError);
+    else if (topicsData) {
       const uniqueTopics = new Set(topicsData.map(item => item.topic_id));
       stats.topicsExplored = uniqueTopics.size;
     }
@@ -136,11 +107,9 @@ export async function GET(_request: NextRequest) {
       .select('specific_model_id')
       .eq('user_id', userId)
       .single();
-
-    if (preferencesError) {
-      console.error('Error fetching user preferences:', preferencesError);
+    if (preferencesError && preferencesError.code !== 'PGRST116') { // Ignore no row found for preferences
+        console.error('Error fetching user preferences:', preferencesError);
     } else if (preferencesData) {
-      // Map model ID to a friendly name
       const modelMap: Record<string, string> = {
         'llama-3.1-8b-instant': 'Llama 3.1 8B',
         'llama-3.1-70b-instant': 'Llama 3.1 70B',
@@ -148,7 +117,6 @@ export async function GET(_request: NextRequest) {
         'mixtral-8x7b-32768': 'Mixtral 8x7B',
         'gemma-7b-it': 'Gemma 7B'
       };
-
       const modelId = preferencesData.specific_model_id as string;
       stats.preferredModel = modelId ? (modelMap[modelId] || modelId) : 'Not set';
     }
@@ -159,9 +127,8 @@ export async function GET(_request: NextRequest) {
       .select('created_at')
       .eq('id', userId)
       .single();
-
-    if (profileError) {
-      console.error('Error fetching user profile:', profileError);
+    if (profileError && profileError.code !== 'PGRST116') { // Ignore no row found for profile (should not happen for authenticated user)
+        console.error('Error fetching user profile:', profileError);
     } else if (profileData) {
       stats.joinDate = profileData.created_at;
     }
@@ -173,8 +140,8 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json(stats);
 
-  } catch (error) {
-    console.error('Error in user stats API:', error);
+  } catch (error: any) { // Catch any type for broader error handling
+    console.error('Error in user stats API:', error.message || error);
     return NextResponse.json({ error: 'Failed to fetch user stats' }, { status: 500 });
   }
 }

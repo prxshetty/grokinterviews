@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { LogOut, Moon, Sun, User } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { LogOut, Moon, Sun, User, Menu } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface UserProfile {
   id: string;
@@ -36,10 +38,10 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [hoveredTopic, setHoveredTopic] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const isTopicPage = pathname.startsWith('/topics');
   const isTopicDetailPage = isTopicPage && pathname !== '/topics';
@@ -59,6 +61,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       e.preventDefault();
       router.push('/');
     }
+    setIsMobileMenuOpen(false);
   }, [isTopicPage, router]);
 
   useEffect(() => {
@@ -67,18 +70,31 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     setIsDarkMode(isDark);
 
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const { data: profileData } = await supabase
+      const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('Error fetching user in MainNavigation:', userError);
+        setUser(null);
+        setProfile(null);
+        return;
+      }
+
+      if (fetchedUser) {
+        setUser(fetchedUser);
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('id', fetchedUser.id)
           .single();
 
-        if (profileData) {
+        if (profileError) {
+          console.error('Error fetching profile in MainNavigation:', profileError);
+          setProfile(null);
+        } else if (profileData) {
           setProfile(profileData);
         }
+      } else {
+        setUser(null);
+        setProfile(null);
       }
     };
 
@@ -88,13 +104,16 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       setUser(session?.user || null);
       if (session?.user) {
         const fetchProfile = async () => {
-          const { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
 
-          if (profileData) {
+          if (profileError) {
+            console.error('Error fetching profile on auth change in MainNavigation:', profileError);
+            setProfile(null);
+          } else if (profileData) {
             setProfile(profileData);
           }
         };
@@ -112,7 +131,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
-
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.theme = 'dark';
@@ -120,12 +138,14 @@ export default function MainNavigation({ children }: { children: React.ReactNode
       document.documentElement.classList.remove('dark');
       localStorage.theme = 'light';
     }
+    setIsMobileMenuOpen(false);
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push('/');
     router.refresh();
+    setIsMobileMenuOpen(false);
   };
 
   const logoElement = (
@@ -153,8 +173,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             {logoElement}
           </div>
 
-          {/* Centered Navigation */}
-          <div className="hidden sm:flex flex-1 items-center justify-center gap-x-4 sm:gap-x-6">
+          {/* Centered Desktop Navigation */}
+          <div className="hidden lg:flex flex-1 items-center justify-center gap-x-4 sm:gap-x-6">
             <Link
               href="/topics"
               onClick={handleTopicsLinkClick}
@@ -184,7 +204,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             )}
 
             <div
-              onMouseLeave={() => setHoveredTopic(null)}
               className={`flex items-center gap-x-4 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out sm:gap-x-6 ${isTopicPage ? 'max-w-screen-md opacity-100' : 'max-w-0 opacity-0'}`}
             >
               <div className="h-6 border-l border-gray-300 dark:border-gray-700" />
@@ -192,9 +211,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 <Link
                   key={topic.id}
                   href={`/topics/${topic.id}`}
-                  onMouseEnter={() => setHoveredTopic(topic.id)}
                   onClick={e => {
-                    if (selectedTopic === topic.id) {
+                    if (extractDomainFromPath(pathname, 'topics') === topic.id) {
                       e.preventDefault();
                       window.dispatchEvent(
                         new CustomEvent('resetCategorySelection', {
@@ -205,12 +223,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                     }
                   }}
                   className={`flex flex-col items-center rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-300 hover:bg-gray-100 hover:text-black dark:hover:bg-white/10 dark:hover:text-white ${
-                    hoveredTopic && hoveredTopic !== topic.id
-                      ? 'blur-sm opacity-50'
-                      : selectedTopic
-                      ? selectedTopic === topic.id
-                        ? 'text-black dark:text-white'
-                        : 'text-gray-400 dark:text-gray-600'
+                    extractDomainFromPath(pathname, 'topics') === topic.id
+                      ? 'text-black dark:text-white'
                       : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
@@ -231,61 +245,61 @@ export default function MainNavigation({ children }: { children: React.ReactNode
             </Link>
           </div>
 
-          {/* User Profile / Auth */}
-          <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+          {/* Desktop User Profile / Auth */}
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
             {user ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1"
-              >
-                <span>
-                  {profile?.full_name || profile?.username || user.email.split('@')[0]}
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-4 h-4 transition-transform ml-1"
-                >
-                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md overflow-hidden animate-in fade-in-80 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
-              <DropdownMenuLabel className="text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10">
-                <div>
-                  <p className="font-medium">{profile?.full_name || 'User'}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-300 truncate font-normal">{user.email}</p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => router.push('/account')} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={toggleDarkMode} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
-                  {isDarkMode ? (
-                    <>
-                      <Sun className="mr-2 h-4 w-4" />
-                      <span>Light Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="mr-2 h-4 w-4" />
-                      <span>Dark Mode</span>
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
-              <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:bg-gray-100 dark:focus:bg-white/10">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign Out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1"
+                  >
+                    <span>
+                      {profile?.full_name || profile?.username || user.email.split('@')[0]}
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-4 h-4 transition-transform ml-1"
+                    >
+                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md overflow-hidden animate-in fade-in-80 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
+                  <DropdownMenuLabel className="text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10">
+                    <div>
+                      <p className="font-medium">{profile?.full_name || 'User'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-300 truncate font-normal">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => { router.push('/account'); setIsMobileMenuOpen(false); }} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Account</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={toggleDarkMode} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
+                      {isDarkMode ? (
+                        <>
+                          <Sun className="mr-2 h-4 w-4" />
+                          <span>Light Mode</span>
+                        </>
+                      ) : (
+                        <>
+                          <Moon className="mr-2 h-4 w-4" />
+                          <span>Dark Mode</span>
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:bg-gray-100 dark:focus:bg-white/10">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="relative group w-full sm:w-auto">
@@ -297,11 +311,112 @@ export default function MainNavigation({ children }: { children: React.ReactNode
               </div>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden flex items-center">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6 text-black dark:text-white" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-white/95 dark:bg-black/95 border-l border-gray-200 dark:border-white/10 p-6 pt-10">
+                <SheetHeader>
+                  <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col space-y-4 mt-4">
+                  <SheetClose asChild>
+                    <Link href="/topics" onClick={handleTopicsLinkClick} className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white">Topics</Link>
+                  </SheetClose>
+                  {user && (
+                    <>
+                      <SheetClose asChild>
+                         <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white">Dashboard</Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                         <Link href="/dashboard/activity" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white">Activity</Link>
+                      </SheetClose>
+                    </>
+                  )}
+                  <SheetClose asChild>
+                    <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white">About</Link>
+                  </SheetClose>
+
+                  {isTopicPage && (
+                     <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                       <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Categories</p>
+                      {mainTopics.map(topic => (
+                        <SheetClose asChild key={topic.id}>
+                          <Link
+                            href={`/topics/${topic.id}`}
+                            onClick={e => {
+                              if (extractDomainFromPath(pathname, 'topics') === topic.id) {
+                                e.preventDefault();
+                                window.dispatchEvent(
+                                  new CustomEvent('resetCategorySelection', {
+                                    detail: { domain: topic.id },
+                                  }),
+                                );
+                                router.replace(`/topics/${topic.id}`);
+                              }
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className={`block py-2 text-md font-medium transition-colors duration-300 ${
+                              extractDomainFromPath(pathname, 'topics') === topic.id
+                                ? 'text-black dark:text-white'
+                                : 'text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white'
+                            }`}
+                          >
+                            {topic.label}
+                          </Link>
+                        </SheetClose>
+                      ))}
+                    </div>
+                  )}
+                </nav>
+
+                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  {user ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                         {profile?.avatar_url && <img src={profile.avatar_url} alt="User avatar" className="w-10 h-10 rounded-full" />}
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{profile?.full_name || profile?.username || 'User'}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      <SheetClose asChild>
+                        <Button variant="ghost" onClick={() => { router.push('/account'); setIsMobileMenuOpen(false);}} className="w-full justify-start text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white">
+                          <User className="mr-2 h-4 w-4" /> Account
+                        </Button>
+                      </SheetClose>
+                      <Button variant="ghost" onClick={toggleDarkMode} className="w-full justify-start text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white">
+                        {isDarkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                      </Button>
+                      <SheetClose asChild>
+                        <Button variant="ghost" onClick={handleSignOut} className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+                          <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                        </Button>
+                      </SheetClose>
+                    </div>
+                  ) : (
+                    <SheetClose asChild>
+                      <Link href="/signin" onClick={() => setIsMobileMenuOpen(false)} className="block w-full text-center px-4 py-2 text-md font-medium text-gray-600 dark:text-gray-300 bg-gradient-to-b from-gray-50 to-gray-100 hover:to-gray-200 dark:from-gray-900 dark:to-gray-800 border border-transparent dark:border-gray-700/50 rounded-lg hover:text-black dark:hover:text-white transition-all duration-200">
+                        Login
+                      </Link>
+                    </SheetClose>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 
       <div style={{ paddingTop: '80px' }}>
-        <main className={isTopicDetailPage ? "w-full px-8 py-8" : "w-full px-8"}>
+        <main className={isTopicDetailPage ? "w-full px-4 sm:px-8 py-8" : "w-full px-4 sm:px-8"}>
           {children}
         </main>
       </div>

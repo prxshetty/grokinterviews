@@ -1,7 +1,6 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
 
 // Define the structure of a resource item from the database
 interface Resource {
@@ -28,48 +27,55 @@ export async function POST(request: Request) {
   // 1. Read request body
   const { questionText, questionId } = await request.json();
 
-  // Create Supabase client with cookies
-  const cookieStore = await cookies();
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  // Create Supabase client using the new server utility
+  const supabase = await createClient();
 
   // Validate input
   if (!questionText || !questionId) {
     return NextResponse.json({ error: 'Question text and Question ID are required' }, { status: 400 });
   }
 
+  // Authenticate user
+  let userId: string | undefined;
+  let userApiKey: string | null = null;
+  let userEmail: string | undefined;
+
   try {
-    // 2. Get the authenticated user
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
 
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
-      return NextResponse.json({ error: 'Failed to get user session' }, { status: 500 });
+    if (userError) {
+      console.error('User fetch error in generate-answer:', userError.message);
+      // Allow anonymous access if OPENAI_API_KEY is set and no user_api_key is provided by client
+      // This path is for a potential global API key scenario
+    } else if (user) {
+      userId = user.id;
+      userEmail = user.email;
+      console.log(`Authenticated user ${userId} in generate-answer.`);
+
+      // Fetch user's custom API key from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('custom_api_key')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error(`Error fetching profile for user ${userId}:`, profileError.message);
+      } else if (profile && profile.custom_api_key) {
+        userApiKey = profile.custom_api_key;
+        console.log(`Using custom API key for user ${userId}.`);
+      }
+    } else {
+      console.log('No authenticated user for generate-answer. Proceeding with potential global API key.');
     }
+  } catch (e: any) {
+    console.error('Error during user authentication or profile fetch in generate-answer:', e.message);
+    // Decide if this should be a hard stop or allow anonymous if global key exists
+  }
 
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const clientApiKey = request.headers.get('X-API-Key');
 
-    const userId = session.user.id;
-
-    // 3. Fetch the user's profile (for API Key)
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('custom_api_key') // Only select the API key here
-      .eq('id', userId)
-      .single();
-
-    if (profileError) {
-      console.error('Profile Fetch Error:', profileError.message);
-      return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
-    }
-    if (!profileData) {
-       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
-    }
-    const { custom_api_key } = profileData;
-
+  try {
     // 3b. Fetch user preferences (for model and answer settings)
     const { data: preferencesData, error: preferencesError } = await supabase
       .from('user_preferences')
@@ -127,9 +133,9 @@ export async function POST(request: Request) {
     };
 
     // Check for API Key and selected model ID
-    if (!custom_api_key || !specific_model_id) {
+    if (!userApiKey || !specific_model_id) {
       let missingItems = [];
-      if (!custom_api_key) missingItems.push("Groq API key");
+      if (!userApiKey) missingItems.push("Groq API key");
       if (!specific_model_id) missingItems.push("Groq model selection");
       const message = `Generation requires a ${missingItems.join(' and ')} to be configured in Account Preferences.`;
       return NextResponse.json({ message: message, answer: null }, { status: 200 });
@@ -265,7 +271,7 @@ export async function POST(request: Request) {
 
     // 9. Initialize Groq SDK and generate answer
     const groq = new Groq({
-      apiKey: custom_api_key,
+      apiKey: userApiKey,
     });
 
     // Determine max_tokens based on answer depth

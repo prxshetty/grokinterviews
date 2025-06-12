@@ -1,51 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
 
 export const revalidate = 0;
 
 // GET: Retrieve user domain completion statistics
 export async function GET(_request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({
-    cookies: () => cookieStore,
-  });
+  // Create Supabase client using the new server utility
+  const supabase = await createClient();
 
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
+    if (userError) {
+      console.error('User fetch Error:', userError.message);
       return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-    }
-    
-    if (!session?.user) {
+    } else if (user) {
+      const userId = user.id;
+      console.log('Found user ID from auth for domains:', userId);
+
+      const { data: domainStats, error: rpcError } = await supabase
+        .rpc('get_user_domain_stats', { p_user_id: userId });
+
+      if (rpcError) {
+        console.error('Error fetching user domain stats:', rpcError);
+        return NextResponse.json({ error: 'Failed to fetch user domain stats' }, { status: 500 });
+      }
+
+      const { count: totalDomains, error: countError } = await supabase
+        .from('topics')
+        .select('domain', { count: 'exact', head: true })
+        .not('domain', 'is', null);
+
+      if (countError) {
+        console.error('Error fetching total domains count:', countError);
+      }
+      
+      return NextResponse.json({
+        domains: domainStats || [],
+        totalDomains: totalDomains || 0
+      });
+    } else {
+      console.log('No user found from auth for domains');
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
-
-    const userId = session.user.id;
-
-    const { data: domainStats, error: rpcError } = await supabase
-      .rpc('get_user_domain_stats', { p_user_id: userId });
-
-    if (rpcError) {
-      console.error('Error fetching user domain stats:', rpcError);
-      return NextResponse.json({ error: 'Failed to fetch user domain stats' }, { status: 500 });
-    }
-
-    const { count: totalDomains, error: countError } = await supabase
-      .from('topics')
-      .select('domain', { count: 'exact', head: true })
-      .not('domain', 'is', null);
-
-    if (countError) {
-      console.error('Error fetching total domains count:', countError);
-    }
-    
-    return NextResponse.json({
-      domains: domainStats || [],
-      totalDomains: totalDomains || 0
-    });
 
   } catch (error) {
     console.error('An unexpected error occurred:', error);

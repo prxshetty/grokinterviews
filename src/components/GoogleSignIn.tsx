@@ -18,9 +18,15 @@ export default function GoogleSignIn() {
 
       // Check if the user is now logged in
       const supabase = createClientComponentClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user }, error } = await supabase.auth.getUser();
 
-      if (session?.user) {
+      if (error) {
+        console.error('Error fetching user for Google Sign In check:', error);
+        // Optionally handle the error, e.g., by setting an error state
+        return;
+      }
+
+      if (user) {
         console.log('Google sign-in completed successfully');
         localStorage.removeItem('googleSignInAttempt');
         router.push('/dashboard');

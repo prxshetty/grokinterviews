@@ -5,7 +5,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { QuestionWithAnswer } from '@/components/questions';
 import ProgressBar from '../ui/ProgressBar';
-import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted } from '@/app/utils/progress';
+import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted, isQuestionBookmarked } from '@/app/utils/progress';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
@@ -124,6 +124,9 @@ export default function CategoryDetailView({
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
   const [isSubtopicProgressLoading, setIsSubtopicProgressLoading] = useState(false);
   
+  // Local state to store bookmark status
+  const [bookmarkStatus, setBookmarkStatus] = useState<Record<number, boolean>>({});
+  
   // Check if this is section/header or specific topic
   const isSectionHeader = categoryId.startsWith('header-');
   const hasSubtopics = categoryDetails?.subtopics && Object.keys(categoryDetails.subtopics).length > 0;
@@ -207,6 +210,15 @@ export default function CategoryDetailView({
     return Object.keys(questionsByCategory).length > 0;
   }, [questionsByCategory]);
 
+  // Callback to handle bookmark status changes from individual QuestionWithAnswer components
+  const handleBookmarkChangeFromQuestion = useCallback((questionId: number, newStatus: boolean) => {
+    setBookmarkStatus(prevStatus => ({
+      ...prevStatus,
+      [questionId]: newStatus,
+    }));
+    console.log(`Bookmark status updated by child for QID ${questionId}: ${newStatus}`);
+  }, []);
+
   // Update filtered questions when calculation changes
   useEffect(() => {
     if (passedInSubtopicProgress) {
@@ -226,12 +238,21 @@ export default function CategoryDetailView({
     }
   }, [currentSubtopicProgress]);
 
+  // Fetch bookmark status for each question
+  const fetchBookmarkStatus = async (questions: QuestionType[]) => {
+    const bookmarkStatus: Record<number, boolean> = {};
+    await Promise.all(questions.map(async (question) => {
+      bookmarkStatus[question.id] = await isQuestionBookmarked(question.id);
+    }));
+    return bookmarkStatus;
+  };
+
   // Fetch progress data for category and subtopic
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
 
-    const fetchProgress = async () => {
+    const fetchProgressAndBookmarks = async () => {
       try {
         if (!selectedSubtopic) {
           // For categories, fetch their progress data
@@ -279,6 +300,13 @@ export default function CategoryDetailView({
           setCompletedQuestions({});
         }
 
+        // Fetch bookmark status for questions
+        const newBookmarkStatus = await fetchBookmarkStatus(questions);
+        if (!signal.aborted) {
+          setBookmarkStatus(newBookmarkStatus);
+          console.log('Fetched initial bookmark statuses in CategoryDetailView:', newBookmarkStatus);
+        }
+
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           console.error('Error fetching progress:', error);
@@ -286,7 +314,7 @@ export default function CategoryDetailView({
       }
     };
 
-    fetchProgress();
+    fetchProgressAndBookmarks();
 
     return () => {
       controller.abort();
@@ -464,6 +492,8 @@ export default function CategoryDetailView({
                       isHighlighted={highlightedQuestionId === question.id}
                       topicId={category.topic_id}
                       onCompletionChange={handleCompletionChange}
+                      isBookmarked={bookmarkStatus[question.id] || false}
+                      onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
                     />
                   ))}
                 </div>
@@ -483,6 +513,8 @@ export default function CategoryDetailView({
                   isHighlighted={highlightedQuestionId === question.id}
                   topicId={subtopicDetails?.subtopicId ?? undefined}
                   onCompletionChange={handleCompletionChange}
+                  isBookmarked={bookmarkStatus[question.id] || false}
+                  onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
                 />
               ))}
             </div>
@@ -571,6 +603,8 @@ export default function CategoryDetailView({
                   isHighlighted={highlightedQuestionId === question.id}
                   topicId={question.topic_id ?? undefined}
                   onCompletionChange={handleCompletionChange}
+                  isBookmarked={bookmarkStatus[question.id] || false}
+                  onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
                 />
               ))}
             </div>

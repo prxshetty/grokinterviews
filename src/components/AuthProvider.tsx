@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter, usePathname } from 'next/navigation';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 
 interface UserProfile {
   id: string;
@@ -13,7 +14,7 @@ interface UserProfile {
 }
 
 interface AuthContextType {
-  user: any;
+  user: User | null;
   profile: UserProfile | null;
   loading: boolean;
   error: string | null;
@@ -33,7 +34,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,17 +67,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     try {
       setLoading(true);
 
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
 
       if (error) {
         throw error;
       }
 
-      if (session?.user) {
-        setUser(session.user);
+      if (fetchedUser) {
+        setUser(fetchedUser);
 
         // Fetch user profile
-        const profileData = await fetchUserProfile(session.user.id);
+        const profileData = await fetchUserProfile(fetchedUser.id);
         setProfile(profileData);
       } else {
         setUser(null);
@@ -114,12 +115,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log('AuthProvider - Checking session');
-        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('AuthProvider - Checking user');
+        const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
 
-        console.log('AuthProvider - Session check result:', {
-          hasSession: !!session,
-          userId: session?.user?.id,
+        console.log('AuthProvider - User check result:', {
+          hasUser: !!fetchedUser,
+          userId: fetchedUser?.id,
           cookies: document.cookie.split(';').map(c => c.trim().split('=')[0])
         });
 
@@ -127,11 +128,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           throw error;
         }
 
-        if (session?.user) {
-          setUser(session.user);
+        if (fetchedUser) {
+          setUser(fetchedUser);
 
           // Fetch user profile
-          const profileData = await fetchUserProfile(session.user.id);
+          const profileData = await fetchUserProfile(fetchedUser.id);
           setProfile(profileData);
         }
       } catch (error: any) {
@@ -145,7 +146,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     checkAuth();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       console.log('AuthProvider - Auth state changed:', event, session?.user?.id);
       console.log('AuthProvider - Cookies after state change:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
 

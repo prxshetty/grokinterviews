@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/utils/supabase/client';
+import type { User } from '@supabase/supabase-js';
 import { DemoButton } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Image from 'next/image';
@@ -80,7 +81,7 @@ export default function AccountPage() {
   const [saving, setSaving] = useState(false);
   const [savingApiKey, setSavingApiKey] = useState(false);
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -107,19 +108,19 @@ export default function AccountPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
+      const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
+      if (userError || !fetchedUser) {
         router.push('/signin');
         return;
       }
 
-      setUser(session.user);
+      setUser(fetchedUser);
 
       // Fetch Profile Data (name, username, api key)
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('full_name, username, avatar_url, custom_api_key') // Added avatar_url
-        .eq('id', session.user.id)
+        .select('full_name, username, avatar_url, custom_api_key')
+        .eq('id', fetchedUser.id)
         .single();
 
       if (error) {
@@ -129,64 +130,40 @@ export default function AccountPage() {
       // Fetch Preferences Data (model, answer prefs)
       const { data: preferencesData, error: prefError } = await supabase
         .from('user_preferences')
-        .select('*') // Select all preference fields
-        .eq('user_id', session.user.id)
-        .maybeSingle(); // Use maybeSingle as it might not exist
+        .select('*')
+        .eq('user_id', fetchedUser.id)
+        .maybeSingle();
 
       if (prefError) {
         console.error('Error fetching preferences:', prefError);
       }
 
       if (profileData) {
-        // Combine fetched data with session info, ensure all UserProfile fields are present
+        // Combine fetched data with user info, ensure all UserProfile fields are present
         setProfile({
-            id: session.user.id,
-            email: session.user.email || '',
+            id: fetchedUser.id,
+            email: fetchedUser.email || '',
             full_name: profileData.full_name,
             username: profileData.username,
-            avatar_url: profileData.avatar_url, // Make sure avatar_url is included
+            avatar_url: profileData.avatar_url,
             custom_api_key: profileData.custom_api_key
         });
         setFormData(prev => ({
-          ...prev, // Keep existing preferences state
+          ...prev,
           full_name: profileData.full_name || '',
           username: profileData.username || '',
-          email: session.user.email || '', // Email from session
+          email: fetchedUser.email || '',
         }));
         setApiKeyInput(profileData.custom_api_key || '');
-      } else if (session.user.email) {
-        // Profile doesn't exist, but we have email from session
-        setFormData(prev => ({ ...prev, email: session.user.email! }));
+      } else if (fetchedUser.email) {
+        // Profile doesn't exist, but we have email from fetchedUser
+        setFormData(prev => ({ ...prev, email: fetchedUser.email! }));
       }
-
-      if (preferencesData) {
-        setPreferences(preferencesData); // Store raw preferences
-        // Update form data with fetched preferences, using defaults if needed
-        setFormData(prev => ({
-          ...prev, // Keep profile info
-          specific_model_id: preferencesData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
-          use_youtube_sources: preferencesData.use_youtube_sources ?? true,
-          use_pdf_sources: preferencesData.use_pdf_sources ?? true,
-          use_paper_sources: preferencesData.use_paper_sources ?? true,
-          use_website_sources: preferencesData.use_website_sources ?? true,
-          use_book_sources: preferencesData.use_book_sources ?? false,
-          use_image_sources: preferencesData.use_image_sources ?? false,
-          preferred_answer_format: (preferencesData.preferred_answer_format || 'markdown') as AnswerFormat,
-          preferred_answer_depth: (preferencesData.preferred_answer_depth || 'standard') as AnswerDepth,
-          include_code_snippets: preferencesData.include_code_snippets ?? true,
-          include_latex_formulas: preferencesData.include_latex_formulas ?? false,
-          custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
-        }));
-      } else {
-        // Preferences don't exist, form data already has defaults
-        setPreferences(null);
-      }
-
       setLoading(false);
     };
 
     checkUser();
-  }, [supabase, router]);
+  }, [router, supabase]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

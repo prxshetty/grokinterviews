@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
+// import supabaseServer from '@/utils/supabase-server'; // Will be removed
 
 // Helper function to format time ago
 function formatTimeAgo(date: Date): string {
@@ -38,18 +39,18 @@ function formatTimeAgo(date: Date): string {
 
 // GET: Retrieve user bookmarks from user_bookmarks table
 export async function GET(request: NextRequest) {
-  const cookieStore = await cookies();
-  // @ts-ignore
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = await createClient();
   let userId = null;
 
+  // Get the user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) throw new Error('User not authenticated');
-    userId = session.user.id;
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    if (userError) throw userError;
+    if (!user) throw new Error('User not authenticated');
+    userId = user.id;
+    console.log('Found user ID from auth for bookmarks GET:', userId); // Updated log
   } catch (error: any) {
-    console.error('Bookmark GET Session Error:', error.message);
+    console.error('Bookmark GET User/Auth Error:', error.message); // Updated log
     return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
@@ -57,18 +58,9 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get('limit') || '50');
 
-    // Fetch bookmarks directly from user_bookmarks
-    const { data: bookmarks, error: bookmarksError } = await supabaseServer
+    const { data: bookmarks, error: bookmarksError } = await supabase
       .from('user_bookmarks')
-      .select(`
-        id,
-        question_id,
-        category_id,
-        topic_id,
-        domain,
-        section_name,
-        created_at
-      `)
+      .select('id, question_id, category_id, topic_id, domain, section_name, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -90,7 +82,7 @@ export async function GET(request: NextRequest) {
     // Fetch question texts
     let questionTexts: Record<number, string> = {};
     if (questionIds.length > 0) {
-      const { data: qData, error: qError } = await supabaseServer
+      const { data: qData, error: qError } = await supabase
         .from('questions')
         .select('id, question_text')
         .in('id', questionIds);
@@ -106,7 +98,7 @@ export async function GET(request: NextRequest) {
     // Fetch topic names
     let topicNames: Record<number, string> = {};
     if (topicIds.length > 0) {
-      const { data: tData, error: tError } = await supabaseServer
+      const { data: tData, error: tError } = await supabase
         .from('topics')
         .select('id, name')
         .in('id', topicIds);
@@ -122,7 +114,7 @@ export async function GET(request: NextRequest) {
     // Fetch category names
     let categoryNames: Record<number, string> = {};
     if (categoryIds.length > 0) {
-       const { data: cData, error: cError } = await supabaseServer
+       const { data: cData, error: cError } = await supabase
          .from('categories')
          .select('id, name')
          .in('id', categoryIds);
@@ -161,19 +153,18 @@ export async function GET(request: NextRequest) {
 
 // POST: Add or remove a bookmark in user_bookmarks table
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  // @ts-ignore
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = await createClient();
   let userId = null;
 
-  // Get user session
+  // Get user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!session?.user) throw new Error('User not authenticated');
-    userId = session.user.id;
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    if (userError) throw userError;
+    if (!user) throw new Error('User not authenticated');
+    userId = user.id;
+    console.log('Found user ID from auth for bookmarks POST:', userId); // Updated log
   } catch (error: any) {
-    console.error('Bookmark POST Session Error:', error.message);
+    console.error('Bookmark POST User/Auth Error:', error.message); // Updated log
     return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
@@ -203,11 +194,11 @@ export async function POST(request: NextRequest) {
       let domain: string | null = null;
       let sectionName: string | null = null;
       try {
-          const { data: topicData, error: topicError } = await supabaseServer
+          const { data: topicData, error: topicError } = await supabase
               .from('topics')
               .select('domain, section_name')
               .eq('id', topicId)
-              .maybeSingle(); // Use maybeSingle to handle potential null topic
+              .maybeSingle();
           
           if (topicError) {
               console.warn(`Failed to get topic details for bookmark: ${topicError.message}`);
@@ -216,13 +207,13 @@ export async function POST(request: NextRequest) {
               domain = topicData.domain;
               sectionName = topicData.section_name;
           }
-      } catch (fetchError) {
-          console.error('Error fetching topic details:', fetchError);
+      } catch (fetchError: any) {
+          console.error('Error fetching topic details:', fetchError.message);
           // Proceed without domain/section
       }
 
       // 2. Insert into user_bookmarks
-      const { error: insertError } = await supabaseServer
+      const { error: insertError } = await supabase
         .from('user_bookmarks')
         .insert({
           user_id: userId,
@@ -251,7 +242,7 @@ export async function POST(request: NextRequest) {
       // --- Remove bookmark --- 
       console.log(`Removing bookmark: User ${userId}, Q:${questionId}`);
 
-      const { error: deleteError } = await supabaseServer
+      const { error: deleteError } = await supabase
         .from('user_bookmarks')
         .delete()
         .eq('user_id', userId)
