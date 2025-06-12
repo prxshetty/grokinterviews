@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
 
 // GET: Retrieve user activity aggregated by date for the activity grid
 export async function GET(request: NextRequest) {
-  // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  // Create Supabase client using the new server utility
+  const supabase = await createClient();
   let userId = null;
 
-  // Get the user session using Supabase auth
+  // Get the user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
+    if (userError) {
+      console.error('User fetch Error:', userError.message);
       return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-    } else if (session?.user) {
-      userId = session.user.id;
+    } else if (user) {
+      userId = user.id;
+      console.log('Found user ID from auth for activity grid:', userId);
     } else {
+      console.log('No user found from auth for activity grid');
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 

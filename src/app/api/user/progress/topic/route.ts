@@ -1,34 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 // GET: Retrieve progress data for a specific topic
 export async function GET(request: NextRequest) {
-  // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = await createClient(); // Use the new server client
   let userId = null;
 
-  // Get the user session using Supabase auth
+  // Get the user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
-      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-    } else if (session?.user) {
-      userId = session.user.id;
-    } else {
-      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
-    }
-  } catch (error) {
-    console.error('Error getting user session:', error);
-    return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    if (userError) throw userError;
+    if (!user) throw new Error('User not authenticated');
+    userId = user.id;
+    console.log('Found user ID from auth for progress/topic:', userId); // Updated log
+  } catch (error: any) {
+    console.error('Progress/topic User/Auth Error:', error.message); // Updated log
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
   try {
-    // Get the topic ID from the query parameters
     const url = new URL(request.url);
     const topicId = url.searchParams.get('topicId');
 
@@ -36,136 +26,69 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Topic ID is required' }, { status: 400 });
     }
 
-    // Get all categories in this topic
-    const { data: categories, error: categoriesError } = await supabaseServer
+    const { data: categories, error: categoriesError } = await supabase // Use session client
       .from('categories')
       .select('id')
       .eq('topic_id', topicId);
-
-    if (categoriesError) {
-      console.error('Error fetching categories:', categoriesError);
-      return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
-    }
-
+    if (categoriesError) return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
     const totalCategories = categories?.length || 0;
     const categoryIds = categories?.map(cat => cat.id) || [];
+    if (totalCategories === 0) return NextResponse.json({ categoriesCompleted: 0, totalCategories: 0, questionsCompleted: 0, totalQuestions: 0, completionPercentage: 0 });
 
-    // If there are no categories, return empty data
-    if (totalCategories === 0) {
-      return NextResponse.json({
-        categoriesCompleted: 0,
-        totalCategories: 0,
-        questionsCompleted: 0,
-        totalQuestions: 0,
-        completionPercentage: 0
-      });
-    }
 
-    // Get the total number of questions in all categories of this topic
-    const { count: totalQuestions, error: countError } = await supabaseServer
+    const { count: totalQuestions, error: countError } = await supabase // Use session client
       .from('questions')
       .select('*', { count: 'exact', head: true })
       .in('category_id', categoryIds);
+    if (countError) return NextResponse.json({ error: 'Failed to count questions' }, { status: 500 });
 
-    if (countError) {
-      console.error('Error counting questions:', countError);
-      return NextResponse.json({ error: 'Failed to count questions' }, { status: 500 });
-    }
-
-    // First get all question IDs in these categories
-    const { data: questionIds, error: questionIdsError } = await supabaseServer
+    const { data: questionIdsData, error: questionIdsError } = await supabase // Use session client
       .from('questions')
       .select('id')
       .in('category_id', categoryIds);
+    if (questionIdsError) return NextResponse.json({ error: 'Failed to fetch question IDs' }, { status: 500 });
+    const questionIdArray = questionIdsData.map(q => q.id);
+    if (questionIdArray.length === 0) return NextResponse.json({ categoriesCompleted: 0, totalCategories, questionsCompleted: 0, totalQuestions: 0, completionPercentage: 0 });
 
-    if (questionIdsError) {
-      console.error('Error fetching question IDs:', questionIdsError);
-      return NextResponse.json({ error: 'Failed to fetch question IDs' }, { status: 500 });
-    }
 
-    // Extract just the IDs into an array
-    const questionIdArray = questionIds.map(q => q.id);
-
-    // If there are no questions in these categories, return zeros
-    if (questionIdArray.length === 0) {
-      return NextResponse.json({
-        categoriesCompleted: 0,
-        totalCategories,
-        questionsCompleted: 0,
-        totalQuestions: 0,
-        completionPercentage: 0
-      });
-    }
-
-    // Get the number of completed questions in all categories of this topic
-    const { count: questionsCompleted, error: completedError } = await supabaseServer
+    const { count: questionsCompleted, error: completedError } = await supabase // Use session client
       .from('user_progress')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'completed')
       .in('question_id', questionIdArray);
+    if (completedError) return NextResponse.json({ error: 'Failed to count completed questions' }, { status: 500 });
 
-    if (completedError) {
-      console.error('Error counting completed questions:', completedError);
-      return NextResponse.json({ error: 'Failed to count completed questions' }, { status: 500 });
-    }
-
-    // Calculate how many categories are "completed" (all questions completed)
     let categoriesCompleted = 0;
-
-    // For each category, check if all questions are completed
     for (const categoryId of categoryIds) {
-      // Get total questions in this category
-      const { count: catTotalQuestions, error: catCountError } = await supabaseServer
+      const { count: catTotalQuestions, error: catCountError } = await supabase // Use session client
         .from('questions')
         .select('*', { count: 'exact', head: true })
         .eq('category_id', categoryId);
+      if (catCountError) continue;
 
-      if (catCountError) {
-        console.error(`Error counting questions for category ${categoryId}:`, catCountError);
-        continue;
-      }
-
-      // First get all question IDs in this category
-      const { data: catQuestionIds, error: catQuestionIdsError } = await supabaseServer
+      const { data: catQuestionIdsData, error: catQuestionIdsError } = await supabase // Use session client
         .from('questions')
         .select('id')
         .eq('category_id', categoryId);
+      if (catQuestionIdsError) continue;
+      const catQuestionIdArray = catQuestionIdsData.map(q => q.id);
+      if (catQuestionIdArray.length === 0) continue;
 
-      if (catQuestionIdsError) {
-        console.error(`Error fetching question IDs for category ${categoryId}:`, catQuestionIdsError);
-        continue;
-      }
-
-      // Extract just the IDs into an array
-      const catQuestionIdArray = catQuestionIds.map(q => q.id);
-
-      // If there are no questions in this category, skip it
-      if (catQuestionIdArray.length === 0) {
-        continue;
-      }
-
-      // Get completed questions in this category
-      const { count: catCompletedQuestions, error: catCompletedError } = await supabaseServer
+      const { count: catCompletedQuestions, error: catCompletedError } = await supabase // Use session client
         .from('user_progress')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('status', 'completed')
         .in('question_id', catQuestionIdArray);
+      if (catCompletedError) continue;
 
-      if (catCompletedError) {
-        console.error(`Error counting completed questions for category ${categoryId}:`, catCompletedError);
-        continue;
-      }
-
-      // If all questions are completed, increment the counter
-      if (catTotalQuestions > 0 && catCompletedQuestions === catTotalQuestions) {
+      if (catTotalQuestions !== null && catTotalQuestions > 0 && catCompletedQuestions === catTotalQuestions) {
         categoriesCompleted++;
       }
     }
 
-    // Calculate completion percentage
-    const completionPercentage = totalQuestions ? Math.round((questionsCompleted / totalQuestions) * 100) : 0;
+    const completionPercentage = totalQuestions ? Math.round(((questionsCompleted || 0) / totalQuestions) * 100) : 0;
 
     return NextResponse.json({
       categoriesCompleted,
@@ -175,8 +98,8 @@ export async function GET(request: NextRequest) {
       completionPercentage
     });
 
-  } catch (error) {
-    console.error('Error fetching topic progress:', error);
+  } catch (error: any) {
+    console.error('Error fetching topic progress:', error.message);
     return NextResponse.json({ error: 'Failed to fetch topic progress' }, { status: 500 });
   }
 }

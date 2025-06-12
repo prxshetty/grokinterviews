@@ -1,64 +1,72 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
+import { type NextRequest } from 'next/server'
+import { createClient } from '@/utils/supabase/server' // Import the updated server client
 
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+  const origin = requestUrl.origin
 
   if (code) {
-    const cookieStore = await cookies();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createClient() // Use the new server client
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
 
-    // Exchange the code for a session
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      // Check if the user has a profile (optional, but good practice from your original code)
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData?.user) {
+        console.error('Error getting user after session exchange:', userError)
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=UserNotFoundAfterExchange`);
+      }
 
-    if (error) {
-      console.error('Error exchanging code for session:', error);
-    } else if (data?.user) {
-      // Check if the user has a profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+        .select('id')
+        .eq('id', userData.user.id)
+        .single()
 
-      if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is the error code for no rows returned
-        console.error('Error checking profile:', profileError);
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error checking profile:', profileError)
+        // Optionally redirect to an error page or handle differently
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=ProfileCheckFailed`);
       }
 
-      // If no profile exists, create one
       if (!profileData) {
-        console.log('Creating profile for OAuth user:', data.user.id);
-
-        // Extract user information from OAuth metadata
-        const { user } = data;
-        const email = user.email || '';
-        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
-        const username = user.user_metadata?.username || user.user_metadata?.preferred_username || email.split('@')[0];
+        console.log('Creating profile for OAuth user:', userData.user.id)
+        const { user } = userData
+        const email = user.email || ''
+        // Supabase user_metadata might not be immediately available after code exchange with ssr client
+        // It's safer to rely on user.email and potentially a default username/fullname
+        // Or, if essential, make another call to get full user details after session is set.
+        // For now, let's use email to derive username and a placeholder for full_name.
+        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'New User';
+        const username = user.user_metadata?.user_name || user.user_metadata?.preferred_username || email.split('@')[0] || `user-${Date.now()}`;
         const avatarUrl = user.user_metadata?.avatar_url || '';
 
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              username,
-              full_name: fullName,
-              email,
-              avatar_url: avatarUrl,
-            },
-          ]);
+        const { error: insertError } = await supabase.from('profiles').insert([
+          {
+            id: user.id,
+            username,
+            full_name: fullName,
+            email,
+            avatar_url: avatarUrl,
+          },
+        ])
 
         if (insertError) {
-          console.error('Error creating profile for OAuth user:', insertError);
+          console.error('Error creating profile for OAuth user:', insertError)
+          return NextResponse.redirect(`${origin}/auth/auth-code-error?error=ProfileCreationFailed`);
         }
       }
+      // Successful authentication and profile check/creation
+      return NextResponse.redirect(`${origin}/dashboard`) // Redirect to dashboard or a user-defined 'next' path
     }
+    console.error('Error exchanging code for session:', error)
+    return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${error.message}`);
+
   }
 
-  // URL to redirect to after sign in process completes
-  return NextResponse.redirect(new URL('/dashboard', request.url));
+  // Fallback redirect if no code is present
+  console.error('No code found in auth callback')
+  return NextResponse.redirect(`${origin}/auth/auth-code-error?error=NoAuthCode`);
 }

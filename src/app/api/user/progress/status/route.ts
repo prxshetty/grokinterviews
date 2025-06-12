@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
+// import supabaseServer from '@/utils/supabase-server'; // To be removed
 
 // Define cache control headers for different scenarios
 const CACHE_HEADERS = {
@@ -18,27 +19,25 @@ const CACHE_HEADERS = {
 
 // GET: Retrieve status of a specific question for the current user
 export async function GET(request: NextRequest) {
-  // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-  let userId = null;
+  const supabase = await createClient(); // Use the new server client
+  let userId: string;
 
-  // Get the user session using Supabase auth
+  // Authenticate user
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
-      return NextResponse.json({ status: 'unknown', error: 'Authentication error' }, { status: 401 });
-    } else if (session?.user) {
-      userId = session.user.id;
-    } else {
-      return NextResponse.json({ status: 'unknown', error: 'User not authenticated' }, { status: 401 });
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    if (userError) {
+      console.error('User fetch Error in progress/status:', userError.message);
+      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
     }
-  } catch (error) {
-    console.error('Error getting user session:', error);
-    return NextResponse.json({ status: 'unknown', error: 'Session error' }, { status: 500 });
+    if (!user) {
+      console.log('No user found in progress/status');
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+    userId = user.id;
+    console.log('Found user ID from auth for progress/status:', userId); // Updated log
+  } catch (e: any) {
+    console.error('Authentication process error in progress/status:', e.message);
+    return NextResponse.json({ error: 'Authentication process failed' }, { status: 500 });
   }
 
   try {
@@ -50,9 +49,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'unknown', error: 'Question ID is required' }, { status: 400 });
     }
 
-    // Single optimized query - check user_progress directly instead of user_activity
-    // This is more efficient as it only has one row per user/question
-    const { data: progressData, error: progressError } = await supabaseServer
+    // 1. Check user_bookmarks first
+    const { data: bookmarkData, error: bookmarkError } = await supabase
+      .from('user_bookmarks')
+      .select('id') // We only need to know if it exists
+      .eq('user_id', userId)
+      .eq('question_id', questionId)
+      .maybeSingle(); // Use maybeSingle as a bookmark might not exist
+
+    if (bookmarkError) {
+      console.error('Error fetching from user_bookmarks:', bookmarkError);
+      // Don't immediately fail; proceed to check user_progress if this specific error isn't critical
+      // However, if the error is not just "not found", it might be a more serious issue.
+      if (bookmarkError.code !== 'PGRST116') { // PGRST116 is "Not found"
+         return NextResponse.json({ status: 'unknown', error: 'Failed to check bookmark status' }, { status: 500 });
+      }
+    }
+
+    if (bookmarkData) {
+      // If a bookmark record exists, the status is 'bookmarked'
+      return NextResponse.json({
+        status: 'bookmarked',
+        isBookmarked: true,
+        timestamp: Date.now()
+      }, {
+        status: 200,
+        headers: CACHE_HEADERS.short // Bookmarks can change, so short cache
+      });
+    }
+
+    // 2. If not bookmarked, check user_progress for other statuses (e.g., viewed, completed)
+    const { data: progressData, error: progressError } = await supabase
       .from('user_progress')
       .select('status, updated_at')
       .eq('user_id', userId)
@@ -65,20 +92,18 @@ export async function GET(request: NextRequest) {
     }
 
     let responseData = {
-      status: progressData?.status || 'unknown',
-      isBookmarked: progressData?.status === 'bookmarked',
+      status: progressData?.status || 'unknown', // If not in user_bookmarks, status comes from user_progress
+      isBookmarked: false, // Since it wasn't found in user_bookmarks
       timestamp: Date.now()
     };
 
     // If the status is 'completed', we can cache it longer (unlikely to change)
     // For other statuses, use shorter cache duration
-    const cacheHeaders = progressData?.status === 'completed' ? 
-                        CACHE_HEADERS.medium : 
-                        CACHE_HEADERS.short;
+    const cacheHeadersToUse = progressData?.status === 'completed' ? CACHE_HEADERS.medium : CACHE_HEADERS.short;
 
     return NextResponse.json(responseData, { 
       status: 200,
-      headers: cacheHeaders
+      headers: cacheHeadersToUse
     });
 
   } catch (error) {

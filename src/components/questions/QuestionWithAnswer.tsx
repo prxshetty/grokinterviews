@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, memo, useMemo, useCallback, Suspense } from 'react';
 import { isQuestionBookmarked, isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed, toggleQuestionBookmark } from '@/app/utils/progress';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/utils/supabase/client';
 import React from 'react';
 import { toast } from '@/hooks/use-toast';
 
@@ -61,23 +61,35 @@ interface QuestionWithAnswerProps {
   isHighlighted?: boolean;
   topicId?: number;
   onCompletionChange?: (questionId: number, isCompleted: boolean) => void;
+  isBookmarked: boolean;
+  onBookmarkStatusChange?: (questionId: number, newStatus: boolean) => void;
 }
 
 // Renaming original component and preparing for memoization
-function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = false, topicId, onCompletionChange }: QuestionWithAnswerProps) {
+function QuestionWithAnswerComponent({
+  question,
+  questionIndex,
+  isHighlighted = false,
+  topicId,
+  onCompletionChange,
+  isBookmarked,
+  onBookmarkStatusChange
+}: QuestionWithAnswerProps) {
   // Initialize Supabase client
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAnswer, setGeneratedAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isViewed, setIsViewed] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const answerRef = useRef<HTMLDivElement | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // isBookmarkedState should now primarily reflect the prop.
+  const [isBookmarkedState, setIsBookmarkedState] = useState(isBookmarked);
 
   // Memoize expensive calculations
   const hasPredefinedAnswer = useMemo(() => {
@@ -86,13 +98,17 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
   }, [question.answer_text]);
 
   const questionId = question.id;
-  const categoryId = question.categories?.id ?? question.category_id;
+  // Use question.category_id from the question object itself as primary, then fallback.
+  const actualCategoryId = question.categories?.id ?? question.category_id;
 
-
+  // Synchronize isBookmarkedState with the isBookmarked prop
+  useEffect(() => {
+    setIsBookmarkedState(isBookmarked);
+  }, [isBookmarked]);
 
   useEffect(() => {
     if (question.id) {
-      console.log(`Checking status for question ${question.id}`);
+      console.log(`Checking completion status for question ${question.id}`);
 
       try {
         const localStorageCompletedQuestions = JSON.parse(localStorage.getItem('completedQuestions') || '[]');
@@ -106,12 +122,6 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
         console.error('Error checking client storage:', err);
       }
 
-      isQuestionBookmarked(question.id)
-        .then(bookmarked => {
-          setIsBookmarked(bookmarked);
-        })
-        .catch(err => console.error('Failed to check bookmark status:', err));
-      
       if (!isCompleted) {
         fetch(`/api/user/progress/status?questionId=${question.id}`, { headers: { 'Cache-Control': 'no-store' } })
         .then(response => response.json())
@@ -183,7 +193,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
         onCompletionChange?.(question.id, true);
         toast.success("Question marked as completed!");
 
-        markQuestionAsCompleted(question.id, topicId || 0, categoryId || 0)
+        markQuestionAsCompleted(question.id, topicId || 0, actualCategoryId || 0)
           .then((success) => {
             if (success) {
               console.log(`Question ${question.id} marked as completed in database`);
@@ -201,7 +211,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
                     completedSessionQuestions.push({
                       questionId: question.id,
                       topicId: topicId,
-                      categoryId: categoryId,
+                      categoryId: actualCategoryId,
                     });
                     sessionStorage.setItem('completedQuestions', JSON.stringify(completedSessionQuestions));
                     console.log(`Added question ${question.id} to completedQuestions in sessionStorage`);
@@ -238,7 +248,7 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
       clearTimeout(initialTimer);
       if (answerElement) answerElement.removeEventListener('scroll', handleScroll);
     };
-  }, [isExpanded, question.id, topicId, categoryId, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text, isCompleted, onCompletionChange]);
+  }, [isExpanded, question.id, topicId, actualCategoryId, generatedAnswer, hasPredefinedAnswer, isGenerating, question.answer_text, isCompleted, onCompletionChange]);
 
   useEffect(() => {
     if (isExpanded && !hasPredefinedAnswer && !generatedAnswer && !isGenerating && !error) {
@@ -281,15 +291,26 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
   };
 
   const toggleBookmark = async () => {
-    const newBookmarkStatus = !isBookmarked;
-    setIsBookmarked(newBookmarkStatus); // Optimistic update
+    const newBookmarkStatus = !isBookmarkedState;
+    setIsBookmarkedState(newBookmarkStatus); // Optimistic update
+
+    // Prefer question's own topic_id and category_id
+    const qTopicId = question.topic_id ?? topicId ?? 0; // Use question.topic_id, fallback to prop topicId
+    const qCategoryId = question.categories?.id ?? question.category_id ?? 0;
+
+    if (qTopicId === 0) {
+      console.warn(`toggleBookmark: Missing topicId for question ${question.id}. Q_Topic: ${question.topic_id}, Prop_Topic: ${topicId}`);
+    }
+    if (qCategoryId === 0) {
+      console.warn(`toggleBookmark: Missing categoryId for question ${question.id}. Q_Cat_Obj: ${question.categories?.id}, Q_Cat_Field: ${question.category_id}`);
+    }
 
     try {
       const success = await toggleQuestionBookmark(
         question.id,
         newBookmarkStatus,
-        topicId || question.topic_id || 0,
-        categoryId || 0
+        qTopicId, 
+        qCategoryId
       );
 
       if (success) {
@@ -302,14 +323,16 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
                 description: "Question removed from your bookmarks."
             });
         }
+        // Notify parent about the change
+        onBookmarkStatusChange?.(question.id, newBookmarkStatus);
       } else {
-        setIsBookmarked(!newBookmarkStatus); // Revert
+        setIsBookmarkedState(!newBookmarkStatus); // Revert
         toast.error("Failed to update bookmark", {
             description: "Please try again."
         });
       }
     } catch (error) {
-      setIsBookmarked(!newBookmarkStatus); // Revert
+      setIsBookmarkedState(!newBookmarkStatus); // Revert
       console.error("Failed to toggle bookmark:", error);
       toast.error("An unexpected error occurred", {
         description: "Please try again."
@@ -360,9 +383,9 @@ function QuestionWithAnswerComponent({ question, questionIndex, isHighlighted = 
                 toggleBookmark();
               }}
               className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+              title={isBookmarkedState ? 'Remove bookmark' : 'Add bookmark'}
             >
-              {isBookmarked ? (
+              {isBookmarkedState ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-3.125L5 18V4z" />
                 </svg>

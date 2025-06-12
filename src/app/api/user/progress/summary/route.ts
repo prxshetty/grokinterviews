@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 // Environment-aware logging function that only logs in development
 const log = (message: string, data?: any) => {
@@ -15,6 +13,9 @@ const log = (message: string, data?: any) => {
 };
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient(); // Use the new server client
+  let userId = null;
+
   try {
     const { searchParams } = new URL(request.url);
     const domain = searchParams.get('domain');
@@ -22,34 +23,21 @@ export async function GET(request: NextRequest) {
     const entityType = searchParams.get('entityType'); // 'domain', 'section', 'topic', 'category'
     const entityId = searchParams.get('entityId');
 
-    // Revert to explicit await for cookies() before creating the client
-    const cookieStore = await cookies();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - Suppressing linter error as runtime requires awaited cookies here
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    let userId = null;
-
-    // Get the user session using Supabase auth
+    // Get the user using Supabase auth
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('Session Error:', sessionError.message);
-        return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-      } else if (session?.user) {
-        userId = session.user.id;
-      } else {
-        return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
-      }
-    } catch (error) {
-      console.error('Error getting user session:', error);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
+      const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+      if (userError) throw userError;
+      if (!user) throw new Error('User not authenticated'); // Check for user object
+      userId = user.id;
+    } catch (error: any) {
+      console.error('User fetch Error:', error.message); // Updated log message
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
     }
 
     // Special handling for section progress using the materialized view
     if (entityType === 'section' && domain && sectionName) {
       // Use materialized view for section progress
-      const { data, error } = await supabaseServer
+      const { data, error } = await supabase
         .from('user_section_subtopic_progress_mv')
         .select('*')
         .eq('user_id', userId)
@@ -105,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     // For other entity types, use the user_progress_summary table
     // Build the query based on the provided parameters
-    let query = supabaseServer
+    let query = supabase
       .from('user_progress_summary')
       .select('*')
       .eq('user_id', userId);
@@ -171,15 +159,12 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now()
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching progress summary:', error);
 
     // Provide more detailed error information
     let errorMessage = 'Failed to fetch progress summary';
-    if (error instanceof Error) {
-      errorMessage = `${errorMessage}: ${error.message}`;
-    }
-
+    if (error instanceof Error) errorMessage = `${errorMessage}: ${error.message}`;
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

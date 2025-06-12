@@ -1,74 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
+// import supabaseServer from '@/utils/supabase-server'; // To be removed
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient(); // Use the new server client for all operations
+  let userId = null;
+
   try {
     const { searchParams } = new URL(request.url);
     const domain = searchParams.get('domain');
     const sectionName = searchParams.get('section');
 
-    if (!domain) {
-      return NextResponse.json({ error: 'Domain parameter is required' }, { status: 400 });
+    if (!domain || !sectionName) {
+      return NextResponse.json({ error: 'Domain and Section parameters are required' }, { status: 400 });
     }
 
-    if (!sectionName) {
-      return NextResponse.json({ error: 'Section parameter is required' }, { status: 400 });
-    }
-
-    // Get the user ID from the session
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    let userId = null;
-
-    // Get the user session using Supabase auth
+    // Authenticate user
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('Session Error:', sessionError.message);
+      const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+      if (userError) {
+        console.error('User fetch Error in section-progress:', userError.message);
         return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-      } else if (session?.user) {
-        userId = session.user.id;
-      } else {
+      }
+      if (!user) {
+        console.log('No user found in section-progress');
         return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
       }
-    } catch (error) {
-      console.error('Error getting user session:', error);
-      return NextResponse.json({ error: 'Session error' }, { status: 500 });
+      userId = user.id;
+      console.log('Found user ID from auth for section-progress:', userId); // Updated log
+    } catch (e: any) {
+      console.error('Authentication process error in section-progress:', e.message);
+      return NextResponse.json({ error: 'Authentication process failed' }, { status: 500 });
     }
 
     console.log(`Calculating section progress for domain ${domain}, section ${sectionName}`);
 
     // Get all topics for this section
-    let subtopics = null;
-    let subtopicsError = null;
+    let subtopicsQuery = supabase // Use session client
+      .from('topics')
+      .select('id, name, section_name, domain')
+      .eq('domain', domain);
 
-    // Special handling for "Core Concepts" which might be both a section_name and a name
     if (sectionName === "Core Concepts") {
-      // For Core Concepts, check both section_name and name fields
-      const response = await supabaseServer
-        .from('topics')
-        .select('id, name, section_name, domain')
-        .eq('domain', domain)
-        .or('section_name.eq."Core Concepts",name.eq."Core Concepts"');
-
-      subtopics = response.data;
-      subtopicsError = response.error;
+      subtopicsQuery = subtopicsQuery.or('section_name.eq."Core Concepts",name.eq."Core Concepts"');
     } else {
-      // For other sections, just check section_name
-      const response = await supabaseServer
-        .from('topics')
-        .select('id, name, section_name, domain')
-        .eq('domain', domain)
-        .eq('section_name', sectionName);
-
-      subtopics = response.data;
-      subtopicsError = response.error;
+      subtopicsQuery = subtopicsQuery.eq('section_name', sectionName);
     }
-
-    // We've already assigned subtopics and subtopicsError above
+    const { data: subtopics, error: subtopicsError } = await subtopicsQuery;
 
     if (subtopicsError) {
       console.error(`Error fetching subtopics for section ${sectionName}:`, subtopicsError);
@@ -90,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     // Get all categories for these subtopics
     const subtopicIds = subtopics.map(subtopic => subtopic.id);
-    const { data: categories, error: categoriesError } = await supabaseServer
+    const { data: categories, error: categoriesError } = await supabase // Use session client
       .from('categories')
       .select('id, topic_id, name')
       .in('topic_id', subtopicIds);
@@ -114,7 +94,7 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${categories.length} categories for section ${sectionName}`);
 
     // Group categories by subtopic
-    const categoriesBySubtopic = {};
+    const categoriesBySubtopic: Record<string, any[]> = {};
     categories.forEach(category => {
       if (!categoriesBySubtopic[category.topic_id]) {
         categoriesBySubtopic[category.topic_id] = [];
@@ -126,7 +106,7 @@ export async function GET(request: NextRequest) {
     const categoryIds = categories.map(category => category.id);
 
     // Get all questions for these categories
-    const { data: questions, error: questionsError } = await supabaseServer
+    const { data: questions, error: questionsError } = await supabase // Use session client
       .from('questions')
       .select('id, category_id')
       .in('category_id', categoryIds);
@@ -140,7 +120,7 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${totalQuestions} questions for section ${sectionName}`);
 
     // Group questions by category
-    const questionsByCategory = {};
+    const questionsByCategory: Record<string, any[]> = {};
     questions?.forEach(question => {
       if (!questionsByCategory[question.category_id]) {
         questionsByCategory[question.category_id] = [];
@@ -149,7 +129,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get all completed questions for this user
-    const { data: completedData, error: completedError } = await supabaseServer
+    const { data: completedData, error: completedError } = await supabase // Use session client
       .from('user_activity')
       .select('question_id, category_id')
       .eq('user_id', userId)
@@ -252,7 +232,7 @@ export async function GET(request: NextRequest) {
         }
       }
       // If no subtopics are completed or partially completed but some questions are, show some progress
-      else if (questionsCompleted > 0) {
+      else if (questionsCompleted > 0 && totalQuestions > 0) {
         const questionBasedPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
         completionPercentage = Math.min(10, questionBasedPercentage);
         console.log(`Using question-based percentage for section ${sectionName}: ${completionPercentage}%`);
@@ -287,15 +267,8 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now()
     });
 
-  } catch (error) {
-    console.error('Error calculating section progress:', error);
-
-    // Provide more detailed error information
-    let errorMessage = 'Failed to calculate section progress';
-    if (error instanceof Error) {
-      errorMessage = `${errorMessage}: ${error.message}`;
-    }
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error fetching section progress:', error);
+    return NextResponse.json({ error: 'Failed to fetch section progress', details: error.message }, { status: 500 });
   }
 }

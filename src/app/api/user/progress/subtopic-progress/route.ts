@@ -1,35 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
+// import supabaseServer from '@/utils/supabase-server'; // To be removed
 
 // GET: Retrieve progress for a specific subtopic
 export async function GET(request: NextRequest) {
-  // Await cookies() first, then pass a function returning the store
-  const cookieStore = await cookies();
-  // @ts-ignore - Supabase helper type expects Promise, but runtime needs resolved store with Next 15 async cookies
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = await createClient(); // Use the new server client
   let userId = null;
 
-  // Get the user session using Supabase auth
+  // Get the user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
-      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-    } else if (session?.user) {
-      userId = session.user.id;
-    } else {
-      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
-    }
-  } catch (error) {
-    console.error('Error getting user session:', error);
-    return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    if (userError) throw userError;
+    if (!user) throw new Error('User not authenticated');
+    userId = user.id;
+    console.log('Found user ID from auth for subtopic-progress:', userId); // Updated log
+  } catch (error: any) {
+    console.error('Subtopic-progress User/Auth Error:', error.message); // Updated log
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
   try {
-    // Get the subtopic ID from the query parameters
     const url = new URL(request.url);
     const subtopicId = url.searchParams.get('subtopicId');
 
@@ -39,8 +31,7 @@ export async function GET(request: NextRequest) {
 
     console.log(`Fetching progress for subtopic ${subtopicId}`);
 
-    // Get all categories in this subtopic
-    const { data: categories, error: categoriesError } = await supabaseServer
+    const { data: categories, error: categoriesError } = await supabase // Use session client
       .from('categories')
       .select('id')
       .eq('topic_id', subtopicId);
@@ -50,7 +41,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
     }
 
-    // Extract category IDs
     const categoryIds = categories.map(category => category.id);
     const totalCategories = categoryIds.length;
 
@@ -61,8 +51,7 @@ export async function GET(request: NextRequest) {
 
     console.log(`Found ${totalCategories} categories for subtopic ${subtopicId}:`, categoryIds);
 
-    // Get all questions in these categories
-    const { data: questions, error: questionsError } = await supabaseServer
+    const { data: questions, error: questionsError } = await supabase // Use session client
       .from('questions')
       .select('id, category_id')
       .in('category_id', categoryIds);
@@ -81,93 +70,51 @@ export async function GET(request: NextRequest) {
 
     console.log(`Found ${totalQuestions} questions for subtopic ${subtopicId}`);
 
-    // Get all question IDs
     const questionIds = questions.map(q => q.id);
 
-    // Get all completed questions for this user within the specific subtopic's questions
-    // Querying user_progress instead of user_activity for potentially more canonical state
-    const { data: completedProgress, error: completedError } = await supabaseServer
-      .from('user_progress') // Changed from user_activity
-      .select('question_id, category_id') // Ensure category_id is selected if needed later
+    const { data: completedProgress, error: completedError } = await supabase // Use session client
+      .from('user_progress')
+      .select('question_id, category_id')
       .eq('user_id', userId)
       .eq('status', 'completed')
-      .in('question_id', questionIds); // Filter by questions in this subtopic
+      .in('question_id', questionIds);
 
     if (completedError) {
       console.error('Error fetching completed questions from user_progress:', completedError);
       return NextResponse.json({ error: 'Failed to fetch completed questions' }, { status: 500 });
     }
 
-    // Count unique completed questions from the fetched progress data
-    const uniqueCompletedQuestionIds = new Set<number>(); // Explicitly type the set
-    completedProgress?.forEach(item => {
-      if (item.question_id) {
-        uniqueCompletedQuestionIds.add(item.question_id);
-      }
-    });
+    const uniqueCompletedQuestionIds = new Set<number>();
+    completedProgress?.forEach(item => { if (item.question_id) uniqueCompletedQuestionIds.add(item.question_id); });
     const questionsCompleted = uniqueCompletedQuestionIds.size;
 
-    // Log the count accurately based on user_progress
     console.log(`User has completed ${questionsCompleted}/${totalQuestions} questions in subtopic ${subtopicId} (from user_progress)`);
 
-    // Group questions by category ID
-    const questionsByCategory: { [key: number]: number[] } = {}; // Type the index signature
+    const questionsByCategory: { [key: number]: number[] } = {};
     questions.forEach(q => {
-      if (!questionsByCategory[q.category_id]) {
-        questionsByCategory[q.category_id] = [];
-      }
+      if (!questionsByCategory[q.category_id]) questionsByCategory[q.category_id] = [];
       questionsByCategory[q.category_id].push(q.id);
     });
 
-    // Calculate how many categories are "completed" (all questions completed)
     let categoriesCompleted = 0;
-
-    // Use Object.keys to iterate only over own properties of the questionsByCategory object
     for (const categoryIdStr of Object.keys(questionsByCategory)) {
         const categoryId = parseInt(categoryIdStr, 10);
-        if (isNaN(categoryId)) continue; // Skip if parsing fails
-
+        if (isNaN(categoryId)) continue;
         const categoryQuestionIds = questionsByCategory[categoryId] || [];
         const totalQuestionsInCategory = categoryQuestionIds.length;
-
-        // Skip empty categories
-        if (totalQuestionsInCategory === 0) {
-            console.log(`Skipping category ${categoryId}: No questions found.`);
-            continue;
-        }
-
-        // Count how many questions in this category are in the completed set
-      let categoryCompletedCount = 0;
-        categoryQuestionIds.forEach(questionId => {
-            if (uniqueCompletedQuestionIds.has(questionId)) {
-          categoryCompletedCount++;
-        }
-      });
-
-        console.log(`Category ${categoryId}: ${categoryCompletedCount}/${totalQuestionsInCategory} questions completed.`);
-
-        // If all questions in the category are completed, increment the category counter
-        if (categoryCompletedCount === totalQuestionsInCategory) {
-        categoriesCompleted++;
-            console.log(`Category ${categoryId} is fully completed.`);
-      }
+        if (totalQuestionsInCategory === 0) continue;
+        let categoryCompletedCount = 0;
+        categoryQuestionIds.forEach(questionId => { if (uniqueCompletedQuestionIds.has(questionId)) categoryCompletedCount++; });
+        if (categoryCompletedCount === totalQuestionsInCategory) categoriesCompleted++;
     }
 
-    // Calculate completion percentage based on question completion, not category completion.
-    const completionPercentage = totalQuestions > 0
-      ? Math.round((questionsCompleted / totalQuestions) * 100)
-      : 0;
+    const completionPercentage = totalQuestions > 0 ? Math.round((questionsCompleted / totalQuestions) * 100) : 0;
     
-    // Log a summary with updated calculation source
     console.log(`Subtopic ${subtopicId} progress (calculated live): ${questionsCompleted}/${totalQuestions} questions, ${categoriesCompleted}/${totalCategories} categories, ${completionPercentage}% complete`);
 
     return NextResponse.json({
-      categoriesCompleted,
-      totalCategories,
-      questionsCompleted,
-      totalQuestions,
-      completionPercentage,
-      timestamp: Date.now() // Add timestamp to prevent caching
+      categoriesCompleted, totalCategories, questionsCompleted, totalQuestions, completionPercentage,
+      timestamp: Date.now()
     });
 
   } catch (error) {

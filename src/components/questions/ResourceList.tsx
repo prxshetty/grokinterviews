@@ -1,321 +1,329 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/utils/supabase/client';
 import Image from 'next/image';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ExternalLink, Bookmark, Video, FileText, Globe, BookOpen, Image as ImageIcon, ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { type Database } from '@/types/database.types';
 
-interface Resource {
-  id: number;
-  question_id: number;
-  type: string;
-  title: string;
-  url: string;
-  description: string | null;
-  relevance_score: number;
-  previewUrl?: string;
-}
+type DbResource = Database['public']['Tables']['resources']['Row'];
+type UserPreferences = Database['public']['Tables']['user_preferences']['Row'];
+type Resource = DbResource & { previewUrl?: string }; // Combine DbResource with optional previewUrl
 
 interface ResourceListProps {
-  questionId: number;
+  questionId: number | null;
+  domain?: string | null;
+  topicId?: number | null;
+  categoryId?: number | null;
+  subcategoryId?: number | null;
 }
 
-export function ResourceList({ questionId }: ResourceListProps) {
+export function ResourceList({ questionId, domain, topicId, categoryId, subcategoryId }: ResourceListProps) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
+  const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   useEffect(() => {
-    const fetchUserPreferences = async () => {
-      let prefs = {
-        use_youtube_sources: true,
-        use_pdf_sources: true,
-        use_paper_sources: true,
-        use_website_sources: true,
-        use_book_sources: false,
-        use_image_sources: false,
-      };
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const { data: prefData, error: prefError } = await supabase
+    setLoading(true);
+    let isMounted = true;
+
+    async function fetchData() {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (!isMounted) return;
+
+      if (userError) {
+        console.error("Error fetching user for ResourceList:", userError);
+        setIsLoggedIn(false);
+      } else if (user) {
+        setIsLoggedIn(true);
+        try {
+          const { data: prefs, error: prefsError } = await supabase
             .from('user_preferences')
-            .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-          if (prefError) {
-            console.error('Error fetching user preferences:', prefError);
-          } else if (prefData) {
-            prefs = {
-              use_youtube_sources: prefData.use_youtube_sources ?? true,
-              use_pdf_sources: prefData.use_pdf_sources ?? true,
-              use_paper_sources: prefData.use_paper_sources ?? true,
-              use_website_sources: prefData.use_website_sources ?? true,
-              use_book_sources: prefData.use_book_sources ?? false,
-              use_image_sources: prefData.use_image_sources ?? false,
-            };
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          if (!isMounted) return;
+          if (prefsError && prefsError.code !== 'PGRST116') {
+            console.error('Error fetching user preferences:', prefsError);
+            setError('Failed to load preferences.');
+          } else if (prefs) {
+            setUserPreferences(prefs);
           }
+        } catch (e) {
+          if (!isMounted) return;
+          console.error('Exception fetching preferences:', e);
+          setError('An error occurred while loading preferences.');
         }
-      } catch (err) {
-        console.error('Error in session/preference logic:', err);
+        setPreferencesLoaded(true);
+        try {
+          const { data: bookmarksData, error: bookmarksError } = await supabase
+            .from('user_bookmarks')
+            .select('question_id')
+            .eq('user_id', user.id);
+          if (!isMounted) return;
+          if (bookmarksError) {
+            console.error('Error fetching bookmarks:', bookmarksError);
+          } else if (bookmarksData) {
+            const bookmarkedIds = new Set(bookmarksData.map(b => b.question_id));
+            setBookmarkedQuestions(bookmarkedIds);
+          }
+        } catch (e) {
+          if (!isMounted) return;
+          console.error('Exception fetching bookmarks:', e);
+        }
+      } else {
+        setIsLoggedIn(false);
+        setPreferencesLoaded(true);
       }
-      setPreferencesLoaded(true);
-      return prefs;
-    };
-
-    const fetchResources = async (userPrefs: any) => {
-      if (!questionId) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
 
       try {
-        const typesToInclude = [
-          userPrefs.use_youtube_sources ? 'video' : null,
-          userPrefs.use_pdf_sources ? 'pdf' : null,
-          userPrefs.use_pdf_sources ? 'enhanced_pdf' : null,
-          userPrefs.use_paper_sources ? 'paper' : null,
-          userPrefs.use_website_sources ? 'website' : null,
-          userPrefs.use_book_sources ? 'book' : null,
-          userPrefs.use_image_sources ? 'image' : null,
-        ].filter(Boolean) as string[];
-
-        if (typesToInclude.length === 0) {
-          setResources([]);
-          setLoading(false);
-          return;
+        let query = supabase.from('resources').select('*', { count: 'exact' });
+        if (domain) query = query.eq('domain', domain);
+        if (topicId) query = query.eq('topic_id', topicId);
+        if (categoryId) query = query.eq('category_id', categoryId);
+        if (subcategoryId) query = query.eq('subcategory_id', subcategoryId);
+        if (questionId && !domain && !topicId && !categoryId && !subcategoryId) {
+             query = query.eq('question_id', questionId);
         }
 
-        const { data, error: resourceError } = await supabase
-          .from('resources')
-          .select('*')
-          .eq('question_id', questionId)
-          .in('type', typesToInclude)
-          .order('relevance_score', { ascending: false });
+        if (user && userPreferences) {
+          if (!userPreferences.use_youtube_sources) query = query.neq('resource_type', 'video');
+          if (!userPreferences.use_pdf_sources) query = query.neq('resource_type', 'pdf');
+          if (!userPreferences.use_paper_sources) query = query.neq('resource_type', 'paper');
+          if (!userPreferences.use_website_sources) query = query.neq('resource_type', 'website');
+          if (!userPreferences.use_book_sources) query = query.neq('resource_type', 'book');
+          // if (!userPreferences.use_image_sources) query = query.neq('resource_type', 'image'); // Commented out due to type error
+        }
+        
+        query = query.order('created_at', { ascending: false }).limit(500);
+        const { data: dbData, error: resourcesError, count } = await query;
+        if (!isMounted) return;
 
-        if (resourceError) throw resourceError;
-
-        const processedData = data?.map(resource => {
-          let previewUrl: string | undefined = undefined;
-          if (resource.type === 'video' && resource.url) {
-            try {
-              const url = new URL(resource.url);
-              let videoId: string | null = null;
-              if (url.hostname === 'youtu.be') {
-                videoId = url.pathname.substring(1);
-              } else if (url.hostname === 'www.youtube.com' || url.hostname === 'youtube.com') {
-                videoId = url.searchParams.get('v');
-              }
-              if (videoId) previewUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-            } catch (e) {
-              console.error('Error parsing video URL:', e);
-            }
-          } else if (resource.type === 'website' && resource.url) {
-            try {
-              previewUrl = `https://www.google.com/s2/favicons?sz=32&domain_url=${encodeURIComponent(resource.url)}`;
-            } catch (e) {
-              console.error('Error processing website URL for favicon:', e);
-            }
-          }
-          return { ...resource, previewUrl };
-        }) || [];
-        setResources(processedData);
-
-      } catch (err) {
-        console.error('Error fetching resources data:', err);
-        setError('An unexpected error occurred while fetching resources. Please try again later.');
-        setResources([]);
-      } finally {
-        setLoading(false);
+        if (resourcesError) {
+          console.error('Error fetching resources:', resourcesError);
+          setError('Failed to load resources.');
+        } else if (dbData) {
+          const processedData = dbData.map(r => ({ ...r, previewUrl: undefined } as Resource)); // Ensure previewUrl is part of the object
+          setResources(processedData);
+          setTotalCount(count || 0);
+        }
+      } catch (e) {
+        if (!isMounted) return;
+        console.error('Exception fetching resources:', e);
+        setError('An error occurred while loading resources.');
       }
-    };
-    
-    fetchUserPreferences().then(prefs => {
-        fetchResources(prefs);
+      setLoading(false);
+    }
+
+    fetchData();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+      const currentUser = session?.user;
+      setIsLoggedIn(!!currentUser);
+      if (currentUser) {
+        const { data: bookmarksData, error: bookmarksError } = await supabase
+          .from('user_bookmarks')
+          .select('question_id')
+          .eq('user_id', currentUser.id);
+        if (!isMounted) return;
+        if (bookmarksError) {
+          console.error('Error fetching bookmarks on auth change:', bookmarksError);
+        } else if (bookmarksData) {
+          const bookmarkedIds = new Set(bookmarksData.map(b => b.question_id));
+          setBookmarkedQuestions(bookmarkedIds);
+        }
+        const { data: prefs, error: prefsError } = await supabase
+            .from('user_preferences')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .single();
+        if (!isMounted) return;
+        if (prefsError && prefsError.code !== 'PGRST116') {
+            console.error('Error fetching user preferences on auth change:', prefsError);
+        } else if (prefs) {
+            setUserPreferences(prefs);
+        } else {
+            setUserPreferences(null);
+        }
+        setPreferencesLoaded(true);
+      } else {
+        setBookmarkedQuestions(new Set());
+        setUserPreferences(null);
+        setPreferencesLoaded(true);
+      }
     });
 
-  }, [questionId, supabase]);
+    return () => {
+      isMounted = false;
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [supabase, questionId, domain, topicId, categoryId, subcategoryId]);
 
-  const getResourcesByType = (type: string) => {
-    return resources.filter(resource => resource.type === type).slice(0, 10); // Show up to 10 resources for horizontal scroll
+  const getResourcesByType = (type: string) => resources.filter(r => r.resource_type === type);
+
+  const typeDisplayOrder: string[] = ['video', 'pdf', 'paper', 'website', 'book', 'image', 'other'];
+
+  const typeDisplayInfo: { [key: string]: { Icon: React.ElementType, title: string } } = {
+    video: { Icon: Video, title: 'Videos' },
+    pdf: { Icon: FileText, title: 'PDFs' },
+    paper: { Icon: FileText, title: 'Research Papers' }, // Could use specific icon if available
+    website: { Icon: Globe, title: 'Websites' },
+    book: { Icon: BookOpen, title: 'Books' },
+    image: { Icon: ImageIcon, title: 'Images' },
+    other: { Icon: ExternalLink, title: 'Other Resources' },
   };
 
-  if (!preferencesLoaded || loading) {
-    return (
-      <div className="flex justify-center items-center py-4">
-        <InlineLoadingSpinner text="Loading resources..." />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-600 dark:text-red-400 text-sm py-3 px-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-600/30 rounded-md">{error}</div>;
-  }
-
-  if (resources.length === 0) {
-    return (
-        <div className="text-sm text-gray-500 dark:text-gray-400 py-3 px-4 bg-gray-50 dark:bg-gray-800/20 border border-gray-200 dark:border-gray-700/30 rounded-md">
-            No additional resources found based on your current preferences.
-        </div>
-    );
-  }
-
-  const resourceTypes = Array.from(new Set(resources.map(resource => resource.type)));
-  // Prioritize 'video' type
-  if (resourceTypes.includes('video')) {
-    const index = resourceTypes.indexOf('video');
-    if (index > -1) {
-      resourceTypes.splice(index, 1);
-      resourceTypes.unshift('video');
+  const handleBookmarkToggle = async (resource: Resource) => {
+    if (!isLoggedIn || !resource.question_id) {
+      toast.error('Please log in to bookmark questions.');
+      return;
     }
-  }
+    const questionNumericId = Number(resource.question_id);
+    const isCurrentlyBookmarked = bookmarkedQuestions.has(questionNumericId);
 
-  const getResourceTypeLabel = (type: string) => {
-    switch (type) {
-      case 'video': return 'Videos';
-      case 'pdf': return 'PDFs';
-      case 'enhanced_pdf': return 'Enhanced PDFs';
-      case 'paper': return 'Research Papers';
-      case 'website': return 'Websites';
-      case 'book': return 'Books';
-      case 'image': return 'Images';
-      default: return type.charAt(0).toUpperCase() + type.slice(1);
+    // Optimistically update UI
+    const newBookmarkedQuestions = new Set(bookmarkedQuestions);
+    if (isCurrentlyBookmarked) {
+      newBookmarkedQuestions.delete(questionNumericId);
+    } else {
+      newBookmarkedQuestions.add(questionNumericId);
     }
-  };
+    setBookmarkedQuestions(newBookmarkedQuestions);
 
-  const getResourceTypeIcon = (type: string) => {
-    switch (type) {
-      case 'video':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      case 'pdf':
-      case 'enhanced_pdf':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-        );
-      case 'paper':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-          </svg>
-        );
-      case 'website':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-          </svg>
-        );
-      case 'book':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        );
-      case 'image':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+    try {
+      const { error } = await supabase.from('user_bookmarks').upsert({
+        user_id: (await supabase.auth.getUser()).data.user?.id, // Ensure user ID is correctly fetched
+        question_id: questionNumericId,
+        // Required fields from your table definition, assuming they exist
+        // topic_id, category_id, domain, section_name should be fetched or passed if required by table
+        // For now, assuming they can be null or have defaults, or are not strictly required for a simple bookmark action
+      }, {
+        onConflict: 'user_id,question_id',
+        ignoreDuplicates: false, // Explicitly false to either insert or update based on conflict
+      });
+      // If it was a delete operation (isCurrentlyBookmarked was true)
+      if (isCurrentlyBookmarked && !error) {
+         const { error: deleteError } = await supabase.from('user_bookmarks')
+          .delete()
+          .match({ user_id: (await supabase.auth.getUser()).data.user?.id, question_id: questionNumericId });
+        if (deleteError) throw deleteError;
+      }
+
+      if (error) throw error;
+      toast.success(isCurrentlyBookmarked ? 'Bookmark removed' : 'Bookmark added');
+    } catch (e: any) {
+      console.error('Error toggling bookmark:', e);
+      toast.error('Failed to update bookmark.');
+      // Revert optimistic update
+      setBookmarkedQuestions(bookmarkedQuestions);
     }
   };
 
-  const renderHorizontalScrollResources = (type: string) => {
-    const typeResources = getResourcesByType(type);
-    if (typeResources.length === 0) return null;
+  if (loading) return <div className="flex justify-center items-center h-40"><p>Loading resources...</p></div>;
+  if (error) return <p className="text-red-500">Error: {error}</p>;
+  if (resources.length === 0 && preferencesLoaded) return <p>No resources found for this selection or your preferences.</p>;
 
-    return (
-      <div className="overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        <div className="flex space-x-4">
-          {typeResources.map(resource => (
-            <div key={resource.id} className="flex-shrink-0 w-64 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 group">
-              <a href={resource.url} target="_blank" rel="noopener noreferrer" className="block">
-                {resource.previewUrl && (
-                  <div className="relative w-full h-32 mb-2 rounded overflow-hidden">
-                    <Image
-                      src={resource.previewUrl}
-                      alt={`${resource.title} preview`}
-                      layout="fill"
-                      objectFit={resource.type === 'video' || resource.type === 'image' ? 'cover' : 'contain'}
-                      className={`transition-transform duration-300 group-hover:scale-105 ${resource.type === 'website' ? 'p-2' : '' }`}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      unoptimized={resource.type === 'website'}
-                    />
-                     {resource.type === 'website' && !resource.previewUrl?.includes('google.com/s2/favicons') && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-                           {getResourceTypeIcon(resource.type)}
-                        </div>
-                    )}
-                  </div>
-                )}
-                {!resource.previewUrl && resource.type !== 'website' && (
-                     <div className="w-full h-32 mb-2 rounded flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-                        {getResourceTypeIcon(resource.type)}
-                     </div>
-                )}
-                <h5 className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate transition-colors">
-                  {resource.title}
-                </h5>
-                {resource.type !== 'image' && resource.description && (
-                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                    {resource.description}
-                  </p>
-                )}
-              </a>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const displayedTypes = typeDisplayOrder.filter(type => getResourcesByType(type).length > 0);
 
   return (
-    <div className="mt-4 mb-6">
-      <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">Additional Resources</h3>
-      {resourceTypes.length > 1 ? (
-        <Tabs defaultValue={resourceTypes.includes('video') ? 'video' : resourceTypes[0]} className="w-full">
-          <TabsList className="mb-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-            {resourceTypes.map(type => (
-              <TabsTrigger 
-                key={type} 
-                value={type} 
-                className="px-3 py-1.5 text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-gray-950 data-[state=active]:shadow-sm data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400 rounded-md"
-              >
-                <span className="mr-2">{getResourceTypeIcon(type)}</span>
-                {getResourceTypeLabel(type)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {resourceTypes.map(type => (
-            <TabsContent key={type} value={type} className="mt-0">
-              {renderHorizontalScrollResources(type)}
-            </TabsContent>
-          ))}
-        </Tabs>
-      ) : resourceTypes.length === 1 ? (
-        <div className="mt-1">
-          {renderHorizontalScrollResources(resourceTypes[0])}
-        </div>
-      ) : null }
+    <div className="space-y-6">
+      {displayedTypes.map(type => {
+        const RIcon = typeDisplayInfo[type]?.Icon || ExternalLink;
+        const title = typeDisplayInfo[type]?.title || 'Resources';
+        const filteredResources = getResourcesByType(type);
+        if (filteredResources.length === 0) return null;
+
+        return (
+          <section key={type}>
+            <h3 className="text-lg font-semibold mb-3 flex items-center">
+              <RIcon className="w-5 h-5 mr-2 text-gray-700 dark:text-gray-300" />
+              {title} <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({filteredResources.length})</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredResources.map(resource => (
+                <Card key={resource.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+                  <CardHeader className="p-4">
+                    {resource.previewUrl && (
+                      <img src={resource.previewUrl} alt={`Preview for ${resource.title}`} className="w-full h-32 object-cover mb-3 rounded" />
+                    )}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-md font-semibold truncate">
+                            <a href={resource.url || '#'} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                              {resource.title || 'Untitled Resource'}
+                            </a>
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{resource.title || 'Untitled Resource'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 mb-3">
+                      {resource.description || 'No description available.'}
+                    </p>
+                    <div className="flex items-center justify-between mt-auto">
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-3 h-3 mr-1.5" /> View
+                          </a>
+                        </Button>
+                        {isLoggedIn && resource.question_id && (
+                           <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => handleBookmarkToggle(resource)} className="w-8 h-8">
+                                  <Bookmark className={`w-4 h-4 ${bookmarkedQuestions.has(Number(resource.question_id)) ? 'fill-yellow-400 text-yellow-500' : 'text-gray-500'}`} />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{bookmarkedQuestions.has(Number(resource.question_id)) ? 'Remove bookmark' : 'Add bookmark'}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      {/* Placeholder for future actions like upvote/downvote/comments */}
+                      {/* <div className="flex items-center space-x-1 text-xs text-gray-500">
+                        <button className="hover:text-green-500 p-1"><ThumbsUp className="w-3 h-3" /></button>
+                        <span>{Math.floor(Math.random() * 20)}</span>
+                        <button className="hover:text-red-500 p-1"><ThumbsDown className="w-3 h-3" /></button>
+                        <button className="hover:text-blue-500 p-1 ml-2"><MessageCircle className="w-3 h-3" /></button>
+                        <span>{Math.floor(Math.random() * 5)}</span>
+                      </div> */}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
+
+// Add a simple toast component if not already globally available
+// For simplicity, using a basic console log for now, replace with actual toast library.
+const toast = {
+    success: (message: string) => console.log(`SUCCESS: ${message}`),
+    error: (message: string) => console.error(`ERROR: ${message}`),
+};

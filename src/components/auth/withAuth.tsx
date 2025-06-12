@@ -1,9 +1,9 @@
 'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import type { User } from '@supabase/auth-helpers-nextjs'
+import type { User } from '@supabase/supabase-js'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import SignIn from '@/app/signin/page'
 
@@ -15,24 +15,24 @@ export default function withAuth<P extends object>(
   WrappedComponent: React.ComponentType<P>
 ) {
   const WithAuth: React.FC<P & WithAuthProps> = (props) => {
-    const supabase = createClientComponentClient()
+    const supabase = createClient()
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-      async function getUser() {
+      async function fetchUser() {
         const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        if (session) {
-          setUser(session.user)
+          data: { user: fetchedUser },
+        } = await supabase.auth.getUser()
+        if (fetchedUser) {
+          setUser(fetchedUser)
         }
         setLoading(false)
       }
-      getUser()
+      fetchUser()
 
       const { data: authListener } = supabase.auth.onAuthStateChange(
-        (event, session) => {
+        (_event, session) => {
           setUser(session?.user ?? null)
           setLoading(false)
         }

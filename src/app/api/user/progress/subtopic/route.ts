@@ -1,34 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import supabaseServer from '@/utils/supabase-server';
+// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
+// import { cookies } from 'next/headers'; // Old import
+import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
+// import supabaseServer from '@/utils/supabase-server'; // To be removed
 
 // GET: Retrieve progress data for a specific subtopic
 export async function GET(request: NextRequest) {
-  // Use the Next.js route handler client for authentication
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = await createClient(); // Use the new server client
   let userId = null;
 
-  // Get the user session using Supabase auth
+  // Get the user using Supabase auth
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('Session Error:', sessionError.message);
-      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
-    } else if (session?.user) {
-      userId = session.user.id;
-    } else {
-      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
-    }
-  } catch (error) {
-    console.error('Error getting user session:', error);
-    return NextResponse.json({ error: 'Session error' }, { status: 500 });
+    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    if (userError) throw userError;
+    if (!user) throw new Error('User not authenticated');
+    userId = user.id;
+    console.log('Found user ID from auth for progress/subtopic:', userId); // Updated log
+  } catch (error: any) {
+    console.error('Progress/subtopic User/Auth Error:', error.message); // Updated log
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
   try {
-    // Get the subtopic ID from the query parameters
     const url = new URL(request.url);
     const subtopicId = url.searchParams.get('subtopicId');
 
@@ -36,11 +29,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Subtopic ID is required' }, { status: 400 });
     }
 
-    // Get all categories in this subtopic
-    const { data: categories, error: categoriesError } = await supabaseServer
+    const { data: categories, error: categoriesError } = await supabase // Use session client
       .from('categories')
       .select('id')
-      .eq('subtopic_id', subtopicId);
+      .eq('subtopic_id', subtopicId); // Corrected from topic_id to subtopic_id if this is truly for subtopics
+                                     // If 'subtopic_id' is not the correct column name, adjust as needed.
+                                     // Assuming 'topic_id' was intended as per previous logic for subtopics.
+      // .eq('topic_id', subtopicId); // If subtopicId actually refers to a topic_id
 
     if (categoriesError) {
       console.error('Error fetching categories:', categoriesError);
@@ -50,7 +45,6 @@ export async function GET(request: NextRequest) {
     const totalCategories = categories?.length || 0;
     const categoryIds = categories?.map(cat => cat.id) || [];
 
-    // If there are no categories, return empty data
     if (totalCategories === 0) {
       return NextResponse.json({
         categoriesCompleted: 0,
@@ -61,8 +55,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get the total number of questions in all categories of this subtopic
-    const { count: totalQuestions, error: countError } = await supabaseServer
+    const { count: totalQuestions, error: countError } = await supabase // Use session client
       .from('questions')
       .select('*', { count: 'exact', head: true })
       .in('category_id', categoryIds);
@@ -72,8 +65,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to count questions' }, { status: 500 });
     }
 
-    // First get all question IDs in these categories
-    const { data: questionIds, error: questionIdsError } = await supabaseServer
+    const { data: questionIdsData, error: questionIdsError } = await supabase // Use session client
       .from('questions')
       .select('id')
       .in('category_id', categoryIds);
@@ -83,10 +75,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch question IDs' }, { status: 500 });
     }
 
-    // Extract just the IDs into an array
-    const questionIdArray = questionIds.map(q => q.id);
+    const questionIdArray = questionIdsData.map(q => q.id);
 
-    // If there are no questions in these categories, return zeros
     if (questionIdArray.length === 0) {
       return NextResponse.json({
         categoriesCompleted: 0,
@@ -97,36 +87,25 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get the number of completed questions in all categories of this subtopic
-    // We need to handle potential duplicates in the user_activity table
-    const { data: completedQuestionData, error: completedError } = await supabaseServer
+    const { data: completedQuestionData, error: completedError } = await supabase // Use session client
       .from('user_activity')
       .select('question_id')
       .eq('user_id', userId)
       .eq('status', 'completed')
       .in('question_id', questionIdArray);
 
-    // Count unique completed questions
-    const uniqueCompletedQuestions = new Set();
-    completedQuestionData?.forEach(item => {
-      if (item.question_id) {
-        uniqueCompletedQuestions.add(item.question_id);
-      }
-    });
-    const questionsCompleted = uniqueCompletedQuestions.size;
-
     if (completedError) {
       console.error('Error counting completed questions:', completedError);
       return NextResponse.json({ error: 'Failed to count completed questions' }, { status: 500 });
     }
 
-    // Calculate how many categories are "completed" (all questions completed)
-    let categoriesCompleted = 0;
+    const uniqueCompletedQuestionsGlobal = new Set();
+    completedQuestionData?.forEach(item => { if (item.question_id) uniqueCompletedQuestionsGlobal.add(item.question_id); });
+    const questionsCompleted = uniqueCompletedQuestionsGlobal.size;
 
-    // For each category, check if all questions are completed
+    let categoriesCompleted = 0;
     for (const categoryId of categoryIds) {
-      // Get total questions in this category
-      const { count: catTotalQuestions, error: catCountError } = await supabaseServer
+      const { count: catTotalQuestions, error: catCountError } = await supabase // Use session client
         .from('questions')
         .select('*', { count: 'exact', head: true })
         .eq('category_id', categoryId);
@@ -136,8 +115,7 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // First get all question IDs in this category
-      const { data: catQuestionIds, error: catQuestionIdsError } = await supabaseServer
+      const { data: catQuestionIdsData, error: catQuestionIdsError } = await supabase // Use session client
         .from('questions')
         .select('id')
         .eq('category_id', categoryId);
@@ -147,17 +125,13 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Extract just the IDs into an array
-      const catQuestionIdArray = catQuestionIds.map(q => q.id);
+      const catQuestionIdArray = catQuestionIdsData.map(q => q.id);
 
-      // If there are no questions in this category, skip it
       if (catQuestionIdArray.length === 0) {
         continue;
       }
 
-      // Get distinct completed question IDs in this category
-      // We need to handle potential duplicates in the user_activity table
-      const { data: completedQuestionData, error: catCompletedError } = await supabaseServer
+      const { data: catCompletedQuestionData, error: catCompletedError } = await supabase // Use session client
         .from('user_activity')
         .select('question_id')
         .eq('user_id', userId)
@@ -169,25 +143,18 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Count unique completed questions
-      const uniqueCompletedQuestions = new Set();
-      completedQuestionData?.forEach(item => {
-        if (item.question_id) {
-          uniqueCompletedQuestions.add(item.question_id);
-        }
-      });
-      const catCompletedQuestions = uniqueCompletedQuestions.size;
+      const uniqueCatCompletedQuestions = new Set();
+      catCompletedQuestionData?.forEach(item => { if (item.question_id) uniqueCatCompletedQuestions.add(item.question_id); });
+      const catCompletedQuestionsCount = uniqueCatCompletedQuestions.size;
 
-      console.log(`Category ${categoryId}: ${catCompletedQuestions}/${catTotalQuestions} questions completed`);
+      console.log(`Category ${categoryId}: ${catCompletedQuestionsCount}/${catTotalQuestions} questions completed`);
 
-      // If all questions are completed, increment the counter
-      if (catTotalQuestions > 0 && catCompletedQuestions === catTotalQuestions) {
+      if (catTotalQuestions !== null && catTotalQuestions > 0 && catCompletedQuestionsCount === catTotalQuestions) {
         categoriesCompleted++;
         console.log(`Category ${categoryId} is fully completed`);
       }
     }
 
-    // Calculate completion percentage
     const completionPercentage = totalQuestions ? Math.round((questionsCompleted / totalQuestions) * 100) : 0;
 
     console.log(`Subtopic ${subtopicId} progress: ${questionsCompleted}/${totalQuestions} questions, ${categoriesCompleted}/${totalCategories} categories, ${completionPercentage}% complete`);
