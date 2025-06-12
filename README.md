@@ -1,6 +1,10 @@
 # 🚀 GrokInterviews - AI-Powered Interview Preparation Platform
 
+<<<<<<< HEAD
+A modern web application that aggregates, organizes, and presents Data Science and Software Engineering interview preparation resources with relevant content sources. 
+=======
 > A comprehensive, AI-enhanced interview preparation platform with **3.6+ million curated resources** and **81,499 technical questions** across 5 major domains.
+>>>>>>> cleanup
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
