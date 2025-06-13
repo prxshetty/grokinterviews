@@ -218,7 +218,9 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
     };
   }, [supabase, questionId, domain, topicId, categoryId, subcategoryId]);
 
-  const getResourcesByType = (typeValue: string) => resources.filter(r => r.type === typeValue);
+  const getResourcesByType = (typeValue: string) => resources
+    .filter(r => r.type === typeValue)
+    .sort((a, b) => (b.relevance_score ?? 0) - (a.relevance_score ?? 0));
 
   const typeDisplayOrder: string[] = ['video', 'pdf', 'paper', 'website', 'book', 'image', 'other'];
 

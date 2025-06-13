@@ -56,13 +56,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   const selectedTopic = extractDomainFromPath(pathname, 'topics');
 
-  const handleTopicsLinkClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (isTopicPage) {
-      e.preventDefault();
-      router.push('/');
-    }
+  const handleTopicsLinkClick = useCallback(() => {
     setIsMobileMenuOpen(false);
-  }, [isTopicPage, router]);
+  }, [setIsMobileMenuOpen]);
 
   useEffect(() => {
     setMounted(true);
@@ -345,7 +341,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
                   {isTopicPage && (
                      <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                       <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Categories</p>
+                       <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Switch Subject Area</p>
                       {mainTopics.map(topic => (
                         <SheetClose asChild key={topic.id}>
                           <Link

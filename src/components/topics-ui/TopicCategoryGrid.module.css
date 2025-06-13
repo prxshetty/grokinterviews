@@ -1,22 +1,40 @@
 .gridContainer {
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: 1.5rem;
-  padding: 1rem;
+  /* grid-template-columns: repeat(3, auto); */ /* Handled by Tailwind */
+  /* gap: 1.5rem; */ /* Handled by Tailwind */
+  /* padding: 1rem; */ /* Handled by Tailwind */
   justify-content: center;
 }
 
 .gridItem {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   cursor: pointer;
+  width: 100%;
 }
 
 .serialNumber {
-  font-size: 2rem;
+  /* font-size: 2rem; */ /* Replaced with responsive Tailwind classes if applied directly, or adjusted here */
+  font-size: 1.5rem; /* Base size for mobile */
   font-weight: 600;
-  margin-left: 1rem;
   color: hsl(var(--muted-foreground));
   opacity: 0.7;
+  padding-left: 0.5rem;  /* 8px */
+  padding-right: 0.75rem; /* Increased from 0.5rem to 0.75rem (12px) */
+}
+
+/* Example of how to make it responsive within CSS module if preferred */
+@media (min-width: 640px) { /* sm breakpoint */
+  .serialNumber {
+    font-size: 1.75rem;
+    /* Padding can be adjusted here if needed for larger screens, e.g., padding-right: 1rem; */
+  }
+}
+
+@media (min-width: 1024px) { /* lg breakpoint */
+  .serialNumber {
+    font-size: 2rem;
+    /* Padding can be adjusted here if needed for larger screens, e.g., padding-right: 1.25rem; */
+  }
 }
