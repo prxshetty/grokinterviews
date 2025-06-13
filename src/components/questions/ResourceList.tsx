@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import Image from 'next/image';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -45,9 +45,9 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
   const [error, setError] = useState<string | null>(null);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [activeTabType, setActiveTabType] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -91,7 +91,8 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
           }
           setPreferencesLoaded(true);
           console.log('[ResourceList FetchData] Preferences loaded. Fetching bookmarks...');
-          try {
+          // Bookmarks fetching logic removed
+          /* try {
             const { data: bookmarksData, error: bookmarksError } = await supabase
               .from('user_bookmarks')
               .select('question_id')
@@ -107,7 +108,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
           } catch (e) {
             if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during bookmarks exception.'); return; }
             console.error('[ResourceList FetchData] Exception fetching bookmarks:', e);
-          }
+          } */
         } else {
           console.log('[ResourceList FetchData] No user found.');
           setIsLoggedIn(false);
@@ -177,7 +178,8 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
       const currentUser = session?.user;
       setIsLoggedIn(!!currentUser);
       if (currentUser) {
-        const { data: bookmarksData, error: bookmarksError } = await supabase
+        // Bookmarks fetching logic on auth change removed
+        /* const { data: bookmarksData, error: bookmarksError } = await supabase
           .from('user_bookmarks')
           .select('question_id')
           .eq('user_id', currentUser.id);
@@ -187,7 +189,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
         } else if (bookmarksData) {
           const bookmarkedIds = new Set(bookmarksData.map(b => b.question_id));
           setBookmarkedQuestions(bookmarkedIds);
-        }
+        } */
         const { data: prefs, error: prefsError } = await supabase
             .from('user_preferences')
             .select('*')
@@ -203,7 +205,8 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
         }
         setPreferencesLoaded(true);
       } else {
-        setBookmarkedQuestions(new Set());
+        // Bookmarks fetching logic on auth change removed
+        /* setBookmarkedQuestions(new Set()); */
         setUserPreferences(null);
         setPreferencesLoaded(true);
       }
@@ -229,148 +232,159 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
     other: { Icon: ExternalLink, title: 'Other Resources' },
   };
 
-  const handleBookmarkToggle = async (resource: Resource) => {
-    if (!isLoggedIn || !resource.question_id) {
-      toast.error('Please log in to bookmark questions.');
-      return;
+  // Derived state for displayable tabs
+  const displayableTabs = useMemo(() => {
+    let tabs = typeDisplayOrder
+      .map(typeKey => {
+        let isPreferred = true;
+        if (preferencesLoaded && userPreferences) {
+          switch (typeKey) {
+            case 'video': isPreferred = userPreferences.use_youtube_sources ?? true; break;
+            case 'pdf': isPreferred = userPreferences.use_pdf_sources ?? true; break;
+            case 'paper': isPreferred = userPreferences.use_paper_sources ?? true; break;
+            case 'website': isPreferred = userPreferences.use_website_sources ?? true; break;
+            case 'book': isPreferred = userPreferences.use_book_sources ?? false; break;
+            case 'image': 
+              // Safely check for use_image_sources, works even if types are outdated
+              isPreferred = typeof (userPreferences as any).use_image_sources === 'boolean' ? (userPreferences as any).use_image_sources : false; 
+              break;
+            default: isPreferred = true; 
+          }
+        }
+        
+        const currentResources = getResourcesByType(typeKey);
+        if (currentResources.length > 0 && isPreferred) {
+          return {
+            type: typeKey,
+            title: typeDisplayInfo[typeKey]?.title || 'Resources',
+            Icon: typeDisplayInfo[typeKey]?.Icon || ExternalLink,
+            count: currentResources.length,
+            resources: currentResources, 
+          };
+        }
+        return null;
+      })
+      .filter(tab => tab !== null) as { type: string; title: string; Icon: React.ElementType; count: number, resources: Resource[] }[];
+
+    const videoTabIndex = tabs.findIndex(tab => tab.type === 'video');
+    if (videoTabIndex > 0) {
+      const videoTab = tabs.splice(videoTabIndex, 1)[0];
+      tabs.unshift(videoTab);
     }
-    const questionNumericId = Number(resource.question_id);
-    const isCurrentlyBookmarked = bookmarkedQuestions.has(questionNumericId);
+    return tabs;
+  }, [resources, userPreferences, preferencesLoaded, typeDisplayOrder, typeDisplayInfo]);
 
-    // Optimistically update UI
-    const newBookmarkedQuestions = new Set(bookmarkedQuestions);
-    if (isCurrentlyBookmarked) {
-      newBookmarkedQuestions.delete(questionNumericId);
-    } else {
-      newBookmarkedQuestions.add(questionNumericId);
+  useEffect(() => {
+    if (displayableTabs.length > 0 && !activeTabType) {
+      setActiveTabType(displayableTabs[0].type);
+    } else if (displayableTabs.length > 0 && activeTabType && !displayableTabs.find(tab => tab.type === activeTabType)) {
+      setActiveTabType(displayableTabs[0].type);
+    } else if (displayableTabs.length === 0) {
+      setActiveTabType(null); 
     }
-    setBookmarkedQuestions(newBookmarkedQuestions);
+  }, [displayableTabs, activeTabType]);
 
-    try {
-      const { error } = await supabase.from('user_bookmarks').upsert({
-        user_id: (await supabase.auth.getUser()).data.user?.id, // Ensure user ID is correctly fetched
-        question_id: questionNumericId,
-        // Required fields from your table definition, assuming they exist
-        // topic_id, category_id, domain, section_name should be fetched or passed if required by table
-        // For now, assuming they can be null or have defaults, or are not strictly required for a simple bookmark action
-      }, {
-        onConflict: 'user_id,question_id',
-        ignoreDuplicates: false, // Explicitly false to either insert or update based on conflict
-      });
-      // If it was a delete operation (isCurrentlyBookmarked was true)
-      if (isCurrentlyBookmarked && !error) {
-         const { error: deleteError } = await supabase.from('user_bookmarks')
-          .delete()
-          .match({ user_id: (await supabase.auth.getUser()).data.user?.id, question_id: questionNumericId });
-        if (deleteError) throw deleteError;
-      }
-
-      if (error) throw error;
-      toast.success(isCurrentlyBookmarked ? 'Bookmark removed' : 'Bookmark added');
-    } catch (e: any) {
-      console.error('Error toggling bookmark:', e);
-      toast.error('Failed to update bookmark.');
-      // Revert optimistic update
-      setBookmarkedQuestions(bookmarkedQuestions);
-    }
-  };
-
-  if (loading) return <div className="flex justify-center items-center h-40"><p>Loading resources...</p></div>;
+  if (loading && !preferencesLoaded) return <div className="flex justify-center items-center h-40"><InlineLoadingSpinner size="md" text="Loading resources and preferences..." /></div>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
-  if (resources.length === 0 && preferencesLoaded) return <p>No resources found for this selection or your preferences.</p>;
-
-  const displayedTypes = typeDisplayOrder.filter(type => getResourcesByType(type).length > 0);
-
-  // **** ADDED FOR DEBUGGING ****
-  console.log('[ResourceList Debug] State before render:', {
-    resources,
-    displayedTypes,
-    loading,
-    error,
-    preferencesLoaded,
-    totalCount
-  });
-  // ******************************
+  
+  if (displayableTabs.length === 0) {
+    if (preferencesLoaded && totalCount > 0) {
+      return <p>No resources match your current preferences. Adjust preferences to see more.</p>;
+    }
+    return <p>No resources found for this selection.</p>;
+  }
+  
+  if (!activeTabType && displayableTabs.length > 0) { 
+    return <div className="flex justify-center items-center h-40"><InlineLoadingSpinner size="md" text="Determining available resources..." /></div>;
+  } else if (!activeTabType && displayableTabs.length === 0) {
+    return <p>No resources available to display in tabs.</p>;
+  }
 
   return (
-    <div className="space-y-6">
-      {displayedTypes.map(type => {
-        const RIcon = typeDisplayInfo[type]?.Icon || ExternalLink;
-        const title = typeDisplayInfo[type]?.title || 'Resources';
-        const filteredResources = getResourcesByType(type);
-        if (filteredResources.length === 0) return null;
-
-        return (
-          <section key={type}>
-            <h3 className="text-lg font-semibold mb-3 flex items-center">
-              <RIcon className="w-5 h-5 mr-2 text-gray-700 dark:text-gray-300" />
-              {title} <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({filteredResources.length})</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredResources.map(resource => (
-                <Card key={resource.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
-                  <CardHeader className="p-4">
-                    {resource.previewUrl && (
-                      <img src={resource.previewUrl} alt={`Preview for ${resource.title}`} className="w-full h-32 object-cover mb-3 rounded" />
-                    )}
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <CardTitle className="text-md font-semibold truncate">
-                            <a href={resource.url || '#'} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                              {resource.title || 'Untitled Resource'}
-                            </a>
-                          </CardTitle>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{resource.title || 'Untitled Resource'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 mb-3">
-                      {/* {resource.description || 'No description available.'} */}
-                    </p>
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-3 h-3 mr-1.5" /> View
-                          </a>
-                        </Button>
-                        {isLoggedIn && resource.question_id && (
-                           <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => handleBookmarkToggle(resource)} className="w-8 h-8">
-                                  <Bookmark className={`w-4 h-4 ${bookmarkedQuestions.has(Number(resource.question_id)) ? 'fill-yellow-400 text-yellow-500' : 'text-gray-500'}`} />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{bookmarkedQuestions.has(Number(resource.question_id)) ? 'Remove bookmark' : 'Add bookmark'}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
+    <Tabs value={activeTabType || ''} onValueChange={setActiveTabType} className="w-full space-y-4">
+      <TabsList className="flex space-x-1 overflow-x-auto py-1 px-1 border-b border-slate-200 dark:border-slate-700">
+        {displayableTabs.map(tab => (
+          <TabsTrigger 
+            key={tab.type} 
+            value={tab.type} 
+            className="flex items-center space-x-2 py-2 px-3 rounded-md transition-colors duration-150 text-sm font-medium h-auto flex-shrink-0 data-[state=active]:bg-slate-100 data-[state=active]:text-slate-900 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-50 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-400 data-[state=active]:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <tab.Icon className="w-4 h-4 opacity-80" />
+            <span>{tab.title} ({tab.count})</span>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {displayableTabs.map(tab => (
+        <TabsContent key={tab.type} value={tab.type} className="mt-0">
+          <div className="flex overflow-x-auto space-x-4 pt-4 pb-4 pl-1 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
+            {tab.resources.map(resource => (
+              <div key={resource.id} className="min-w-[300px] w-[300px] sm:min-w-[320px] sm:w-[320px]">
+                <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col bg-white dark:bg-slate-800 rounded-xl group h-full">
+                  <div className="relative h-48 w-full">
+                    {resource.previewUrl ? (
+                      <Image src={resource.previewUrl} alt={resource.title || 'Resource preview'} layout="fill" objectFit="cover" className="rounded-t-xl" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-t-xl">
+                        {(() => {
+                          const Info = typeDisplayInfo[resource.type || 'other'];
+                          return Info ? <Info.Icon className="w-16 h-16 text-slate-400 dark:text-slate-500" /> : <ExternalLink className="w-16 h-16 text-slate-400 dark:text-slate-500" />;
+                        })()}
                       </div>
-                      {/* Placeholder for future actions like upvote/downvote/comments */}
-                      {/* <div className="flex items-center space-x-1 text-xs text-gray-500">
-                        <button className="hover:text-green-500 p-1"><ThumbsUp className="w-3 h-3" /></button>
-                        <span>{Math.floor(Math.random() * 20)}</span>
-                        <button className="hover:text-red-500 p-1"><ThumbsDown className="w-3 h-3" /></button>
-                        <button className="hover:text-blue-500 p-1 ml-2"><MessageCircle className="w-3 h-3" /></button>
-                        <span>{Math.floor(Math.random() * 5)}</span>
-                      </div> */}
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/60 to-transparent rounded-t-xl"></div>
+                    <div className="absolute bottom-0 left-0 p-4 w-full">
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                             <h3 className="text-lg font-semibold text-white truncate">{resource.title || 'Untitled Resource'}</h3>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" align="start">
+                            <p>{resource.title || 'Untitled Resource'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <p className="text-xs text-slate-200">{typeDisplayInfo[resource.type || 'other']?.title || 'Resource'}</p>
                     </div>
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button variant="secondary" size="sm" asChild className="bg-slate-800/80 text-white hover:bg-slate-700/90 backdrop-blur-sm !opacity-100">
+                        <a href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
+                          View
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <CardContent className="p-4 flex-grow flex flex-col justify-between">
+                    <div>
+                       {/* Description placeholder if you want to add it back later */}
+                      {/* <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">
+                        {resource.description || 'No description available.'}
+                      </p> */}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-auto pt-2">
+                      <div className="flex items-center">
+                        {(() => {
+                          const Info = typeDisplayInfo[resource.type || 'other'];
+                          return Info ? <Info.Icon className="w-3.5 h-3.5 mr-1.5 opacity-70" /> : <ExternalLink className="w-3.5 h-3.5 mr-1.5 opacity-70" />;
+                        })()}
+                        <span>{new Date(resource.created_at).toLocaleDateString()}</span>
+                      </div>
+                      {resource.relevance_score && (
+                        <Badge variant="outline" className="font-medium">
+                          {/* Using a star or similar icon for relevance might be nice if available */}
+                          Score: {Number(resource.relevance_score).toFixed(2)}
+                        </Badge>
+                      )}
+                    </div>
+                    {/* Removed bookmark button and other actions to match the provided image's simplicity for now */}
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </section>
-        );
-      })}
-    </div>
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }
 

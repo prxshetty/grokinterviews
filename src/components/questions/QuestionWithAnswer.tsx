@@ -100,6 +100,7 @@ function QuestionWithAnswerComponent({
   const questionId = question.id;
   // Use question.category_id from the question object itself as primary, then fallback.
   const actualCategoryId = question.categories?.id ?? question.category_id;
+  const actualTopicId = question.topic_id ?? topicId; // Ensure topicId is available
 
   // Synchronize isBookmarkedState with the isBookmarked prop
   useEffect(() => {
@@ -344,98 +345,47 @@ function QuestionWithAnswerComponent({
     answerRef.current = el;
   }, []);
 
+  // Adapter for onBookmarkChange prop for QuestionHeader
+  const handleBookmarkChangeAdapter = (newBookmarkStatus: boolean) => {
+    // This function might need to call toggleBookmark or directly onBookmarkStatusChange
+    // For now, assuming toggleBookmark handles the necessary logic including parent notification
+    toggleBookmark(); 
+  };
+
   console.log(`Rendering QuestionWithAnswer for question ${question.id}, isCompleted=${isCompleted}`);
 
   return (
-    <div 
-      id={`question-${question.id}`}
-      className={`border-t border-b border-gray-200 dark:border-gray-700 transition-all duration-200 ${
-        isHighlighted 
-          ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600' 
-          : 'bg-white dark:bg-gray-900'
-      }`}
-    >
-      <div className="py-6 px-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3 flex-grow min-w-0 cursor-pointer" onClick={toggleExpansion} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && toggleExpansion()}>
-            {isCompleted && (
-              <div title="Completed" className="flex-shrink-0">
-                <svg 
-                  className="w-5 h-5 text-green-500" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
-            <h3 className="text-lg font-normal text-gray-900 dark:text-gray-100 pr-4 leading-relaxed whitespace-normal">
-              {question.question_text}
-            </h3>
-          </div>
-          
-          <div className="flex items-center space-x-2 flex-shrink-0">
-            {/* Bookmark button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleBookmark();
-              }}
-              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              title={isBookmarkedState ? 'Remove bookmark' : 'Add bookmark'}
-            >
-              {isBookmarkedState ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-3.125L5 18V4z" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              )}
-            </button>
-            
-            {/* Expand/collapse arrow */}
-            <button
-              onClick={toggleExpansion}
-              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              aria-expanded={isExpanded}
-              aria-controls={`answer-${question.id}`}
-            >
-              <svg 
-                className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
+    <div className={`question-with-answer border-b border-gray-200 dark:border-gray-700 py-3 md:py-4 ${isHighlighted ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''} transition-colors duration-300 ease-in-out`}>
+      <QuestionHeader
+        questionId={question.id}
+        topicId={actualTopicId ?? null}
+        categoryId={actualCategoryId ?? null}
+        questionText={question.question_text}
+        questionIndex={questionIndex}
+        isCompleted={isCompleted}
+        isBookmarked={isBookmarkedState}
+        isExpanded={isExpanded}
+        onToggleExpansion={toggleExpansion}
+        onBookmarkChange={handleBookmarkChangeAdapter}
+      />
+      {isExpanded && (
+        <div ref={answerRef} className="answer-container mt-2 pl-4 pr-2 md:pl-6 text-sm text-gray-700 dark:text-gray-300 overflow-y-auto max-h-[calc(100vh-250px)] relative" style={{ scrollbarWidth: 'thin' }}>
+          <Suspense fallback={<ResourceListSkeleton />}>
+            <ResourceList questionId={question.id} />
+          </Suspense>
+          <AnswerDisplay
+            answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
+            isLoading={isGenerating}
+            error={error}
+            scrollProgress={scrollProgress}
+            isCompleted={isCompleted}
+            setAnswerRef={handleSetAnswerRef}
+          />
         </div>
-
-        {isExpanded && (
-          <div id={`answer-${question.id}`} className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-            {/* Display additional resources first */}
-            <Suspense fallback={<ResourceListSkeleton />}>
-              <ResourceList questionId={questionId} />
-            </Suspense>
-            
-            <AnswerDisplay
-              answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
-              isLoading={isGenerating}
-              error={error}
-              scrollProgress={scrollProgress}
-              isCompleted={isCompleted}
-              setAnswerRef={handleSetAnswerRef}
-            />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
-// Exporting the memoized component
+// Memoize the component for performance optimization
 export const QuestionWithAnswer = memo(QuestionWithAnswerComponent);
