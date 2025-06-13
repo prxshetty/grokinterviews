@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, KeyboardEvent } from 'react';
 import { toggleQuestionBookmark } from '@/app/utils/progress';
 
 interface BookmarkButtonProps {
@@ -84,18 +84,31 @@ export function BookmarkButton({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    handleToggleBookmark();
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); // Prevent page scroll on spacebar
+      e.stopPropagation();
+      handleToggleBookmark();
+    }
+  };
+
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation(); // Prevent triggering parent click events
-        handleToggleBookmark();
-      }}
-      className={`text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none transition-transform ${
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className={`cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm transition-transform ${
         isAnimating ? 'scale-125' : 'scale-100'
       }`}
       aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
       title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+      aria-pressed={isBookmarked}
     >
       {isBookmarked ? (
         // Filled bookmark icon
@@ -108,6 +121,6 @@ export function BookmarkButton({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
         </svg>
       )}
-    </button>
+    </div>
   );
 }

@@ -42,7 +42,8 @@ module.exports = {
         'slideRight': 'slideRight 0.3s ease-out forwards',
         'slideLeft': 'slideLeft 0.3s ease-out forwards',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
-
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
       keyframes: {
          spin: {
@@ -78,6 +79,14 @@ module.exports = {
            '0%': { transform: 'translateX(20px)', opacity: '0' },
            '100%': { transform: 'translateX(0)', opacity: '1' },
          },
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
       },
       typography: (theme) => ({
         DEFAULT: {

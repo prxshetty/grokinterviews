@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -9,74 +9,17 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-
-// --- Define Groq Model Structure and List ---
-interface GroqModel {
-  id: string;
-  name: string; // User-friendly name
-  rpm: number; // Requests Per Minute
-  notes?: string; // Optional notes about the model's capabilities
-}
-
-const availableGroqModels: GroqModel[] = [
-  // Curated list of high-performance models for different use cases
-  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', rpm: 750, notes: 'Fastest for general text' },
-  { id: 'gemma2-9b-it', name: 'Gemma2 9B Instruct', rpm: 500, notes: 'Excels in code/math, low resource' },
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile', rpm: 276, notes: 'Fastest large model, 8 languages' },
-  { id: 'whisper-large-v3-turbo', name: 'Whisper Large V3 Turbo', rpm: 600, notes: 'Fastest Whisper variant for speech-to-text' },
-  { id: 'llama-guard-3-8b', name: 'Llama Guard 3 8B', rpm: 500, notes: 'Real-time content filtering' },
-];
-// ----------------------------------------------
-
-interface UserProfile {
-  id: string;
-  username: string;
-  full_name: string;
-  avatar_url: string | null;
-  email: string;
-  custom_api_key: string | null;
-}
-
-// Separate interface for preferences
-interface UserPreferences {
-  user_id: string; // Foreign key to profiles.id
-  specific_model_id: string | null;
-  use_youtube_sources?: boolean; // Optional as they might not exist yet
-  use_pdf_sources?: boolean;
-  use_paper_sources?: boolean;
-  use_website_sources?: boolean;
-  use_book_sources?: boolean;
-  use_image_sources?: boolean;
-  preferred_answer_format?: AnswerFormat;
-  preferred_answer_depth?: AnswerDepth;
-  include_code_snippets?: boolean; // Whether to include code examples in answers
-  include_latex_formulas?: boolean; // Whether to include LaTeX formulas in answers
-  custom_formatting_instructions?: string | null;
-  theme?: string; // Include existing fields
-  email_notifications?: boolean;
-}
-
-const DEFAULT_GROQ_MODEL_ID = 'llama-3.1-8b-instant';
-// const DEFAULT_ANSWER_PROMPT = ... [REMOVED as prompt is now structured]
-
-// Define types for new preferences
-type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown';
-type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
-
-// Define a generic error type
-interface ApiError {
-  message: string;
-  details?: string;
-  code?: string;
-  [key: string]: unknown;
-}
+import { AccountTab, Cursor } from '@/components/account/account-tabs';
+import { PersonalInfoSection } from '@/components/account/personal-info/personal-info-section';
+import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-section';
+import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
+import type { UserProfile, UserPreferences, AnswerFormat, AnswerDepth, GroqModel, AccountFormData } from './types';
+import { availableGroqModels, DEFAULT_GROQ_MODEL_ID } from './types';
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState('personal');
   const [user, setUser] = useState<User | null>(null);
-  // profile state is used in saveChanges, saveApiKey functions, and profile display
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  // preferences state is used in saveChanges function - needed for state management
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -84,31 +27,27 @@ export default function AccountPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // State for animated tab cursor
   const [position, setPosition] = useState({
     left: 0,
     width: 0,
     opacity: 0,
   });
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AccountFormData>({
     full_name: '',
     username: '',
     email: '',
     specific_model_id: DEFAULT_GROQ_MODEL_ID,
-    // answer_generation_prompt: DEFAULT_ANSWER_PROMPT, // [REMOVED]
-
-    // Initialize new preferences with defaults
     use_youtube_sources: true,
     use_pdf_sources: true,
     use_paper_sources: true,
     use_website_sources: true,
-    use_book_sources: false, // Default off for less common sources
+    use_book_sources: false,
     use_image_sources: false,
-    preferred_answer_format: 'markdown' as AnswerFormat, // Default format
-    preferred_answer_depth: 'standard' as AnswerDepth, // Default depth
-    include_code_snippets: true, // Default to including code snippets
-    include_latex_formulas: false, // Default to not including LaTeX formulas (experimental)
+    preferred_answer_format: 'markdown' as AnswerFormat,
+    preferred_answer_depth: 'standard' as AnswerDepth,
+    include_code_snippets: true,
+    include_latex_formulas: false,
     custom_formatting_instructions: '',
   });
 
@@ -124,7 +63,6 @@ export default function AccountPage() {
 
       setUser(fetchedUser);
 
-      // Fetch Profile Data (name, username, api key)
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('full_name, username, avatar_url, custom_api_key')
@@ -135,7 +73,6 @@ export default function AccountPage() {
         console.error('Error fetching profile:', error);
       }
 
-      // Fetch Preferences Data (model, answer prefs)
       const { data: preferencesData, error: prefError } = await supabase
         .from('user_preferences')
         .select('*')
@@ -147,7 +84,6 @@ export default function AccountPage() {
       }
 
       if (profileData) {
-        // Combine fetched data with user info, ensure all UserProfile fields are present
         setProfile({
             id: fetchedUser.id,
             email: fetchedUser.email || '',
@@ -164,16 +100,34 @@ export default function AccountPage() {
         }));
         setApiKeyInput(profileData.custom_api_key || '');
       } else if (fetchedUser.email) {
-        // Profile doesn't exist, but we have email from fetchedUser
         setFormData(prev => ({ ...prev, email: fetchedUser.email! }));
       }
+      if (preferencesData) {
+        setPreferences(preferencesData as UserPreferences);
+        setFormData(prev => ({
+          ...prev,
+          specific_model_id: preferencesData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
+          use_youtube_sources: preferencesData.use_youtube_sources ?? true,
+          use_pdf_sources: preferencesData.use_pdf_sources ?? true,
+          use_paper_sources: preferencesData.use_paper_sources ?? true,
+          use_website_sources: preferencesData.use_website_sources ?? true,
+          use_book_sources: preferencesData.use_book_sources ?? false,
+          use_image_sources: preferencesData.use_image_sources ?? false,
+          preferred_answer_format: preferencesData.preferred_answer_format || 'markdown',
+          preferred_answer_depth: preferencesData.preferred_answer_depth || 'standard',
+          include_code_snippets: preferencesData.include_code_snippets ?? true,
+          include_latex_formulas: preferencesData.include_latex_formulas ?? false,
+          custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
+        }));
+      }
+
       setLoading(false);
     };
 
     checkUser();
   }, [router, supabase]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -181,12 +135,11 @@ export default function AccountPage() {
     }));
   };
 
-  const handleApiKeyInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleApiKeyInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setApiKeyInput(e.target.value);
   };
 
-  // Specific handler for checkbox/toggle switches
-  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSwitchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -194,7 +147,6 @@ export default function AccountPage() {
     }));
   };
 
-  // Specific handler for answer depth slider
   const handleAnswerDepthChange = (value: number) => {
     let depth: AnswerDepth = 'standard';
     if (value === 1) depth = 'brief';
@@ -206,7 +158,6 @@ export default function AccountPage() {
     }));
   };
 
-  // Saves Full Name, Username (to profiles) AND Model/Answer Prefs (to user_preferences)
   const saveChanges = async () => {
     if (!user) {
       console.error('No user found. User must be authenticated to save changes.');
@@ -215,35 +166,28 @@ export default function AccountPage() {
     }
 
     setSaving(true);
-
-    // Log the current user and form data for debugging
     console.log("Saving changes for user:", user.id);
     console.log("Form data:", formData);
 
     try {
-      // 1. Upsert Profile Data (full_name, username)
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           full_name: formData.full_name,
           username: formData.username,
-          updated_at: new Date().toISOString(), // Ensure updated_at is set
-        }, { onConflict: 'id' }); // Upsert based on the user ID
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
 
       if (profileError) {
         console.error('Error saving profile:', profileError);
         toast.error(`Failed to save profile: ${profileError.message}`);
-        // Optionally re-throw or handle differently
-        return; // Stop if profile save fails
+        return;
       }
-
-      // Log success after profile upsert
       console.log("Profile data upserted successfully.");
 
-      // 2. Upsert Preferences Data
-      const preferenceDataToSave: Partial<UserPreferences> = {
-        user_id: user.id, // Ensure user_id is included
+      const preferenceDataToSave: Omit<UserPreferences, 'theme' | 'email_notifications'> & { user_id: string } = {
+        user_id: user.id,
         specific_model_id: formData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
         use_youtube_sources: formData.use_youtube_sources,
         use_pdf_sources: formData.use_pdf_sources,
@@ -256,59 +200,26 @@ export default function AccountPage() {
         include_code_snippets: formData.include_code_snippets,
         include_latex_formulas: formData.include_latex_formulas,
         custom_formatting_instructions: formData.custom_formatting_instructions || null,
-        // Add other preference fields as needed, ensure updated_at is handled by DB or trigger
       };
-
-       // Log the data being sent to user_preferences
       console.log("Attempting to upsert preferences:", preferenceDataToSave);
-
 
       const { error: preferencesError } = await supabase
         .from('user_preferences')
-        .upsert(preferenceDataToSave, { onConflict: 'user_id' }); // Upsert based on user_id
+        .upsert(preferenceDataToSave, { onConflict: 'user_id' });
 
       if (preferencesError) {
         console.error('Error saving preferences:', preferencesError);
         toast.error(`Failed to save preferences: ${preferencesError.message}`);
-        // Optionally rollback profile changes or notify user differently
-        return; // Stop if preference save fails
+        return;
       }
-
-      // Log success after preference upsert
       console.log("User preferences upserted successfully.");
 
-      // Update local state ONLY after successful DB operations
       setProfile(prev => prev ? { ...prev, full_name: formData.full_name, username: formData.username } : null);
-      setPreferences(prev => {
-        const base: UserPreferences = prev || { // Provide a full default UserPreferences object if prev is null
-            user_id: user.id,
-            specific_model_id: DEFAULT_GROQ_MODEL_ID, // Ensure required fields have defaults
-            // Add defaults for ALL other potentially missing fields in UserPreferences if prev is null
-            use_youtube_sources: true,
-            use_pdf_sources: true,
-            use_paper_sources: true,
-            use_website_sources: true,
-            use_book_sources: false,
-            use_image_sources: false,
-            preferred_answer_format: 'markdown',
-            preferred_answer_depth: 'standard',
-            include_code_snippets: true,
-            include_latex_formulas: false,
-            custom_formatting_instructions: null,
-            theme: 'system', // Assuming a default theme might exist or needed
-            email_notifications: true // Assuming a default
-        };
-        return {
-            ...base, // Spread the base (either previous state or default)
-            ...preferenceDataToSave, // Spread the saved data (might overwrite some base fields)
-            // Ensure specific_model_id is string | null, not undefined, falling back to base's value
-            specific_model_id: preferenceDataToSave.specific_model_id ?? base.specific_model_id
-        };
-    });
-
-      toast.success('Settings saved successfully!'); // Show success toast
-
-
+      setPreferences(prev => ({
+        ...(prev || { user_id: user.id, theme: 'system', email_notifications: true } as UserPreferences),
+        ...preferenceDataToSave,
+      }));
+      toast.success('Settings saved successfully!');
     } catch (error: any) {
       console.error('Unexpected error during saveChanges:', error);
       toast.error(`An unexpected error occurred: ${error.message || 'Please try again.'}`);
@@ -317,20 +228,17 @@ export default function AccountPage() {
     }
   };
 
-  // Saves only the Custom API Key to profiles table
   const saveApiKey = async () => {
     if (!user) {
       console.error('No user found. Cannot save API key.');
       toast.error('You must be signed in to save the API key.');
       return;
     }
-
     setSavingApiKey(true);
-
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ custom_api_key: apiKeyInput || null }) // Use null if input is empty
+        .update({ custom_api_key: apiKeyInput || null })
         .eq('id', user.id);
 
       if (error) {
@@ -338,9 +246,8 @@ export default function AccountPage() {
         toast.error(`Failed to save API key: ${error.message}`);
       } else {
         console.log('API key saved successfully.');
-        // Update local profile state to reflect the change
         setProfile(prev => prev ? { ...prev, custom_api_key: apiKeyInput || null } : null);
-        toast.success('API key saved successfully!'); // Show success toast
+        toast.success('API key saved successfully!');
       }
     } catch (error: any) {
       console.error('Unexpected error saving API key:', error);
@@ -350,12 +257,10 @@ export default function AccountPage() {
     }
   };
 
-  // Helper to find model details by ID
   const getSelectedModelDetails = () => {
     return availableGroqModels.find(model => model.id === formData.specific_model_id);
   };
 
-  // Callback to set initial position of the cursor on the active tab
   const setInitialCursorPosition = useCallback(() => {
     const activeTabElement = document.querySelector(`[data-tab-value="${activeTab}"]`) as HTMLElement;
     if (activeTabElement) {
@@ -370,7 +275,7 @@ export default function AccountPage() {
   }, [activeTab]);
 
   useEffect(() => {
-    if (!loading) { // Ensure elements are rendered
+    if (!loading) {
       setInitialCursorPosition();
     }
   }, [loading, activeTab, setInitialCursorPosition]);
@@ -406,9 +311,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Main Content Container */}
         <div className="flex flex-col">
-          {/* Left Side Navigation */}
           <div className="w-full flex-shrink-0 mb-8">
             <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">Account</h2>
             <nav className="relative">
@@ -457,755 +360,61 @@ export default function AccountPage() {
                 </AccountTab>
                 <Cursor position={position} />
               </ul>
-
-              {/* No Tab Description */}
             </nav>
           </div>
 
-          {/* Content Area */}
           <div className="w-full">
-            {/* Personal Information Section */}
             {activeTab === 'personal' && (
-              <div className="flex gap-8">
-                {/* Left Panel - Form */}
-                <div className="flex-1 bg-white dark:bg-black/60 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Personal Information</h2>
-                  <div className="space-y-6">
-                    {/* Full Name Input */}
-                    <div>
-                      <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        name="full_name"
-                        id="full_name"
-                        value={formData.full_name}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
-                      />
-                    </div>
-                    {/* Username Input */}
-                    <div>
-                      <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Username
-                      </label>
-                      <input
-                        type="text"
-                        name="username"
-                        id="username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
-                      />
-                    </div>
-                    {/* Email Display (Disabled) */}
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        value={formData.email}
-                        disabled
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 sm:text-sm bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed shadow-sm"
-                      />
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Email address cannot be changed. Contact support if you need to update your email.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Save Button for Personal Info */}
-                  {renderSaveChangesButton()}
-                </div>
-
-                {/* Right Panel - Profile Preview */}
-                <div className="w-80 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-black/80 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center">
-                  <div className="relative mb-6">
-                    <div className="w-32 h-32 rounded-full bg-black dark:bg-white flex items-center justify-center overflow-hidden border-4 border-white dark:border-gray-800 shadow-lg">
-                      {profile?.avatar_url ? (
-                        <Image
-                          src={profile.avatar_url}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
-                          width={128}
-                          height={128}
-                        />
-                      ) : (
-                        <div className="text-4xl font-light text-white dark:text-black">
-                          {formData.full_name ? formData.full_name.charAt(0).toUpperCase() : formData.username ? formData.username.charAt(0).toUpperCase() : '?'}
-                        </div>
-                      )}
-                    </div>
-                    <div className="absolute bottom-0 right-0 bg-white dark:bg-gray-800 rounded-full p-2 shadow-md border border-gray-200 dark:border-gray-700 cursor-not-allowed opacity-50">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div className="text-center">
-                    <h3 className="text-xl font-medium text-gray-900 dark:text-white">
-                      {formData.full_name || 'Your Name'}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      @{formData.username || 'username'}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
-                      Profile picture upload coming soon
-                    </p>
-                  </div>
-                </div>
-              </div>
-              )}
-
-            {/* AI Settings Section (Groq Model & API Key) */}
-            {activeTab === 'ai-settings' && (
-              <div className="flex gap-8">
-                {/* Left Panel - Settings Form */}
-                <div className="flex-1 bg-white dark:bg-black/60 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">AI Settings</h2>
-                  <div className="space-y-10">
-
-                    {/* Groq Model Selection Sub-section */}
-                    <section>
-                       <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Groq Model Selection</h3>
-                       <div className="space-y-2"> {/* Reduced spacing */}
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Groq AI Model
-                            </label>
-
-                            <div className="grid grid-cols-2 gap-3">
-                              {availableGroqModels.filter(model => model.id !== 'whisper-large-v3-turbo').map((model) => {
-                                // Define tags for each model
-                                let tag = '';
-
-                                if (model.id === 'llama-3.1-8b-instant') {
-                                  tag = 'Fastest';
-                                } else if (model.id === 'gemma2-9b-it') {
-                                  tag = 'Code & Math';
-                                } else if (model.id === 'llama-3.3-70b-versatile') {
-                                  tag = 'General';
-                                } else if (model.id === 'llama-guard-3-8b') {
-                                  tag = 'Safety';
-                                }
-
-                                const isSelected = formData.specific_model_id === model.id;
-
-                                return (
-                                  <div
-                                    key={model.id}
-                                    className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
-                                    onClick={() => {
-                                      setFormData(prev => ({
-                                        ...prev,
-                                        specific_model_id: model.id
-                                      }));
-                                    }}
-                                  >
-                                    <div className="flex justify-between items-start">
-                                      <div>
-                                        <h4 className="font-medium text-gray-900 dark:text-white">{model.name}</h4>
-                                        <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
-                                          {tag}
-                                        </span>
-                                      </div>
-                                      <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
-                                        {isSelected && (
-                                          <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                                          </svg>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                              Select a model for generating answers. Model details will appear in the preview panel.
-                            </p>
-                          </div>
-                       </div>
-                       {/* Save Button for AI Settings (includes model) */}
-                       {renderSaveChangesButton()}
-                    </section>
-
-                    {/* Groq API Key Sub-section */}
-                    <section className="pt-8 border-t border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Groq API Key</h3>
-                      <div className="space-y-6">
-                        <div>
-                          <label htmlFor="custom_api_key" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Your Groq API Key
-                          </label>
-                          <input
-                            type="password"
-                            name="custom_api_key"
-                            id="custom_api_key"
-                            value={apiKeyInput}
-                            onChange={handleApiKeyInputChange}
-                            className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm pl-3 py-2"
-                            placeholder="Enter your Groq API key (starts with gsk_...)"
-                            autoComplete="off"
-                          />
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Provide your own API key from Groq to use the selected model. Your key is required for generation.
-                          </p>
-                        </div>
-
-                        {/* Security Information Box */}
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-md border border-yellow-200 dark:border-yellow-700/50">
-                          <div className="flex">
-                            <div className="flex-shrink-0">
-                              <svg className="h-5 w-5 text-yellow-400 dark:text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                            <div className="ml-3">
-                              <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Important Security Information</h4>
-                              <div className="mt-2 text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
-                                <p>Your API key is stored securely in the database.</p>
-                                <p>Using your own API key means any usage will be billed to your personal Groq account.</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Save API Key Button */}
-                      <div className="mt-8 pt-5 border-t border-gray-200 dark:border-gray-800 flex justify-end">
-                        <DemoButton
-                          onClick={saveApiKey}
-                          isLoading={savingApiKey}
-                          buttonText="Save API Key"
-                          className="bg-emerald-500 hover:bg-emerald-600 text-black dark:text-white border-none focus:ring-emerald-400 px-3.5 py-1.5 text-sm"
-                        >
-                          Save API Key
-                        </DemoButton>
-                      </div>
-                    </section>
-                  </div>
-                </div>
-
-                {/* Right Panel - Model Preview */}
-                <div className="w-80 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-black/80 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col">
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Model Preview</h3>
-
-                  {/* Model Information - Only show for selected model */}
-                  {getSelectedModelDetails() && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-                      <div className="mb-3">
-                        <div className="flex items-center mb-2">
-                          <h4 className="font-medium text-gray-900 dark:text-white">{getSelectedModelDetails()?.name}</h4>
-                          <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
-                            {getSelectedModelDetails()?.id === 'llama-3.1-8b-instant' ? 'Fastest' :
-                             getSelectedModelDetails()?.id === 'gemma2-9b-it' ? 'Code/Math' :
-                             getSelectedModelDetails()?.id === 'llama-3.3-70b-versatile' ? 'General' :
-                             getSelectedModelDetails()?.id === 'llama-guard-3-8b' ? 'Safety' : ''}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                          {getSelectedModelDetails()?.notes}
-                        </p>
-                      </div>
-
-                    <div className="mb-4">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                        <span className="font-medium">Model Statistics:</span> Performance and rate limits for the selected model
-                      </p>
-
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-gray-100 dark:bg-gray-700">
-                              <th className="py-2 px-3 text-left font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">RPM</th>
-                              <th className="py-2 px-3 text-left font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">TPM</th>
-                              <th className="py-2 px-3 text-left font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">TPD</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="bg-white dark:bg-gray-800">
-                              <td className="py-2 px-3 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                {getSelectedModelDetails()?.rpm || '-'}
-                              </td>
-                              <td className="py-2 px-3 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                {!getSelectedModelDetails() ? '-' :
-                                 getSelectedModelDetails()?.id === 'whisper-large-v3-turbo' ? '-' :
-                                 getSelectedModelDetails()?.id === 'llama-3.1-8b-instant' || getSelectedModelDetails()?.id === 'llama-3.3-70b-versatile' ? '6,000' : '15,000'}
-                              </td>
-                              <td className="py-2 px-3 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                {!getSelectedModelDetails() ? '-' :
-                                 getSelectedModelDetails()?.id === 'whisper-large-v3-turbo' ? '-' :
-                                 getSelectedModelDetails()?.id === 'llama-3.3-70b-versatile' ? '100,000' : '500,000'}
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Bar chart visualization */}
-                      {getSelectedModelDetails() && getSelectedModelDetails()?.id !== 'whisper-large-v3-turbo' && (
-                        <div className="mt-4">
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tokens Per Day Capacity</p>
-                          <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full ${getSelectedModelDetails()?.id === 'llama-3.3-70b-versatile' ? 'bg-amber-500 dark:bg-amber-600' : 'bg-green-500 dark:bg-green-600'}`}
-                              style={{ width: `${getSelectedModelDetails()?.id === 'llama-3.3-70b-versatile' ? '20%' : '100%'}` }}
-                            ></div>
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            <span>0</span>
-                            <span>250K</span>
-                            <span>500K</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      <p><span className="font-medium">RPM:</span> Requests per minute</p>
-                      <p><span className="font-medium">TPM:</span> Tokens per minute</p>
-                      <p><span className="font-medium">TPD:</span> Tokens per day</p>
-                    </div>
-                  </div>
-                  )}
-
-                  {/* API Status */}
-                  <div className="mt-auto">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Status</h4>
-                    <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-2 ${apiKeyInput ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
-                        {apiKeyInput ? 'API Key Provided' : 'No API Key'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      {apiKeyInput
-                        ? 'Your API key is set. You can generate answers with the selected model.'
-                        : 'Please provide a Groq API key to use this model for generating answers.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <PersonalInfoSection
+                formData={{
+                  full_name: formData.full_name,
+                  username: formData.username,
+                  email: formData.email,
+                }}
+                profile={profile}
+                handleInputChange={handleInputChange}
+                renderSaveChangesButton={renderSaveChangesButton}
+              />
             )}
 
-            {/* Answer Preferences Section */}
+            {activeTab === 'ai-settings' && (
+              <AiSettingsSection
+                formData={{ specific_model_id: formData.specific_model_id }}
+                apiKeyInput={apiKeyInput}
+                availableGroqModels={availableGroqModels}
+                handleApiKeyInputChange={handleApiKeyInputChange}
+                saveApiKey={saveApiKey}
+                savingApiKey={savingApiKey}
+                getSelectedModelDetails={getSelectedModelDetails}
+                renderSaveChangesButton={renderSaveChangesButton}
+                setFormData={setFormData}
+              />
+            )}
+
             {activeTab === 'answer-preferences' && (
-              <div className="flex gap-8">
-                {/* Left Panel - Preferences Form (60%) */}
-                <div className="w-3/5 bg-white dark:bg-black/60 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Answer Preferences</h2>
-                  <div className="space-y-8">
-                    {/* Content Sources */}
-                    <section>
-                      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Content Sources</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select which types of supplementary resources should be considered when generating answers.</p>
-                      <div className="grid grid-cols-3 gap-3 mt-2">
-                        {[
-                          { id: 'use_youtube_sources', name: 'YouTube', tag: 'Relevant videos', description: 'Videos based on keywords' },
-                          { id: 'use_pdf_sources', name: 'PDF', tag: 'Documents', description: 'Notes from Reddit, blogs, drives' },
-                          { id: 'use_paper_sources', name: 'Papers', tag: 'Research', description: 'Academic research papers' },
-                          { id: 'use_website_sources', name: 'Websites', tag: 'Articles', description: 'Relevant web articles' },
-                          { id: 'use_book_sources', name: 'Books', tag: 'References', description: 'Amazon book links' },
-                          { id: 'use_image_sources', name: 'Visual Guides', tag: 'Diagrams', description: 'Articles with diagrams & illustrations' }
-                        ].map((source) => {
-                          const isSelected = formData[source.id as keyof typeof formData] as boolean;
-                          const isComingSoon = false; // None are coming soon currently
-                          return (
-                            <div
-                              key={source.id}
-                              className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-4 ${isComingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-500'} transition-colors`}
-                              onClick={() => {
-                                if (!isComingSoon) {
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    [source.id]: !isSelected
-                                  }));
-                                }
-                              }}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h4 className="font-medium text-gray-900 dark:text-white">{source.name}</h4>
-                                  <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${isComingSoon ? 'border-amber-500 dark:border-amber-400 text-amber-600 dark:text-amber-400' : 'border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200'} bg-transparent`}>
-                                    {source.tag}
-                                  </span>
-                                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{source.description}</p>
-                                </div>
-                                <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
-                                  {isSelected && (
-                                    <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                                    </svg>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                        Select the sources you want to include in your answers. <span className="text-amber-600 dark:text-amber-400">Coming Soon</span> features will be available in future updates.
-                      </p>
-                    </section>
-
-                    {/* Answer Format */}
-                    <section className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Answer Format</h3>
-                      <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format Style</label>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
-                          {[
-                            { id: 'markdown', name: 'Markdown', tag: 'Default' },
-                            { id: 'bullet_points', name: 'Bullet Points', tag: 'Concise' },
-                            { id: 'table', name: 'Table Format', tag: 'Experimental' },
-                            { id: 'paragraph', name: 'Paragraph Style', tag: 'Narrative' }
-                          ].map((format) => {
-                            const isSelected = formData.preferred_answer_format === format.id;
-                            return (
-                              <div
-                                key={format.id}
-                                className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
-                                onClick={() => {
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    preferred_answer_format: format.id as AnswerFormat
-                                  }));
-                                }}
-                              >
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h4 className="font-medium text-gray-900 dark:text-white">{format.name}</h4>
-                                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
-                                      {format.tag}
-                                    </span>
-                                  </div>
-                                  <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
-                                    {isSelected && (
-                                      <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                                      </svg>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                          Choose how you'd like answers to be structured. Markdown is recommended for most cases.
-                        </p>
-                      </div>
-
-                      {/* Answer Add-ons Section */}
-                      <div className="mb-6">
-                        <h4 className="text-base font-medium text-gray-800 dark:text-gray-200 mb-3">Answer Add-ons</h4>
-
-                        {/* Code Snippets Toggle */}
-                        <div className="mb-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-200 dark:border-gray-700">
-                          <div className="flex items-center justify-between">
-                            <label htmlFor="include_code_snippets" className="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                              Include Code Snippets
-                            </label>
-                            <label className="relative inline-block w-10 mr-2 align-middle select-none cursor-pointer" htmlFor="include_code_snippets">
-                              <input
-                                type="checkbox"
-                                id="include_code_snippets"
-                                name="include_code_snippets"
-                                checked={formData.include_code_snippets}
-                                onChange={handleSwitchChange}
-                                className="sr-only"
-                              />
-                              <div className={`block w-10 h-6 rounded-full transition-colors ${formData.include_code_snippets ? 'bg-black dark:bg-black' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                              <div className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform bg-white transform ${formData.include_code_snippets ? 'translate-x-4' : 'translate-x-0'}`}></div>
-                            </label>
-                          </div>
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            When enabled, answers will include code examples for programming-related questions. Disable to focus on theory and save tokens.
-                          </p>
-                        </div>
-
-                        {/* LaTeX Formulas Toggle */}
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-200 dark:border-gray-700">
-                          <div className="flex items-center justify-between">
-                            <label htmlFor="include_latex_formulas" className="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                              Include LaTeX Formulas <span className="text-xs text-amber-600 dark:text-amber-400 ml-1">(Experimental)</span>
-                            </label>
-                            <label className="relative inline-block w-10 mr-2 align-middle select-none cursor-pointer" htmlFor="include_latex_formulas">
-                              <input
-                                type="checkbox"
-                                id="include_latex_formulas"
-                                name="include_latex_formulas"
-                                checked={formData.include_latex_formulas || false}
-                                onChange={handleSwitchChange}
-                                className="sr-only"
-                              />
-                              <div className={`block w-10 h-6 rounded-full transition-colors ${(formData.include_latex_formulas || false) ? 'bg-black dark:bg-black' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                              <div className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform bg-white transform ${(formData.include_latex_formulas || false) ? 'translate-x-4' : 'translate-x-0'}`}></div>
-                            </label>
-                          </div>
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            When enabled, mathematical formulas will be rendered using LaTeX notation. Useful for math, physics, and engineering questions.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Answer Depth */}
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between">
-                          <label htmlFor="preferred_answer_depth" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Answer Depth
-                          </label>
-                          <select
-                            id="preferred_answer_depth"
-                            name="preferred_answer_depth"
-                            value={formData.preferred_answer_depth}
-                            onChange={(e) => {
-                              setFormData(prev => ({
-                                ...prev,
-                                preferred_answer_depth: e.target.value as AnswerDepth
-                              }));
-                            }}
-                            className="mt-1 block w-20 rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
-                          >
-                            <option value="brief">Brief</option>
-                            <option value="standard">Standard</option>
-                            <option value="comprehensive">Comprehensive</option>
-                          </select>
-                        </div>
-                      </div>
-                    </section>
-
-                    {/* Custom Instructions */}
-                    <section className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Custom Instructions</h3>
-                      <div className="mb-6">
-                        <label htmlFor="custom_formatting_instructions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Additional Formatting Instructions
-                        </label>
-                        <textarea
-                          id="custom_formatting_instructions"
-                          name="custom_formatting_instructions"
-                          rows={3}
-                          value={formData.custom_formatting_instructions || ''}
-                          onChange={handleInputChange}
-                          className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm px-4 py-3"
-                          placeholder="e.g., Start with a summary. Use bold for key terms."
-                        />
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          Add any specific instructions for how you'd like answers to be formatted or structured.
-                        </p>
-                      </div>
-                    </section>
-
-                    {/* Save Button */}
-                    {renderSaveChangesButton()}
-                  </div>
-                </div>
-
-                {/* Right Panel - Answer Preview (40%) */}
-                <div className="w-2/5 bg-gradient-to-br from-gray-50 to-white dark:from-black/90 dark:to-black rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col">
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Answer Preview</h3>
-
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-auto max-h-[500px]">
-                    <div className="prose dark:prose-invert prose-sm max-w-none">
-                      {formData.preferred_answer_format === 'markdown' && (
-                        <div>
-                          <h4>Binary Search Tree Implementation</h4>
-                          <p>A Binary Search Tree (BST) is a data structure where each node has at most two children:</p>
-                          <ul>
-                            <li>Left child contains value less than the node</li>
-                            <li>Right child contains value greater than the node</li>
-                          </ul>
-                          <p>Here's a basic implementation in JavaScript:</p>
-                          <pre className="bg-gray-100 dark:bg-gray-900 p-2 rounded">
-                            <code className="text-xs">{`class Node {
-  constructor(value) {
-    this.value = value;
-    this.left = null;
-    this.right = null;
-  }
-}`}</code>
-                          </pre>
-                        </div>
-                      )}
-
-                      {formData.preferred_answer_format === 'bullet_points' && (
-                        <div>
-                          <p><strong>Binary Search Tree Implementation:</strong></p>
-                          <ul>
-                            <li>BST is a tree data structure with specific ordering properties</li>
-                            <li>Each node has at most two children (left and right)</li>
-                            <li>Left subtree contains values less than the node's value</li>
-                            <li>Right subtree contains values greater than the node's value</li>
-                            <li>Implementation requires a Node class with value and pointers</li>
-                            <li>Common operations: insert, search, delete, traverse</li>
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Numbered lists option removed */}
-
-                      {formData.preferred_answer_format === 'paragraph' && (
-                        <div>
-                          <p>A Binary Search Tree (BST) is a fundamental data structure in computer science that maintains an ordered collection of values. Each node in a BST contains a value and references to two child nodes. The left child contains values less than the parent node, while the right child contains values greater than the parent node. This ordering property makes BSTs efficient for operations like searching, insertion, and deletion, typically with O(log n) time complexity in balanced trees. Implementation involves creating a Node class with value and child pointers, then building tree operations that maintain the BST property during modifications.</p>
-                        </div>
-                      )}
-
-                      {formData.preferred_answer_format === 'table' && (
-                        <div>
-                          <p><strong>Binary Search Tree Operations</strong></p>
-                          <div className="overflow-x-auto">
-                            <table className="min-w-full border-collapse text-sm">
-                              <thead>
-                                <tr className="bg-gray-100 dark:bg-gray-800">
-                                  <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Operation</th>
-                                  <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Time Complexity</th>
-                                  <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Description</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr className="bg-white dark:bg-gray-900">
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Insert</td>
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">O(log n)</td>
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Add new node</td>
-                                </tr>
-                                <tr className="bg-gray-50 dark:bg-gray-800/50">
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Search</td>
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">O(log n)</td>
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Find value</td>
-                                </tr>
-                                <tr className="bg-white dark:bg-gray-900">
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Delete</td>
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">O(log n)</td>
-                                  <td className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-300">Remove node</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-auto">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Settings</h4>
-                    <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                      <p><span className="font-medium">Format:</span> {formData.preferred_answer_format.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                      <p><span className="font-medium">Depth:</span> {formData.preferred_answer_depth.charAt(0).toUpperCase() + formData.preferred_answer_depth.slice(1)}</p>
-                      <p><span className="font-medium">Add-ons:</span>
-                        {[formData.include_code_snippets ? 'Code Snippets' : null,
-                          formData.include_latex_formulas ? 'LaTeX Formulas' : null]
-                          .filter(Boolean)
-                          .join(', ') || 'None'}
-                      </p>
-                      <p><span className="font-medium">Sources:</span> {(['use_youtube_sources', 'use_pdf_sources', 'use_paper_sources', 'use_website_sources', 'use_book_sources', 'use_image_sources'] as Array<keyof typeof formData>)
-                        .filter(key => key.startsWith('use_') && formData[key as keyof typeof formData] === true)
-                        .map(key => key.replace('use_','').replace('_sources','').replace('_', ' '))
-                        .join(', ') || 'None selected'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <AnswerPreferencesSection
+                formData={{
+                  use_youtube_sources: formData.use_youtube_sources,
+                  use_pdf_sources: formData.use_pdf_sources,
+                  use_paper_sources: formData.use_paper_sources,
+                  use_website_sources: formData.use_website_sources,
+                  use_book_sources: formData.use_book_sources,
+                  use_image_sources: formData.use_image_sources,
+                  preferred_answer_format: formData.preferred_answer_format,
+                  preferred_answer_depth: formData.preferred_answer_depth,
+                  include_code_snippets: formData.include_code_snippets,
+                  include_latex_formulas: formData.include_latex_formulas,
+                  custom_formatting_instructions: formData.custom_formatting_instructions,
+                }}
+                handleInputChange={handleInputChange}
+                handleSwitchChange={handleSwitchChange}
+                setFormData={setFormData}
+                renderSaveChangesButton={renderSaveChangesButton}
+              />
             )}
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-// --- Local Tab and Cursor Components ---
-
-interface AccountTabProps {
-  children: React.ReactNode;
-  tabValue: string;
-  currentActiveTab: string;
-  setActiveTab: (tab: string) => void;
-  setPosition: React.Dispatch<React.SetStateAction<{
-    left: number;
-    width: number;
-    opacity: number;
-  }>>;
-  position: { left: number; width: number; opacity: number };
-}
-
-function AccountTab({
-  children,
-  tabValue,
-  currentActiveTab,
-  setActiveTab,
-  setPosition,
-  position,
-}: AccountTabProps) {
-  const ref = useRef<HTMLLIElement>(null);
-  const isActive = currentActiveTab === tabValue;
-
-  useEffect(() => {
-    if (isActive && ref.current) {
-      const { width } = ref.current.getBoundingClientRect();
-      const newLeft = ref.current.offsetLeft;
-      // Update position only if it's significantly different or opacity is 0
-      // to prevent re-animation on already active/hovered tab.
-      if (Math.abs(position.left - newLeft) > 1 || position.opacity === 0) {
-        setPosition({
-          width,
-          opacity: 1,
-          left: newLeft,
-        });
-      }
-    }
-  }, [isActive, setPosition, position.left, position.opacity]); // Removed ref.current from deps
-
-  const isUnderCursor =
-    ref.current &&
-    position.opacity === 1 &&
-    Math.abs(position.left - ref.current.offsetLeft) < 1;
-
-  return (
-    <li
-      ref={ref}
-      data-tab-value={tabValue} // Used for querying active tab element
-      onMouseEnter={() => {
-        if (!ref.current) return;
-        const { width } = ref.current.getBoundingClientRect();
-        setPosition({
-          width,
-          opacity: 1,
-          left: ref.current.offsetLeft,
-        });
-      }}
-      onClick={() => setActiveTab(tabValue)}
-      className="relative z-10 block cursor-pointer"
-    >
-      <button // Changed from Link to button as it's internal page navigation
-        className={`relative block px-5 py-2 text-sm font-normal transition-colors ${
-          isUnderCursor || isActive // Keep text white/black if active or under cursor
-            ? 'text-white dark:text-black'
-            : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-        }`}
-      >
-        {children}
-      </button>
-    </li>
-  );
-}
-
-function Cursor({ position }: { position: any }) {
-  return (
-    <motion.li
-      animate={position}
-      className="absolute z-0 h-9 rounded-full bg-black dark:bg-white" // h-9 to match common tab height
-      transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
-      }}
-    />
   );
 }
