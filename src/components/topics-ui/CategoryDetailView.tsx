@@ -211,7 +211,12 @@ export default function CategoryDetailView({
   }, [questionsByCategory]);
 
   // Callback to handle bookmark status changes from individual QuestionWithAnswer components
-  const handleBookmarkChangeFromQuestion = useCallback((questionId: number, newStatus: boolean) => {
+  const handleBookmarkChangeFromQuestion = useCallback((
+    questionId: number, 
+    newStatus: boolean
+    // topicId?: number, // topicId and categoryId are not strictly needed here if we only update bookmark icon
+    // categoryIdFromQuestion?: number 
+  ) => {
     setBookmarkStatus(prevStatus => ({
       ...prevStatus,
       [questionId]: newStatus,
@@ -408,9 +413,43 @@ export default function CategoryDetailView({
     onDifficultyChange(newDifficulty);
   }, [propSelectedDifficulty, onDifficultyChange]);
   
-  const handleCompletionChange = useCallback((questionId: number, status: boolean) => {
+  const handleCompletionChange = useCallback(async (
+    questionId: number, 
+    status: boolean,
+    // Add topicId and categoryId of the question that changed
+    changedQuestionTopicId?: number, 
+    changedQuestionCategoryId?: number
+  ) => {
     setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
-  }, []);
+
+    // After local state for the specific question is updated,
+    // re-fetch the aggregate progress for the current view.
+    if (selectedSubtopic && subtopicDetails) {
+      const currentViewSubtopicId = subtopicDetails.subtopicId ?? parseInt(selectedSubtopic.replace('topic-', ''));
+      if (!isNaN(currentViewSubtopicId)) {
+        console.log(`Question completion changed in subtopic ${currentViewSubtopicId}. Re-fetching its progress with forceRefresh.`);
+        const progress = await fetchSubtopicProgress(currentViewSubtopicId, true); // forceRefresh = true
+        setSubtopicProgress(progress);
+      }
+    } else if (!selectedSubtopic && categoryId && !categoryId.startsWith('header-')) {
+      // We are in a "category-like" view. Re-fetch its progress.
+      // The `categoryId` prop of CategoryDetailView defines this view.
+      const numericViewId = parseInt(categoryId.replace(/^(topic-|category-)/, ''));
+      if (!isNaN(numericViewId)) {
+        // This assumes numericViewId is a valid category_id for fetchCategoryProgress
+        console.log(`Question completion changed in main view ${categoryId} (parsed as ${numericViewId}). Re-fetching its category progress with forceRefresh.`);
+        const progress = await fetchCategoryProgress(numericViewId, true); // forceRefresh = true
+        setCategoryProgress(progress);
+      }
+    }
+  }, [
+    selectedSubtopic, 
+    subtopicDetails, 
+    categoryId, 
+    setCompletedQuestions, 
+    setSubtopicProgress, 
+    setCategoryProgress
+  ]);
 
   if (isLoading && !categoryDetails) {
     return (

@@ -4,18 +4,25 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 function FloatingPaths({ position }: { position: number }) {
-    const paths = Array.from({ length: 60 }, (_, i) => ({
-        id: i,
-        d: `M-${800 - i * 12 * position} -${600 + i * 12}C-${
-            800 - i * 12 * position
-        } -${600 + i * 12} -${600 - i * 12 * position} ${400 - i * 12} ${
-            400 - i * 12 * position
-        } ${800 - i * 12}C${1200 - i * 12 * position} ${1200 - i * 12} ${
-            1600 - i * 12 * position
-        } ${2000 - i * 12} ${1600 - i * 12 * position} ${2000 - i * 12}`,
-        color: `rgba(15,23,42,${0.1 + i * 0.015})`,
-        width: 0.5 + i * 0.015,
-    }));
+    const paths = Array.from({ length: 60 }, (_, i) => {
+        const coord1 = -(800 - i * 12 * position);
+        const coord2 = -(600 + i * 12);
+        const coord5 = -(600 - i * 12 * position);
+        const coord6 = (400 - i * 12);
+        const coord7 = (400 - i * 12 * position);
+        const coord8 = (800 - i * 12);
+        const coord9 = (1200 - i * 12 * position);
+        const coord10 = (1200 - i * 12);
+        const coord11 = (1600 - i * 12 * position);
+        const coord12 = (2000 - i * 12);
+
+        return {
+            id: i,
+            d: `M${coord1} ${coord2}C${coord1} ${coord2} ${coord5} ${coord6} ${coord7} ${coord8}C${coord9} ${coord10} ${coord11} ${coord12} ${coord11} ${coord12}`,
+            color: `rgba(15,23,42,${0.1 + i * 0.015})`,
+            width: 0.5 + i * 0.015,
+        };
+    });
 
     return (
         <div className="absolute inset-0 pointer-events-none">
