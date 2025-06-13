@@ -477,11 +477,11 @@ export default function CategoryDetailView({
   if (selectedSubtopic && subtopicDetails) {
     return (
       <div className="p-4 animate-fadeIn">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-light tracking-tight md:text-5xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
+          <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">
             {subtopicDetails.label}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             {subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
               <FloatingSettings
                 selectedDifficulty={propSelectedDifficulty || null}
@@ -506,9 +506,9 @@ export default function CategoryDetailView({
           <div>
             {Object.entries(questionsByCategory).map(([categoryId, category]) => (
               <div key={categoryId} className="mb-12">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-4xl font-light tracking-tight md:text-2xl">{category.name}</h2>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl">{category.name}</h2>
+                  <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
                   </span>
                 </div>
@@ -542,7 +542,7 @@ export default function CategoryDetailView({
         ) : memoizedFilteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
           <div>
-            <h2 className="text-4xl font-light tracking-tight md:text-5xl mb-6">Questions</h2>
+            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6">Questions</h2>
             <div className="overflow-hidden">
               {memoizedFilteredQuestions.map((question, index) => (
                 <QuestionWithAnswer 
@@ -571,11 +571,11 @@ export default function CategoryDetailView({
   return (
     <div className="p-4 animate-fadeIn">
       {/* Title and back button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-4xl font-light tracking-tight md:text-5xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
+        <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">
           {categoryDetails?.label}
         </h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           {hasQuestions && onDifficultyChange && (
             <FloatingSettings
               selectedDifficulty={propSelectedDifficulty || null}
@@ -598,7 +598,7 @@ export default function CategoryDetailView({
       {/* If the category has subtopics, show them */}
       {hasRealSubtopics && categoryDetails?.subtopics && (
         <div className="mb-8">
-          <h2 className="text-2xl font-light tracking-wide mb-4">Topics</h2>
+          <h2 className="text-2xl sm:text-3xl font-light tracking-wide mb-4">Topics</h2>
           {isSubtopicProgressLoading ? (
             // Loading indicator
             <LoadingSpinner 
@@ -623,10 +623,10 @@ export default function CategoryDetailView({
       {/* Show questions if available */}
       {hasQuestions && (
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-4xl font-light tracking-tight md:text-5xl">Questions</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2 sm:gap-0">
+            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">Questions</h2>
             {categoryProgress && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                 {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed
               </span>
             )}

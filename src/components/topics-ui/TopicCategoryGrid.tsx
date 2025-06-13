@@ -43,6 +43,7 @@ interface TopicCategoryGridProps {
   error?: string | null; // Optional error state controlled by parent
   subtopicProgress?: Record<string, SubtopicProgress>;
   dataCache?: Record<string, any>;
+  showDomainTitle?: boolean; // New prop to control domain title visibility
 }
 
 // Renaming original component
@@ -57,7 +58,8 @@ function TopicCategoryGridComponent({
   isLoading = false, // Default to not loading
   error = null,      // Default to no error
   subtopicProgress,
-  dataCache
+  dataCache,
+  showDomainTitle = false // Default to false
 }: TopicCategoryGridProps) {
   const [itemsWithProgress, setItemsWithProgress] = useState<DisplayItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -340,9 +342,9 @@ function TopicCategoryGridComponent({
   // Handle case where no items are available
   if (!displayableItems || displayableItems.length === 0) {
     return (
-      <div className="text-center py-10">
-        {domain && (
-          <h2 className="text-2xl md:text-3xl font-light tracking-tight mb-6 text-center text-gray-800 dark:text-gray-200">
+      <div className="text-center py-10 px-4">
+        {showDomainTitle && domain && (
+          <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6 text-left text-gray-800 dark:text-gray-200">
             {getDisplayDomainName(domain)}
           </h2>
         )}
@@ -354,13 +356,13 @@ function TopicCategoryGridComponent({
   }
 
   return (
-    <div className="w-full">
-      {domain && (
-        <h2 className="text-2xl md:text-3xl font-light tracking-tight mb-6 text-center text-gray-800 dark:text-gray-200">
+    <div className="w-full px-2 sm:px-4">
+      {showDomainTitle && domain && (
+        <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6 text-left text-gray-800 dark:text-gray-200">
           {getDisplayDomainName(domain)}
         </h2>
       )}
-      <div className={styles.gridContainer}>
+      <div className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-2 sm:p-4`}>
         {displayableItems.map((item, index) => {
           // Determine the text to display. Show total questions for topics/categories,
           // and total subtopics for sections.
@@ -373,7 +375,7 @@ function TopicCategoryGridComponent({
           return (
             <div
               key={item.id || index}
-              className={`${styles.gridItem} group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
+              className={`${styles.gridItem} px-2 sm:px-3 py-2 sm:py-3 group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
               onClick={() => handleItemSelect(item.id)}
               onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
               tabIndex={0}

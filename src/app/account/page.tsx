@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -8,6 +8,7 @@ import { DemoButton } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 // --- Define Groq Model Structure and List ---
 interface GroqModel {
@@ -82,6 +83,13 @@ export default function AccountPage() {
   const [savingApiKey, setSavingApiKey] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // State for animated tab cursor
+  const [position, setPosition] = useState({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -347,6 +355,26 @@ export default function AccountPage() {
     return availableGroqModels.find(model => model.id === formData.specific_model_id);
   };
 
+  // Callback to set initial position of the cursor on the active tab
+  const setInitialCursorPosition = useCallback(() => {
+    const activeTabElement = document.querySelector(`[data-tab-value="${activeTab}"]`) as HTMLElement;
+    if (activeTabElement) {
+      const { width } = activeTabElement.getBoundingClientRect();
+      const left = activeTabElement.offsetLeft;
+      setPosition({
+        width,
+        opacity: 1,
+        left,
+      });
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!loading) { // Ensure elements are rendered
+      setInitialCursorPosition();
+    }
+  }, [loading, activeTab, setInitialCursorPosition]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
@@ -385,49 +413,49 @@ export default function AccountPage() {
             <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">Account</h2>
             <nav className="relative">
               <ul
-                className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-white/20 dark:bg-black/20 backdrop-blur-sm p-1"
+                className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1"
+                onMouseLeave={() => {
+                  const activeTabElement = document.querySelector(`[data-tab-value="${activeTab}"]`) as HTMLElement;
+                  if (activeTabElement) {
+                    const { width } = activeTabElement.getBoundingClientRect();
+                    setPosition({
+                      left: activeTabElement.offsetLeft,
+                      width,
+                      opacity: 1,
+                    });
+                  } else {
+                    setPosition(pv => ({ ...pv, opacity: 0 }));
+                  }
+                }}
               >
-                {/* Personal Information Tab */}
-                <li
-                  data-tab="personal"
-                  className="relative z-10 block cursor-pointer"
+                <AccountTab
+                  tabValue="personal"
+                  currentActiveTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  setPosition={setPosition}
+                  position={position}
                 >
-                  <button
-                    onClick={() => setActiveTab('personal')}
-                    // Apply TopicNav styling
-                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'personal' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                  >
-                    Personal
-                  </button>
-                </li>
-
-                {/* AI Settings Tab */}
-                <li
-                  data-tab="ai-settings"
-                  className="relative z-10 block cursor-pointer"
+                  Personal
+                </AccountTab>
+                <AccountTab
+                  tabValue="ai-settings"
+                  currentActiveTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  setPosition={setPosition}
+                  position={position}
                 >
-                  <button
-                    onClick={() => setActiveTab('ai-settings')}
-                    // Apply TopicNav styling
-                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'ai-settings' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                  >
-                    AI Settings
-                  </button>
-                </li>
-
-                {/* Answer Preferences Tab */}
-                <li
-                  data-tab="answer-preferences"
-                  className="relative z-10 block cursor-pointer"
+                  AI Settings
+                </AccountTab>
+                <AccountTab
+                  tabValue="answer-preferences"
+                  currentActiveTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  setPosition={setPosition}
+                  position={position}
                 >
-                  <button
-                    onClick={() => setActiveTab('answer-preferences')}
-                    // Apply TopicNav styling
-                    className={`px-5 py-2 text-sm font-normal rounded-full border border-gray-200 dark:border-gray-700 transition-colors duration-200 whitespace-nowrap ${activeTab === 'answer-preferences' ? 'bg-black text-white dark:bg-black' : 'bg-white text-black dark:bg-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                  >
-                    Answer Preferences
-                  </button>
-                </li>
+                  Answer Preferences
+                </AccountTab>
+                <Cursor position={position} />
               </ul>
 
               {/* No Tab Description */}
@@ -1089,5 +1117,95 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// --- Local Tab and Cursor Components ---
+
+interface AccountTabProps {
+  children: React.ReactNode;
+  tabValue: string;
+  currentActiveTab: string;
+  setActiveTab: (tab: string) => void;
+  setPosition: React.Dispatch<React.SetStateAction<{
+    left: number;
+    width: number;
+    opacity: number;
+  }>>;
+  position: { left: number; width: number; opacity: number };
+}
+
+function AccountTab({
+  children,
+  tabValue,
+  currentActiveTab,
+  setActiveTab,
+  setPosition,
+  position,
+}: AccountTabProps) {
+  const ref = useRef<HTMLLIElement>(null);
+  const isActive = currentActiveTab === tabValue;
+
+  useEffect(() => {
+    if (isActive && ref.current) {
+      const { width } = ref.current.getBoundingClientRect();
+      const newLeft = ref.current.offsetLeft;
+      // Update position only if it's significantly different or opacity is 0
+      // to prevent re-animation on already active/hovered tab.
+      if (Math.abs(position.left - newLeft) > 1 || position.opacity === 0) {
+        setPosition({
+          width,
+          opacity: 1,
+          left: newLeft,
+        });
+      }
+    }
+  }, [isActive, setPosition, position.left, position.opacity]); // Removed ref.current from deps
+
+  const isUnderCursor =
+    ref.current &&
+    position.opacity === 1 &&
+    Math.abs(position.left - ref.current.offsetLeft) < 1;
+
+  return (
+    <li
+      ref={ref}
+      data-tab-value={tabValue} // Used for querying active tab element
+      onMouseEnter={() => {
+        if (!ref.current) return;
+        const { width } = ref.current.getBoundingClientRect();
+        setPosition({
+          width,
+          opacity: 1,
+          left: ref.current.offsetLeft,
+        });
+      }}
+      onClick={() => setActiveTab(tabValue)}
+      className="relative z-10 block cursor-pointer"
+    >
+      <button // Changed from Link to button as it's internal page navigation
+        className={`relative block px-5 py-2 text-sm font-normal transition-colors ${
+          isUnderCursor || isActive // Keep text white/black if active or under cursor
+            ? 'text-white dark:text-black'
+            : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+        }`}
+      >
+        {children}
+      </button>
+    </li>
+  );
+}
+
+function Cursor({ position }: { position: any }) {
+  return (
+    <motion.li
+      animate={position}
+      className="absolute z-0 h-9 rounded-full bg-black dark:bg-white" // h-9 to match common tab height
+      transition={{
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      }}
+    />
   );
 }

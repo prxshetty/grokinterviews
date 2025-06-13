@@ -593,6 +593,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
                   level="section" // Add the missing level prop - showing sections when domain is selected
                   subtopicProgress={subtopicProgress}
                   dataCache={dataCache}
+                  showDomainTitle={true}
                 />
               )}
 

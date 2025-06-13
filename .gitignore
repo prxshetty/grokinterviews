@@ -1,9 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 topics/*
 .cursor
-augment-memory.md
-TOPICS_UI_OPTIMIZATION_PLAN.md        
-PRE_LAUNCH_CHECKLIST.md
+PROJECT_WIDE_OPTIMIZATION_PLAN.md
 # dependencies
 /node_modules
 /.pnp
