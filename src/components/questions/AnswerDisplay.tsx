@@ -21,7 +21,6 @@ interface AnswerDisplayProps {
   error: string | null;
   scrollProgress: number;
   isCompleted: boolean;
-  setAnswerRef: (el: HTMLDivElement | null) => void;
 }
 
 export function AnswerDisplay({
@@ -29,7 +28,7 @@ export function AnswerDisplay({
   isLoading,
   error,
   isCompleted,
-  setAnswerRef,
+  scrollProgress,
 }: AnswerDisplayProps) {
   const toastId = useRef<string | number | undefined>(undefined);
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
@@ -92,10 +91,7 @@ export function AnswerDisplay({
   return (
     <div className="relative">
       <div
-        ref={(el) => {
-          scrollableContainerRef.current = el;
-          if (setAnswerRef) setAnswerRef(el);
-        }}
+        ref={scrollableContainerRef}
         className="text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none h-[600px] overflow-y-auto pr-4 text-base leading-relaxed scrollbar-thin"
         style={scrollbarStyles}
       >

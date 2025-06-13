@@ -2,13 +2,17 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
 import { QuestionWithAnswer } from '@/components/questions';
 import ProgressBar from '../ui/ProgressBar';
 import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted, isQuestionBookmarked } from '@/app/utils/progress';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
+
+// Import Accordion components
+import {
+  Accordion
+} from "@/components/ui/accordion";
 
 // Import types
 interface QuestionType {
@@ -127,6 +131,11 @@ export default function CategoryDetailView({
   // Local state to store bookmark status
   const [bookmarkStatus, setBookmarkStatus] = useState<Record<number, boolean>>({});
   
+  // State for Accordion: stores the value (questionId.toString()) of the currently open item.
+  const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(
+    highlightedQuestionId ? highlightedQuestionId.toString() : undefined
+  );
+
   // Check if this is section/header or specific topic
   const isSectionHeader = categoryId.startsWith('header-');
   const hasSubtopics = categoryDetails?.subtopics && Object.keys(categoryDetails.subtopics).length > 0;
@@ -387,6 +396,7 @@ export default function CategoryDetailView({
         console.log('Formatted subtopic data:', formattedSubtopic);
         setSubtopicDetails(formattedSubtopic);
         setSelectedSubtopic(topicId);
+        setOpenQuestionId(undefined); // Close any previously open question
       } else {
         console.error('Invalid subtopic data structure:', data);
       }
@@ -401,6 +411,7 @@ export default function CategoryDetailView({
   const handleBackToCategory = useCallback(() => {
     setSelectedSubtopic(null);
     setSubtopicDetails(null);
+    setOpenQuestionId(undefined); // Close any open question when navigating
   }, []);
 
   // Handle difficulty selection from FloatingSettings
@@ -450,6 +461,22 @@ export default function CategoryDetailView({
     setSubtopicProgress, 
     setCategoryProgress
   ]);
+
+  // Handler for Accordion's onValueChange
+  const handleOpenQuestionChange = useCallback((value: string) => {
+    setOpenQuestionId(value);
+    // If a question is opened, update URL for shareability, but only if not clearing
+    if (value) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('q', value); // q for question id
+      router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+    } else {
+      // If accordion is closed (value is empty for single collapsible)
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('q');
+      router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+    }
+  }, [searchParams, router, pathname]);
 
   if (isLoading && !categoryDetails) {
     return (
@@ -503,9 +530,15 @@ export default function CategoryDetailView({
         
         {/* When we have questions grouped by categories */}
         {hasGroupedQuestions ? (
-          <div>
-            {Object.entries(questionsByCategory).map(([categoryId, category]) => (
-              <div key={categoryId} className="mb-12">
+          <Accordion 
+            type="single" 
+            collapsible 
+            className="w-full space-y-2" // Added space-y-2 for spacing between items
+            value={openQuestionId}
+            onValueChange={handleOpenQuestionChange}
+          >
+            {Object.entries(questionsByCategory).map(([catId, category]) => (
+              <div key={catId} className="mb-12"> {/* Keep existing margin for category groups */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
                   <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl">{category.name}</h2>
                   <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -522,41 +555,49 @@ export default function CategoryDetailView({
                     className={category.name}
                   />
                 </div>
-                <div className="overflow-hidden">
-                  {category.questions.map((question, index) => (
-                    <QuestionWithAnswer 
-                      key={question.id}
-                      question={question}
-                      questionIndex={index}
-                      isHighlighted={highlightedQuestionId === question.id}
-                      topicId={category.topic_id}
-                      onCompletionChange={handleCompletionChange}
-                      isBookmarked={bookmarkStatus[question.id] || false}
-                      onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
-                    />
-                  ))}
-                </div>
+                {/* Accordion items for questions within this category group */}
+                {category.questions.map((question, index) => (
+                  <QuestionWithAnswer 
+                    key={question.id}
+                    question={question}
+                    questionIndex={index}
+                    // isHighlighted is not used directly by QWA for expansion control anymore
+                    topicId={category.topic_id}
+                    onCompletionChange={handleCompletionChange}
+                    isBookmarked={bookmarkStatus[question.id] || false}
+                    onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
+                    isOpen={openQuestionId === question.id.toString()}
+                    onRequestClose={() => handleOpenQuestionChange("")}
+                  />
+                ))}
               </div>
             ))}
-          </div>
+          </Accordion>
         ) : memoizedFilteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
           <div>
             <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6">Questions</h2>
-            <div className="overflow-hidden">
+            <Accordion 
+              type="single" 
+              collapsible 
+              className="w-full space-y-2"
+              value={openQuestionId}
+              onValueChange={handleOpenQuestionChange}
+            >
               {memoizedFilteredQuestions.map((question, index) => (
                 <QuestionWithAnswer 
                   key={question.id}
                   question={question}
                   questionIndex={index}
-                  isHighlighted={highlightedQuestionId === question.id}
                   topicId={subtopicDetails?.subtopicId ?? undefined}
                   onCompletionChange={handleCompletionChange}
                   isBookmarked={bookmarkStatus[question.id] || false}
                   onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
+                  isOpen={openQuestionId === question.id.toString()}
+                  onRequestClose={() => handleOpenQuestionChange("")}
                 />
               ))}
-            </div>
+            </Accordion>
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -633,20 +674,27 @@ export default function CategoryDetailView({
           </div>
           
           {memoizedFilteredQuestions.length > 0 ? (
-            <div className="overflow-hidden">
+            <Accordion 
+              type="single" 
+              collapsible 
+              className="w-full space-y-2" // Added for consistent spacing
+              value={openQuestionId}
+              onValueChange={handleOpenQuestionChange}
+            >
               {memoizedFilteredQuestions.map((question, index) => (
                 <QuestionWithAnswer 
                   key={question.id}
                   question={question}
                   questionIndex={index}
-                  isHighlighted={highlightedQuestionId === question.id}
                   topicId={question.topic_id ?? undefined}
                   onCompletionChange={handleCompletionChange}
                   isBookmarked={bookmarkStatus[question.id] || false}
                   onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
+                  isOpen={openQuestionId === question.id.toString()} // Pass isOpen prop
+                  onRequestClose={() => handleOpenQuestionChange("")}
                 />
               ))}
-            </div>
+            </Accordion>
           ) : (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this category.'}</p>

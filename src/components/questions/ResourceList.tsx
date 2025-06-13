@@ -49,10 +49,11 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
   const [totalCount, setTotalCount] = useState<number>(0);
   const [activeTabType, setActiveTabType] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     setLoading(true);
+    setError(null); // Clear previous errors
     let isMounted = true;
     console.log('[ResourceList useEffect] Hook triggered. Initializing fetchData...');
 
@@ -128,12 +129,12 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
 
           if (isLoggedIn && userPreferences) {
             console.log('[ResourceList FetchData] Applying user preference filters to resource query.');
-            if (!userPreferences.use_youtube_sources) query = query.neq('type', 'video');
-            if (!userPreferences.use_pdf_sources) query = query.neq('type', 'pdf');
-            if (!userPreferences.use_paper_sources) query = query.neq('type', 'paper');
-            if (!userPreferences.use_website_sources) query = query.neq('type', 'website');
-            if (!userPreferences.use_book_sources) query = query.neq('type', 'book');
-            // if (!userPreferences.use_image_sources) query = query.neq('type', 'image');
+            if (userPreferences.use_youtube_sources === false) query = query.neq('type', 'video');
+            if (userPreferences.use_pdf_sources === false) query = query.neq('type', 'pdf');
+            if (userPreferences.use_paper_sources === false) query = query.neq('type', 'paper');
+            if (userPreferences.use_website_sources === false) query = query.neq('type', 'website');
+            if (userPreferences.use_book_sources === false) query = query.neq('type', 'book');
+            // if (userPreferences.use_image_sources === false) query = query.neq('type', 'image');
           } else {
             console.log('[ResourceList FetchData] Not applying preference filters (no user or preferences not loaded).');
           }
@@ -174,47 +175,65 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
     fetchData();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return;
+      if (!isMounted) {
+        console.log('[ResourceList AuthListener] Unmounted, skipping auth state change processing.');
+        return;
+      }
       const currentUser = session?.user;
+      console.log('[ResourceList AuthListener] Auth state changed.', { hasSession: !!session, event: _event });
       setIsLoggedIn(!!currentUser);
+
       if (currentUser) {
-        // Bookmarks fetching logic on auth change removed
-        /* const { data: bookmarksData, error: bookmarksError } = await supabase
-          .from('user_bookmarks')
-          .select('question_id')
-          .eq('user_id', currentUser.id);
-        if (!isMounted) return;
-        if (bookmarksError) {
-          console.error('Error fetching bookmarks on auth change:', bookmarksError);
-        } else if (bookmarksData) {
-          const bookmarkedIds = new Set(bookmarksData.map(b => b.question_id));
-          setBookmarkedQuestions(bookmarkedIds);
-        } */
-        const { data: prefs, error: prefsError } = await supabase
+        console.log('[ResourceList AuthListener] User found. Fetching preferences...');
+        try {
+          const { data: prefs, error: prefsError } = await supabase
             .from('user_preferences')
             .select('*')
             .eq('user_id', currentUser.id)
             .single();
-        if (!isMounted) return;
-        if (prefsError && prefsError.code !== 'PGRST116') {
-            console.error('Error fetching user preferences on auth change:', prefsError);
-        } else if (prefs) {
+          
+          if (!isMounted) {
+            console.log('[ResourceList AuthListener] Unmounted after preferences fetch.');
+            return;
+          }
+
+          if (prefsError && prefsError.code !== 'PGRST116') {
+            console.error('[ResourceList AuthListener] Error fetching user preferences on auth change:', prefsError);
+            setUserPreferences(null); // Clear potentially stale preferences
+          } else if (prefs) {
+            console.log('[ResourceList AuthListener] User preferences fetched successfully on auth change.', { prefs });
             setUserPreferences(prefs);
-        } else {
-            setUserPreferences(null);
+          } else {
+            console.log('[ResourceList AuthListener] No user preferences found on auth change.');
+            setUserPreferences(null); // No preferences row found
+          }
+        } catch (e) {
+          if (!isMounted) {
+            console.log('[ResourceList AuthListener] Unmounted during preferences exception on auth change.');
+            return;
+          }
+          console.error('[ResourceList AuthListener] Exception fetching preferences on auth change:', e);
+          setUserPreferences(null);
         }
-        setPreferencesLoaded(true);
+        // PreferencesLoaded should reflect the attempt to load them, regardless of outcome for this user
+        // setPreferencesLoaded(true); // This might be redundant if fetchData also sets it, or could be set here.
+                                  // For now, let fetchData handle its own preferenceLoaded state logic.
       } else {
-        // Bookmarks fetching logic on auth change removed
-        /* setBookmarkedQuestions(new Set()); */
+        console.log('[ResourceList AuthListener] No user session. Clearing preferences.');
         setUserPreferences(null);
-        setPreferencesLoaded(true);
+        // setPreferencesLoaded(true); // If no user, preferences are 'loaded' in the sense that we know there are none to apply.
+                                  // Let fetchData handle this.
       }
+      // Note: Re-fetching resources based on auth/preference change solely within onAuthStateChange
+      // might be complex. The main useEffect handles resource fetching based on props.
+      // If immediate re-fetch on preference change is needed without prop change,
+      // this area or another useEffect listening to userPreferences might be needed.
     });
 
     return () => {
       isMounted = false;
       authListener?.subscription?.unsubscribe();
+      console.log('[ResourceList useEffect] Cleanup. Unsubscribed from auth changes.');
     };
   }, [supabase, questionId, domain, topicId, categoryId, subcategoryId]);
 
