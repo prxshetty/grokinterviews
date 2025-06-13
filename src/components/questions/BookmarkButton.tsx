@@ -21,6 +21,11 @@ export function BookmarkButton({
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Sync state with prop changes
+  useEffect(() => {
+    setIsBookmarked(initialIsBookmarked);
+  }, [initialIsBookmarked]);
+
   // Helper function to get topicId from categoryId if needed
   const getTopicId = async (): Promise<number | null> => {
     if (topicId) return topicId;
