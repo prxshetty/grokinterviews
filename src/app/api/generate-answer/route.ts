@@ -4,15 +4,13 @@ import { createClient } from '@/utils/supabase/server'; // New import for @supab
 
 // Define the structure of a resource item from the database
 interface Resource {
-  id: string;
-  question_id: string;
-  resource_type: 'youtube' | 'paper' | 'note' | 'code_snippet' | string; // Allow other types
+  id: number;
+  question_id: number;
+  type: 'youtube' | 'paper' | 'note' | 'code_snippet' | string;
   title: string | null;
   url: string | null;
-  content: string | null;
-  description: string | null;
   created_at: string;
-  updated_at: string;
+  relevance_score?: number | null;
 }
 
 // Define types for preferences (mirroring frontend)
@@ -172,23 +170,24 @@ export async function POST(request: Request) {
         // code_snippet: true // [REMOVED] - Code snippets are generated, not fetched
         // Add mappings for other resource_types if needed
     };
-    const filteredResources = resources.filter(r => sourceMap[r.resource_type] === true);
+    const filteredResources = resources.filter(r => sourceMap[r.type] === true);
 
     // 7. Format *filtered* resources for the prompt
-    const formatResources = (type: string): string => {
+    const formatResources = (resourceType: string): string => {
       return filteredResources
-        .filter(r => r.resource_type === type)
+        .filter(r => r.type === resourceType)
         .map(r => {
-          if (['youtube', 'paper', 'website', 'pdf', 'book', 'image'].includes(type)) {
+          if (['youtube', 'paper', 'website', 'pdf', 'book', 'image'].includes(resourceType)) {
             const title = r.title || (r.url ? new URL(r.url).hostname : 'Link');
             const link = r.url ? `(${r.url})` : '';
             let text = `- [${title}]${link}`;
-            if (r.description) text += ` - ${r.description}`;
+            // if (r.description) text += ` - ${r.description}`; // Commented out as description is removed
             return text;
-          } else if (type === 'note') {
-            return `- ${r.content || ''}`;
+          } else if (resourceType === 'note') {
+            // return `- ${r.content || ''}`; // Commented out as content is removed. Notes might need a different field now or be removed.
+            return `- ${r.title || r.url || 'Note'}`; // Fallback for note if content is gone
           }
-          // [REMOVED] else if (type === 'code_snippet') { ... }
+          // [REMOVED] else if (resourceType === 'code_snippet') { ... }
           return ''; // Fallback for unknown types
         })
         .join('\n');

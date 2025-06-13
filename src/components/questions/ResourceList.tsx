@@ -12,9 +12,24 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { type Database } from '@/types/database.types';
 
-type DbResource = Database['public']['Tables']['resources']['Row'];
+// Remove old DbResource and redefine Resource to match actual DB schema
+// type DbResource = Database['public']['Tables']['resources']['Row'];
 type UserPreferences = Database['public']['Tables']['user_preferences']['Row'];
-type Resource = DbResource & { previewUrl?: string }; // Combine DbResource with optional previewUrl
+// type Resource = DbResource & { previewUrl?: string };
+
+interface Resource {
+  id: number; // Assuming id is number based on typical DB primary keys
+  question_id: number | null; // From existing usage, assuming number
+  type: string | null; // Correct field from DB schema
+  title: string | null;
+  url: string | null;
+  // content: string | null; // Removed, not in DB schema
+  // description: string | null; // Removed, not in DB schema
+  created_at: string; // Based on original definition
+  relevance_score?: number | null; // From information_schema query
+  previewUrl?: string; // Existing optional field
+  // Add other fields from your 'resources' table if they are used by the component
+}
 
 interface ResourceListProps {
   questionId: number | null;
@@ -39,93 +54,120 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
   useEffect(() => {
     setLoading(true);
     let isMounted = true;
+    console.log('[ResourceList useEffect] Hook triggered. Initializing fetchData...');
 
     async function fetchData() {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (!isMounted) return;
-
-      if (userError) {
-        console.error("Error fetching user for ResourceList:", userError);
-        setIsLoggedIn(false);
-      } else if (user) {
-        setIsLoggedIn(true);
-        try {
-          const { data: prefs, error: prefsError } = await supabase
-            .from('user_preferences')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-          if (!isMounted) return;
-          if (prefsError && prefsError.code !== 'PGRST116') {
-            console.error('Error fetching user preferences:', prefsError);
-            setError('Failed to load preferences.');
-          } else if (prefs) {
-            setUserPreferences(prefs);
-          }
-        } catch (e) {
-          if (!isMounted) return;
-          console.error('Exception fetching preferences:', e);
-          setError('An error occurred while loading preferences.');
-        }
-        setPreferencesLoaded(true);
-        try {
-          const { data: bookmarksData, error: bookmarksError } = await supabase
-            .from('user_bookmarks')
-            .select('question_id')
-            .eq('user_id', user.id);
-          if (!isMounted) return;
-          if (bookmarksError) {
-            console.error('Error fetching bookmarks:', bookmarksError);
-          } else if (bookmarksData) {
-            const bookmarkedIds = new Set(bookmarksData.map(b => b.question_id));
-            setBookmarkedQuestions(bookmarkedIds);
-          }
-        } catch (e) {
-          if (!isMounted) return;
-          console.error('Exception fetching bookmarks:', e);
-        }
-      } else {
-        setIsLoggedIn(false);
-        setPreferencesLoaded(true);
-      }
-
+      console.log('[ResourceList FetchData] Starting...');
       try {
-        let query = supabase.from('resources').select('*', { count: 'exact' });
-        if (domain) query = query.eq('domain', domain);
-        if (topicId) query = query.eq('topic_id', topicId);
-        if (categoryId) query = query.eq('category_id', categoryId);
-        if (subcategoryId) query = query.eq('subcategory_id', subcategoryId);
-        if (questionId && !domain && !topicId && !categoryId && !subcategoryId) {
-             query = query.eq('question_id', questionId);
+        console.log('[ResourceList FetchData] Attempting supabase.auth.getUser()...');
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('[ResourceList FetchData] supabase.auth.getUser() completed.', { user, userError });
+        if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after getUser.'); return; }
+
+        if (userError) {
+          console.error("[ResourceList FetchData] Error fetching user for ResourceList:", userError);
+          setIsLoggedIn(false);
+        } else if (user) {
+          setIsLoggedIn(true);
+          console.log('[ResourceList FetchData] User found. Fetching preferences...');
+          try {
+            const { data: prefs, error: prefsError } = await supabase
+              .from('user_preferences')
+              .select('*')
+              .eq('user_id', user.id)
+              .single();
+            console.log('[ResourceList FetchData] User preferences fetched.', { prefs, prefsError });
+            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after preferences fetch.'); return; }
+            if (prefsError && prefsError.code !== 'PGRST116') { // PGRST116: no rows found, not an error
+              console.error('[ResourceList FetchData] Error fetching user preferences:', prefsError);
+              setError('Failed to load preferences.');
+            } else if (prefs) {
+              setUserPreferences(prefs);
+            }
+          } catch (e) {
+            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during preferences exception.'); return; }
+            console.error('[ResourceList FetchData] Exception fetching preferences:', e);
+            setError('An error occurred while loading preferences.');
+          }
+          setPreferencesLoaded(true);
+          console.log('[ResourceList FetchData] Preferences loaded. Fetching bookmarks...');
+          try {
+            const { data: bookmarksData, error: bookmarksError } = await supabase
+              .from('user_bookmarks')
+              .select('question_id')
+              .eq('user_id', user.id);
+            console.log('[ResourceList FetchData] User bookmarks fetched.', { bookmarksData, bookmarksError });
+            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after bookmarks fetch.'); return; }
+            if (bookmarksError) {
+              console.error('[ResourceList FetchData] Error fetching bookmarks:', bookmarksError);
+            } else if (bookmarksData) {
+              const bookmarkedIds = new Set(bookmarksData.map(b => b.question_id));
+              setBookmarkedQuestions(bookmarkedIds);
+            }
+          } catch (e) {
+            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during bookmarks exception.'); return; }
+            console.error('[ResourceList FetchData] Exception fetching bookmarks:', e);
+          }
+        } else {
+          console.log('[ResourceList FetchData] No user found.');
+          setIsLoggedIn(false);
+          setPreferencesLoaded(true); // Still set to true if no user, so resource fetching can proceed
         }
 
-        if (user && userPreferences) {
-          if (!userPreferences.use_youtube_sources) query = query.neq('resource_type', 'video');
-          if (!userPreferences.use_pdf_sources) query = query.neq('resource_type', 'pdf');
-          if (!userPreferences.use_paper_sources) query = query.neq('resource_type', 'paper');
-          if (!userPreferences.use_website_sources) query = query.neq('resource_type', 'website');
-          if (!userPreferences.use_book_sources) query = query.neq('resource_type', 'book');
-          // if (!userPreferences.use_image_sources) query = query.neq('resource_type', 'image'); // Commented out due to type error
-        }
-        
-        query = query.order('created_at', { ascending: false }).limit(500);
-        const { data: dbData, error: resourcesError, count } = await query;
-        if (!isMounted) return;
+        console.log('[ResourceList FetchData] Attempting to fetch resources...');
+        try {
+          let query = supabase.from('resources').select('*', { count: 'exact' });
+          if (domain) query = query.eq('domain', domain);
+          if (topicId) query = query.eq('topic_id', topicId);
+          if (categoryId) query = query.eq('category_id', categoryId);
+          if (subcategoryId) query = query.eq('subcategory_id', subcategoryId);
+          if (questionId && !domain && !topicId && !categoryId && !subcategoryId) {
+               query = query.eq('question_id', questionId);
+          }
 
-        if (resourcesError) {
-          console.error('Error fetching resources:', resourcesError);
-          setError('Failed to load resources.');
-        } else if (dbData) {
-          const processedData = dbData.map(r => ({ ...r, previewUrl: undefined } as Resource)); // Ensure previewUrl is part of the object
-          setResources(processedData);
-          setTotalCount(count || 0);
+          if (isLoggedIn && userPreferences) {
+            console.log('[ResourceList FetchData] Applying user preference filters to resource query.');
+            if (!userPreferences.use_youtube_sources) query = query.neq('type', 'video');
+            if (!userPreferences.use_pdf_sources) query = query.neq('type', 'pdf');
+            if (!userPreferences.use_paper_sources) query = query.neq('type', 'paper');
+            if (!userPreferences.use_website_sources) query = query.neq('type', 'website');
+            if (!userPreferences.use_book_sources) query = query.neq('type', 'book');
+            // if (!userPreferences.use_image_sources) query = query.neq('type', 'image');
+          } else {
+            console.log('[ResourceList FetchData] Not applying preference filters (no user or preferences not loaded).');
+          }
+          
+          query = query.order('created_at', { ascending: false }).limit(500);
+          console.log('[ResourceList FetchData] Executing resource query...');
+          const { data: dbData, error: resourcesError, count } = await query;
+          console.log('[ResourceList FetchData] Resource query completed.', { dbData, resourcesError, count });
+          if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after resource query.'); return; }
+
+          if (resourcesError) {
+            console.error('[ResourceList FetchData] Error fetching resources:', resourcesError);
+            setError('Failed to load resources.');
+          } else if (dbData) {
+            const processedData = dbData.map(r => ({ ...r, previewUrl: undefined } as Resource));
+            setResources(processedData);
+            setTotalCount(count || 0);
+          }
+        } catch (e) {
+          if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during resource fetching exception.'); return; }
+          console.error('[ResourceList FetchData] Exception fetching resources:', e);
+          setError('An error occurred while loading resources.');
         }
       } catch (e) {
-        if (!isMounted) return;
-        console.error('Exception fetching resources:', e);
-        setError('An error occurred while loading resources.');
+        if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during main fetchData exception.'); return; }
+        console.error('[ResourceList FetchData] Main exception in fetchData:', e);
+        setError('A critical error occurred while preparing to load resources.');
+      } finally {
+        if (isMounted) {
+            console.log('[ResourceList FetchData] In finally block, setting loading to false.');
+            setLoading(false);
+        } else {
+            console.log('[ResourceList FetchData] In finally block, but component unmounted. Not setting loading state.');
+        }
       }
-      setLoading(false);
     }
 
     fetchData();
@@ -173,7 +215,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
     };
   }, [supabase, questionId, domain, topicId, categoryId, subcategoryId]);
 
-  const getResourcesByType = (type: string) => resources.filter(r => r.resource_type === type);
+  const getResourcesByType = (typeValue: string) => resources.filter(r => r.type === typeValue);
 
   const typeDisplayOrder: string[] = ['video', 'pdf', 'paper', 'website', 'book', 'image', 'other'];
 
@@ -239,6 +281,17 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
 
   const displayedTypes = typeDisplayOrder.filter(type => getResourcesByType(type).length > 0);
 
+  // **** ADDED FOR DEBUGGING ****
+  console.log('[ResourceList Debug] State before render:', {
+    resources,
+    displayedTypes,
+    loading,
+    error,
+    preferencesLoaded,
+    totalCount
+  });
+  // ******************************
+
   return (
     <div className="space-y-6">
       {displayedTypes.map(type => {
@@ -277,7 +330,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
                   </CardHeader>
                   <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between">
                     <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3 mb-3">
-                      {resource.description || 'No description available.'}
+                      {/* {resource.description || 'No description available.'} */}
                     </p>
                     <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center space-x-2">
