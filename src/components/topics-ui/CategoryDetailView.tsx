@@ -271,9 +271,8 @@ export default function CategoryDetailView({
         if (!selectedSubtopic) {
           // For categories, fetch their progress data
           if (categoryId && !categoryId.startsWith('header-')) {
-            const numericId = parseInt(categoryId.replace('topic-', ''));
+            const numericId = parseInt(categoryId.replace(/^(topic-|category-)/, ''));
             if (!isNaN(numericId) && !categoryProgressData) { // Fetch only if not provided
-              console.log(`Fetching progress for category ID: ${numericId}`);
               const progress = await fetchCategoryProgress(numericId, true);
               if (!signal.aborted) {
                 setCategoryProgress(progress);
@@ -286,7 +285,6 @@ export default function CategoryDetailView({
         if (selectedSubtopic) {
           const numericId = parseInt(selectedSubtopic.replace('topic-', ''));
           if (!isNaN(numericId) && !currentSubtopicProgress) { // Fetch only if not provided
-            console.log(`Fetching progress for subtopic ID: ${numericId}`);
             const progress = await fetchSubtopicProgress(numericId, true);
             if (!signal.aborted) {
               setSubtopicProgress(progress);
@@ -296,19 +294,24 @@ export default function CategoryDetailView({
         
         // Update completed questions tracking
         const questions = memoizedFilteredQuestions;
-        
-        // Check each question's completion status
-        const completionStatus: Record<number, boolean> = {};
         const questionIds = questions.map(q => q.id);
         
         if (questionIds.length > 0) {
-          // Batch check question completion status
-          const completedResults = await Promise.all(questionIds.map(id => isQuestionCompleted(id)));
-          if (!signal.aborted) {
-            questionIds.forEach((id, index) => {
-              completionStatus[id] = completedResults[index];
-            });
-            setCompletedQuestions(completionStatus);
+          try {
+            const completedResults = await Promise.all(questionIds.map(id => isQuestionCompleted(id)));
+            
+            if (!signal.aborted) {
+              const newCompletedStatus: Record<number, boolean> = {};
+              questionIds.forEach((id, index) => {
+                newCompletedStatus[id] = completedResults[index];
+              });
+              setCompletedQuestions(newCompletedStatus);
+            }
+          } catch (error) {
+            console.error(`Error fetching batch completion status:`, error);
+            if (!signal.aborted) {
+              setCompletedQuestions({}); // Fallback on error
+            }
           }
         } else if (!signal.aborted) {
           setCompletedQuestions({});
