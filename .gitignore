@@ -2,6 +2,7 @@
 topics/*
 .cursor
 PROJECT_WIDE_OPTIMIZATION_PLAN.md
+TODOIST.md
 # dependencies
 /node_modules
 /.pnp
