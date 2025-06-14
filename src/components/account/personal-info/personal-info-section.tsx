@@ -3,8 +3,10 @@
 import Image from 'next/image'
 import type { UserProfile } from '@/app/account/types' // Corrected import path
 import { DemoButton } from '@/components/ui'
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui'
 import type { ReactElement } from 'react'; // Import ReactElement
+import { createClient } from "@/utils/supabase/client";
+import { Button } from "@/components/ui";
 
 interface PersonalInfoSectionProps {
   formData: {

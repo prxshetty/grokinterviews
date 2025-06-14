@@ -3,16 +3,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { QuestionWithAnswer } from '@/components/questions';
-import ProgressBar from '../ui/ProgressBar';
+import { ProgressBar, LoadingSpinner, Accordion } from '@/components/ui';
 import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted, isQuestionBookmarked } from '@/app/utils/progress';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
-
-// Import Accordion components
-import {
-  Accordion
-} from "@/components/ui/accordion";
 
 // Import types
 interface QuestionType {

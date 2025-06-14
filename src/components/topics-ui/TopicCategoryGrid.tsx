@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useTopicData } from '@/hooks';
-import ProgressBar from '../ui/ProgressBar';
-import { IconHover3D } from '@/components/ui/icon-3d-hover';
+import { IconHover3D } from '@/components/ui';
 import TopicDataService from '@/services/TopicDataService';
 import styles from './TopicCategoryGrid.module.css';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 // Define the structure for items to be displayed
 interface DisplayItem {

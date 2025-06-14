@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import QuizPageClient from './QuizPageClient';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 // Define the expected props structure for the Server Component page
 interface PageProps {

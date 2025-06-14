@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { LogOut, Moon, Sun, User, Menu } from 'lucide-react';
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -13,16 +14,21 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+  SheetHeader,
+  SheetTitle
+} from '@/components/ui';
 
+// Define UserProfile interface inline
 interface UserProfile {
   id: string;
-  username: string;
-  full_name: string;
-  avatar_url: string | null;
-  email: string;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  // email is usually part of the Supabase user object, not directly in profiles table unless duplicated
 }
 
 const mainTopics = [

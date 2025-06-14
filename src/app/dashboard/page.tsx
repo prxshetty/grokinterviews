@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import ProgressSaver from '@/components/progress/ProgressSaver';
 import { ActivityGrid } from '@/components/progress';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendar } from '@/components/ui';
 import DashboardNav from './DashboardNav';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 // Component imports
 import { 
