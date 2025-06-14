@@ -323,12 +323,12 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
 
   return (
     <Tabs value={activeTabType || ''} onValueChange={setActiveTabType} className="w-full space-y-1 pt-3">
-      <TabsList className="flex flex-wrap sm:flex-nowrap overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent border-b border-gray-200 dark:border-gray-700">
+      <TabsList className="flex flex-wrap w-full justify-start gap-2 mb-4">
         {displayableTabs.map(tab => (
-          <TabsTrigger 
-            key={tab.type} 
-            value={tab.type} 
-            className="relative inline-flex items-center whitespace-nowrap mx-1 px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/60 data-[state=active]:text-primary dark:data-[state=active]:text-sky-400 data-[state=active]:font-semibold rounded-t-md transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[state=active]:after:absolute data-[state=active]:after:bottom-[-1px] data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-[2px] data-[state=active]:after:bg-primary dark:data-[state=active]:after:bg-sky-500"
+          <TabsTrigger
+            key={tab.type}
+            value={tab.type}
+            className="relative inline-flex items-center whitespace-nowrap px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800/60 data-[state=active]:text-primary dark:data-[state=active]:text-sky-400 data-[state=active]:font-semibold rounded-t-md transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 data-[state=active]:after:absolute data-[state=active]:after:bottom-[-1px] data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:h-[2px] data-[state=active]:after:bg-primary dark:data-[state=active]:after:bg-sky-500"
           >
             {tab.title} ({tab.count})
           </TabsTrigger>

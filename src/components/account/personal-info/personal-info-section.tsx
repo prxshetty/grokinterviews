@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import type { UserProfile } from '@/app/account/types' // Corrected import path
 import { DemoButton } from '@/components/ui'
+import { Input } from '@/components/ui/input'
 import type { ReactElement } from 'react'; // Import ReactElement
 
 interface PersonalInfoSectionProps {
@@ -33,13 +34,13 @@ export function PersonalInfoSection({
             <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Full Name
             </label>
-            <input
+            <Input
               type="text"
               name="full_name"
               id="full_name"
               value={formData.full_name}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
+              className="mt-1"
             />
           </div>
           {/* Username Input */}
@@ -47,13 +48,13 @@ export function PersonalInfoSection({
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Username
             </label>
-            <input
+            <Input
               type="text"
               name="username"
               id="username"
               value={formData.username}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm"
+              className="mt-1"
             />
           </div>
           {/* Email Display (Disabled) */}
