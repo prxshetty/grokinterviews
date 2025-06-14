@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TopicDataService from '@/services/TopicDataService';
 import QuizInterface from '@/components/quiz-ui/QuizInterface';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 // Define types
 type CategoryItem = {

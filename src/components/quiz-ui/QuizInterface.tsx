@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Check, X, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProgressSaver from '../utils/ProgressSaver';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 interface QuestionType {
   id: number;

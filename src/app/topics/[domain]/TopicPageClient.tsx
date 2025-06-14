@@ -14,7 +14,7 @@ import { useTopicData } from '@/hooks';
 
 import { useFilterLogic } from '@/hooks/use-filter-logic.hook';
 import { fetchDomainProgress, fetchCategoryProgress } from '@/app/utils/progress';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import withAuth from '@/components/auth/withAuth';
 

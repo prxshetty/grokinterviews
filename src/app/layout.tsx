@@ -2,7 +2,7 @@ import './globals.css';
 import { MainNavigation } from '@/components';
 import { TopicDataProvider } from '@/components';
 import { Footer } from '@/components';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from "@/components/ui";
 import { janelotus, playfairDisplay } from './fonts';
 
 export default function RootLayout({

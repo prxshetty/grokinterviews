@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
-import { Pagination } from '../ui';
+import { Pagination } from '@/components/ui';
 import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView } from './';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
+import { createClient } from "@/utils/supabase/client";
+import { type Database } from "@/types/database.types";
 
 // Import necessary types
 interface QuestionType {
@@ -114,6 +116,10 @@ export default function ContentDisplay({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const supabase = useMemo(() => createClient(), []);
+
+  // New state for bookmarks
+  const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
 
   // Scroll to highlighted question if it exists
   useEffect(() => {
@@ -126,7 +132,56 @@ export default function ContentDisplay({
       }, 500); // Give enough time for the component to render
     }
   }, [highlightedQuestionId, selectedCategory, selectedDifficulty]);
-  
+
+  // Fetch bookmarks when difficultyQuestions change or user changes (implicitly via supabase client)
+  useEffect(() => {
+    const fetchUserAndBookmarks = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user && difficultyQuestions.length > 0) {
+        const questionIds = difficultyQuestions.map(q => q.id);
+        try {
+          const { data: bookmarksData, error } = await supabase
+            .from('user_bookmarks')
+            .select('question_id')
+            .eq('user_id', user.id)
+            .in('question_id', questionIds);
+
+          if (error) {
+            console.error('Error fetching bookmarks in ContentDisplay:', error);
+            setBookmarkedQuestions(new Set()); // Reset on error
+            return;
+          }
+          setBookmarkedQuestions(new Set(bookmarksData.map(b => b.question_id)));
+        } catch (e) {
+          console.error('Exception fetching bookmarks in ContentDisplay:', e);
+          setBookmarkedQuestions(new Set()); // Reset on error
+        }
+      } else {
+        setBookmarkedQuestions(new Set()); // Clear if no user or no questions
+      }
+    };
+
+    if (difficultyQuestions.length > 0) { // Only fetch if there are questions to check
+        fetchUserAndBookmarks();
+    } else {
+        setBookmarkedQuestions(new Set()); // Ensure bookmarks are cleared if questions are cleared
+    }
+  }, [supabase, difficultyQuestions]);
+
+  // Handler for bookmark changes from QuestionWithAnswer
+  const handleBookmarkChange = (questionId: number, newStatus: boolean) => {
+    setBookmarkedQuestions(prev => {
+      const newSet = new Set(prev);
+      if (newStatus) {
+        newSet.add(questionId);
+      } else {
+        newSet.delete(questionId);
+      }
+      return newSet;
+    });
+  };
+
   // Decide what content to display based on current selection state
   if (isLoading.difficultyQuestions) {
     return <LoadingSpinner centered text="Loading questions..." />;
@@ -188,6 +243,8 @@ export default function ContentDisplay({
                   question={question}
                   questionIndex={index}
                   isHighlighted={highlightedQuestionId === question.id}
+                  isBookmarked={bookmarkedQuestions.has(question.id)}
+                  onBookmarkStatusChange={handleBookmarkChange}
                 />
               ))}
             </div>

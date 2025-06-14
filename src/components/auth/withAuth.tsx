@@ -4,11 +4,11 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { LoadingSpinner } from '@/components/ui'
 import SignIn from '@/app/signin/page'
 
 interface WithAuthProps {
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 export default function withAuth<P extends object>(

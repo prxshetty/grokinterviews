@@ -103,18 +103,6 @@ export default function LoadingSpinner({
 }
 
 // Specialized loading components for common use cases
-export function PageLoadingSpinner({ text = "Loading..." }: { text?: string }) {
-  return (
-    <LoadingSpinner 
-      size="lg" 
-      color="primary" 
-      text={text}
-      centered={true}
-      className="min-h-[300px]"
-    />
-  );
-}
-
 export function InlineLoadingSpinner({ text, size = 'sm' }: { text?: string; size?: 'sm' | 'md' }) {
   return (
     <LoadingSpinner 
@@ -122,17 +110,6 @@ export function InlineLoadingSpinner({ text, size = 'sm' }: { text?: string; siz
       color="muted" 
       text={text}
       centered={false}
-    />
-  );
-}
-
-export function ButtonLoadingSpinner() {
-  return (
-    <LoadingSpinner 
-      size="sm"
-      color="primary" 
-      centered={false}
-      className="text-current"
     />
   );
 } 

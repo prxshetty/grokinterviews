@@ -1,6 +1,7 @@
 'use client'
 
-import { Feature } from '@/components/ui/feature-with-advantages'
+import React from 'react';
+import { Feature } from '@/components/ui';
 
 export function FeatureSection() {
   return <Feature />
