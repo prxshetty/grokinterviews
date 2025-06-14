@@ -314,7 +314,7 @@ export const isQuestionBookmarked = async (questionId: number): Promise<boolean>
 
     const data = await response.json();
     console.log(`Bookmark status for question ${questionId}:`, data);
-    return data.status === 'bookmarked';
+    return data.isBookmarked;
   } catch (error) {
     console.error('Failed to check bookmark status:', error);
     return false;
