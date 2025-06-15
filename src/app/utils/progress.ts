@@ -280,7 +280,7 @@ export const toggleQuestionBookmark = async (
       try {
         const errorData = await response.json();
         errorDetails = errorData.details || errorData.error || JSON.stringify(errorData);
-      } catch (_e) {
+      } catch {
         errorDetails = response.statusText;
       }
       throw new Error(`Failed to update bookmark status: ${response.status} - ${errorDetails}`);
@@ -717,7 +717,7 @@ export const clearDomainProgressCache = (domain: string): void => {
     
     // Clear localStorage completed questions for the domain
     try {
-      const completedQuestions = JSON.parse(localStorage.getItem('completedQuestions') || '[]');
+      // const completedQuestions = JSON.parse(localStorage.getItem('completedQuestions') || '[]');
       // We can't easily filter by domain here since we only have question IDs
       // So we'll clear all completed questions to be safe
       localStorage.removeItem('completedQuestions');
@@ -728,7 +728,7 @@ export const clearDomainProgressCache = (domain: string): void => {
 
     // Clear sessionStorage completed questions for the domain
     try {
-      const sessionCompletedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
+      // const sessionCompletedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
       // Filter out questions from the specified domain if we have domain info
       // Otherwise clear all to be safe
       sessionStorage.removeItem('completedQuestions');

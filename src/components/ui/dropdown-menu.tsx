@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import { Check, ChevronRight, Circle } from 'lucide-react';
+import { Check, Circle } from 'lucide-react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
 import { cn } from '@/lib/utils';
@@ -113,137 +113,9 @@ const DropdownMenuTrigger = React.forwardRef<
 ));
 DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
 
-type DropdownMenuGroupProps = React.ComponentPropsWithoutRef<
-  typeof DropdownMenuPrimitive.Group
->;
-const DropdownMenuGroup = DropdownMenuPrimitive.Group;
-
-type DropdownMenuPortalProps = React.ComponentPropsWithoutRef<
-  typeof DropdownMenuPrimitive.Portal
->;
-const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
-
-type DropdownMenuSubProps = React.ComponentPropsWithoutRef<
-  typeof DropdownMenuPrimitive.Sub
->;
-const DropdownMenuSub = DropdownMenuPrimitive.Sub;
-
-type DropdownMenuRadioGroupProps = React.ComponentPropsWithoutRef<
-  typeof DropdownMenuPrimitive.RadioGroup
->;
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
-type DropdownMenuSubTriggerProps = React.ComponentPropsWithoutRef<
-  typeof DropdownMenuPrimitive.SubTrigger
-> & {
-  inset?: boolean;
-  transition?: Transition;
-};
-const DropdownMenuSubTrigger = React.forwardRef<
-  React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
-  DropdownMenuSubTriggerProps
->(
-  (
-    {
-      className,
-      children,
-      inset,
-      disabled,
-      transition = { type: 'spring', stiffness: 200, damping: 20 },
-      ...props
-    },
-    ref,
-  ) => {
-    const { activeValue, setActiveValue, scheduleReset, clearReset } =
-      useDropdownMenu();
-    const id = React.useId();
-
-    const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-      clearReset();
-      setActiveValue(id);
-      props.onMouseEnter?.(e);
-    };
-
-    const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-      scheduleReset();
-      props.onMouseLeave?.(e);
-    };
-
-    return (
-      <DropdownMenuPrimitive.SubTrigger
-        ref={ref}
-        className="relative"
-        {...props}
-        disabled={disabled}
-        onMouseEnter={(e) => {
-          handleMouseEnter(e);
-          props.onMouseEnter?.(e);
-        }}
-        onMouseLeave={(e) => {
-          handleMouseLeave(e);
-          props.onMouseLeave?.(e);
-        }}
-      >
-        <AnimatePresence>
-          {activeValue === id && !disabled && (
-            <motion.span
-              className="absolute inset-0 h-full w-full bg-muted rounded-sm"
-              layoutId="dropdown-menu-item-background"
-              initial={{ opacity: 0 }}
-              animate={{
-                opacity: 1,
-                transition,
-              }}
-              exit={{
-                opacity: 0,
-                transition: {
-                  transition: {
-                    ...transition,
-                    delay: EXIT_DELAY + (transition?.delay ?? 0),
-                  },
-                },
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        <motion.span
-          data-disabled={disabled}
-          whileTap={{ scale: 0.95 }}
-          className={cn(
-            'relative z-[1] flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none data-[state=open]:bg-accent [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
-            inset && 'pl-8',
-            className,
-          )}
-        >
-          {children}
-          <ChevronRight className="ml-auto" />
-        </motion.span>
-      </DropdownMenuPrimitive.SubTrigger>
-    );
-  },
-);
-DropdownMenuSubTrigger.displayName =
-  DropdownMenuPrimitive.SubTrigger.displayName;
-
-type DropdownMenuSubContentProps = React.ComponentPropsWithoutRef<
-  typeof DropdownMenuPrimitive.SubContent
->;
-const DropdownMenuSubContent = React.forwardRef<
-  React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
-  DropdownMenuSubContentProps
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.SubContent
-    ref={ref}
-    className={cn(
-      'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]',
-      className,
-    )}
-    {...props}
-  />
-));
-DropdownMenuSubContent.displayName =
-  DropdownMenuPrimitive.SubContent.displayName;
+const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
 type DropdownMenuContentProps = React.ComponentPropsWithoutRef<
   typeof DropdownMenuPrimitive.Content
@@ -646,10 +518,6 @@ export {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuGroup,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
+  DropdownMenuGroup,
 };

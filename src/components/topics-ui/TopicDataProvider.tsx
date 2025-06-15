@@ -79,7 +79,7 @@ export default function TopicDataProvider({
     console.log('TopicDataProvider - useEffect running...');
 
     // Clear localStorage to force a fresh fetch (for debugging)
-    localStorage.removeItem(TOPIC_DATA_CACHE_KEY);
+    // localStorage.removeItem(TOPIC_DATA_CACHE_KEY); // Commented out for now, likely for debugging
 
     // Try to load from cache first
     try {

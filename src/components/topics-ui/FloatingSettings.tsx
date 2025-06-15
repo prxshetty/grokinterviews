@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, Check } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -49,20 +50,17 @@ export default function FloatingSettings({
           Difficulty
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
-        {['Beginner', 'Intermediate', 'Advanced'].map((d) => (
-          <DropdownMenuItem
-            key={d}
-            onSelect={() => onSelectDifficulty(d.toLowerCase())}
-            className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10"
-          >
-            <Check
-              className={`mr-2 h-4 w-4 ${
-                selectedDifficulty === d.toLowerCase() ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-            <span>{d}</span>
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuRadioGroup value={selectedDifficulty ?? ''} onValueChange={onSelectDifficulty}>
+          {['Beginner', 'Intermediate', 'Advanced'].map((d) => (
+            <DropdownMenuRadioItem
+              key={d}
+              value={d.toLowerCase()}
+              className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10"
+            >
+              <span>{d}</span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

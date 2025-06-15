@@ -30,6 +30,21 @@ type CategoryItem = {
   label: string;
 };
 
+// Helper function (ideally in a utils file, define or import it as needed)
+// For the purpose of this edit, we'll assume slugify is available in the scope.
+// If not, you would need to define it here or import it.
+// Example:
+function slugify(text: string): string {
+  if (typeof text !== 'string') return ''; // Handle cases where name might be undefined
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars (alphanumeric, underscore, hyphen)
+    .replace(/--+/g, '-'); // Replace multiple hyphens with single hyphen
+}
+
 class TopicDataService {
   private cache: {
     topics: TopicTree | null;
@@ -143,7 +158,7 @@ class TopicDataService {
 
         // Convert database categories to the format expected by the UI
         const formattedCategories = categories.map(category => ({
-          id: category.slug,
+          id: slugify(category.name), // Use slugified name for category ID
           label: category.name
         }));
 
@@ -517,8 +532,9 @@ class TopicDataService {
           // Add categories as subtopics
           if (topicWithCategories.categories) {
             for (const category of topicWithCategories.categories) {
-              dbTopicData.subtopics[category.slug] = {
-                id: category.slug,
+              const categorySlug = slugify(category.name); // Generate slug from name
+              dbTopicData.subtopics[categorySlug] = {
+                id: categorySlug,
                 label: category.name,
                 subtopics: {}
               };
@@ -663,29 +679,35 @@ class TopicDataService {
       if (dbTopics && dbTopics.length > 0) {
         console.log('TopicDataService.getAllTopicData - Adding database topics');
         for (const topic of dbTopics) {
-          console.log(`TopicDataService.getAllTopicData - Processing topic: ${topic.slug}`);
-          mergedTopics[topic.slug] = {
+          const currentTopicSlug = (topic as any).slug; // Use type assertion assuming slug exists at runtime
+          if (!currentTopicSlug) {
+            console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topic.id} has no slug, skipping.`);
+            continue;
+          }
+          console.log(`TopicDataService.getAllTopicData - Processing topic: ${currentTopicSlug}`);
+          mergedTopics[currentTopicSlug] = {
             label: topic.name,
             subtopics: {}
           };
 
           // Get categories for this topic
           try {
-            console.log(`TopicDataService.getAllTopicData - Fetching categories for topic: ${topic.slug}`);
+            console.log(`TopicDataService.getAllTopicData - Fetching categories for topic: ${currentTopicSlug}`);
             const categories = await DatabaseService.getCategoriesByTopic(topic.id);
-            console.log(`TopicDataService.getAllTopicData - Got ${categories.length} categories for topic: ${topic.slug}`);
+            console.log(`TopicDataService.getAllTopicData - Got ${categories.length} categories for topic: ${currentTopicSlug}`);
 
             // Add categories as subtopics
             for (const category of categories) {
-              console.log(`TopicDataService.getAllTopicData - Adding category: ${category.slug}`);
-              mergedTopics[topic.slug].subtopics[category.slug] = {
-                id: category.slug,
+              const categorySlug = slugify(category.name); // Generate slug from name
+              console.log(`TopicDataService.getAllTopicData - Adding category: ${categorySlug}`);
+              mergedTopics[currentTopicSlug].subtopics[categorySlug] = {
+                id: categorySlug,
                 label: category.name,
                 subtopics: {}
               };
             }
           } catch (categoryError) {
-            console.error(`Error fetching categories for topic ${topic.slug}:`, categoryError);
+            console.error(`Error fetching categories for topic ${currentTopicSlug}:`, categoryError);
           }
         }
       } else {

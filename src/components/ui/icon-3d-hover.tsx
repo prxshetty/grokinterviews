@@ -34,8 +34,10 @@ const transformTemplate1 = (_: any, t: string) => `translate(-50%, -50%) ${t}`;
 // Transition wrapper component
 const Transition: React.FC<{ value: any; children: React.ReactNode }> = ({ value, children }) => {
   const config = React.useContext(MotionConfigContext);
-  const transition = value ?? config.transition;
-  const contextValue = React.useMemo(() => ({ ...config, transition }), [JSON.stringify(transition)]);
+  const contextValue = React.useMemo(() => {
+    const memoizedTransition = value ?? config.transition;
+    return { ...config, transition: memoizedTransition };
+  }, [config, value]);
 
   return (
     <MotionConfigContext.Provider value={contextValue}>
@@ -57,7 +59,6 @@ export const IconHover3D: React.FC<Props> = ({
   height = 130, // Reduced from 150
   ...restProps
 }) => {  const [currentVariant, setCurrentVariant] = useState<'Default' | 'Hover'>(variant);
-  const [gestureState, setGestureState] = useState({ isHovered: false });
   const refBinding = useRef<HTMLDivElement>(null);
   const defaultLayoutId = React.useId();
 
@@ -65,12 +66,10 @@ export const IconHover3D: React.FC<Props> = ({
   const variants = [currentVariant === 'Default' ? 'GPnJri30y' : 'zEwHlJ7zp'];
 
   const handleMouseEnter = async () => {
-    setGestureState({ isHovered: true });
     setCurrentVariant('Hover');
   };
 
   const handleMouseLeave = async () => {
-    setGestureState({ isHovered: false });
     setCurrentVariant('Default');
   };
 
@@ -79,14 +78,14 @@ export const IconHover3D: React.FC<Props> = ({
       "--border-color": "rgb(139, 47, 250)"
     }
   };
-  const titleVariants = {
-    default: {
-      "--fill-width": "0%"
-    },
-    hovered: {
-      "--fill-width": "100%"
-    }
-  };
+  // const titleVariants = {
+  //   default: {
+  //     "--fill-width": "0%"
+  //   },
+  //   hovered: {
+  //     "--fill-width": "100%"
+  //   }
+  // };
 
   // Add this new transition for the title
   const titleTransition = {
@@ -110,11 +109,11 @@ export const IconHover3D: React.FC<Props> = ({
     }
   };
 
-  const bgFillVariants = {
-    zEwHlJ7zp: {
-      opacity: 1
-    }
-  };
+  // const bgFillVariants = {
+  // zEwHlJ7zp: {
+  // opacity: 1
+  // }
+  // };
 
 
 
@@ -887,7 +886,7 @@ export const IconHover3D: React.FC<Props> = ({
                       animate={{
                         clipPath: `inset(0 ${isHoverVariant ? '0%' : '100%'} 0 0)`
                       }}
-                      transition={titleTransition}
+                      transition={titleTransition as any}
                     >
                       {heading}
                     </motion.span>
@@ -908,7 +907,7 @@ export const IconHover3D: React.FC<Props> = ({
                       animate={{
                         scaleX: isHoverVariant ? 1 : 0
                       }}
-                      transition={titleTransition}
+                      transition={titleTransition as any}
                     />
                   </motion.div>
                 </motion.div>
