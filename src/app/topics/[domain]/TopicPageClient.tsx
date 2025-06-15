@@ -132,8 +132,6 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const [subtopicProgress, setSubtopicProgress] = useState<Record<string, SubtopicProgress>>({});
   const [categoryProgress, setCategoryProgress] = useState<CategoryProgress | null>(null);
 
-
-
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(pageParam ? parseInt(pageParam) : 1);
   const [totalPages, setTotalPages] = useState<number>(1);
@@ -157,14 +155,12 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     setCurrentPage(pageParam ? parseInt(pageParam) : 1);
   }, [pageParam]);
 
-
-
   // Fetch difficulty questions when selectedDifficulty or currentPage changes
   useEffect(() => {
     if (selectedDifficulty && domain) {
       fetchDifficultyQuestions(selectedDifficulty, currentPage);
     } else {
-      setDifficultyQuestions([]); // Clear questions if no difficulty
+      setDifficultyQuestions([]);
     }
   }, [selectedDifficulty, currentPage, domain]); // domain added as dependency
 

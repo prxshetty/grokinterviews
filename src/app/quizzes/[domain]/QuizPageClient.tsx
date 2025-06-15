@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import TopicDataService from '@/services/TopicDataService';
 import QuizInterface from '@/components/quiz-ui/QuizInterface';
 import { LoadingSpinner } from '@/components/ui';
@@ -39,15 +38,13 @@ interface QuizPageClientProps {
 }
 
 export default function QuizPageClient({ initialDomain, domainName }: QuizPageClientProps) {
-  const [domain, setDomain] = useState<string>(initialDomain);
+  const [domain, _setDomain] = useState<string>(initialDomain);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(domain || null);
   const [topicCategories, setTopicCategories] = useState<CategoryItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<QuestionType[]>([]);
   const [loadingCategories, setLoadingCategories] = useState<boolean>(false);
   const [loadingQuestions, setLoadingQuestions] = useState<boolean>(false);
-
-  const router = useRouter();
 
   // Update selectedTopic when domain changes
   useEffect(() => {

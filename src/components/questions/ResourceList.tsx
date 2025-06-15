@@ -250,7 +250,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
 
   // Derived state for displayable tabs
   const displayableTabs = useMemo(() => {
-    let tabs = typeDisplayOrder
+    const tabs = typeDisplayOrder
       .map(typeKey => {
         let isPreferred = true;
         if (preferencesLoaded && userPreferences) {

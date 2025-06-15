@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import ProgressSaver from '@/components/progress/ProgressSaver';
 import { ActivityGrid } from '@/components/progress';
@@ -12,10 +11,8 @@ import { LoadingSpinner } from '@/components/ui';
 
 // Component imports
 import { 
-  OverviewWidget, 
   DomainCompletionWidget, 
   RecentActivityWidget, 
-  UserStatsWidget,
   UserActivityChart,
   MetricCards
 } from '@/components/dashboard';
@@ -210,10 +207,11 @@ export default function DashboardPage() {
           }));
         }
       } catch (error) {
+        console.error('Error fetching activity data:', error);
         setActivityData(prev => ({
           ...prev,
           loading: false,
-          error: 'Error fetching activity data'
+          error: error instanceof Error ? error.message : 'Error fetching activity data'
         }));
       }
     };
@@ -237,10 +235,11 @@ export default function DashboardPage() {
           }));
         }
       } catch (error) {
+        console.error('Error fetching user stats:', error);
         setUserStats(prev => ({
           ...prev,
           loading: false,
-          error: 'Error fetching user stats'
+          error: error instanceof Error ? error.message : 'Error fetching user stats'
         }));
       }
     };
@@ -265,10 +264,11 @@ export default function DashboardPage() {
           }));
         }
       } catch (error) {
+        console.error('Error fetching domain stats:', error);
         setDomainStats(prev => ({
           ...prev,
           loading: false,
-          error: 'Error fetching domain stats'
+          error: error instanceof Error ? error.message : 'Error fetching domain stats'
         }));
       }
     };
@@ -298,10 +298,11 @@ export default function DashboardPage() {
           }));
         }
       } catch (error) {
+        console.error('Error fetching activity chart data:', error);
         setActivityChartData(prev => ({
           ...prev,
           loading: false,
-          error: 'Error fetching activity chart data'
+          error: error instanceof Error ? error.message : 'Error fetching activity chart data'
         }));
       }
     };
@@ -311,61 +312,6 @@ export default function DashboardPage() {
     fetchDomainStats();
     fetchActivityChartData();
   }, [loading, profile]);
-
-  const refreshProgressData = async () => {
-    try {
-      // Manually save any completed questions
-      const completedQuestions = JSON.parse(sessionStorage.getItem('completedQuestions') || '[]');
-      if (completedQuestions.length > 0) {
-        console.log('Manually saving completed questions:', completedQuestions);
-
-        const results = [];
-        for (const questionId of completedQuestions) {
-          try {
-            const response = await fetch('/api/user/progress', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ questionId, status: 'completed' }),
-            });
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error(`Error saving question ${questionId}:`, response.status, errorText);
-              results.push({ questionId, success: false, error: errorText });
-            } else {
-              const result = await response.json();
-              console.log(`Successfully saved question ${questionId}:`, result);
-              results.push({ questionId, success: true });
-            }
-          } catch (err) {
-            console.error(`Exception saving question ${questionId}:`, err);
-            results.push({ questionId, success: false, error: String(err) });
-          }
-        }
-
-        const successes = results.filter(r => r.success).length;
-        const failures = results.length - successes;
-
-        if (failures === 0) {
-          sessionStorage.removeItem('completedQuestions');
-        }
-      }
-
-      // Refresh progress data
-      const progressResponse = await fetch('/api/user/progress');
-      if (progressResponse.ok) {
-        const data = await progressResponse.json();
-        if (data.totalQuestions > 0) {
-          data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
-        } else {
-          data.completionPercentage = 0;
-        }
-        setProgressData(data);
-      }
-    } catch (err) {
-      console.error('Error in refresh operation:', err);
-    }
-  };
 
   if (loading) {
     return (

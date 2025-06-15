@@ -15,7 +15,6 @@ function SignInForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -23,8 +22,6 @@ function SignInForm() {
 
   useEffect(() => {
     setMounted(true);
-    const isDark = document.documentElement.classList.contains('dark');
-    setIsDarkMode(isDark);
 
     // Check for error or message in URL params
     const errorParam = searchParams.get('error');

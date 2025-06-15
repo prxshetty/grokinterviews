@@ -280,7 +280,7 @@ export const toggleQuestionBookmark = async (
       try {
         const errorData = await response.json();
         errorDetails = errorData.details || errorData.error || JSON.stringify(errorData);
-      } catch (e) {
+      } catch (_e) {
         errorDetails = response.statusText;
       }
       throw new Error(`Failed to update bookmark status: ${response.status} - ${errorDetails}`);

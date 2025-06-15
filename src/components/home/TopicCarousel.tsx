@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { quizTopics } from '@/data/quizTopics';
 import TopicCard from './TopicCard';
+import Link from 'next/link';
 
 export default function TopicCarousel() {
   const [activeIndex, setActiveIndex] = useState(0); // Start with first card active
@@ -125,9 +126,9 @@ export default function TopicCarousel() {
             AI Agents at your service.<br/>
             You decide your conceirge.<br/>
           </p>
-          <a href="/topics" className="mt-2 px-6 py-2 bg-gray-900 dark:bg-white/10 text-white text-sm rounded-full hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 inline-block">
+          <Link href="/topics" className="mt-2 px-6 py-2 bg-gray-900 dark:bg-white/10 text-white text-sm rounded-full hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 inline-block">
             Browse Topics
-          </a>
+          </Link>
         </div>
 
         {/* Cards in a perfect inverted arc */}

@@ -36,7 +36,6 @@ export async function POST(request: Request) {
   // Authenticate user
   let userId: string | undefined;
   let userApiKey: string | null = null;
-  let userEmail: string | undefined;
 
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
@@ -47,7 +46,6 @@ export async function POST(request: Request) {
       // This path is for a potential global API key scenario
     } else if (user) {
       userId = user.id;
-      userEmail = user.email;
       console.log(`Authenticated user ${userId} in generate-answer.`);
 
       // Fetch user's custom API key from profiles table
@@ -70,8 +68,6 @@ export async function POST(request: Request) {
     console.error('Error during user authentication or profile fetch in generate-answer:', e.message);
     // Decide if this should be a hard stop or allow anonymous if global key exists
   }
-
-  const clientApiKey = request.headers.get('X-API-Key');
 
   try {
     // 3b. Fetch user preferences (for model and answer settings)
@@ -132,7 +128,7 @@ export async function POST(request: Request) {
 
     // Check for API Key and selected model ID
     if (!userApiKey || !specific_model_id) {
-      let missingItems = [];
+      const missingItems = [];
       if (!userApiKey) missingItems.push("Groq API key");
       if (!specific_model_id) missingItems.push("Groq model selection");
       const message = `Generation requires a ${missingItems.join(' and ')} to be configured in Account Preferences.`;
@@ -180,7 +176,7 @@ export async function POST(request: Request) {
           if (['youtube', 'paper', 'website', 'pdf', 'book', 'image'].includes(resourceType)) {
             const title = r.title || (r.url ? new URL(r.url).hostname : 'Link');
             const link = r.url ? `(${r.url})` : '';
-            let text = `- [${title}]${link}`;
+            const text = `- [${title}]${link}`;
             // if (r.description) text += ` - ${r.description}`; // Commented out as description is removed
             return text;
           } else if (resourceType === 'note') {
@@ -206,7 +202,7 @@ export async function POST(request: Request) {
     };
 
     // 8. Construct the final prompt based on preferences
-    let promptSegments = [
+    const promptSegments = [
         `Please answer the following interview question strictly using the specified Markdown format (Headers: #, ##, ###; Emphasis: **bold**):`,
         `"${questionText}"`,
         `\nAdhere to the following preferences:`,

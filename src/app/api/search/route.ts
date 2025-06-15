@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PythonShell, PythonShellError } from 'python-shell';
+import { PythonShell } from 'python-shell';
 import { resolve } from 'path';
 import NodeCache from 'node-cache';
 
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
     };
     
     // Run the Python script
-    const results = await new Promise<SearchResult[]>((resolve, reject) => {
+    const results = await new Promise<SearchResult[]>((resolve, _reject) => {
       let stdoutData = ''; // Collect all stdout data
       
       const pyshell = new PythonShell(scriptPath, options);
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
       });
       
       // Handle script completion
-      pyshell.end((err, exitCode, exitSignal) => {
+      pyshell.end((err, _exitCode, _exitSignal) => {
         if (err) {
           console.error('Python script error:', err);
           // Return a default error result instead of rejecting
@@ -100,7 +100,8 @@ export async function GET(request: Request) {
               try {
                 const parsedResults = JSON.parse(fallbackMatch[0]) as SearchResult[];
                 resolve(parsedResults);
-              } catch (fallbackError) {
+              } catch (_fallbackError) {
+                console.error('Secondary JSON parsing attempt failed:', _fallbackError);
                 resolve([{
                   title: `Search results for "${query}"`,
                   url: `https://aiml.com/?s=${encodeURIComponent(query)}`,

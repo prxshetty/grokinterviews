@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GET as dbGet } from './db-route';
 import supabaseServer from '@/utils/supabase-server';
 
-// Define type for category items
-type CategoryItem = {
-  id: string;
-  label: string;
-};
-
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const categoryId = url.searchParams.get('categoryId');

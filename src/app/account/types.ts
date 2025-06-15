@@ -1,5 +1,3 @@
-import type { User } from '@supabase/supabase-js'
-
 // --- Groq Model Structure and List ---
 export interface GroqModel {
   id: string

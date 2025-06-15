@@ -33,26 +33,26 @@ export async function GET(_request: NextRequest) {
       });
     }
 
-    const { count: totalQuestions, error: countError } = await supabase // Use session client
+    const { count: totalQuestions, error: _countError } = await supabase // Use session client
       .from('questions')
       .select('*', { count: 'exact', head: true });
     // ... (handle countError)
 
-    const { count: completedQuestions, error: completedError } = await supabase // Use session client
+    const { count: completedQuestions, error: _completedError } = await supabase // Use session client
       .from('user_activity')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'completed');
     // ... (handle completedError)
 
-    const { count: viewedQuestions, error: viewedError } = await supabase // Use session client
+    const { count: viewedQuestions, error: _viewedError } = await supabase // Use session client
       .from('user_activity')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'viewed');
     // ... (handle viewedError)
 
-    const { data: userProgress, error: progressError } = await supabase // Use session client
+    const { data: userProgress, error: _progressError } = await supabase // Use session client
       .from('user_activity')
       .select('question_id')
       .eq('user_id', userId)
@@ -64,7 +64,7 @@ export async function GET(_request: NextRequest) {
     let totalDomains = 0;
 
     if (questionIds.length > 0) {
-      const { data: questionsData, error: domainsError } = await supabase // Use session client
+      const { data: questionsData, error: _domainsError } = await supabase // Use session client
         .from('questions')
         .select('id, category_id')
         .in('id', questionIds);
@@ -72,7 +72,7 @@ export async function GET(_request: NextRequest) {
 
       const categoryIds = questionsData?.map(q => q.category_id).filter(Boolean) || [];
       if (categoryIds.length > 0) {
-        const { data: categoriesData, error: categoriesError } = await supabase // Use session client
+        const { data: categoriesData, error: _categoriesError } = await supabase // Use session client
           .from('categories')
           .select('id, topic_id')
           .in('id', categoryIds);
@@ -80,7 +80,7 @@ export async function GET(_request: NextRequest) {
 
         const topicIds = categoriesData?.map(c => c.topic_id).filter(Boolean) || [];
         if (topicIds.length > 0) {
-          const { data: topicsData, error: topicsError } = await supabase // Use session client
+          const { data: topicsData, error: _topicsError } = await supabase // Use session client
             .from('topics')
             .select('id, domain')
             .in('id', topicIds);
@@ -91,7 +91,7 @@ export async function GET(_request: NextRequest) {
       }
     }
 
-    const { data: allDomains, error: allDomainsError } = await supabase // Use session client
+    const { data: allDomains, error: _allDomainsError } = await supabase // Use session client
       .from('topics')
       .select('domain');
     // ... (handle allDomainsError)
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Question ID, status, Topic ID, and Category ID are required' }, { status: 400 });
     }
 
-    const { error: userProgressUpsertError } = await supabase // Use session client
+    const { error: _userProgressUpsertError } = await supabase // Use session client
       .from('user_progress')
       .upsert({
           user_id: userId, question_id: questionId, topic_id: topicId,
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       );
     // ... (handle userProgressUpsertError) ...
 
-    const { error: activityInsertError } = await supabase // Use session client
+    const { error: _activityInsertError } = await supabase // Use session client
       .from('user_activity')
       .insert({
           user_id: userId, activity_type: status === 'completed' ? 'question_completed' : 'question_viewed',

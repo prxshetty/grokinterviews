@@ -20,7 +20,7 @@ async function testSectionHeadersTable() {
     console.log('Testing section_headers table...');
     
     // Check if the section_headers table exists
-    const { data: tableInfo, error: tableError } = await supabase
+    const { error: tableError } = await supabase
       .from('section_headers')
       .select('count()')
       .limit(1);
