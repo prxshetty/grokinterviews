@@ -19,7 +19,7 @@ interface AnswerDisplayProps {
   answerText: string | null;
   isLoading: boolean;
   error: string | null;
-  scrollProgress: number;
+  _scrollProgress: number;
   isCompleted: boolean;
 }
 
@@ -28,7 +28,7 @@ export function AnswerDisplay({
   isLoading,
   error,
   isCompleted,
-  scrollProgress,
+  _scrollProgress,
 }: AnswerDisplayProps) {
   const toastId = useRef<string | number | undefined>(undefined);
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
@@ -81,11 +81,6 @@ export function AnswerDisplay({
   const scrollbarStyles = {
     '--scrollbar-track-color': '#f1f1f1',
     '--scrollbar-thumb-color': '#c1c1c1',
-  } as React.CSSProperties;
-  
-  const darkScrollbarStyles = {
-    '--scrollbar-track-color': '#2d3748',
-    '--scrollbar-thumb-color': '#4a5568',
   } as React.CSSProperties;
 
   return (

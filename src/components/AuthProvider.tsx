@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter, usePathname } from 'next/navigation';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { usePathname } from 'next/navigation';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 
 interface UserProfile {
@@ -39,11 +39,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClientComponentClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -61,9 +63,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       console.error('Exception fetching profile:', error);
       return null;
     }
-  };
+  }, [supabase]);
 
-  const refreshAuth = async () => {
+  const refreshAuth = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -75,8 +77,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
       if (fetchedUser) {
         setUser(fetchedUser);
-
-        // Fetch user profile
         const profileData = await fetchUserProfile(fetchedUser.id);
         setProfile(profileData);
       } else {
@@ -89,7 +89,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, fetchUserProfile]);
 
   const signOut = async () => {
     try {
@@ -130,8 +130,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         if (fetchedUser) {
           setUser(fetchedUser);
-
-          // Fetch user profile
           const profileData = await fetchUserProfile(fetchedUser.id);
           setProfile(profileData);
         }
@@ -145,19 +143,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     checkAuth();
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       console.log('AuthProvider - Auth state changed:', event, session?.user?.id);
       console.log('AuthProvider - Cookies after state change:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
 
       if (session?.user) {
         setUser(session.user);
-
-        // Fetch user profile
         const profileData = await fetchUserProfile(session.user.id);
         setProfile(profileData);
 
-        // If we're on the sign-in page, redirect to dashboard
         if (pathname === '/signin') {
           console.log('AuthProvider - Redirecting from sign-in to dashboard');
           window.location.href = '/dashboard?refresh=true';
@@ -166,30 +160,25 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         setUser(null);
         setProfile(null);
       }
-
       setLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, fetchUserProfile, pathname]);
 
-  // Check for refresh parameter in URL
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('refresh') === 'true') {
-        // Remove the refresh parameter from the URL
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('refresh');
         window.history.replaceState({}, '', newUrl.toString());
-
-        // Refresh auth state
         refreshAuth();
       }
     }
-  }, [pathname]);
+  }, [pathname, refreshAuth]);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, error, signOut, refreshAuth }}>

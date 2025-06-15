@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
 
 // GET: Retrieve user activity aggregated by date for the activity grid
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   // Create Supabase client using the new server utility
   const supabase = await createClient();
   let userId = null;

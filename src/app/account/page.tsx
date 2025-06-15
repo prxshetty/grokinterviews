@@ -1,26 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
+import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { DemoButton } from '@/components/ui';
 import { LoadingSpinner } from '@/components/ui';
-import Image from 'next/image';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
 import { AccountTab, Cursor } from '@/components/account/account-tabs';
 import { PersonalInfoSection } from '@/components/account/personal-info/personal-info-section';
 import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-section';
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
-import type { UserProfile, UserPreferences, AnswerFormat, AnswerDepth, GroqModel, AccountFormData } from './types';
+import type { UserProfile, UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
 import { availableGroqModels, DEFAULT_GROQ_MODEL_ID } from './types';
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState('personal');
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingApiKey, setSavingApiKey] = useState(false);
@@ -103,7 +100,6 @@ export default function AccountPage() {
         setFormData(prev => ({ ...prev, email: fetchedUser.email! }));
       }
       if (preferencesData) {
-        setPreferences(preferencesData as UserPreferences);
         setFormData(prev => ({
           ...prev,
           specific_model_id: preferencesData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
@@ -144,17 +140,6 @@ export default function AccountPage() {
     setFormData(prev => ({
       ...prev,
       [name]: checked
-    }));
-  };
-
-  const handleAnswerDepthChange = (value: number) => {
-    let depth: AnswerDepth = 'standard';
-    if (value === 1) depth = 'brief';
-    else if (value === 3) depth = 'comprehensive';
-
-    setFormData(prev => ({
-      ...prev,
-      preferred_answer_depth: depth
     }));
   };
 
@@ -215,10 +200,6 @@ export default function AccountPage() {
       console.log("User preferences upserted successfully.");
 
       setProfile(prev => prev ? { ...prev, full_name: formData.full_name, username: formData.username } : null);
-      setPreferences(prev => ({
-        ...(prev || { user_id: user.id, theme: 'system', email_notifications: true } as UserPreferences),
-        ...preferenceDataToSave,
-      }));
       toast.success('Settings saved successfully!');
     } catch (error: any) {
       console.error('Unexpected error during saveChanges:', error);

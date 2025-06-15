@@ -1,5 +1,5 @@
 // This is a server component by default in Next.js App Router
-/* eslint-disable */
+ 
 import React from 'react';
 import { notFound } from 'next/navigation';
 

@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
-// Environment-aware logging function that only logs in development
-const log = (message: string, data?: any) => {
-  if (process.env.NODE_ENV === 'development') {
-    if (data) {
-      console.log(message, data);
-    } else {
-      console.log(message);
-    }
-  }
-};
-
 export async function GET(request: NextRequest) {
   const supabase = await createClient(); // Use the new server client
   let userId = null;

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, type ReactElement } from 'react';
-import type { JSX } from 'react';
 
 interface TopicCardProps {
   topic: {

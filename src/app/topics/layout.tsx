@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Topics | Grok Interviews',
@@ -8,7 +7,6 @@ export const metadata: Metadata = {
 
 export default function TopicsLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
   params: { domain: string };

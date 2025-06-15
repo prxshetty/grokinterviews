@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { LogOut, Moon, Sun, User, Menu } from 'lucide-react';
@@ -59,8 +60,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     }
     return null;
   };
-
-  const selectedTopic = extractDomainFromPath(pathname, 'topics');
 
   const handleTopicsLinkClick = useCallback(() => {
     setIsMobileMenuOpen(false);
@@ -382,7 +381,15 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   {user ? (
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
-                         {profile?.avatar_url && <img src={profile.avatar_url} alt="User avatar" className="w-10 h-10 rounded-full" />}
+                         {profile?.avatar_url && 
+                           <Image 
+                             src={profile.avatar_url} 
+                             alt="User avatar" 
+                             className="w-10 h-10 rounded-full" 
+                             width={40} 
+                             height={40} 
+                           />
+                         }
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{profile?.full_name || profile?.username || 'User'}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
