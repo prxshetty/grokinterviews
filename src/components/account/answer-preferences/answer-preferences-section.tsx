@@ -2,6 +2,13 @@
 
 import type { ChangeEvent } from 'react'
 import type { AccountFormData, AnswerFormat, AnswerDepth } from '@/app/account/types'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface AnswerPreferencesSectionProps {
   formData: Pick<
@@ -200,22 +207,37 @@ export function AnswerPreferencesSection({
                 <label htmlFor="preferred_answer_depth" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Answer Depth
                 </label>
-                <select
-                  id="preferred_answer_depth"
-                  name="preferred_answer_depth"
-                  value={formData.preferred_answer_depth}
-                  onChange={(e) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      preferred_answer_depth: e.target.value as AnswerDepth
-                    }));
-                  }}
-                  className="mt-1 block w-auto rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm pl-3 pr-8 py-2"
-                >
-                  <option value="brief">Brief</option>
-                  <option value="standard">Standard</option>
-                  <option value="comprehensive">Comprehensive</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="mt-1 block w-auto rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm pl-3 pr-8 py-2 text-left capitalize"
+                    >
+                      {formData.preferred_answer_depth || 'Select depth'}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md backdrop-blur-md">
+                    <DropdownMenuRadioGroup
+                      value={formData.preferred_answer_depth}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          preferred_answer_depth: value as AnswerDepth
+                        }));
+                      }}
+                    >
+                      {(['brief', 'standard', 'comprehensive'] as AnswerDepth[]).map((depth) => (
+                        <DropdownMenuRadioItem
+                          key={depth}
+                          value={depth}
+                          className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10 capitalize"
+                        >
+                          {depth}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </section>

@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 export default function ProgressSaver() {
   // Listen for beforeunload event to save progress
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (_e: BeforeUnloadEvent) => {
       // Dispatch a custom event to trigger progress saving
       window.dispatchEvent(new CustomEvent('saveProgress'));
     };
