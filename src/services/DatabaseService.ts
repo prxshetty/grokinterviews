@@ -67,30 +67,8 @@ class DatabaseService {
           throw new Error(`Failed to fetch topics: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log('DatabaseService.getTopics - Received data from API:', data);
-
-        // Convert from legacy format to Topic[] format
-        const topics: Topic[] = Object.entries(data).map(([slug, details]: [string, any]) => {
-          // Generate a unique ID based on the slug if it's not a number
-          let id: number;
-          if (!isNaN(parseInt(slug, 10))) {
-            id = parseInt(slug, 10);
-          } else {
-            // Use a hash function to generate a numeric ID from the slug
-            id = slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-          }
-
-          return {
-            id,
-            slug,
-            name: details.label,
-            domain: domain || 'unknown',
-            created_at: new Date().toISOString(),
-          };
-        });
-
-        console.log('DatabaseService.getTopics - Converted topics:', topics);
+        const topics: Topic[] = await response.json(); // API now returns Topic[] directly
+        console.log('DatabaseService.getTopics - Received data from API:', topics);
 
         // Update cache if no domain filter was applied
         if (!domain) {
@@ -161,24 +139,9 @@ class DatabaseService {
           throw new Error(`Failed to fetch categories: ${response.statusText}`);
         }
 
-        const data = await response.json();
-
-        // The API returns categories in a different format, so we need to convert them
-        const categories: Category[] = [];
-
-        // Extract categories for this topic
-        const topicCategories = data[topicId as string] || [];
-
-        // Convert to Category[] format
-        topicCategories.forEach((cat: any, index: number) => {
-          categories.push({
-            id: index + 1, // Generate a fake ID
-            name: cat.label,
-            slug: cat.id,
-            topic_id: typeof topicId === 'number' ? topicId : 0,
-            created_at: new Date().toISOString()
-          });
-        });
+        // API now returns Category[] directly for this specific call
+        const categories: Category[] = await response.json();
+        console.log(`DatabaseService.getCategoriesByTopic - Received ${categories.length} categories from API for topic ${topicId}:`, categories);
 
         // Update cache
         this.cache.categoriesByTopic[cacheKey] = categories;
@@ -372,8 +335,7 @@ class DatabaseService {
     // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
-        // First get the topic
-        const topicResponse = await fetch(`/api/topics`, {
+        const response = await fetch(`/api/topics`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -381,33 +343,17 @@ class DatabaseService {
           body: JSON.stringify({ topicId })
         });
 
-        if (!topicResponse.ok) {
-          throw new Error(`Failed to fetch topic: ${topicResponse.statusText}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log(`DatabaseService.getTopicWithCategories - Topic ${topicId} not found via API.`);
+            return null;
+          }
+          throw new Error(`Failed to fetch topic with categories: ${response.statusText}`);
         }
 
-        const topicData = await topicResponse.json();
-
-        // Convert from legacy format to Topic format
-        const topicSlug = Object.keys(topicData)[0];
-        if (!topicSlug) return null;
-
-        const topicDetails = topicData[topicSlug];
-
-        const topic: Topic = {
-          id: parseInt(topicSlug, 10) || 0,
-          slug: topicSlug,
-          name: topicDetails.label,
-          domain: 'unknown',
-          created_at: new Date().toISOString()
-        };
-
-        // Get categories for this topic
-        const categories = await this.getCategoriesByTopic(topicSlug);
-
-        return {
-          ...topic,
-          categories
-        };
+        const topicWithCategories: TopicWithCategories | null = await response.json(); // API now returns TopicWithCategories | null
+        console.log(`DatabaseService.getTopicWithCategories - Received data for ${topicId} from API:`, topicWithCategories);
+        return topicWithCategories;
       } catch (error) {
         console.error(`Failed to fetch topic with categories via API for ${topicId}:`, error);
         return null;
@@ -455,127 +401,45 @@ class DatabaseService {
   }
 
   /**
-   * Helper method to create a CategoryWithQuestions object from markdown data
-   * @param data The markdown data
-   * @param categoryId The ID of the category
-   */
-  private createCategoryWithQuestionsFromMarkdown(data: any, categoryId: string | number): CategoryWithQuestions & { subtopics?: Record<string, any> } {
-    // Create a category object
-    const category: Category = {
-      id: typeof categoryId === 'number' ? categoryId : 0,
-      name: data.label || 'Unknown Category',
-      slug: typeof categoryId === 'string' ? categoryId : 'unknown',
-      topic_id: 0, // We don't know the topic ID from this API call
-      created_at: new Date().toISOString()
-    };
-
-    // Create questions from subtopics if available
-    const questions: Question[] = [];
-
-    // Create the result object with both questions and subtopics
-    const result: CategoryWithQuestions & { subtopics?: Record<string, any> } = {
-      ...category,
-      questions,
-      subtopics: {}
-    };
-
-    // If the data has subtopics, preserve them in the result
-    if (data.subtopics) {
-      // First, copy the subtopics directly
-      result.subtopics = data.subtopics;
-
-      // Then, also create questions from them for backward compatibility
-      Object.entries(data.subtopics).forEach(([id, subtopic]: [string, any], index) => {
-        // If the subtopic already has questions, use those
-        if (subtopic.questions && Array.isArray(subtopic.questions) && subtopic.questions.length > 0) {
-          questions.push(...subtopic.questions);
-        } else {
-          // Otherwise create a question from the subtopic content
-          questions.push({
-            id: index + 1,
-            category_id: typeof categoryId === 'number' ? categoryId : 0,
-            question_text: subtopic.label || `Question ${index + 1}`,
-            answer_text: subtopic.content || '',
-            difficulty: 'medium',
-            keywords: [],
-            created_at: new Date().toISOString()
-          });
-        }
-      });
-    }
-
-    return result;
-  }
-
-  /**
    * Get a category with all its questions
    * @param categoryId The ID or slug of the category
    */
-  async getCategoryWithQuestions(categoryId: string | number): Promise<CategoryWithQuestions | null> {
+  async getCategoryWithQuestions(categoryId: string | number, topicIdFromCaller?: string | number): Promise<CategoryWithQuestions | null> {
     // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
-        // Fetch category details from our new category-details API
-        const response = await fetch(`/api/topics/category-details?topicId=ml&categoryId=${categoryId}`);
+        // Ensure topicIdFromCaller is a specific value, not 'any' or undefined for the main API call.
+        // If topicIdFromCaller is not provided or is unsuitable, this API call might fail or return unexpected results.
+        // The db-route for categories now expects a concrete topicId when categoryId is also present.
+        const apiTopicId = topicIdFromCaller && String(topicIdFromCaller) !== 'any' ? String(topicIdFromCaller) : undefined;
 
-        if (!response.ok) {
-          console.warn(`Failed to fetch from category-details API: ${response.statusText}`);
-          // Try with a different topic
-          const altResponse = await fetch(`/api/topics/category-details?topicId=ai&categoryId=${categoryId}`);
-
-          if (!altResponse.ok) {
-            console.warn(`Failed to fetch from category-details API with alt topic: ${altResponse.statusText}`);
-            // Try with another topic
-            const dsa = await fetch(`/api/topics/category-details?topicId=dsa&categoryId=${categoryId}`);
-
-            if (!dsa.ok) {
-              console.warn(`Failed to fetch from category-details API with dsa topic: ${dsa.statusText}`);
-              // Fall back to the original categories API
-              const categoriesResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&topicId=any`);
-
-              if (!categoriesResponse.ok) {
-                throw new Error(`Failed to fetch category: ${categoriesResponse.statusText}`);
-              }
-
-              const categoryData = await categoriesResponse.json();
-
-              if (!categoryData || categoryData.error) {
-                throw new Error(categoryData?.error || 'Failed to fetch category');
-              }
-
-              // Create a category object
-              const category: Category = {
-                id: typeof categoryId === 'number' ? categoryId : 0,
-                name: categoryData.label || 'Unknown Category',
-                slug: typeof categoryId === 'string' ? categoryId : 'unknown',
-                topic_id: 0, // We don't know the topic ID from this API call
-                created_at: new Date().toISOString()
-              };
-
-              // Get questions for this category
-              const questions = await this.getQuestionsByCategory(categoryId);
-
-              return {
-                ...category,
-                questions
-              };
-            }
-
-            // Use the DSA response
-            const dsaData = await dsa.json();
-            return this.createCategoryWithQuestionsFromMarkdown(dsaData, categoryId);
-          }
-
-          // Use the alt response
-          const altData = await altResponse.json();
-          return this.createCategoryWithQuestionsFromMarkdown(altData, categoryId);
+        if (!apiTopicId) {
+          console.warn(`DatabaseService.getCategoryWithQuestions: topicIdFromCaller is undefined or 'any'. Cannot reliably fetch category ${categoryId} with questions via API without a specific topic ID.`);
+          // Potentially fall back to a broader search or return null, 
+          // but this indicates a potential issue in the calling code or data flow.
+          // For now, let's attempt the call and let the API handle it, or return null directly.
+          // Depending on API behavior, it might 404 or try to guess, which is not ideal.
+          // A more robust solution would be to ensure topicId is always passed from TopicDataService.
+          // Consider making topicIdFromCaller non-optional if it's always available.
+          return null; // Or try a more generic API call if one exists that doesn't need topicId
         }
 
-        // Use the primary response
-        const data = await response.json();
-        return this.createCategoryWithQuestionsFromMarkdown(data, categoryId);
+        const response = await fetch(`/api/topics/categories?categoryId=${categoryId}&topicId=${apiTopicId}`);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log(`DatabaseService.getCategoryWithQuestions - Category ${categoryId} in topic ${apiTopicId} not found via API.`);
+            return null;
+          }
+          throw new Error(`Failed to fetch category ${categoryId} with questions for topic ${apiTopicId}: ${response.statusText}`);
+        }
+
+        const categoryWithQuestions: CategoryWithQuestions | null = await response.json();
+        console.log(`DatabaseService.getCategoryWithQuestions - Received data for category ${categoryId}, topic ${apiTopicId} from API:`, categoryWithQuestions);
+        return categoryWithQuestions;
+
       } catch (error) {
-        console.error(`Failed to fetch category with questions via API for ${categoryId}:`, error);
+        console.error(`Failed to fetch category with questions via API for ${categoryId} (topic: ${topicIdFromCaller}):`, error);
         return null;
       }
     }
@@ -624,7 +488,7 @@ class DatabaseService {
             slug: `section-${headerId}`,
             topic_id: 0,
             created_at: new Date().toISOString(),
-            questions: []
+            questions: [] // Ensure questions is initialized as Question[]
           };
 
           return fakeCategory;
@@ -633,14 +497,14 @@ class DatabaseService {
         console.log(`Found ${categories.length} categories for section ${sectionName}`);
 
         // Create a result object with the section name
-        const result: CategoryWithQuestions & { subtopics?: Record<string, any> } = {
+        const result = {
           id: parseInt(headerId, 10),
           name: sectionName,
           slug: `section-${headerId}`,
           topic_id: 0,
           created_at: new Date().toISOString(),
-          questions: [],
-          subtopics: {}
+          questions: [] as Question[], // Explicitly type as Question[] and initialize
+          subtopics: {} as Record<string, any> // Explicitly type as Record<string, any> and initialize
         };
 
         // Add each category as a subtopic
@@ -649,29 +513,31 @@ class DatabaseService {
           const subtopicId = `subtopic-${i}`;
 
           // Get questions for this category
-          const { data: questions, error: questionsError } = await supabase
+          const { data: questionsForSubtopic, error: questionsError } = await supabase
             .from('questions')
             .select('*')
             .eq('category_id', category.id)
             .order('difficulty');
 
           // Add this category as a subtopic
+          // Ensure result.subtopics is treated as defined here
           result.subtopics[subtopicId] = {
             id: subtopicId,
             label: category.name,
             categoryId: category.id, // Store the actual category ID for reference
-            questions: questions || []
+            questions: questionsForSubtopic || []
           };
 
-          if (!questionsError && questions && questions.length > 0) {
-            console.log(`Found ${questions.length} questions for category ${category.name}`);
+          if (!questionsError && questionsForSubtopic && questionsForSubtopic.length > 0) {
+            console.log(`Found ${questionsForSubtopic.length} questions for category ${category.name}`);
             // Also add these questions to the main result for backward compatibility
-            result.questions.push(...questions);
+            // Ensure result.questions is treated as defined here
+            result.questions.push(...questionsForSubtopic);
           }
         }
 
         console.log(`Created ${Object.keys(result.subtopics).length} subtopics for section ${sectionName}`);
-        return result;
+        return result as CategoryWithQuestions; // Cast to ensure compatibility, subtopics is an extra prop
       } catch (error) {
         console.error(`Error processing section header ${categoryId}:`, error);
         return null;

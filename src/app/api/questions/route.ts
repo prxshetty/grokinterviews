@@ -142,18 +142,20 @@ export async function GET(request: NextRequest) {
       }
     } catch (dbError) {
       console.error('Error using Supabase directly:', dbError);
-      // Fall back to the old implementation if direct Supabase fails
+      // Fallback to old implementation was here, now removed.
+      // If Supabase fails, we will proceed to the parameter check or error.
     }
 
-    // Fall back to the old implementation
-    if (topicId) {
-      const questions = await getQuestionsByTopic(Number(topicId));
-      return NextResponse.json(questions);
-    }
+    // If Supabase direct access failed or parameters didn't match Supabase paths:
+    // Check if any specific parameters were provided that should have been handled by Supabase logic.
+    // If only topicId was provided, it would have previously hit the SQLite fallback.
+    // Now, it will fall through to the "Missing required parameters" error if not handled by Supabase paths.
 
-    // If no specific parameters, return an error
+    // If no specific parameters were matched by Supabase logic above (e.g. only topicId, which had its fallback removed)
+    // or if Supabase itself had an error and we chose not to rethrow,
+    // this will catch cases that are not valid for this API endpoint's current Supabase-only capabilities.
     return NextResponse.json(
-      { error: 'Missing required parameters. Please provide categoryId, topicId, or query.' },
+      { error: 'Missing required parameters or operation failed. Please provide categoryId, or a search query. Fetching by topicId alone is not supported via this direct questions endpoint in this version.' },
       { status: 400 }
     );
   } catch (error) {
@@ -254,18 +256,20 @@ export async function POST(request: NextRequest) {
       }
     } catch (dbError) {
       console.error('Error using Supabase directly:', dbError);
-      // Fall back to the old implementation if direct Supabase fails
+      // Fallback to old implementation was here, now removed.
+      // If Supabase fails, we will proceed to the parameter check or error.
     }
 
-    // If only a topic ID is provided, use the old implementation
-    if (topicId) {
-      const questions = await getQuestionsByTopic(Number(topicId));
-      return NextResponse.json(questions);
-    }
+    // If Supabase direct access failed or parameters didn't match Supabase paths:
+    // Check if any specific parameters were provided that should have been handled by Supabase logic.
+    // If only topicId was provided, it would have previously hit the SQLite fallback.
+    // Now, it will fall through to the "Missing required parameters" error if not handled by Supabase paths.
 
-    // If no specific parameters, return an error
+    // If no specific parameters were matched by Supabase logic above (e.g. only topicId, which had its fallback removed)
+    // or if Supabase itself had an error and we chose not to rethrow,
+    // this will catch cases that are not valid for this API endpoint's current Supabase-only capabilities.
     return NextResponse.json(
-      { error: 'Missing required parameters. Please provide categoryId, topicId, or query.' },
+      { error: 'Missing required parameters or operation failed. Please provide categoryId, or a search query. Fetching by topicId alone is not supported via this direct questions endpoint in this version.' },
       { status: 400 }
     );
   } catch (error) {
