@@ -18,65 +18,15 @@ import { LoadingSpinner } from '@/components/ui';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import withAuth from '@/components/auth/withAuth';
 
-// Import types (assuming these are defined elsewhere or can be moved here)
-interface QuestionType {
-  id: number;
-  category_id: number;
-  question_text: string;
-  answer_text?: string;
-  keywords?: string[];
-  difficulty?: string;
-  created_at?: string;
-  categories?: {
-    id: number;
-    name: string;
-    topic_id: number;
-    topics?: {
-      id: number;
-      name: string;
-      domain: string;
-    }
-  };
-}
-
-type CategoryItem = {
-  id: string;
-  label: string;
-};
-
-type TopicItem = {
-  id?: string;
-  label: string;
-  content?: string;
-  questions?: QuestionType[];
-  categoryId?: number;
-  subtopicId?: number;
-  subtopics?: Record<string, TopicItem>;
-  isGenerated?: boolean;
-};
-
-interface ProgressData {
-  progress: number;
-  completed: number;
-  total: number;
-  subtopicsCompleted?: number;
-  partiallyCompletedSubtopics?: number;
-  totalSubtopics?: number;
-}
-
-interface SubtopicProgress {
-  completionPercentage: number;
-  questionsCompleted: number;
-  totalQuestions: number;
-  categoriesCompleted: number;
-  totalCategories: number;
-}
-
-interface CategoryProgress {
-  questionsCompleted: number;
-  totalQuestions: number;
-  completionPercentage: number;
-}
+// Import types from global definitions
+import {
+  QuestionType,
+  CategoryItem,
+  TopicItem,
+  ProgressData,
+  SubtopicProgress,
+  CategoryProgress
+} from '@/types/topic-page.types';
 
 // Props for the client component, including the domain passed from the server component
 interface TopicPageClientProps {
@@ -86,18 +36,12 @@ interface TopicPageClientProps {
 function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const [domain, setDomain] = useState<string>(initialDomain);
 
-  // Get domain from data attribute set by layout component
-  // This useEffect might need adjustment depending on how domain is passed now
+  // Sync internal domain state with initialDomain prop
   useEffect(() => {
-    // Get the domain from the data attribute set in the layout
-    const domainElement = document.querySelector('[data-domain]');
-    if (domainElement) {
-      const domainValue = domainElement.getAttribute('data-domain');
-      if (domainValue) {
-        setDomain(domainValue);
-      }
+    if (initialDomain !== domain) {
+      setDomain(initialDomain);
     }
-  }, []);
+  }, [initialDomain, domain]);
 
   // URL parameters
   const searchParams = useSearchParams();
@@ -204,91 +148,50 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
     setIsLoading(prev => ({ ...prev, sections: true }));
     try {
-      // Use the current selectedTopic without defaulting to 'ml'
       const topicId = selectedTopic;
-
-      // If no topic is selected, we cannot proceed
       if (!topicId) {
         console.error('No topic selected, cannot load category details');
         setIsLoading(prev => ({ ...prev, sections: false }));
         return;
       }
-
-      // Check if this is a section header ID (format: header-123)
       if (categoryId.startsWith('header-')) {
-        console.log(`This is a section header: ${categoryId}`);
-
-        // Extract the header number and get the section name
         const headerNumber = parseInt(categoryId.replace('header-', ''), 10);
         const response = await fetch(`/api/section-headers?domain=${topicId}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch section headers: ${response.statusText}`);
-        }
-
+        if (!response.ok) throw new Error(`Failed to fetch section headers: ${response.statusText}`);
         const sectionHeaders = await response.json();
         const sectionHeader = sectionHeaders.find((header: any) => header.id === headerNumber);
-
-        if (!sectionHeader) {
-          throw new Error(`Could not find section header with ID ${headerNumber}`);
-        }
-
-        // Use the correct API endpoint - /api/topics/by-section instead of /api/section
+        if (!sectionHeader) throw new Error(`Could not find section header with ID ${headerNumber}`);
         const sectionResponse = await fetch(`/api/topics/by-section?domain=${topicId}&sectionName=${encodeURIComponent(sectionHeader.name)}`);
-        if (!sectionResponse.ok) {
-          throw new Error(`Failed to fetch section: ${sectionResponse.statusText}`);
-        }
+        if (!sectionResponse.ok) throw new Error(`Failed to fetch section: ${sectionResponse.statusText}`);
         const topicsInSection = await sectionResponse.json();
-        console.log('Topics in section:', topicsInSection);
-
-        // Format the data to match the expected structure for CategoryDetails
-        const sectionData = {
+        const sectionData: TopicItem = {
           label: sectionHeader.name,
           subtopics: topicsInSection.reduce((acc: Record<string, any>, topic: any) => {
-            acc[`topic-${topic.id}`] = {
-              id: `topic-${topic.id}`,
-              label: topic.name,
-              content: topic.description || ''
-            };
+            acc[`topic-${topic.id}`] = { id: `topic-${topic.id}`, label: topic.name, content: topic.description || '' };
             return acc;
           }, {})
         };
-
         setCategoryDetails(sectionData);
         setDataCache(prevCache => ({ ...prevCache, [cacheKey]: sectionData }));
-        setCategoryDetails(sectionData);
-        // Sections do not have their own direct progress bar in this view
         setCategoryProgress(null);
       } else {
-        // This is a regular topic/category
-        const topicToFetch = categoryId.includes('topic-') ?
-          parseInt(categoryId.replace('topic-', ''), 10) :
-          topicId;
-        
+        const topicToFetch = categoryId.includes('topic-') ? parseInt(categoryId.replace('topic-', ''), 10) : topicId;
         if (!topicToFetch) {
           console.error('Could not determine a topic ID to fetch for category:', categoryId);
           setIsLoading(prev => ({ ...prev, sections: false }));
           return;
         }
-        
-        const response = await fetch(`/api/topics/categories?topicId=${topicToFetch}`);
+        const apiTopicParam = (typeof topicToFetch === 'number' || !isNaN(Number(topicToFetch))) ? topicToFetch : topicId;
+        const response = await fetch(`/api/topics/categories?topicId=${apiTopicParam}`);
         if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
-        
         const categories = await response.json();
         const category = categories.find((cat: any) => `topic-${cat.id}` === categoryId);
-        
-        // If we found the category, we can get details - though this seems inefficient
-        // This part of logic may need review if it's causing issues.
-        // For now, let's assume `categoryDetails` are fetched/set correctly.
-        
-        // Let's create a simplified details object to proceed
         const simplifiedDetails: TopicItem = {
           id: categoryId,
           label: category?.name || 'Category',
-          isGenerated: false, 
+          isGenerated: false,
         };
-        setCategoryDetails(simplifiedDetails); 
-        
-        // Fetch progress for the category
+        setCategoryDetails(simplifiedDetails);
         const numericId = parseInt(categoryId.replace('topic-', ''));
         if (!isNaN(numericId)) {
           const progress = await fetchCategoryProgress(numericId, true);
@@ -301,7 +204,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     } finally {
       setIsLoading(prev => ({ ...prev, sections: false }));
     }
-  }, [selectedTopic, dataCache]);
+  }, [selectedTopic, dataCache, setIsLoading, setCategoryDetails, setDataCache, setCategoryProgress]);
 
   // Handle category selection
   const handleCategorySelect = useCallback(async (categoryId: string) => {
@@ -319,8 +222,6 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
     await loadCategoryDetails(categoryId);
   }, [selectedCategory, loadCategoryDetails]);
-
-
 
   const fetchDifficultyQuestions = useCallback(async (difficulty: string, page: number = 1) => {
     if (!domain) return; // Ensure domain is available
@@ -345,7 +246,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     } finally {
       setIsLoading(prev => ({ ...prev, difficultyQuestions: false }));
     }
-  }, [domain, handlePageChange]);
+  }, [domain, setIsLoading, setDifficultyQuestions, setTotalPages, setTotalResults, handlePageChange]);
 
   // Load topic categories (sections)
   const loadTopicCategories = useCallback(async (topicId: string) => {
@@ -357,32 +258,30 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     }
     setIsLoading(prev => ({ ...prev, categories: true }));
     try {
-      // For the first level, we want to show section headers
       const sectionHeaders = await TopicDataService.getSectionHeaders(topicId);
       setTopicCategories(sectionHeaders);
       setDataCache(prevCache => ({ ...prevCache, [cacheKey]: sectionHeaders }));
     } catch (error) {
       console.error(`Error loading section headers for ${topicId}:`, error);
-      setTopicCategories([]);
+      setTopicCategories([]); // Reset on error
     } finally {
       setIsLoading(prev => ({ ...prev, categories: false }));
     }
-  }, [dataCache]);
+  }, [dataCache, setIsLoading, setTopicCategories, setDataCache]);
 
   // Preload subtopic progress data for a domain
   const preloadSubtopicProgressForDomain = useCallback(async (topicId: string) => {
     try {
       console.log(`Preloading subtopic progress for domain ${domain} with topic ${topicId}`);
       
-      // Fetch domain-wide progress data
       const domainProgressData = await fetchDomainProgress(domain, topicId, true);
       
-      if (domainProgressData && domainProgressData.subtopics) {
-        // Update subtopic progress state with the fetched data
-        const formattedSubtopicProgress: Record<string, SubtopicProgress> = {};
+      const accumulatedNewCacheEntries: Record<string, any> = {};
+      const accumulatedSubtopicProgress: Record<string, SubtopicProgress> = {};
 
-        Object.entries(domainProgressData.subtopics).forEach(([subtopicId, data]) => {
-          formattedSubtopicProgress[`topic-${subtopicId}`] = {
+      if (domainProgressData && domainProgressData.subtopics) {
+        Object.entries(domainProgressData.subtopics).forEach(([subtopicId, data]: [string, any]) => {
+          accumulatedSubtopicProgress[`topic-${subtopicId}`] = {
             completionPercentage: data.completionPercentage,
             questionsCompleted: data.questionsCompleted,
             totalQuestions: data.totalQuestions,
@@ -390,81 +289,81 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
             totalCategories: data.totalCategories
           };
         });
-
-        setSubtopicProgress(formattedSubtopicProgress);
-        console.log(`Updated subtopic progress cache for ${Object.keys(formattedSubtopicProgress).length} subtopics`);
-
-        // Fetch section-level progress for each section header
-        try {
-          const sectionHeaders = await TopicDataService.getSectionHeaders(domain);
-          const sectionProgressUpdates: Record<string, any> = {};
-          
-          // Fetch progress for each section
-          await Promise.all(sectionHeaders.map(async (header) => {
-            try {
-              const cacheKey = `section-progress-${domain}-${header.label}`;
-              console.log(`Fetching section progress for ${header.label}`);
-              
-              const response = await fetch(`/api/user/progress/summary?domain=${domain}&section=${encodeURIComponent(header.label)}&entityType=section`);
-              if (response.ok) {
-                const sectionData = await response.json();
-                sectionProgressUpdates[cacheKey] = {
-                  questionsCompleted: sectionData.completed_children || 0,
-                  totalQuestions: sectionData.total_children || 0,
-                  completionPercentage: sectionData.completion_percentage || 0
-                };
-                console.log(`Cached section progress for ${header.label}:`, sectionProgressUpdates[cacheKey]);
-              }
-            } catch (error) {
-              console.error(`Error fetching section progress for ${header.label}:`, error);
-            }
-          }));
-          
-          // Update the data cache with section progress
-          setDataCache(prevCache => ({ ...prevCache, ...sectionProgressUpdates }));
-          console.log(`Updated section progress cache for ${Object.keys(sectionProgressUpdates).length} sections`);
-        } catch (error) {
-          console.error('Error fetching section progress:', error);
-        }
-
-        // Also update domain-level section progress if available
-        if (domainProgressData.sectionProgress) {
-          const sectionData = domainProgressData.sectionProgress;
-          const sectionProgressUpdate: Record<string, ProgressData> = {};
-          
-          // Use the domain as the section key for now, or derive from topic data
-          const sectionKey = domain;
-          sectionProgressUpdate[sectionKey] = {
-            progress: sectionData.completionPercentage,
-            completed: sectionData.questionsCompleted,
-            total: sectionData.totalQuestions,
-            subtopicsCompleted: sectionData.subtopicsCompleted,
-            partiallyCompletedSubtopics: sectionData.partiallyCompletedSubtopics,
-            totalSubtopics: sectionData.totalSubtopics
-          };
-          setDataCache(prevCache => ({ ...prevCache, ...sectionProgressUpdate }));
-          console.log('Updated domain section progress cache');
-        }
-
-        // Emit a custom event to notify other components that progress has been preloaded
-        const event = new CustomEvent('domainProgressPreloaded', {
-          detail: { domain, topicId, progressData: domainProgressData }
-        });
-        window.dispatchEvent(event);
+        console.log(`Collected subtopic progress for ${Object.keys(accumulatedSubtopicProgress).length} subtopics`);
       }
+
+      try {
+        const sectionHeaders = await TopicDataService.getSectionHeaders(domain);
+        const sectionProgressUpdatesBatch: Record<string, any> = {};
+        
+        await Promise.all(sectionHeaders.map(async (header: CategoryItem) => {
+          try {
+            const cacheKey = `section-progress-${domain}-${header.label}`;
+            // Check existing cache before fetching, though fetchDomainProgress has forceRefresh
+            if (dataCache && dataCache[cacheKey] && !topicId) { // topicId presence implies forceRefresh context
+                 sectionProgressUpdatesBatch[cacheKey] = dataCache[cacheKey];
+                 return;
+            }
+            console.log(`Fetching section progress for ${header.label}`);
+            
+            const response = await fetch(`/api/user/progress/summary?domain=${domain}&section=${encodeURIComponent(header.label)}&entityType=section`);
+            if (response.ok) {
+              const sectionData = await response.json();
+              sectionProgressUpdatesBatch[cacheKey] = {
+                questionsCompleted: sectionData.completed_children || 0,
+                totalQuestions: sectionData.total_children || 0,
+                completionPercentage: sectionData.completion_percentage || 0
+              };
+            }
+          } catch (error) {
+            console.error(`Error fetching section progress for ${header.label}:`, error);
+          }
+        }));
+        
+        if (Object.keys(sectionProgressUpdatesBatch).length > 0) {
+            Object.assign(accumulatedNewCacheEntries, sectionProgressUpdatesBatch);
+        }
+        console.log(`Collected section progress cache for ${Object.keys(sectionProgressUpdatesBatch).length} sections`);
+      } catch (error) {
+        console.error('Error fetching section headers or their progress:', error);
+      }
+
+      if (domainProgressData && domainProgressData.sectionProgress) {
+        const sectionData = domainProgressData.sectionProgress;
+        const sectionKey = domain; // Or a more specific key if needed
+        accumulatedNewCacheEntries[`domain-section-progress-${sectionKey}`] = { // Made key more specific
+          progress: sectionData.completionPercentage,
+          completed: sectionData.questionsCompleted,
+          total: sectionData.totalQuestions,
+          subtopicsCompleted: sectionData.subtopicsCompleted,
+          partiallyCompletedSubtopics: sectionData.partiallyCompletedSubtopics,
+          totalSubtopics: sectionData.totalSubtopics
+        };
+        console.log('Collected domain section progress cache');
+      }
+
+      // Batch update states
+      if (Object.keys(accumulatedSubtopicProgress).length > 0) {
+        setSubtopicProgress(prev => ({ ...prev, ...accumulatedSubtopicProgress }));
+      }
+      if (Object.keys(accumulatedNewCacheEntries).length > 0) {
+        setDataCache(prevCache => ({ ...prevCache, ...accumulatedNewCacheEntries }));
+      }
+
+      const event = new CustomEvent('domainProgressPreloaded', {
+        detail: { domain, topicId, progressData: domainProgressData }
+      });
+      window.dispatchEvent(event);
+      
     } catch (error) {
       console.error(`Error preloading subtopic progress for domain ${domain}:`, error);
     }
-  }, [domain, dataCache]);
+  }, [domain, dataCache, setDataCache, setSubtopicProgress]);
 
   // Handle topic selection
   const handleTopicClick = useCallback(async (topicId: string) => {
     console.log('Topic clicked:', topicId);
-
-    // Set loading states
     setIsLoading(prev => ({ ...prev, sections: true }));
-
-    // Reset selected category if clicking on already selected topic
     if (selectedTopic === topicId) {
       setSelectedTopic(null);
       setSelectedCategory(null);
@@ -473,20 +372,13 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
       setIsLoading(prev => ({ ...prev, sections: false }));
       return;
     }
-
-    // Set the selected topic and reset other states
     setSelectedTopic(topicId);
     setSelectedCategory(null);
     setCategoryDetails(null);
-
-    // Load topic categories
     await loadTopicCategories(topicId);
-
-    // Preload progress data for this domain
     await preloadSubtopicProgressForDomain(topicId);
-
     setIsLoading(prev => ({ ...prev, sections: false }));
-  }, [selectedTopic, loadTopicCategories, preloadSubtopicProgressForDomain]);
+  }, [selectedTopic, loadTopicCategories, preloadSubtopicProgressForDomain, setIsLoading, setSelectedTopic, setSelectedCategory, setCategoryDetails, setTopicCategories]);
 
   // Handle back button click
   const handleBackToMainCategories = useCallback(() => {
@@ -516,20 +408,13 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
       loadData();
 
-      // If difficulty is provided in URL, apply filter
-      if (selectedDifficulty) {
-        // The pageToFetch is used by the useEffect watching selectedDifficulty and currentPage/pageParam
-        handleDifficultyChange(selectedDifficulty);
-      } else {
-        // Clear difficulty filter state if not in URL
-        handleDifficultyChange(null);
-      }
     } else if (domain === 'topics') {
       // Special case for /topics - ensure no data is loaded
       console.log('On main topics page, not loading any specific topic data');
       setSelectedTopic(null);
     }
-  }, [domain]); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domain, setSelectedTopic, setIsLoading]); 
 
   // Handle reset category selection event from CategoryDetailView
   useEffect(() => {
@@ -547,7 +432,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     return () => {
       window.removeEventListener('resetCategory', handleResetCategory);
     };
-  }, [domain]); // Only re-add the listener if domain changes
+  }, [domain, clearDifficultyFilter]); // Added clearDifficultyFilter dependency
 
   // Handle highlighted question ID from URL
   useEffect(() => {
