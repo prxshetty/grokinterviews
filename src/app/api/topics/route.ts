@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabaseServer from '@/utils/supabase-server';
-import { Topic, Category, TopicWithCategories } from '@/types/database';
+import { Topic, TopicWithCategories } from '@/types/database';
 
 // Removed legacy TopicItem and TopicData types
 

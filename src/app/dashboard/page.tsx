@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import ProgressSaver from '@/components/progress/ProgressSaver';
@@ -53,6 +53,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showCalendarView, setShowCalendarView] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const isMounted = useRef(true);
+  const router = useRouter();
+
   const [progressData, setProgressData] = useState({
     questionsCompleted: 0,
     questionsViewed: 0,
@@ -124,8 +127,6 @@ export default function DashboardPage() {
     error: null
   });
 
-  const router = useRouter();
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Morning';
@@ -134,54 +135,71 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    isMounted.current = true;
     const supabase = createClient();
     const checkUserAndProfile = async () => {
-      setLoading(true);
-      const { data: { user } , error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        console.error("Error fetching user or user not found for dashboard:", userError);
-        router.push('/signin');
-        setLoading(false);
-        return;
-      }
-
-      // Fetch user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        setProfile(null);
-      } else if (profileData) {
-        setProfile(profileData);
-      }
-
-      // Fetch user progress data
       try {
-        const response = await fetch('/api/user/progress');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.totalQuestions > 0) {
-            data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
-          } else {
-            data.completionPercentage = 0;
+        const { data: { user } , error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          console.error("Error fetching user or user not found for dashboard:", userError);
+          if (isMounted.current) {
+            router.push('/signin');
           }
-          setProgressData(data);
-        } else {
-          console.error('Failed to fetch progress data');
+          return;
         }
-      } catch (err) {
-        console.error('Error fetching progress data:', err);
-      }
 
-      setLoading(false);
+        // Fetch user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          if (isMounted.current) {
+            setProfile(null);
+          }
+        } else if (profileData && isMounted.current) {
+          setProfile(profileData);
+        }
+
+        // Fetch user progress data only if still mounted and user exists
+        if (isMounted.current && user) {
+          try {
+            const response = await fetch('/api/user/progress');
+            if (response.ok) {
+              const data = await response.json();
+              if (isMounted.current) {
+                if (data.totalQuestions > 0) {
+                  data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
+                } else {
+                  data.completionPercentage = 0;
+                }
+                setProgressData(data);
+              }
+            } else {
+              console.error('Failed to fetch progress data');
+            }
+          } catch (err) {
+            console.error('Error fetching progress data:', err);
+          }
+        }
+      } catch (error) {
+        console.error("An unexpected error occurred during initial dashboard load:", error);
+      } finally {
+        if (isMounted.current) {
+          setLoading(false);
+        }
+      }
     };
 
     checkUserAndProfile();
+
+    return () => {
+      isMounted.current = false;
+    };
   }, [router]);
 
   // Fetch additional data when loading is complete
