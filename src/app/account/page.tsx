@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, ChangeEvent } from 'react';
+import { useState, useEffect, useCallback, ChangeEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -23,6 +23,7 @@ export default function AccountPage() {
   const [savingApiKey, setSavingApiKey] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const isMounted = useRef(true);
 
   const [position, setPosition] = useState({
     left: 0,
@@ -51,76 +52,98 @@ export default function AccountPage() {
   const [apiKeyInput, setApiKeyInput] = useState('');
 
   useEffect(() => {
+    isMounted.current = true;
+
     const checkUser = async () => {
-      const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
-      if (userError || !fetchedUser) {
-        router.push('/signin');
-        return;
-      }
+      try {
+        const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
+        if (userError || !fetchedUser) {
+          if (isMounted.current) {
+            router.push('/signin');
+          }
+          return;
+        }
 
-      setUser(fetchedUser);
+        if (!isMounted.current) return;
+        setUser(fetchedUser);
 
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('full_name, username, avatar_url, custom_api_key')
-        .eq('id', fetchedUser.id)
-        .single();
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, username, avatar_url, custom_api_key')
+          .eq('id', fetchedUser.id)
+          .single();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-      }
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        }
 
-      const { data: preferencesData, error: prefError } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', fetchedUser.id)
-        .maybeSingle();
+        if (!isMounted.current) return;
 
-      if (prefError) {
-        console.error('Error fetching preferences:', prefError);
-      }
+        const { data: preferencesData, error: prefError } = await supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', fetchedUser.id)
+          .maybeSingle();
 
-      if (profileData) {
-        setProfile({
-            id: fetchedUser.id,
+        if (prefError) {
+          console.error('Error fetching preferences:', prefError);
+        }
+        
+        if (!isMounted.current) return;
+
+        if (profileData) {
+          setProfile({
+              id: fetchedUser.id,
+              email: fetchedUser.email || '',
+              full_name: profileData.full_name,
+              username: profileData.username,
+              avatar_url: profileData.avatar_url,
+              custom_api_key: profileData.custom_api_key
+          });
+          setFormData(prev => ({
+            ...prev,
+            full_name: profileData.full_name || '',
+            username: profileData.username || '',
             email: fetchedUser.email || '',
-            full_name: profileData.full_name,
-            username: profileData.username,
-            avatar_url: profileData.avatar_url,
-            custom_api_key: profileData.custom_api_key
-        });
-        setFormData(prev => ({
-          ...prev,
-          full_name: profileData.full_name || '',
-          username: profileData.username || '',
-          email: fetchedUser.email || '',
-        }));
-        setApiKeyInput(profileData.custom_api_key || '');
-      } else if (fetchedUser.email) {
-        setFormData(prev => ({ ...prev, email: fetchedUser.email! }));
-      }
-      if (preferencesData) {
-        setFormData(prev => ({
-          ...prev,
-          specific_model_id: preferencesData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
-          use_youtube_sources: preferencesData.use_youtube_sources ?? true,
-          use_pdf_sources: preferencesData.use_pdf_sources ?? true,
-          use_paper_sources: preferencesData.use_paper_sources ?? true,
-          use_website_sources: preferencesData.use_website_sources ?? true,
-          use_book_sources: preferencesData.use_book_sources ?? false,
-          use_image_sources: preferencesData.use_image_sources ?? false,
-          preferred_answer_format: preferencesData.preferred_answer_format || 'markdown',
-          preferred_answer_depth: preferencesData.preferred_answer_depth || 'standard',
-          include_code_snippets: preferencesData.include_code_snippets ?? true,
-          include_latex_formulas: preferencesData.include_latex_formulas ?? false,
-          custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
-        }));
-      }
+          }));
+          setApiKeyInput(profileData.custom_api_key || '');
+        } else if (fetchedUser.email) {
+          setFormData(prev => ({ ...prev, email: fetchedUser.email! }));
+        }
 
-      setLoading(false);
+        if (!isMounted.current) return;
+
+        if (preferencesData) {
+          setFormData(prev => ({
+            ...prev,
+            specific_model_id: preferencesData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
+            use_youtube_sources: preferencesData.use_youtube_sources ?? true,
+            use_pdf_sources: preferencesData.use_pdf_sources ?? true,
+            use_paper_sources: preferencesData.use_paper_sources ?? true,
+            use_website_sources: preferencesData.use_website_sources ?? true,
+            use_book_sources: preferencesData.use_book_sources ?? false,
+            use_image_sources: preferencesData.use_image_sources ?? false,
+            preferred_answer_format: preferencesData.preferred_answer_format || 'markdown',
+            preferred_answer_depth: preferencesData.preferred_answer_depth || 'standard',
+            include_code_snippets: preferencesData.include_code_snippets ?? true,
+            include_latex_formulas: preferencesData.include_latex_formulas ?? false,
+            custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
+          }));
+        }
+      } catch (error) {
+        console.error('An unexpected error occurred in checkUser:', error);
+      } finally {
+        if (isMounted.current) {
+          setLoading(false);
+        }
+      }
     };
 
     checkUser();
+
+    return () => {
+      isMounted.current = false;
+    };
   }, [router, supabase]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -263,13 +286,8 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
-        <LoadingSpinner 
-          size="lg" 
-          color="primary" 
-          text="Loading your account..."
-          centered={true}
-        />
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="xl" text="Loading Account..." fullScreen={false} />
       </div>
     );
   }
@@ -290,7 +308,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col">
           <div className="w-full flex-shrink-0 mb-8">

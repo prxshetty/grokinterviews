@@ -4,7 +4,7 @@
  */
 
 import DatabaseService from '@/services/DatabaseService';
-import { Topic, Category, Question } from '@/types/database';
+import { Topic, Question } from '@/types/database';
 
 // Define TopicItem type directly in this file
 export type TopicItem = {

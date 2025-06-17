@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabaseServer from '@/utils/supabase-server';
-import { getQuestionsByTopic } from '@/app/lib/db';
 
 export async function GET(request: NextRequest) {
   try {

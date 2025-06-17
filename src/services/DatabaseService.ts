@@ -156,8 +156,6 @@ class DatabaseService {
 
     // Server-side direct database access
     try {
-      let query;
-
       // Check if topicId is a number or a slug
       let topicIdValue: number | null = null;
 
@@ -200,7 +198,7 @@ class DatabaseService {
         throw new Error(`Topic with ID or slug ${topicId} not found`);
       }
 
-      query = supabase.from('categories').select('*').eq('topic_id', topicIdValue);
+      const query = supabase.from('categories').select('*').eq('topic_id', topicIdValue);
 
       const { data, error } = await query.order('name');
 

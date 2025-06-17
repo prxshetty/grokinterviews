@@ -94,30 +94,32 @@ export default function TopicDataProvider({
           console.log('TopicDataProvider - Using cached data');
           setTopicData(cachedData.data);
           setIsLoading(false);
-          return; // Skip the API call if we have valid cached data
+          return; // Skip further processing if we have valid cached data
         } else {
-          console.log('TopicDataProvider - Cache expired, fetching fresh data');
+          console.log('TopicDataProvider - Cache expired, proceeding to check initial/API');
         }
       } else {
-        console.log('TopicDataProvider - No cached data found');
+        console.log('TopicDataProvider - No cached data found, proceeding to check initial/API');
       }
     } catch (err) {
       console.error('Error reading from cache:', err);
-      // Continue to fetch from API if cache fails
+      // Continue to check initial/API if cache fails
     }
 
-    // If we don't have initial data or valid cache, fetch it
-    if (Object.keys(initialTopicData).length === 0) {
-      console.log('TopicDataProvider - No initial data, fetching from API');
+    // If cache was not used or was invalid, check the current topicData state
+    // (which was initialized with initialTopicData prop)
+    if (Object.keys(topicData).length === 0) {
+      // topicData is empty, meaning initialTopicData prop was also empty (or cache failed and initial was empty)
+      console.log('TopicDataProvider - No cached or initial prop data, fetching from API');
       fetchTopicData();
     } else {
-      console.log('TopicDataProvider - Using initial data');
-      // If we have initial data, just use it
+      // topicData was populated by initialTopicData prop (and cache wasn't used/valid).
+      // Data is already in place from props.
+      console.log('TopicDataProvider - Using data from initialTopicData prop (cache not used/valid)');
       setIsLoading(false);
     }
 
-    // No cleanup or dependencies that would cause re-fetching
-  }, []); // Empty dependency array means this only runs once on mount
+  }, []); // Dependency array is empty to ensure this runs only once on mount
 
   return (
     <TopicDataContext.Provider value={{ topicData, isLoading, error, refetchData }}>
