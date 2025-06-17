@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
-import { useTopicData } from '@/hooks';
+import { useTopicData as _useTopicData } from '@/hooks';
 import { IconHover3D } from '@/components/ui';
-import TopicDataService from '@/services/TopicDataService';
+import _TopicDataService from '@/services/TopicDataService';
 import styles from './TopicCategoryGrid.module.css';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
 import { LoadingSpinner } from '@/components/ui';
@@ -36,7 +36,6 @@ interface TopicCategoryGridProps {
   level?: HierarchyLevel; // Indicates what level of the hierarchy the items represent
   onSelectItem?: (itemId: string, level: HierarchyLevel) => void; // Callback when an item is selected
   onSelectCategory?: (categoryId: string) => void; // Alternative callback for backward compatibility
-  topicId?: string; // Optional topic ID for context
   domain?: string; // Optional domain for section progress
   isLoading?: boolean; // Optional loading state controlled by parent
   error?: string | null; // Optional error state controlled by parent
@@ -52,7 +51,6 @@ function TopicCategoryGridComponent({
   level = 'category',
   onSelectItem,
   onSelectCategory,
-  topicId,
   domain,
   isLoading = false, // Default to not loading
   error = null,      // Default to no error
@@ -63,7 +61,7 @@ function TopicCategoryGridComponent({
   const [itemsWithProgress, setItemsWithProgress] = useState<DisplayItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [_isDarkMode, setIsDarkMode] = useState(false);
 
   // Memoize the base items to avoid recalculating on every render
   const baseItems = useMemo(() => {
@@ -256,7 +254,7 @@ function TopicCategoryGridComponent({
           progress: { questionsCompleted: 0, totalQuestions: 0, completionPercentage: 0 }
       })));
     }
-  }, [baseItems, level, domain, topicId, subtopicProgress, dataCache]);
+  }, [baseItems, level, domain, subtopicProgress, dataCache]);
 
   // Define event handlers with useCallback at component level
   const handleQuestionCompleted = useCallback((event: Event) => {

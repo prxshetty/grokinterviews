@@ -4,14 +4,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   TopicCategoryGrid,
-  CategoryDetailView,
   TopicDataProvider,
   ContentDisplay
 } from '@/components/topics-ui';
 import ProgressSaver from '@/components/utils/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
-import { useTopicData } from '@/hooks';
-
 import { useFilterLogic } from '@/hooks/use-filter-logic.hook';
 import { fetchDomainProgress, fetchCategoryProgress } from '@/app/utils/progress';
 import { LoadingSpinner } from '@/components/ui';
@@ -23,7 +20,6 @@ import {
   QuestionType,
   CategoryItem,
   TopicItem,
-  ProgressData,
   SubtopicProgress,
   CategoryProgress
 } from '@/types/topic-page.types';
@@ -89,10 +85,43 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     questionIdParam ? parseInt(questionIdParam) : undefined
   );
 
-  const { topicData } = useTopicData(); // This hook might need context setup
+  // const { topicData } = useTopicData(); // This hook might need context setup
 
   const router = useRouter();
   const pathname = usePathname();
+
+  // Fetch questions by difficulty
+  const fetchDifficultyQuestions = useCallback(async (difficulty: string, page: number = 1) => {
+    if (!domain) return; // Ensure domain is available
+    console.log(`Fetching ${difficulty} questions for domain ${domain}, page ${page}`);
+    setIsLoading(prev => ({ ...prev, difficultyQuestions: true }));
+    try {
+      const response = await fetch(`/api/questions/difficulty?difficulty=${difficulty}&domain=${domain}&page=${page}&limit=10`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Difficulty questions data:', data);
+
+      if (data && data.questions) {
+        setDifficultyQuestions(data.questions);
+        setTotalPages(data.totalPages || 1);
+        setTotalResults(data.totalResults || 0);
+        setCurrentPage(data.currentPage || 1); // Ensure currentPage is updated from response
+      } else {
+        setDifficultyQuestions([]);
+        setTotalPages(1);
+        setTotalResults(0);
+      }
+    } catch (error) {
+      console.error(`Error fetching ${difficulty} questions:`, error);
+      setDifficultyQuestions([]); // Clear on error
+      setTotalPages(1);
+      setTotalResults(0);
+    } finally {
+      setIsLoading(prev => ({ ...prev, difficultyQuestions: false }));
+    }
+  }, [domain]); // Added domain as a dependency for useCallback
 
   // Update currentPage when pageParam changes (e.g., from hook resetting page on filter change)
   useEffect(() => {
@@ -106,7 +135,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     } else {
       setDifficultyQuestions([]);
     }
-  }, [selectedDifficulty, currentPage, domain]); // domain added as dependency
+  }, [selectedDifficulty, currentPage, domain, fetchDifficultyQuestions]); // Ensures fetchDifficultyQuestions is a dependency
 
   // Handle page change for pagination
   const handlePageChange = useCallback((newPage: number) => {
@@ -206,47 +235,18 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     }
   }, [selectedTopic, dataCache, setIsLoading, setCategoryDetails, setDataCache, setCategoryProgress]);
 
-  // Handle category selection
+  // Handle category selection from TopicCategoryGrid
   const handleCategorySelect = useCallback(async (categoryId: string) => {
-    console.log('topics/page - handleCategorySelect called with:', categoryId);
-
-    if (categoryId === selectedCategory) {
-      console.log('topics/page - Same category selected, clearing selection');
-      setSelectedCategory(null);
-      setCategoryDetails(null);
-      return;
-    }
-
-    console.log('topics/page - Setting selectedCategory to:', categoryId);
+    console.log('Category selected:', categoryId);
     setSelectedCategory(categoryId);
-
+    // Update URL
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('category', categoryId);
+    params.delete('q'); // Clear question ID when a new category is selected
+    router.push(`${pathname}?${params.toString()}`);
+    // Load details for the selected category
     await loadCategoryDetails(categoryId);
-  }, [selectedCategory, loadCategoryDetails]);
-
-  const fetchDifficultyQuestions = useCallback(async (difficulty: string, page: number = 1) => {
-    if (!domain) return; // Ensure domain is available
-    setIsLoading(prev => ({ ...prev, difficultyQuestions: true }));
-    try {
-      const response = await fetch(
-        `/api/questions/difficulty?domain=${domain}&difficulty=${difficulty}&page=${page}`
-      );
-      if (!response.ok) throw new Error('Failed to fetch difficulty questions');
-      const data = await response.json();
-      setDifficultyQuestions(data.questions || []);
-      setTotalPages(data.pagination?.totalPages || 1);
-      setTotalResults(data.pagination?.totalCount || 0);
-      if (data.questions?.length === 0 && page > 1) {
-         handlePageChange(1); // Corrected call
-      }
-    } catch (error) {
-      console.error('Error fetching difficulty questions:', error);
-      setDifficultyQuestions([]);
-      setTotalPages(1);
-      setTotalResults(0);
-    } finally {
-      setIsLoading(prev => ({ ...prev, difficultyQuestions: false }));
-    }
-  }, [domain, setIsLoading, setDifficultyQuestions, setTotalPages, setTotalResults, handlePageChange]);
+  }, [searchParams, router, pathname, loadCategoryDetails]);
 
   // Load topic categories (sections)
   const loadTopicCategories = useCallback(async (topicId: string) => {
@@ -360,26 +360,6 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     }
   }, [domain, dataCache, setDataCache, setSubtopicProgress]);
 
-  // Handle topic selection
-  const handleTopicClick = useCallback(async (topicId: string) => {
-    console.log('Topic clicked:', topicId);
-    setIsLoading(prev => ({ ...prev, sections: true }));
-    if (selectedTopic === topicId) {
-      setSelectedTopic(null);
-      setSelectedCategory(null);
-      setCategoryDetails(null);
-      setTopicCategories([]);
-      setIsLoading(prev => ({ ...prev, sections: false }));
-      return;
-    }
-    setSelectedTopic(topicId);
-    setSelectedCategory(null);
-    setCategoryDetails(null);
-    await loadTopicCategories(topicId);
-    await preloadSubtopicProgressForDomain(topicId);
-    setIsLoading(prev => ({ ...prev, sections: false }));
-  }, [selectedTopic, loadTopicCategories, preloadSubtopicProgressForDomain, setIsLoading, setSelectedTopic, setSelectedCategory, setCategoryDetails, setTopicCategories]);
-
   // Handle back button click
   const handleBackToMainCategories = useCallback(() => {
     setSelectedCategory(null);
@@ -418,7 +398,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // Handle reset category selection event from CategoryDetailView
   useEffect(() => {
-    const handleResetCategory = (event: Event) => {
+    const handleResetCategory = (_event: Event) => {
       console.log('handleResetCategory triggered');
       setSelectedCategory(null);
       setCategoryDetails(null);
