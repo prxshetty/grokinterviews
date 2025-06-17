@@ -2,16 +2,14 @@
 
 import { useState, useEffect, useRef, memo, useMemo, useCallback, Suspense } from 'react';
 import { isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed } from '@/app/utils/progress';
-import { createClient } from '@/utils/supabase/client';
 import React from 'react';
 import { toast } from '@/hooks/use-toast';
 import { ChevronUp } from 'lucide-react';
 
 // Import the new accordion components
 import {
-  Accordion,
-  AccordionContent,
   AccordionItem,
+  AccordionContent,
   AccordionTrigger,
 } from "@/components/ui/accordion"; // Assuming this is the correct path
 
@@ -66,7 +64,6 @@ type QuestionType = {
 interface QuestionWithAnswerProps {
   question: QuestionType;
   questionIndex: number;
-  isHighlighted?: boolean; // Will be used by parent Accordion's defaultValue
   topicId?: number;
   onCompletionChange?: (questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void;
   isBookmarked: boolean;
@@ -80,7 +77,6 @@ interface QuestionWithAnswerProps {
 function QuestionWithAnswerComponent({
   question,
   questionIndex,
-  isHighlighted = false, // Not directly used for expansion here, parent Accordion handles it
   topicId,
   onCompletionChange,
   isBookmarked: initialIsBookmarked, // Renamed to avoid conflict
@@ -88,10 +84,8 @@ function QuestionWithAnswerComponent({
   isOpen, // New prop to indicate if the accordion item is open
   onRequestClose // Destructure new prop
 }: QuestionWithAnswerProps) {
-  const supabase = createClient();
+  // const supabase = createClient(); // Removed unused variable
 
-  // isExpanded is now primarily for internal logic triggered by accordion's state (via isOpen prop)
-  // It doesn't control the visual expansion itself.
   const [isExpandedState, setIsExpandedState] = useState(false); 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAnswer, setGeneratedAnswer] = useState<string | null>(null);
@@ -111,6 +105,32 @@ function QuestionWithAnswerComponent({
   const questionId = question.id;
   const actualCategoryId = useMemo(() => question.categories?.id ?? question.category_id, [question.categories?.id, question.category_id]);
   const actualTopicId = useMemo(() => question.topic_id ?? topicId, [question.topic_id, topicId]);
+
+  const generateAnswer = useCallback(async () => {
+    if (!questionId || isGenerating || generatedAnswer) return;
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/generate-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionText: question.question_text,
+          questionId: question.id,
+          topicId: actualTopicId,
+          categoryId: actualCategoryId,
+        }),
+      });
+      if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+      const data = await response.json();
+      setGeneratedAnswer(data.answer);
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate answer.');
+      toast.error(err.message || 'Failed to generate answer.');
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [questionId, isGenerating, generatedAnswer, actualTopicId, actualCategoryId, question.question_text, question.id]);
 
   useEffect(() => {
     setIsBookmarkedState(initialIsBookmarked);
@@ -132,7 +152,7 @@ function QuestionWithAnswerComponent({
     if (isOpen && !hasPredefinedAnswer && !generatedAnswer && !isGenerating && questionId) {
       generateAnswer();
     }
-  }, [isOpen, isViewed, questionId, actualTopicId, actualCategoryId, hasPredefinedAnswer, generatedAnswer, isGenerating]);
+  }, [isOpen, isViewed, questionId, actualTopicId, actualCategoryId, hasPredefinedAnswer, generatedAnswer, isGenerating, generateAnswer]);
 
 
   useEffect(() => {
@@ -205,63 +225,6 @@ function QuestionWithAnswerComponent({
     };
   }, [isExpandedState, hasPredefinedAnswer, question.answer_text, generatedAnswer, isGenerating, questionId, isCompletedState, onCompletionChange, actualTopicId, actualCategoryId]);
 
-  const generateAnswer = useCallback(async () => {
-    if (!questionId || isGenerating || generatedAnswer) return;
-    setIsGenerating(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/generate-answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          questionText: question.question_text,
-          questionId: question.id,
-          topicId: actualTopicId,
-          categoryId: actualCategoryId,
-        }),
-      });
-      if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-      const data = await response.json();
-      setGeneratedAnswer(data.answer);
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate answer.');
-      toast.error(err.message || 'Failed to generate answer.');
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [questionId, isGenerating, generatedAnswer, actualTopicId, actualCategoryId, question.question_text]);
-
-  // This function is effectively an "on toggle" handler for the accordion item.
-  // It's called when the trigger is clicked.
-  // The actual expansion/collapse is handled by Radix. This manages side effects.
-  const handleExpansionToggle = () => {
-    // The 'isOpen' prop will change, and the useEffect listening to 'isOpen' will handle side effects.
-    // This function can be simplified or removed if AccordionTrigger's onClick isn't needed
-    // for direct state manipulation here, and all is handled via isOpen prop.
-    // For now, let's assume CategoryDetailView will manage which item is open and pass 'isOpen'.
-  };
-
-  const handleBookmarkToggle = async () => {
-    if (!actualCategoryId) {
-      console.error("Cannot toggle bookmark: categoryId is missing.");
-      toast.error("Could not save bookmark, category information is missing.");
-      return;
-    }
-    const newBookmarkStatus = !isBookmarkedState;
-    setIsBookmarkedState(newBookmarkStatus); // Optimistic update
-    onBookmarkStatusChange?.(questionId, newBookmarkStatus);
-
-    try {
-      await toggleQuestionBookmark(questionId, newBookmarkStatus, actualTopicId, actualCategoryId);
-      // console.log(`Bookmark status for QID ${questionId} updated to ${newBookmarkStatus}`);
-    } catch (error) {
-      console.error('Error toggling bookmark:', error);
-      setIsBookmarkedState(!newBookmarkStatus); // Revert on error
-      onBookmarkStatusChange?.(questionId, !newBookmarkStatus);
-      toast.error("Failed to save bookmark change.");
-    }
-  };
-  
   // Adapter for BookmarkButton's onBookmarkChange
   const handleBookmarkChangeFromButton = (newStatus: boolean) => {
     // This function is essentially handleBookmarkToggle but invoked by the child.
@@ -327,7 +290,7 @@ function QuestionWithAnswerComponent({
             answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
             isLoading={isGenerating}
             error={error}
-            scrollProgress={scrollProgress}
+            _scrollProgress={scrollProgress}
             isCompleted={isCompletedState}
           />
         </div>

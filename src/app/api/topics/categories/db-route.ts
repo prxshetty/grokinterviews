@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabaseServer from '@/utils/supabase-server';
-import { Category, Question, CategoryWithQuestions } from '@/types/database';
+import { Category, CategoryWithQuestions } from '@/types/database';
 
 // Removed convertCategoriesToLegacyFormat (will be fully removed if not used elsewhere after refactor)
 // Removed convertQuestionsToLegacyFormat (will be fully removed if not used elsewhere after refactor)
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       try {
         console.time('category-with-questions-query');
         
-        let topicIdValue: string | number = topicId;
+        const topicIdValue: string | number = topicId;
         // Simplified topicId resolution, assuming topicId from client is numeric or a valid slug/name for direct use if needed
         // For this path, we primarily need topicId for the categories.topic_id match.
         // If topicId is 'any', it's problematic for a specific category query. Assume valid topicId.

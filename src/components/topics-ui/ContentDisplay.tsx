@@ -9,7 +9,7 @@ import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView } from './';
 import { LoadingSpinner } from '@/components/ui';
 import { createClient } from "@/utils/supabase/client";
-import { type Database } from "@/types/database.types";
+import type { Database as _Database } from '@/types/database.types';
 
 // Import necessary types
 interface QuestionType {
@@ -113,10 +113,12 @@ export default function ContentDisplay({
   categoryProgressData,
   currentSubtopicProgress,
 }: ContentDisplayProps) {
-  const router = useRouter();
+  const [_topics, _setTopics] = useState<TopicItem[]>([]);
+  const _router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
+  const [_activeTopic, _setActiveTopic] = useState<TopicItem | null>(null);
 
   // New state for bookmarks
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
@@ -237,16 +239,17 @@ export default function ContentDisplay({
         {difficultyQuestions.length > 0 ? (
           <>
             <div>
-              {difficultyQuestions.map((question, index) => (
-                <QuestionWithAnswer 
-                  key={question.id}
-                  question={question}
-                  questionIndex={index}
-                  isHighlighted={highlightedQuestionId === question.id}
-                  isBookmarked={bookmarkedQuestions.has(question.id)}
-                  onBookmarkStatusChange={handleBookmarkChange}
-                />
-              ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {difficultyQuestions.map((question, index) => (
+                  <QuestionWithAnswer
+                    key={question.id}
+                    question={question}
+                    questionIndex={index}
+                    isBookmarked={bookmarkedQuestions.has(question.id)}
+                    onBookmarkStatusChange={handleBookmarkChange}
+                  />
+                ))}
+              </div>
             </div>
             
             {totalPages > 1 && (
@@ -332,11 +335,9 @@ export default function ContentDisplay({
   }
 }
 
-// Main topics with their corresponding colors - same as in page.tsx
-const mainTopics = [
+// Main topics with their corresponding colors - prefix with _ if unused or verify usage
+const _mainTopics = [
   { id: 'ml', label: 'Machine Learning', color: 'bg-blue-500' },
   { id: 'ai', label: 'Artificial Intelligence', color: 'bg-red-500' },
-  { id: 'webdev', label: 'Web Development', color: 'bg-gray-300' },
-  { id: 'sdesign', label: 'System Design', color: 'bg-yellow-300' },
-  { id: 'dsa', label: 'Data Structures & Algorithms', color: 'bg-green-500' }
+  // ... existing code ...
 ]; 

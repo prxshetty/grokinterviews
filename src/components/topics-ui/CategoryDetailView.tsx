@@ -8,28 +8,13 @@ import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted, isQu
 import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
 
-// Import types
-interface QuestionType {
-  id: number;
-  question_text: string;
-  answer_text?: string | null;
-  keywords?: string[] | string | null;
-  difficulty?: string | null;
-  category_id?: number | null;
-  topic_id?: number | null;
-  created_at?: string;
-  categories?: {
-    id: number;
-    name: string;
-    topic_id: number;
-    topics?: {
-      id: number;
-      name: string;
-      domain: string;
-    }
-  };
-}
+// Imported shared types
+import { QuestionType } from '@/types/topics';
+import { SubtopicProgress, CategoryProgress } from '@/types/topic-page.types';
 
+// Local types that remain (or are specific to this component's internal API handling)
+// Type definitions for component-specific data structures or direct API response shapes
+// not covered by shared types.
 type TopicItem = {
   id?: string;
   label: string;
@@ -40,20 +25,6 @@ type TopicItem = {
   subtopics?: Record<string, TopicItem>;
   isGenerated?: boolean;
 };
-
-interface SubtopicProgress {
-  completionPercentage: number;
-  questionsCompleted: number;
-  totalQuestions: number;
-  categoriesCompleted: number;
-  totalCategories: number;
-}
-
-interface CategoryProgress {
-  questionsCompleted: number;
-  totalQuestions: number;
-  completionPercentage: number;
-}
 
 interface CategoryDetailViewProps {
   categoryId: string;
@@ -68,7 +39,7 @@ interface CategoryDetailViewProps {
   currentSubtopicProgress?: SubtopicProgress | null;
 }
 
-// Add these types for API response
+// Types for API response structure specific to handleSubtopicSelect
 interface CategoryResponse {
   id: number;
   topic_id: number;
@@ -114,13 +85,13 @@ export default function CategoryDetailView({
   // Progress tracking states
   const [categoryProgress, setCategoryProgress] = useState<CategoryProgress | null>(null);
   
-  const [subtopicProgress, setSubtopicProgress] = useState<SubtopicProgress | null>(null);
+  const [_subtopicProgress, setSubtopicProgress] = useState<SubtopicProgress | null>(null);
   
   // Update type for subtopicsProgress to include category counts
   const [subtopicsProgress, setSubtopicsProgress] = useState<Record<string, SubtopicProgress>>({});
   
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
-  const [isSubtopicProgressLoading, setIsSubtopicProgressLoading] = useState(false);
+  const [isSubtopicProgressLoading, _setIsSubtopicProgressLoading] = useState(false);
   
   // Local state to store bookmark status
   const [bookmarkStatus, setBookmarkStatus] = useState<Record<number, boolean>>({});
@@ -131,7 +102,7 @@ export default function CategoryDetailView({
   );
 
   // Check if this is section/header or specific topic
-  const isSectionHeader = categoryId.startsWith('header-');
+  const _isSectionHeader = categoryId.startsWith('header-');
   const hasSubtopics = categoryDetails?.subtopics && Object.keys(categoryDetails.subtopics).length > 0;
   const hasRealSubtopics = hasSubtopics && Object.keys(categoryDetails?.subtopics || {}).some(id => id.startsWith('topic-'));
   const hasQuestions = categoryDetails?.questions && categoryDetails.questions.length > 0;
@@ -156,7 +127,7 @@ export default function CategoryDetailView({
   }, [questionsToFilter, propSelectedDifficulty]);
 
   // Available difficulty levels - memoized since it's static
-  const difficulties = useMemo(() => [
+  const _difficulties = useMemo(() => [
     { id: 'beginner', label: 'Beginner' },
     { id: 'intermediate', label: 'Intermediate' },
     { id: 'advanced', label: 'Advanced' },
@@ -425,8 +396,8 @@ export default function CategoryDetailView({
     questionId: number, 
     status: boolean,
     // Add topicId and categoryId of the question that changed
-    changedQuestionTopicId?: number, 
-    changedQuestionCategoryId?: number
+    _changedQuestionTopicId?: number, 
+    _changedQuestionCategoryId?: number
   ) => {
     setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
 

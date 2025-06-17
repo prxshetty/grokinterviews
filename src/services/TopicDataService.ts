@@ -55,6 +55,7 @@ class TopicDataService {
     categories: null,
     categoryDetails: {}
   };
+  private ongoingGetAllTopicDataFetch: Promise<TopicTree> | null = null;
 
   /**
    * Gets all section headers for a specific domain
@@ -396,86 +397,97 @@ class TopicDataService {
    */
   async getAllTopicData(): Promise<TopicTree> {
     console.log('TopicDataService.getAllTopicData - Called');
-    try {
-      // Try to get from cache first
-      if (this.cache.topics) {
-        console.log('TopicDataService.getAllTopicData - Using cached data');
-        return this.cache.topics;
-      }
-
-      const allTopicsFromDB: TopicTree = {};
-      let dbTopics: Topic[] = [];
-
-      // 1. Get all topics from the database
-      try {
-        console.log('TopicDataService.getAllTopicData - Fetching topics from database');
-        dbTopics = await DatabaseService.getTopics();
-        console.log('TopicDataService.getAllTopicData - Got topics from database:', dbTopics);
-      } catch (dbError) {
-        console.error('Error fetching all topics from database:', dbError);
-        // If fetching topics fails, return an empty tree, as no further processing is possible.
-        return {};
-      }
-
-      // 2. For each database topic, get its categories and structure the TopicTree
-      if (dbTopics && dbTopics.length > 0) {
-        console.log('TopicDataService.getAllTopicData - Processing database topics');
-        for (const topic of dbTopics) {
-          // Ensure topic.slug exists and is a string. If not, slugify topic.name or skip.
-          const currentTopicSlug = (topic as Topic & { slug?: string }).slug || slugify(topic.name);
-          if (!currentTopicSlug) {
-            console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topic.id} has no slug or name, skipping.`);
-            continue;
-          }
-          console.log(`TopicDataService.getAllTopicData - Processing topic: ${currentTopicSlug}`);
-          allTopicsFromDB[currentTopicSlug] = {
-            label: topic.name,
-            subtopics: {}
-          };
-
-          // Get categories for this topic
-          try {
-            console.log(`TopicDataService.getAllTopicData - Fetching categories for topic: ${currentTopicSlug} (ID: ${topic.id})`);
-            const categories = await DatabaseService.getCategoriesByTopic(topic.id);
-            console.log(`TopicDataService.getAllTopicData - Got ${categories.length} categories for topic: ${currentTopicSlug}`);
-
-            // Add categories as subtopics
-            for (const category of categories) {
-              const categorySlug = slugify(category.name);
-              if (!categorySlug) {
-                console.warn(`TopicDataService.getAllTopicData - Category under topic ${currentTopicSlug} has no name, skipping.`);
-                continue;
-              }
-              console.log(`TopicDataService.getAllTopicData - Adding category: ${categorySlug} to topic ${currentTopicSlug}`);
-              allTopicsFromDB[currentTopicSlug].subtopics[categorySlug] = {
-                id: categorySlug, // This ID is the slugified category name
-                label: category.name,
-                // Actual subtopics/questions within a category are loaded by getCategoryDetails on demand
-                subtopics: {}
-              };
-            }
-          } catch (categoryError) {
-            console.error(`Error fetching categories for topic ${currentTopicSlug} (ID: ${topic.id}):`, categoryError);
-            // Continue processing other topics even if one fails to get categories
-          }
-        }
-      } else {
-        console.log('TopicDataService.getAllTopicData - No topics found in the database.');
-        // Return empty object if no topics were found
-        this.cache.topics = {};
-        return {};
-      }
-
-      // Update cache with the data constructed purely from the database
-      console.log('TopicDataService.getAllTopicData - Returning topics from DB:', allTopicsFromDB);
-      this.cache.topics = allTopicsFromDB;
-
-      return allTopicsFromDB;
-    } catch (error) {
-      // General error catch for any unexpected issues during the process
-      console.error('Error loading all topic data:', error);
-      return {}; // Return an empty object in case of any other error
+    // Try to get from cache first
+    if (this.cache.topics) {
+      console.log('TopicDataService.getAllTopicData - Using cached data');
+      return this.cache.topics;
     }
+
+    // Check if a fetch is already in progress
+    if (this.ongoingGetAllTopicDataFetch) {
+      console.log('TopicDataService.getAllTopicData - Fetch already in progress, returning existing promise');
+      return this.ongoingGetAllTopicDataFetch;
+    }
+
+    console.log('TopicDataService.getAllTopicData - Starting new fetch');
+    this.ongoingGetAllTopicDataFetch = (async (): Promise<TopicTree> => {
+      try {
+        const allTopicsFromDB: TopicTree = {};
+        let dbTopics: Topic[] = [];
+
+        // 1. Get all topics from the database
+        try {
+          console.log('TopicDataService.getAllTopicData - (Inner) Fetching topics from database');
+          dbTopics = await DatabaseService.getTopics();
+          console.log('TopicDataService.getAllTopicData - (Inner) Got topics from database:', dbTopics);
+        } catch (dbError) {
+          console.error('Error fetching all topics from database:', dbError);
+          this.cache.topics = {}; // Key fix: Cache empty on this critical failure
+          return {}; // Resolve promise with empty
+        }
+
+        // 2. For each database topic, get its categories and structure the TopicTree
+        if (dbTopics && dbTopics.length > 0) {
+          console.log('TopicDataService.getAllTopicData - (Inner) Processing database topics');
+          for (const topic of dbTopics) {
+            const currentTopicSlug = (topic as Topic & { slug?: string }).slug || slugify(topic.name);
+            if (!currentTopicSlug) {
+              console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topic.id} has no slug or name, skipping.`);
+              continue;
+            }
+            console.log(`TopicDataService.getAllTopicData - (Inner) Processing topic: ${currentTopicSlug}`);
+            allTopicsFromDB[currentTopicSlug] = {
+              label: topic.name,
+              subtopics: {}
+            };
+
+            try {
+              console.log(`TopicDataService.getAllTopicData - (Inner) Fetching categories for topic: ${currentTopicSlug} (ID: ${topic.id})`);
+              const categories = await DatabaseService.getCategoriesByTopic(topic.id);
+              console.log(`TopicDataService.getAllTopicData - (Inner) Got ${categories.length} categories for topic: ${currentTopicSlug}`);
+
+              for (const category of categories) {
+                const categorySlug = slugify(category.name);
+                if (!categorySlug) {
+                  console.warn(`TopicDataService.getAllTopicData - (Inner) Category under topic ${currentTopicSlug} has no name, skipping.`);
+                  continue;
+                }
+                console.log(`TopicDataService.getAllTopicData - (Inner) Adding category: ${categorySlug} to topic ${currentTopicSlug}`);
+                allTopicsFromDB[currentTopicSlug].subtopics[categorySlug] = {
+                  id: categorySlug,
+                  label: category.name,
+                  subtopics: {}
+                };
+              }
+            } catch (categoryError) {
+              console.error(`Error fetching categories for topic ${currentTopicSlug} (ID: ${topic.id}):`, categoryError);
+            }
+          }
+        } else {
+          console.log('TopicDataService.getAllTopicData - (Inner) No topics found in the database.');
+          this.cache.topics = {}; // Cache empty if no topics found
+          return {}; // Resolve promise with empty
+        }
+
+        console.log('TopicDataService.getAllTopicData - (Inner) DB processing complete, topics processed:', Object.keys(allTopicsFromDB).length);
+        this.cache.topics = allTopicsFromDB;
+        return allTopicsFromDB;
+
+      } catch (error) {
+        console.error('Error processing all topic data within IIFE:', error);
+        // Ensure cache is set if not already by a specific error handler and it is still null
+        if (this.cache.topics === null) {
+            this.cache.topics = {};
+        }
+        return this.cache.topics; // Return current cache state (likely {} now)
+      } finally {
+        this.ongoingGetAllTopicDataFetch = null;
+        console.log('TopicDataService.getAllTopicData - Fetch operation concluded. Ongoing fetch cleared.');
+      }
+    })();
+    
+    return this.ongoingGetAllTopicDataFetch;
+    // Removed the outer try-catch as the IIFE handles its own errors and sets the cache.
   }
 
   /**

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import Image from 'next/image';
-import { InlineLoadingSpinner, Tabs, TabsContent, TabsList, TabsTrigger, Card, CardContent, CardHeader, CardTitle, Button, Badge, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
-import { ExternalLink, Bookmark, Video, FileText, Globe, BookOpen, Image as ImageIcon, ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
+import { InlineLoadingSpinner, Tabs, TabsContent, TabsList, TabsTrigger, Card, CardContent, Button, Badge, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
+import { ExternalLink, Video, FileText, Globe, BookOpen, Image as ImageIcon } from 'lucide-react';
 import { type Database } from '@/types/database.types';
 
 // Remove old DbResource and redefine Resource to match actual DB schema
@@ -34,6 +34,19 @@ interface ResourceListProps {
   subcategoryId?: number | null;
 }
 
+// Define constants outside the component
+const TYPE_DISPLAY_ORDER: string[] = ['video', 'pdf', 'paper', 'website', 'book', 'image', 'other'];
+
+const TYPE_DISPLAY_INFO: { [key: string]: { Icon: React.ElementType, title: string } } = {
+  video: { Icon: Video, title: 'Videos' },
+  pdf: { Icon: FileText, title: 'PDFs' },
+  paper: { Icon: FileText, title: 'Research Papers' },
+  website: { Icon: Globe, title: 'Websites' },
+  book: { Icon: BookOpen, title: 'Books' },
+  image: { Icon: ImageIcon, title: 'Images' },
+  other: { Icon: ExternalLink, title: 'Other Resources' },
+};
+
 export function ResourceList({ questionId, domain, topicId, categoryId, subcategoryId }: ResourceListProps) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,182 +60,175 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null); // Clear previous errors
     let isMounted = true;
-    console.log('[ResourceList useEffect] Hook triggered. Initializing fetchData...');
+    console.log('[ResourceList useEffect] Hook triggered by dependency change.');
 
-    async function fetchData() {
-      console.log('[ResourceList FetchData] Starting...');
-      try {
-        console.log('[ResourceList FetchData] Attempting supabase.auth.getUser()...');
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        console.log('[ResourceList FetchData] supabase.auth.getUser() completed.', { user, userError });
-        if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after getUser.'); return; }
+    // Initialize loading states for new data fetch cycle
+    setLoading(true);
+    setError(null);
+    // Reset resources if desired, to prevent showing stale data,
+    // or rely on loading state to cover this.
+    // setResources([]); 
+    // setTotalCount(0);
 
-        if (userError) {
-          console.error("[ResourceList FetchData] Error fetching user for ResourceList:", userError);
-          setIsLoggedIn(false);
-        } else if (user) {
-          setIsLoggedIn(true);
-          console.log('[ResourceList FetchData] User found. Fetching preferences...');
-          try {
-            const { data: prefs, error: prefsError } = await supabase
-              .from('user_preferences')
-              .select('*')
-              .eq('user_id', user.id)
-              .single();
-            console.log('[ResourceList FetchData] User preferences fetched.', { prefs, prefsError });
-            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after preferences fetch.'); return; }
-            if (prefsError && prefsError.code !== 'PGRST116') { // PGRST116: no rows found, not an error
-              console.error('[ResourceList FetchData] Error fetching user preferences:', prefsError);
-              setError('Failed to load preferences.');
-            } else if (prefs) {
-              setUserPreferences(prefs);
-            }
-          } catch (e) {
-            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during preferences exception.'); return; }
-            console.error('[ResourceList FetchData] Exception fetching preferences:', e);
-            setError('An error occurred while loading preferences.');
-          }
-          setPreferencesLoaded(true);
-          console.log('[ResourceList FetchData] Preferences loaded. Fetching bookmarks...');
-          // Bookmarks fetching logic removed
-          /* try {
-            const { data: bookmarksData, error: bookmarksError } = await supabase
-              .from('user_bookmarks')
-              .select('question_id')
-              .eq('user_id', user.id);
-            console.log('[ResourceList FetchData] User bookmarks fetched.', { bookmarksData, bookmarksError });
-            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after bookmarks fetch.'); return; }
-            if (bookmarksError) {
-              console.error('[ResourceList FetchData] Error fetching bookmarks:', bookmarksError);
-            } else if (bookmarksData) {
-              const bookmarkedIds = new Set(bookmarksData.map(b => b.question_id));
-              setBookmarkedQuestions(bookmarkedIds);
-            }
-          } catch (e) {
-            if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during bookmarks exception.'); return; }
-            console.error('[ResourceList FetchData] Exception fetching bookmarks:', e);
-          } */
-        } else {
-          console.log('[ResourceList FetchData] No user found.');
-          setIsLoggedIn(false);
-          setPreferencesLoaded(true); // Still set to true if no user, so resource fetching can proceed
-        }
+    async function fetchDataAndResources() {
+      console.log('[ResourceList fetchDataAndResources] Starting...');
+      if (!isMounted) {
+        console.log('[ResourceList fetchDataAndResources] Aborting: component unmounted at start.');
+        return;
+      }
 
-        console.log('[ResourceList FetchData] Attempting to fetch resources...');
+      // Step 1: Determine auth status and get user
+      // `isLoggedIn` state is now the primary driver from onAuthStateChange
+      // but we might need user.id here.
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (!isMounted) {
+        console.log('[ResourceList fetchDataAndResources] Aborting: component unmounted after getUser.');
+        return;
+      }
+
+      let currentFetchedPrefs: UserPreferences | null = null;
+
+      if (authError || !user) {
+        console.log('[ResourceList fetchDataAndResources] No user or auth error.', { authError });
+        // isLoggedIn state will be false via onAuthStateChange
+        // We ensure preferences are cleared if they weren't already by onAuthStateChange
+        if (userPreferences !== null) setUserPreferences(null);
+        if (!preferencesLoaded) setPreferencesLoaded(true); // Preferences "known" (i.e., none for guest)
+      } else {
+        // User is logged in (isLoggedIn should be true via onAuthStateChange)
+        console.log('[ResourceList fetchDataAndResources] User found. Fetching preferences...');
         try {
-          let query = supabase.from('resources').select('*', { count: 'exact' });
-          if (domain) query = query.eq('domain', domain);
-          if (topicId) query = query.eq('topic_id', topicId);
-          if (categoryId) query = query.eq('category_id', categoryId);
-          if (subcategoryId) query = query.eq('subcategory_id', subcategoryId);
-          if (questionId && !domain && !topicId && !categoryId && !subcategoryId) {
-               query = query.eq('question_id', questionId);
+          const { data: prefs, error: prefsError } = await supabase
+            .from('user_preferences')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!isMounted) {
+            console.log('[ResourceList fetchDataAndResources] Aborting: component unmounted after preferences fetch.');
+            return;
           }
 
-          if (isLoggedIn && userPreferences) {
-            console.log('[ResourceList FetchData] Applying user preference filters to resource query.');
-            if (userPreferences.use_youtube_sources === false) query = query.neq('type', 'video');
-            if (userPreferences.use_pdf_sources === false) query = query.neq('type', 'pdf');
-            if (userPreferences.use_paper_sources === false) query = query.neq('type', 'paper');
-            if (userPreferences.use_website_sources === false) query = query.neq('type', 'website');
-            if (userPreferences.use_book_sources === false) query = query.neq('type', 'book');
-            // if (userPreferences.use_image_sources === false) query = query.neq('type', 'image');
+          if (prefsError && prefsError.code !== 'PGRST116') {
+            console.error('[ResourceList fetchDataAndResources] Error fetching user preferences:', prefsError);
+            setError('Failed to load preferences.');
+            if (userPreferences !== null) setUserPreferences(null); // Clear on error
           } else {
-            console.log('[ResourceList FetchData] Not applying preference filters (no user or preferences not loaded).');
-          }
-          
-          query = query.order('created_at', { ascending: false }).limit(500);
-          console.log('[ResourceList FetchData] Executing resource query...');
-          const { data: dbData, error: resourcesError, count } = await query;
-          console.log('[ResourceList FetchData] Resource query completed.', { dbData, resourcesError, count });
-          if (!isMounted) { console.log('[ResourceList FetchData] Unmounted after resource query.'); return; }
-
-          if (resourcesError) {
-            console.error('[ResourceList FetchData] Error fetching resources:', resourcesError);
-            setError('Failed to load resources.');
-          } else if (dbData) {
-            const processedData = dbData.map(r => ({ ...r, previewUrl: undefined } as Resource));
-            setResources(processedData);
-            setTotalCount(count || 0);
+            currentFetchedPrefs = prefs || null;
+            // Only update state if the fetched preferences are different from current state
+            // This comparison helps if other mechanisms could update userPreferences.
+            if (JSON.stringify(currentFetchedPrefs) !== JSON.stringify(userPreferences)) {
+              setUserPreferences(currentFetchedPrefs);
+            }
           }
         } catch (e) {
-          if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during resource fetching exception.'); return; }
-          console.error('[ResourceList FetchData] Exception fetching resources:', e);
-          setError('An error occurred while loading resources.');
+          if (!isMounted) {
+            console.log('[ResourceList fetchDataAndResources] Aborting: component unmounted during preferences exception.');
+            return;
+          }
+          console.error('[ResourceList fetchDataAndResources] Exception fetching preferences:', e);
+          setError('An error occurred while loading preferences.');
+          if (userPreferences !== null) setUserPreferences(null); // Clear on error
+        }
+        if (!preferencesLoaded) setPreferencesLoaded(true);
+      }
+
+      // Step 2: Fetch resources using the determined auth state and preferences
+      console.log('[ResourceList fetchDataAndResources] Attempting to fetch resources...');
+      try {
+        let query = supabase.from('resources').select('*', { count: 'exact' });
+
+        // Apply context filters
+        if (domain) query = query.eq('domain', domain);
+        if (topicId) query = query.eq('topic_id', topicId);
+        if (categoryId) query = query.eq('category_id', categoryId);
+        if (subcategoryId) query = query.eq('subcategory_id', subcategoryId);
+        if (questionId && !domain && !topicId && !categoryId && !subcategoryId) {
+          query = query.eq('question_id', questionId);
+        }
+
+        // Apply user preference filters. Use `isLoggedIn` state and `currentFetchedPrefs`
+        if (isLoggedIn && currentFetchedPrefs) {
+          console.log('[ResourceList fetchDataAndResources] Applying user preference filters.', { currentFetchedPrefs });
+          if (currentFetchedPrefs.use_youtube_sources === false) query = query.neq('type', 'video');
+          if (currentFetchedPrefs.use_pdf_sources === false) query = query.neq('type', 'pdf');
+          if (currentFetchedPrefs.use_paper_sources === false) query = query.neq('type', 'paper');
+          if (currentFetchedPrefs.use_website_sources === false) query = query.neq('type', 'website');
+          if (currentFetchedPrefs.use_book_sources === false) query = query.neq('type', 'book');
+          // Note: 'use_image_sources' was commented out in original, keeping it that way.
+        } else {
+          console.log('[ResourceList fetchDataAndResources] Not applying preference filters (user not logged in or no prefs).');
+        }
+        
+        query = query.order('created_at', { ascending: false }).limit(500);
+        console.log('[ResourceList fetchDataAndResources] Executing resource query...');
+        const { data: dbData, error: resourcesError, count } = await query;
+
+        if (!isMounted) {
+          console.log('[ResourceList fetchDataAndResources] Aborting: component unmounted after resource query.');
+          return;
+        }
+
+        if (resourcesError) {
+          console.error('[ResourceList fetchDataAndResources] Error fetching resources:', resourcesError);
+          setError('Failed to load resources.');
+          setResources([]); // Clear resources on error
+          setTotalCount(0);
+        } else if (dbData) {
+          console.log('[ResourceList fetchDataAndResources] Resources fetched successfully.', { count });
+          const processedData = dbData.map(r => ({ ...r, previewUrl: undefined } as Resource));
+          setResources(processedData);
+          setTotalCount(count || 0);
+        } else {
+          setResources([]);
+          setTotalCount(0);
         }
       } catch (e) {
-        if (!isMounted) { console.log('[ResourceList FetchData] Unmounted during main fetchData exception.'); return; }
-        console.error('[ResourceList FetchData] Main exception in fetchData:', e);
-        setError('A critical error occurred while preparing to load resources.');
+        if (!isMounted) {
+          console.log('[ResourceList fetchDataAndResources] Aborting: component unmounted during resource fetching exception.');
+          return;
+        }
+        console.error('[ResourceList fetchDataAndResources] Exception fetching resources:', e);
+        setError('An error occurred while loading resources.');
+        setResources([]);
+        setTotalCount(0);
       } finally {
         if (isMounted) {
-            console.log('[ResourceList FetchData] In finally block, setting loading to false.');
-            setLoading(false);
+          console.log('[ResourceList fetchDataAndResources] In finally block, setting loading to false.');
+          setLoading(false);
         } else {
-            console.log('[ResourceList FetchData] In finally block, but component unmounted. Not setting loading state.');
+          console.log('[ResourceList fetchDataAndResources] In finally block, component unmounted. Not setting loading state.');
         }
       }
     }
 
-    fetchData();
+    fetchDataAndResources();
 
+    // Auth listener primarily manages isLoggedIn state.
+    // It also clears preferences if user logs out, to ensure fresh fetch on next login.
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) {
         console.log('[ResourceList AuthListener] Unmounted, skipping auth state change processing.');
         return;
       }
       const currentUser = session?.user;
-      console.log('[ResourceList AuthListener] Auth state changed.', { hasSession: !!session, event: _event });
-      setIsLoggedIn(!!currentUser);
+      const newIsLoggedIn = !!currentUser;
+      console.log('[ResourceList AuthListener] Auth state changed.', { event: _event, newIsLoggedIn });
 
-      if (currentUser) {
-        console.log('[ResourceList AuthListener] User found. Fetching preferences...');
-        try {
-          const { data: prefs, error: prefsError } = await supabase
-            .from('user_preferences')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .single();
-          
-          if (!isMounted) {
-            console.log('[ResourceList AuthListener] Unmounted after preferences fetch.');
-            return;
-          }
-
-          if (prefsError && prefsError.code !== 'PGRST116') {
-            console.error('[ResourceList AuthListener] Error fetching user preferences on auth change:', prefsError);
-            setUserPreferences(null); // Clear potentially stale preferences
-          } else if (prefs) {
-            console.log('[ResourceList AuthListener] User preferences fetched successfully on auth change.', { prefs });
-            setUserPreferences(prefs);
-          } else {
-            console.log('[ResourceList AuthListener] No user preferences found on auth change.');
-            setUserPreferences(null); // No preferences row found
-          }
-        } catch (e) {
-          if (!isMounted) {
-            console.log('[ResourceList AuthListener] Unmounted during preferences exception on auth change.');
-            return;
-          }
-          console.error('[ResourceList AuthListener] Exception fetching preferences on auth change:', e);
-          setUserPreferences(null);
-        }
-        // PreferencesLoaded should reflect the attempt to load them, regardless of outcome for this user
-        // setPreferencesLoaded(true); // This might be redundant if fetchData also sets it, or could be set here.
-                                  // For now, let fetchData handle its own preferenceLoaded state logic.
-      } else {
-        console.log('[ResourceList AuthListener] No user session. Clearing preferences.');
-        setUserPreferences(null);
-        // setPreferencesLoaded(true); // If no user, preferences are 'loaded' in the sense that we know there are none to apply.
-                                  // Let fetchData handle this.
+      if (isLoggedIn !== newIsLoggedIn) {
+        setIsLoggedIn(newIsLoggedIn);
       }
-      // Note: Re-fetching resources based on auth/preference change solely within onAuthStateChange
-      // might be complex. The main useEffect handles resource fetching based on props.
-      // If immediate re-fetch on preference change is needed without prop change,
-      // this area or another useEffect listening to userPreferences might be needed.
+
+      if (!newIsLoggedIn) {
+        // User logged out or session ended
+        console.log('[ResourceList AuthListener] No user session. Clearing preferences.');
+        if (userPreferences !== null) setUserPreferences(null);
+        // Reset preferencesLoaded so that if user logs back in, preferences are re-evaluated
+        if (preferencesLoaded) setPreferencesLoaded(false); 
+      }
+      // No longer directly fetching preferences here; main effect handles it based on isLoggedIn.
     });
 
     return () => {
@@ -230,27 +236,14 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
       authListener?.subscription?.unsubscribe();
       console.log('[ResourceList useEffect] Cleanup. Unsubscribed from auth changes.');
     };
-  }, [supabase, questionId, domain, topicId, categoryId, subcategoryId]);
+  }, [supabase, questionId, domain, topicId, categoryId, subcategoryId, isLoggedIn, userPreferences, preferencesLoaded]);
 
-  const getResourcesByType = (typeValue: string) => resources
+  const getResourcesByType = useCallback((typeValue: string) => resources
     .filter(r => r.type === typeValue)
-    .sort((a, b) => (b.relevance_score ?? 0) - (a.relevance_score ?? 0));
+    .sort((a, b) => (b.relevance_score ?? 0) - (a.relevance_score ?? 0)), [resources]);
 
-  const typeDisplayOrder: string[] = ['video', 'pdf', 'paper', 'website', 'book', 'image', 'other'];
-
-  const typeDisplayInfo: { [key: string]: { Icon: React.ElementType, title: string } } = {
-    video: { Icon: Video, title: 'Videos' },
-    pdf: { Icon: FileText, title: 'PDFs' },
-    paper: { Icon: FileText, title: 'Research Papers' }, // Could use specific icon if available
-    website: { Icon: Globe, title: 'Websites' },
-    book: { Icon: BookOpen, title: 'Books' },
-    image: { Icon: ImageIcon, title: 'Images' },
-    other: { Icon: ExternalLink, title: 'Other Resources' },
-  };
-
-  // Derived state for displayable tabs
   const displayableTabs = useMemo(() => {
-    const tabs = typeDisplayOrder
+    const tabs = TYPE_DISPLAY_ORDER
       .map(typeKey => {
         let isPreferred = true;
         if (preferencesLoaded && userPreferences) {
@@ -261,7 +254,6 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
             case 'website': isPreferred = userPreferences.use_website_sources ?? true; break;
             case 'book': isPreferred = userPreferences.use_book_sources ?? false; break;
             case 'image': 
-              // Safely check for use_image_sources, works even if types are outdated
               isPreferred = typeof (userPreferences as any).use_image_sources === 'boolean' ? (userPreferences as any).use_image_sources : false; 
               break;
             default: isPreferred = true; 
@@ -272,8 +264,8 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
         if (currentResources.length > 0 && isPreferred) {
           return {
             type: typeKey,
-            title: typeDisplayInfo[typeKey]?.title || 'Resources',
-            Icon: typeDisplayInfo[typeKey]?.Icon || ExternalLink,
+            title: TYPE_DISPLAY_INFO[typeKey]?.title || 'Resources',
+            Icon: TYPE_DISPLAY_INFO[typeKey]?.Icon || ExternalLink,
             count: currentResources.length,
             resources: currentResources, 
           };
@@ -288,7 +280,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
       tabs.unshift(videoTab);
     }
     return tabs;
-  }, [resources, userPreferences, preferencesLoaded, typeDisplayOrder, typeDisplayInfo]);
+  }, [userPreferences, preferencesLoaded, getResourcesByType]);
 
   useEffect(() => {
     if (displayableTabs.length > 0 && !activeTabType) {
@@ -298,7 +290,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
     } else if (displayableTabs.length === 0) {
       setActiveTabType(null); 
     }
-  }, [displayableTabs, activeTabType]);
+  }, [displayableTabs, activeTabType, userPreferences, preferencesLoaded]);
 
   if (loading && !preferencesLoaded) return <div className="flex justify-center items-center h-40"><InlineLoadingSpinner size="md" text="Loading resources and preferences..." /></div>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
@@ -343,7 +335,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-t-xl">
                       {(() => {
-                        const Info = typeDisplayInfo[resource.type || 'other'];
+                        const Info = TYPE_DISPLAY_INFO[resource.type || 'other'];
                         return Info ? <Info.Icon className="w-12 h-12 sm:w-14 sm:h-14 text-slate-400 dark:text-slate-500" /> : <ExternalLink className="w-12 h-12 sm:w-14 sm:h-14 text-slate-400 dark:text-slate-500" />;
                       })()}
                     </div>
@@ -360,7 +352,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <p className="text-xs text-slate-200 mt-0.5">{typeDisplayInfo[resource.type || 'other']?.title || 'Resource'}</p>
+                    <p className="text-xs text-slate-200 mt-0.5">{TYPE_DISPLAY_INFO[resource.type || 'other']?.title || 'Resource'}</p>
                   </div>
                   <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <Button variant="secondary" size="sm" asChild className="bg-slate-800/80 text-white hover:bg-slate-700/90 backdrop-blur-sm !opacity-100 h-7 sm:h-8 px-2.5 sm:px-3 text-xs sm:text-sm">
@@ -381,7 +373,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
                   <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-auto pt-2">
                     <div className="flex items-center">
                       {(() => {
-                        const Info = typeDisplayInfo[resource.type || 'other'];
+                        const Info = TYPE_DISPLAY_INFO[resource.type || 'other'];
                         return Info ? <Info.Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 opacity-70" /> : <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 opacity-70" />;
                       })()}
                       <span className="text-xs sm:text-sm">{new Date(resource.created_at).toLocaleDateString()}</span>
@@ -401,10 +393,3 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
     </Tabs>
   );
 }
-
-// Add a simple toast component if not already globally available
-// For simplicity, using a basic console log for now, replace with actual toast library.
-const toast = {
-    success: (message: string) => console.log(`SUCCESS: ${message}`),
-    error: (message: string) => console.error(`ERROR: ${message}`),
-};
