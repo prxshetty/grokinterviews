@@ -430,20 +430,49 @@ class TopicDataService {
         if (dbTopics && dbTopics.length > 0) {
           console.log('TopicDataService.getAllTopicData - (Inner) Processing database topics');
           for (const topic of dbTopics) {
-            const currentTopicSlug = (topic as Topic & { slug?: string }).slug || slugify(topic.name);
+            // Enhanced logging for current topic iteration
+            const topicNameForSlug = (topic as Topic & { name?: string }).name;
+            const topicIdForLog = (topic as Topic & { id?: any }).id;
+            console.log(`TopicDataService.getAllTopicData - (Detail) Iteration start: Topic ID ${topicIdForLog}, Name: '${topicNameForSlug}'`);
+
+            let currentTopicSlug = slugify(topicNameForSlug);
+            console.log(`TopicDataService.getAllTopicData - (Detail) Calculated Initial Slug: '${currentTopicSlug}' for Topic ID ${topicIdForLog}`);
+
+            // Handle potential slug collisions by appending topic ID
+            if (allTopicsFromDB[currentTopicSlug]) {
+              const originalSlug = currentTopicSlug;
+              currentTopicSlug = `${currentTopicSlug}-${topicIdForLog}`;
+              console.warn(`TopicDataService.getAllTopicData - (Collision) Slug '${originalSlug}' already exists. Using new unique slug '${currentTopicSlug}' for Topic ID ${topicIdForLog}`);
+            }
+
             if (!currentTopicSlug) {
-              console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topic.id} has no slug or name, skipping.`);
+              console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topicIdForLog} has no valid slug (original name: '${topicNameForSlug}'), skipping.`);
               continue;
             }
-            console.log(`TopicDataService.getAllTopicData - (Inner) Processing topic: ${currentTopicSlug}`);
-            allTopicsFromDB[currentTopicSlug] = {
-              label: topic.name,
-              subtopics: {}
-            };
+            // Existing log, ensure topic.id is valid for logging
+            console.log(`TopicDataService.getAllTopicData - (Inner) Processing topic: ${currentTopicSlug} (ID: ${topicIdForLog})`);
 
             try {
-              console.log(`TopicDataService.getAllTopicData - (Inner) Fetching categories for topic: ${currentTopicSlug} (ID: ${topic.id})`);
-              const categories = await DatabaseService.getCategoriesByTopic(topic.id);
+              const currentLabel = (topic as Topic & { name?: string }).name;
+              console.log(`TopicDataService.getAllTopicData - (Detail) Attempting to assign to allTopicsFromDB for slug: ${currentTopicSlug}. Label will be: '${currentLabel}'`);
+              if (typeof currentLabel !== 'string') {
+                console.error(`TopicDataService.getAllTopicData - (CRITICAL) Topic ID ${topicIdForLog} has a non-string name: `, currentLabel, `(Type: ${typeof currentLabel})`);
+                // Decide on handling: skip, use a placeholder, or let it assign if String() handles it.
+                // For now, we'll proceed but this log is crucial.
+              }
+              allTopicsFromDB[currentTopicSlug] = {
+                label: String(currentLabel), // Use String() for safety, though DB should enforce TEXT
+                subtopics: {}
+              };
+              console.log(`TopicDataService.getAllTopicData - (Detail) Successfully assigned to allTopicsFromDB for slug: ${currentTopicSlug}`);
+            } catch (assignmentError) {
+              console.error(`TopicDataService.getAllTopicData - (CRITICAL) Error during assignment to allTopicsFromDB for topic ID ${topicIdForLog}, slug ${currentTopicSlug}:`, assignmentError);
+              continue; // Skip this problematic topic
+            }
+
+            try {
+              console.log(`TopicDataService.getAllTopicData - (Inner) Fetching categories for topic: ${currentTopicSlug} (ID: ${topicIdForLog})`);
+              const categories = await DatabaseService.getCategoriesByTopic(topicIdForLog); // Ensure topicIdForLog is the correct ID type
               console.log(`TopicDataService.getAllTopicData - (Inner) Got ${categories.length} categories for topic: ${currentTopicSlug}`);
 
               for (const category of categories) {
@@ -460,7 +489,7 @@ class TopicDataService {
                 };
               }
             } catch (categoryError) {
-              console.error(`Error fetching categories for topic ${currentTopicSlug} (ID: ${topic.id}):`, categoryError);
+              console.error(`Error fetching categories for topic ${currentTopicSlug} (ID: ${topicIdForLog}):`, categoryError);
             }
           }
         } else {

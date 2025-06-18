@@ -85,7 +85,7 @@ export default function TopicDataProvider({
     let isMounted = true;
     const mountedChecker = () => isMounted; // Closure to check if component is still mounted
 
-    console.log(`TopicDataProvider - useEffect: isLoading: ${isLoading}, initialDataProvided: ${Object.keys(initialTopicData).length > 0}`);
+    console.log(`TopicDataProvider - useEffect: isLoading: ${isLoading}`);
 
     // If not currently loading, it means data is either present from initial props,
     // or a previous load (cache/fetch) has completed.
@@ -134,9 +134,10 @@ export default function TopicDataProvider({
     return () => {
       isMounted = false;
     };
-  }, [isLoading, performFetch]); // REMOVED initialTopicData from dependencies.
-                                // The effect's logic is gated by 'isLoading'.
-                                // initialTopicData's influence is captured by the initial value of 'isLoading' state.
+  }, [isLoading, performFetch]);
+    // The effect's logic is primarily gated by 'isLoading'.
+    // initialTopicData is no longer used directly in this effect.
+    // Its influence on the initial 'isLoading' state is handled by the useState initializer for isLoading.
 
   return (
     <TopicDataContext.Provider value={{ topicData, isLoading, error, refetchData }}>
