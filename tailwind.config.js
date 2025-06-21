@@ -29,94 +29,83 @@ module.exports = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
       boxShadow: {
         'card': '0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)',
       },
       animation: {
-        'spin-slow': 'spin 60s linear infinite',
         'scroll-up': 'scroll-up 30s linear infinite',
         'scroll-smooth': 'scroll-smooth 30s linear infinite',
         'fadeIn': 'fadeIn 0.3s ease-out forwards',
         'fadeOut': 'fadeOut 0.3s ease-out forwards',
-        'slideRight': 'slideRight 0.3s ease-out forwards',
-        'slideLeft': 'slideLeft 0.3s ease-out forwards',
+        'slide-right': 'slideRight 0.3s ease-out forwards',
+        'slide-left': 'slideLeft 0.3s ease-out forwards',
         'pulse-slow': 'pulse 3s ease-in-out infinite',
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        'spin-slow': 'spin 60s linear infinite',
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'shrink': 'shrink 5s linear forwards',
       },
       keyframes: {
-         spin: {
-           '0%': { transform: 'rotate(0deg)' },
-           '100%': { transform: 'rotate(360deg)' },
-         },
-         pulse: {
-           '0%, 100%': { opacity: 1 },
-           '50%': { opacity: 0.7 },
-         },
-         'scroll-up': {
-           '0%': { transform: 'translateY(0)' },
-           '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
-         },
-
-         'scroll-smooth': {
-           '0%': { transform: 'translateX(0)' },
-           '100%': { transform: 'translateX(calc(-50%))' },
-         },
-         fadeIn: {
-           '0%': { opacity: '0', transform: 'translateY(10px)' },
-           '100%': { opacity: '1', transform: 'translateY(0)' },
-         },
-         fadeOut: {
-           '0%': { opacity: '1', transform: 'translateY(0)' },
-           '100%': { opacity: '0', transform: 'translateY(10px)' },
-         },
-         slideRight: {
-           '0%': { transform: 'translateX(-20px)', opacity: '0' },
-           '100%': { transform: 'translateX(0)', opacity: '1' },
-         },
-         slideLeft: {
-           '0%': { transform: 'translateX(20px)', opacity: '0' },
-           '100%': { transform: 'translateX(0)', opacity: '1' },
-         },
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
+        'scroll-up': {
+          '0%': { transform: 'translateY(0)' },
+          '100%': { transform: 'translateY(calc(-1 * var(--total-height) / 2))' },
         },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+        'scroll-smooth': {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(calc(-50%))' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeOut: {
+          '0%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(10px)' },
+        },
+        slideRight: {
+          '0%': { transform: 'translateX(-20px)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        slideLeft: {
+          '0%': { transform: 'translateX(20px)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        pulse: {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.7 },
+        },
+        spin: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+        shrink: {
+          from: { width: '100%' },
+          to: { width: '0%' },
         },
       },
       typography: (theme) => ({
         DEFAULT: {
           css: {
             color: theme('colors.gray.800'),
+            maxWidth: 'none',
             a: {
               color: theme('colors.gray.700'),
-              '&:hover': {
-                color: theme('colors.gray.900'),
-              },
+              '&:hover': { color: theme('colors.gray.900') },
             },
-            h1: {
-              color: theme('colors.gray.900'),
-              fontWeight: '700',
-              fontSize: '1.75rem',
-              marginBottom: '0.75em',
-            },
-            h2: {
+            'h1, h2, h3, h4': {
               color: theme('colors.gray.900'),
               fontWeight: '600',
-              fontSize: '1.5rem',
-              marginTop: '1.5em',
-              marginBottom: '0.75em',
-            },
-            h3: {
-              color: theme('colors.gray.800'),
-              fontWeight: '600',
-              fontSize: '1.25rem',
-              marginTop: '1.25em',
-              marginBottom: '0.6em',
             },
             code: {
               backgroundColor: '#f0f0f0',
@@ -126,12 +115,8 @@ module.exports = {
               color: '#000000',
               fontWeight: '500',
             },
-            'code::before': {
-              content: '""',
-            },
-            'code::after': {
-              content: '""',
-            },
+            'code::before': { content: '""' },
+            'code::after': { content: '""' },
             pre: {
               backgroundColor: '#f0f0f0',
               borderRadius: '0.375rem',
@@ -146,61 +131,6 @@ module.exports = {
               borderRadius: '0',
               fontWeight: 'normal',
               color: '#000000',
-              display: 'block',
-              lineHeight: '1.5',
-            },
-            img: {
-              marginTop: '1rem',
-              marginBottom: '1rem',
-              borderRadius: '0.375rem',
-            },
-            p: {
-              marginTop: '0.75rem',
-              marginBottom: '0.75rem',
-              lineHeight: '1.6',
-              fontSize: '1rem',
-            },
-            ul: {
-              listStyleType: 'disc',
-              marginTop: '0.75rem',
-              marginBottom: '0.75rem',
-              paddingLeft: '1.5rem',
-            },
-            ol: {
-              listStyleType: 'decimal',
-              marginTop: '0.75rem',
-              marginBottom: '0.75rem',
-              paddingLeft: '1.5rem',
-            },
-            'ul li, ol li': {
-              marginTop: '0.375rem',
-              marginBottom: '0.375rem',
-            },
-            blockquote: {
-              fontStyle: 'italic',
-              borderLeftColor: theme('colors.gray.300'),
-              backgroundColor: theme('colors.gray.50'),
-              padding: '0.75rem 1.25rem',
-              borderLeftWidth: '4px',
-              marginLeft: 0,
-              marginRight: 0,
-            },
-            table: {
-              width: '100%',
-              textAlign: 'left',
-              marginTop: '1.5rem',
-              marginBottom: '1.5rem',
-            },
-            th: {
-              backgroundColor: theme('colors.gray.50'),
-              padding: '0.5rem 1rem',
-              borderWidth: '1px',
-              borderColor: theme('colors.gray.200'),
-            },
-            td: {
-              padding: '0.5rem 1rem',
-              borderWidth: '1px',
-              borderColor: theme('colors.gray.200'),
             },
           },
         },
@@ -209,31 +139,9 @@ module.exports = {
             color: theme('colors.gray.200'),
             a: {
               color: theme('colors.gray.300'),
-              '&:hover': {
-                color: theme('colors.white'),
-              },
+              '&:hover': { color: theme('colors.white') },
             },
-            h1: {
-              color: theme('colors.white'),
-              fontSize: '1.75rem',
-              marginBottom: '0.75em',
-            },
-            h2: {
-              color: theme('colors.white'),
-              fontSize: '1.5rem',
-              marginTop: '1.5em',
-              marginBottom: '0.75em',
-            },
-            h3: {
-              color: theme('colors.white'),
-              fontSize: '1.25rem',
-              marginTop: '1.25em',
-              marginBottom: '0.6em',
-            },
-            h4: {
-              color: theme('colors.white'),
-            },
-            strong: {
+            'h1, h2, h3, h4': {
               color: theme('colors.white'),
             },
             code: {
@@ -252,23 +160,9 @@ module.exports = {
               color: '#f0f0f0',
               fontWeight: 'normal',
             },
-            blockquote: {
-              color: theme('colors.gray.300'),
-              borderLeftColor: theme('colors.gray.600'),
-              backgroundColor: theme('colors.gray.800'),
-              padding: '0.75rem 1.25rem',
-              borderLeftWidth: '4px',
-              marginLeft: 0,
-              marginRight: 0,
-            },
           },
         },
       }),
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-      },
     },
   },
   plugins: [
