@@ -246,15 +246,14 @@ class TopicDataService {
               console.log(`Fallback: Found category by exact ID match in cache: ${categoryId}`);
             } else {
               // Try to find by partial match or label
-              // This logic might need further review as per Phase 1.2 re-evaluation
               for (const subtopicKey in topic.subtopics) {
                 const subtopic = topic.subtopics[subtopicKey];
-                if (
-                  subtopic.id === categoryId || // Check actual id field if present
+                if (subtopic && (
+                  subtopic.id === categoryId ||
                   slugify(subtopic.label) === categoryId ||
                   subtopic.label.toLowerCase().includes(categoryId.toLowerCase()) ||
                   categoryId.toLowerCase().includes(subtopic.label.toLowerCase())
-                ) {
+                )) {
                   result = subtopic;
                   console.log(`Fallback: Found category by fuzzy match in cache: ${subtopic.label}`);
                   break;
@@ -265,24 +264,20 @@ class TopicDataService {
         }
 
         // Special case for 'data-preprocessing-and-exploration' and 'naive-bayes' (example)
-        // This specific hardcoding should be reviewed if it's due to old markdown structures
         if (!result || Object.keys(result.subtopics || {}).length === 0) {
           if (categoryId === 'data-preprocessing-and-exploration') {
-            // Attempt to find a category that looks like "Data Preprocessing"
-            // This is a placeholder for the kind of logic that might exist
             console.warn('Attempting special fallback for data-preprocessing-and-exploration');
-            // ... (keep existing special logic if any, but ensure it doesn't rely on markdown data)
           } else if (categoryId === 'naive-bayes' && this.cache.topics) {
             console.warn('Attempting special fallback for naive-bayes');
-            // This is complex logic that was in the original file, preserved for now.
-            // It searches through all topics and their subtopics for "Naive Bayes".
-            // Needs careful review in Phase 1.2 "Subsequent Re-evaluation".
             const findNaiveBayes = (node: TopicItem): TopicItem | null => {
               if (node.label === 'Naive Bayes') return node;
               if (node.subtopics) {
                 for (const key in node.subtopics) {
-                  const found = findNaiveBayes(node.subtopics[key]);
-                  if (found) return found;
+                  const subNode = node.subtopics[key];
+                  if (subNode) { // Check if subNode exists before passing
+                    const found = findNaiveBayes(subNode);
+                    if (found) return found;
+                  }
                 }
               }
               return null;
@@ -290,12 +285,15 @@ class TopicDataService {
 
             for (const topicKey in this.cache.topics) {
               const topic = this.cache.topics[topicKey];
-              if (topic && topic.subtopics) { // Ensure topic and topic.subtopics are not null
+              if (topic && topic.subtopics) {
                 for (const subtopicKey in topic.subtopics) {
-                  const found = findNaiveBayes(topic.subtopics[subtopicKey]);
-                  if (found) {
-                    result = found;
-                    break;
+                  const subNode = topic.subtopics[subtopicKey];
+                  if (subNode) { // Check if subNode exists before passing
+                    const found = findNaiveBayes(subNode);
+                    if (found) {
+                      result = found;
+                      break;
+                    }
                   }
                 }
               }
@@ -397,9 +395,10 @@ class TopicDataService {
    */
   async getAllTopicData(): Promise<TopicTree> {
     console.log('TopicDataService.getAllTopicData - Called');
+
     // Try to get from cache first
     if (this.cache.topics) {
-      console.log('TopicDataService.getAllTopicData - Using cached data');
+      console.log('TopicDataService.getAllTopicData - Using cached data (this.cache.topics)');
       return this.cache.topics;
     }
 
@@ -409,114 +408,78 @@ class TopicDataService {
       return this.ongoingGetAllTopicDataFetch;
     }
 
-    console.log('TopicDataService.getAllTopicData - Starting new fetch');
+    console.log('TopicDataService.getAllTopicData - Starting new fetch using optimized method');
     this.ongoingGetAllTopicDataFetch = (async (): Promise<TopicTree> => {
       try {
-        const allTopicsFromDB: TopicTree = {};
-        let dbTopics: Topic[] = [];
+        const topicsWithCategories = await DatabaseService.fetchAllTopicsWithDetailedCategories();
+        console.log('TopicDataService.getAllTopicData - Fetched from DatabaseService:', topicsWithCategories.length, 'topics with categories');
 
-        // 1. Get all topics from the database
-        try {
-          console.log('TopicDataService.getAllTopicData - (Inner) Fetching topics from database');
-          dbTopics = await DatabaseService.getTopics();
-          console.log('TopicDataService.getAllTopicData - (Inner) Got topics from database:', dbTopics);
-        } catch (dbError) {
-          console.error('Error fetching all topics from database:', dbError);
-          this.cache.topics = {}; // Key fix: Cache empty on this critical failure
-          return {}; // Resolve promise with empty
+        if (!topicsWithCategories || topicsWithCategories.length === 0) {
+          console.warn('TopicDataService.getAllTopicData - No topics returned from DatabaseService.fetchAllTopicsWithDetailedCategories');
+          this.cache.topics = {}; // Cache empty object
+          return {};
         }
 
-        // 2. For each database topic, get its categories and structure the TopicTree
-        if (dbTopics && dbTopics.length > 0) {
-          console.log('TopicDataService.getAllTopicData - (Inner) Processing database topics');
-          for (const topic of dbTopics) {
-            // Enhanced logging for current topic iteration
-            const topicNameForSlug = (topic as Topic & { name?: string }).name;
-            const topicIdForLog = (topic as Topic & { id?: any }).id;
-            console.log(`TopicDataService.getAllTopicData - (Detail) Iteration start: Topic ID ${topicIdForLog}, Name: '${topicNameForSlug}'`);
+        const newTopicTree: TopicTree = {};
 
-            let currentTopicSlug = slugify(topicNameForSlug);
-            console.log(`TopicDataService.getAllTopicData - (Detail) Calculated Initial Slug: '${currentTopicSlug}' for Topic ID ${topicIdForLog}`);
+        for (const topic of topicsWithCategories) {
+          const topicNameForSlug = topic.name;
+          const topicIdForLog = topic.id;
+          let currentTopicSlug = slugify(topicNameForSlug);
 
-            // Handle potential slug collisions by appending topic ID
-            if (allTopicsFromDB[currentTopicSlug]) {
-              const originalSlug = currentTopicSlug;
-              currentTopicSlug = `${currentTopicSlug}-${topicIdForLog}`;
-              console.warn(`TopicDataService.getAllTopicData - (Collision) Slug '${originalSlug}' already exists. Using new unique slug '${currentTopicSlug}' for Topic ID ${topicIdForLog}`);
-            }
+          if (newTopicTree[currentTopicSlug]) {
+            const originalSlug = currentTopicSlug;
+            currentTopicSlug = `${currentTopicSlug}-${topicIdForLog}`;
+            console.warn(`TopicDataService.getAllTopicData - (Collision) Slug '${originalSlug}' already exists. Using new unique slug '${currentTopicSlug}' for Topic ID ${topicIdForLog}`);
+          }
 
-            if (!currentTopicSlug) {
-              console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topicIdForLog} has no valid slug (original name: '${topicNameForSlug}'), skipping.`);
-              continue;
-            }
-            // Existing log, ensure topic.id is valid for logging
-            console.log(`TopicDataService.getAllTopicData - (Inner) Processing topic: ${currentTopicSlug} (ID: ${topicIdForLog})`);
+          if (!currentTopicSlug) {
+            console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topicIdForLog} has no valid slug (original name: '${topicNameForSlug}'), skipping.`);
+            continue;
+          }
 
-            try {
-              const currentLabel = (topic as Topic & { name?: string }).name;
-              console.log(`TopicDataService.getAllTopicData - (Detail) Attempting to assign to allTopicsFromDB for slug: ${currentTopicSlug}. Label will be: '${currentLabel}'`);
-              if (typeof currentLabel !== 'string') {
-                console.error(`TopicDataService.getAllTopicData - (CRITICAL) Topic ID ${topicIdForLog} has a non-string name: `, currentLabel, `(Type: ${typeof currentLabel})`);
-                // Decide on handling: skip, use a placeholder, or let it assign if String() handles it.
-                // For now, we'll proceed but this log is crucial.
+          newTopicTree[currentTopicSlug] = {
+            label: String(topicNameForSlug),
+            subtopics: {}
+          };
+
+          if (topic.categories && topic.categories.length > 0) {
+            for (const category of topic.categories) {
+              const categorySlug = slugify(category.name);
+              if (!categorySlug) {
+                console.warn(`TopicDataService.getAllTopicData - Category under topic ${currentTopicSlug} has no name, skipping.`);
+                continue;
               }
-              allTopicsFromDB[currentTopicSlug] = {
-                label: String(currentLabel), // Use String() for safety, though DB should enforce TEXT
-                subtopics: {}
-              };
-              console.log(`TopicDataService.getAllTopicData - (Detail) Successfully assigned to allTopicsFromDB for slug: ${currentTopicSlug}`);
-            } catch (assignmentError) {
-              console.error(`TopicDataService.getAllTopicData - (CRITICAL) Error during assignment to allTopicsFromDB for topic ID ${topicIdForLog}, slug ${currentTopicSlug}:`, assignmentError);
-              continue; // Skip this problematic topic
-            }
-
-            try {
-              console.log(`TopicDataService.getAllTopicData - (Inner) Fetching categories for topic: ${currentTopicSlug} (ID: ${topicIdForLog})`);
-              const categories = await DatabaseService.getCategoriesByTopic(topicIdForLog); // Ensure topicIdForLog is the correct ID type
-              console.log(`TopicDataService.getAllTopicData - (Inner) Got ${categories.length} categories for topic: ${currentTopicSlug}`);
-
-              for (const category of categories) {
-                const categorySlug = slugify(category.name);
-                if (!categorySlug) {
-                  console.warn(`TopicDataService.getAllTopicData - (Inner) Category under topic ${currentTopicSlug} has no name, skipping.`);
-                  continue;
-                }
-                console.log(`TopicDataService.getAllTopicData - (Inner) Adding category: ${categorySlug} to topic ${currentTopicSlug}`);
-                allTopicsFromDB[currentTopicSlug].subtopics[categorySlug] = {
-                  id: categorySlug,
+              const topicEntry = newTopicTree[currentTopicSlug];
+              if (topicEntry) {
+                topicEntry.subtopics[categorySlug] = {
+                  id: categorySlug, // This is the category's slug
                   label: category.name,
+                  categoryId: category.id, // Store original category ID
+                  // subtopics here would represent questions or further nested items if your structure supports it
+                  // For now, aligning with previous structure, it's an empty object, 
+                  // actual questions are fetched later by getCategoryDetails
                   subtopics: {}
                 };
               }
-            } catch (categoryError) {
-              console.error(`Error fetching categories for topic ${currentTopicSlug} (ID: ${topicIdForLog}):`, categoryError);
             }
           }
-        } else {
-          console.log('TopicDataService.getAllTopicData - (Inner) No topics found in the database.');
-          this.cache.topics = {}; // Cache empty if no topics found
-          return {}; // Resolve promise with empty
         }
 
-        console.log('TopicDataService.getAllTopicData - (Inner) DB processing complete, topics processed:', Object.keys(allTopicsFromDB).length);
-        this.cache.topics = allTopicsFromDB;
-        return allTopicsFromDB;
+        this.cache.topics = newTopicTree;
+        console.log('TopicDataService.getAllTopicData - Successfully processed and cached data.');
+        return newTopicTree;
 
       } catch (error) {
-        console.error('Error processing all topic data within IIFE:', error);
-        // Ensure cache is set if not already by a specific error handler and it is still null
-        if (this.cache.topics === null) {
-            this.cache.topics = {};
-        }
-        return this.cache.topics; // Return current cache state (likely {} now)
+        console.error('Error in TopicDataService.getAllTopicData during new fetch logic:', error);
+        this.cache.topics = {}; // Cache empty on error
+        return {}; // Resolve promise with empty on error
       } finally {
-        this.ongoingGetAllTopicDataFetch = null;
-        console.log('TopicDataService.getAllTopicData - Fetch operation concluded. Ongoing fetch cleared.');
+        this.ongoingGetAllTopicDataFetch = null; // Clear the ongoing fetch promise
       }
     })();
-    
+
     return this.ongoingGetAllTopicDataFetch;
-    // Removed the outer try-catch as the IIFE handles its own errors and sets the cache.
   }
 
   /**

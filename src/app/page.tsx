@@ -30,7 +30,7 @@ export default async function Home() {
               Explore
             </p>
             <div className="flex flex-wrap gap-1">
-              {['AI', 'ML', 'Web Dev','System Design', 'DSA'].map((domain) => (
+              {['ML', 'Web Dev','System Design', 'DSA'].map((domain) => (
                 <Link
                   key={domain}
                   href={`/topics/${domain.toLowerCase().replace(' ', '-')}`}

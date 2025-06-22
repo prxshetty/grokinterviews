@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { LogOut, Moon, Sun, User, Menu } from 'lucide-react';
+import { type User } from '@supabase/supabase-js';
+import { LogOut, Moon, Sun, User as UserIcon, Menu } from 'lucide-react';
 import {
   Button,
   DropdownMenu,
@@ -22,33 +23,24 @@ import {
   SheetHeader,
   SheetTitle
 } from '@/components/ui';
+import { MAIN_NAV_TOPICS, type NavTopic } from '@/config/navigation.constants';
+import type { Tables } from '@/types/database.types'; // Import Tables
 
-// Define UserProfile interface inline
-interface UserProfile {
-  id: string;
-  username?: string | null;
-  full_name?: string | null;
-  avatar_url?: string | null;
-  // email is usually part of the Supabase user object, not directly in profiles table unless duplicated
-}
-
-const mainTopics = [
-  { id: 'ml', label: 'Machine Learning', abbreviation: 'ML' },
-  { id: 'ai', label: 'Artificial Intelligence', abbreviation: 'AI' },
-  { id: 'webdev', label: 'Web Development', abbreviation: 'Web Development' },
-  { id: 'sdesign', label: 'System Design', abbreviation: 'System Design' },
-  { id: 'dsa', label: 'Data Structures & Algorithms', abbreviation: 'DSA' },
-];
+// Define UserProfile using the actual database type
+type UserProfile = Tables<'profiles'>;
 
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+
+  // Filter out the AI domain from the navigation topics
+  const displayedNavTopics = MAIN_NAV_TOPICS.filter(topic => topic.id !== 'ai');
 
   const isTopicPage = pathname.startsWith('/topics');
   const isTopicDetailPage = isTopicPage && pathname !== '/topics';
@@ -69,7 +61,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     setMounted(true);
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
+  }, []);
 
+  useEffect(() => {
     const checkUser = async () => {
       const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
       if (userError) {
@@ -100,7 +94,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     };
 
     checkUser();
+  }, [supabase]);
 
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       if (session?.user) {
@@ -208,7 +204,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
               className={`flex items-center gap-x-4 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out sm:gap-x-6 ${isTopicPage ? 'max-w-screen-md opacity-100' : 'max-w-0 opacity-0'}`}
             >
               <div className="h-6 border-l border-gray-300 dark:border-gray-700" />
-              {mainTopics.map(topic => (
+              {displayedNavTopics.map((topic: NavTopic) => (
                 <Link
                   key={topic.id}
                   href={`/topics/${topic.id}`}
@@ -255,7 +251,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                     className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1"
                   >
                     <span>
-                      {profile?.full_name || profile?.username || user.email.split('@')[0]}
+                      {profile?.full_name || profile?.username || user?.email?.split('@')[0] || 'User'}
                     </span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -271,13 +267,13 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   <DropdownMenuLabel className="text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10">
                     <div>
                       <p className="font-medium">{profile?.full_name || 'User'}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-300 truncate font-normal">{user.email}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-300 truncate font-normal">{user?.email || 'No email provided'}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
                   <DropdownMenuGroup>
                     <DropdownMenuItem onClick={() => { router.push('/account'); setIsMobileMenuOpen(false); }} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       <span>Account</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={toggleDarkMode} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
@@ -347,7 +343,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   {isTopicPage && (
                      <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
                        <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Switch Subject Area</p>
-                      {mainTopics.map(topic => (
+                      {displayedNavTopics.map((topic: NavTopic) => (
                         <SheetClose asChild key={topic.id}>
                           <Link
                             href={`/topics/${topic.id}`}
@@ -392,12 +388,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                          }
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{profile?.full_name || profile?.username || 'User'}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'No email provided'}</p>
                         </div>
                       </div>
                       <SheetClose asChild>
                         <Button variant="ghost" onClick={() => { router.push('/account'); setIsMobileMenuOpen(false);}} className="w-full justify-start text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white">
-                          <User className="mr-2 h-4 w-4" /> Account
+                          <UserIcon className="mr-2 h-4 w-4" /> Account
                         </Button>
                       </SheetClose>
                       <Button variant="ghost" onClick={toggleDarkMode} className="w-full justify-start text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white">

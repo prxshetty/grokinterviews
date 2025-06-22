@@ -101,7 +101,10 @@ export async function GET(request: NextRequest) {
 
         if (categoriesError) {
           console.error(`Error fetching categories for topic ${topicId}:`, categoriesError);
-          throw categoriesError;
+          return NextResponse.json(
+            { error: 'Failed to load categories for topic from database', details: categoriesError.message || String(categoriesError) },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json(categories || [], { // Return Category[] directly
