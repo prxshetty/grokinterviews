@@ -3,6 +3,8 @@ topics/*
 .cursor
 PROJECT_WIDE_OPTIMIZATION_PLAN.md
 TODOIST.md
+NOTES.md
+REFACTOR_TOPIC_SERVICES.md
 # dependencies
 /node_modules
 /.pnp

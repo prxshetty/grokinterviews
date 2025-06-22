@@ -1,7 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-// Create a version that doesn't use cookies at all for API routes
+// Creates a Supabase client for server-side operations (API routes, RSCs),
+// using next/headers to manage cookies for authentication.
 export async function createClient() {
   const cookieStore = await cookies()
 

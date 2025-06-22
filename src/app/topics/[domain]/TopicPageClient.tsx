@@ -5,7 +5,8 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   TopicCategoryGrid,
   TopicDataProvider,
-  ContentDisplay
+  ContentDisplay,
+  useTopicData,
 } from '@/components/topics-ui';
 import ProgressSaver from '@/components/utils/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
@@ -31,6 +32,7 @@ interface TopicPageClientProps {
 
 function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const [domain, setDomain] = useState<string>(initialDomain);
+  const { refetchData } = useTopicData();
 
   // Sync internal domain state with initialDomain prop
   useEffect(() => {
@@ -73,7 +75,10 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const [categoryProgress, setCategoryProgress] = useState<CategoryProgress | null>(null);
 
   // Pagination states
-  const [currentPage, setCurrentPage] = useState<number>(pageParam ? parseInt(pageParam) : 1);
+  const [currentPage, setCurrentPage] = useState<number>(() => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? parseInt(pageParam, 10) : 1;
+  });
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalResults, setTotalResults] = useState<number>(0);
 
@@ -81,11 +86,14 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const [difficultyQuestions, setDifficultyQuestions] = useState<QuestionType[]>([]);
 
   // State for highlighted question (from URL)
-  const [highlightedQuestionId, setHighlightedQuestionId] = useState<number | undefined>(
-    questionIdParam ? parseInt(questionIdParam) : undefined
-  );
-
-  // const { topicData } = useTopicData(); // This hook might need context setup
+  const [highlightedQuestionId, setHighlightedQuestionId] = useState<number | undefined>(() => {
+    const qIdParam = searchParams.get('questionId');
+    if (qIdParam) {
+      const num = parseInt(qIdParam, 10);
+      return !isNaN(num) ? num : undefined;
+    }
+    return undefined;
+  });
 
   const router = useRouter();
   const pathname = usePathname();
@@ -125,8 +133,9 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // Update currentPage when pageParam changes (e.g., from hook resetting page on filter change)
   useEffect(() => {
-    setCurrentPage(pageParam ? parseInt(pageParam) : 1);
-  }, [pageParam]);
+    const pageParam = searchParams.get('page');
+    setCurrentPage(pageParam ? parseInt(pageParam, 10) : 1);
+  }, [searchParams]);
 
   // Fetch difficulty questions when selectedDifficulty or currentPage changes
   useEffect(() => {
@@ -380,6 +389,10 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
       const loadData = async () => {
         setIsLoading(prev => ({ ...prev, categories: true, sections: true }));
         
+        // Refetch global topic data to ensure it's up-to-date
+        // This will clear caches in TopicDataProvider and TopicDataService
+        await refetchData(); 
+
         await loadTopicCategories(domain);
         await preloadSubtopicProgressForDomain(domain);
 
@@ -416,17 +429,17 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // Handle highlighted question ID from URL
   useEffect(() => {
-    const qId = searchParams.get('questionId');
-    setHighlightedQuestionId(qId ? parseInt(qId) : undefined);
-    if (qId) {
-      // If a questionId is in the URL, we might need to ensure the relevant category is selected.
-      // This logic can be complex: find which category the question belongs to, then select it.
-      // For now, just setting the highlight.
-      // Also, clear keyword/difficulty filters if a direct question link is followed?
-      // handleKeywordChange(null);
-      // handleDifficultyChange(null);
+    const qIdParam = searchParams.get('questionId');
+    if (qIdParam) {
+      const num = parseInt(qIdParam, 10);
+      setHighlightedQuestionId(!isNaN(num) ? num : undefined);
+    } else {
+      setHighlightedQuestionId(undefined);
     }
-  }, [searchParams/*, handleKeywordChange, handleDifficultyChange*/]);
+    // If a questionId is in the URL, we might need to ensure the relevant category is selected.
+    // This logic can be complex: find which category the question belongs to, then select it.
+    // For now, just setting the highlight.
+  }, [searchParams]);
 
   // Logic for when no specific view (category, difficulty) is active
   const showTopicGrid = !selectedCategory && !selectedDifficulty;
@@ -473,7 +486,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
                     totalPages={totalPages}
                     totalResults={totalResults}
                     onPageChange={handlePageChange}
-                    highlightedQuestionId={highlightedQuestionId}
+                    {...(highlightedQuestionId !== undefined && { highlightedQuestionId: highlightedQuestionId })}
                     clearDifficultyFilter={clearDifficultyFilter}
                     onDifficultyChange={handleDifficultyChange}
                     onBackToMainCategories={handleBackToMainCategories}

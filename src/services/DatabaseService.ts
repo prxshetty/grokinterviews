@@ -18,10 +18,12 @@ class DatabaseService {
     topics: Topic[] | null;
     categoriesByTopic: Record<string, Category[]>;
     questionsByCategory: Record<string, Question[]>;
+    allDetailedTopics: TopicWithCategories[] | null;
     lastFetched: {
       topics: number;
       categories: Record<string, number>;
       questions: Record<string, number>;
+      allDetailedTopics: number;
     };
   };
 
@@ -33,10 +35,12 @@ class DatabaseService {
       topics: null,
       categoriesByTopic: {},
       questionsByCategory: {},
+      allDetailedTopics: null,
       lastFetched: {
         topics: 0,
         categories: {},
-        questions: {}
+        questions: {},
+        allDetailedTopics: 0,
       }
     };
   }
@@ -185,7 +189,7 @@ class DatabaseService {
               .select('id')
               .ilike('name', topicId.replace(/-/g, ' '));
 
-            if (!error && data && data.length > 0) {
+            if (!error && data && data.length > 0 && data[0]) {
               topicIdValue = data[0].id;
             }
           } catch (nameError) {
@@ -456,7 +460,7 @@ class DatabaseService {
           .select('section_name')
           .eq('id', headerId);
 
-        if (topicsError || !topics || topics.length === 0) {
+        if (topicsError || !topics || topics.length === 0 || !topics[0]) {
           console.error(`Error fetching section name for header ID ${headerId}:`, topicsError);
           return null;
         }
@@ -700,12 +704,74 @@ class DatabaseService {
       topics: null,
       categoriesByTopic: {},
       questionsByCategory: {},
+      allDetailedTopics: null,
       lastFetched: {
         topics: 0,
         categories: {},
-        questions: {}
+        questions: {},
+        allDetailedTopics: 0,
       }
     };
+  }
+
+  /**
+   * Fetches all topics with their associated categories directly.
+   * Uses a new API route if on client-side, or direct Supabase query if on server-side.
+   */
+  async fetchAllTopicsWithDetailedCategories(): Promise<TopicWithCategories[]> {
+    // Check cache first
+    if (
+      this.cache.allDetailedTopics &&
+      this.cache.lastFetched && // Explicitly check if lastFetched object exists
+      typeof this.cache.lastFetched.allDetailedTopics === 'number' && // Check if property is a number
+      this.cache.lastFetched.allDetailedTopics > 0 && // Ensure timestamp is valid (not initial 0)
+      (Date.now() - this.cache.lastFetched.allDetailedTopics < this.CACHE_EXPIRY) // Check expiry
+    ) {
+      console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Using cached data');
+      return this.cache.allDetailedTopics;
+    }
+
+    if (isBrowser) {
+      console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Running in browser, using API /api/topics-detailed');
+      try {
+        const response = await fetch('/api/topics-detailed');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch detailed topics: ${response.statusText}`);
+        }
+        const topicsWithCategories: TopicWithCategories[] = await response.json();
+        console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Received data from API:', topicsWithCategories.length);
+        
+        this.cache.allDetailedTopics = topicsWithCategories;
+        this.cache.lastFetched!.allDetailedTopics = Date.now();
+
+        return topicsWithCategories;
+      } catch (error) {
+        console.error('Failed to fetch detailed topics via API:', error);
+        return [];
+      }
+    }
+
+    // Server-side direct database access
+    console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Running on server, direct Supabase query');
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('*, categories(*)')
+        .order('name', { ascending: true }); // Order topics by name
+
+      if (error) {
+        console.error('Error fetching topics with categories directly:', error);
+        throw error;
+      }
+      
+      this.cache.allDetailedTopics = (data as TopicWithCategories[]) || [];
+      this.cache.lastFetched!.allDetailedTopics = Date.now();
+
+      return (data as TopicWithCategories[]) || [];
+    } catch (error) {
+      console.error('Failed to fetch topics with categories directly:', error);
+      return [];
+    }
   }
 }
 
