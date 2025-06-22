@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
-import { useTopicData as _useTopicData } from '@/hooks';
 import { IconHover3D } from '@/components/ui';
-import _TopicDataService from '@/services/TopicDataService';
 import styles from './TopicCategoryGrid.module.css';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
 import { LoadingSpinner } from '@/components/ui';
@@ -61,7 +59,6 @@ function TopicCategoryGridComponent({
   const [itemsWithProgress, setItemsWithProgress] = useState<DisplayItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-  const [_isDarkMode, setIsDarkMode] = useState(false);
 
   // Memoize the base items to avoid recalculating on every render
   const baseItems = useMemo(() => {
@@ -97,23 +94,6 @@ function TopicCategoryGridComponent({
     }
   }, [onSelectItem, onSelectCategory, level, expandedItemId]);
 
-  // Check for dark mode on mount and when theme changes
-  useEffect(() => {
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    };
-    checkDarkMode(); // Initial check
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          checkDarkMode();
-        }
-      });
-    });
-    observer.observe(document.documentElement, { attributes: true });
-    return () => observer.disconnect();
-  }, []);
-
   // Define fetchProgress function
   const fetchProgress = useCallback(async (forceRefresh = false) => {
     // Use the memoized baseItems
@@ -121,9 +101,6 @@ function TopicCategoryGridComponent({
       setItemsWithProgress([]);
       return;
     }
-
-    // Log the level and domain for debugging
-    console.log(`TopicCategoryGrid - Fetching progress for ${baseItems.length} items at level: ${level}${domain ? `, domain: ${domain}` : ''}`);
 
     try {
       // Create a new array with progress data
@@ -138,10 +115,9 @@ function TopicCategoryGridComponent({
             // Fetch progress based on the level
             if (level === 'category' && isCategory && !isNaN(numericId)) {
               progress = await fetchCategoryProgress(numericId, forceRefresh);
-              console.log(`Progress for category ${item.label} (ID: ${item.id}):`, progress);
             } else if (level === 'topic' && isTopic && !isNaN(numericId)) {
-              if (subtopicProgress && subtopicProgress[item.id]) {
-                const sp = subtopicProgress[item.id];
+              const sp = subtopicProgress && subtopicProgress[item.id];
+              if (sp) {
                 progress = {
                   questionsCompleted: sp.questionsCompleted,
                   totalQuestions: sp.totalQuestions,
@@ -150,19 +126,16 @@ function TopicCategoryGridComponent({
               } else {
                 progress = await fetchSubtopicProgress(numericId, forceRefresh);
               }
-              console.log(`Progress for topic ${item.label} (ID: ${item.id}):`, progress);
             } else if (level === 'section' && domain) {
               const cacheKey = `section-progress-${domain}-${item.label}`;
               if (dataCache && dataCache[cacheKey]) {
                 progress = dataCache[cacheKey];
               } else {
                 try {
-                  console.log(`Fetching progress for section ${item.label} in domain ${domain}`);
                   const response = await fetch(`/api/user/progress/summary?domain=${domain}&section=${encodeURIComponent(item.label)}&entityType=section`);
                   
                   if (response.ok) {
                     const data = await response.json();
-                    console.log(`Section progress response for ${item.label}:`, data);
 
                     // For sections, use completed_children and total_children instead of questions
                     // since sections track subtopic completion, not individual question completion
@@ -172,21 +145,15 @@ function TopicCategoryGridComponent({
                       completionPercentage: data.completion_percentage || 0
                     };
 
-                    console.log(`Mapped section progress for ${item.label}:`, progress);
                   } else {
                     // If the API call failed, fall back to the section progress endpoint
-                    console.log(`Falling back to section progress endpoint for ${item.label}`);
                     progress = await fetchSectionProgress(domain, item.label, forceRefresh); // Pass forceRefresh here too
-                    console.log(`Fallback progress for section ${item.label} in domain ${domain}:`, progress);
                   }
                 } catch (error) {
-                  console.error(`Error fetching progress for section ${item.label}:`, error);
                    // Retry might be excessive here, just use fallback or default
-                  console.log(`Falling back to section progress endpoint due to error for ${item.label}`);
                   try {
                     progress = await fetchSectionProgress(domain, item.label, forceRefresh);
                   } catch (fallbackError) {
-                    console.error(`Fallback failed for section ${item.label}:`, fallbackError);
                     progress = {
                       questionsCompleted: 0,
                       totalQuestions: 0,
@@ -199,7 +166,6 @@ function TopicCategoryGridComponent({
                progress = await fetchCategoryProgress(numericId, forceRefresh);
             } else { // Default for non-numeric IDs or other cases
                 progress = { questionsCompleted: 0, totalQuestions: 0, completionPercentage: 0 };
-                console.warn(`Could not determine progress fetch method for item: ${item.label} (ID: ${item.id}, Level: ${level})`);
             }
 
             // If progress data is valid, add it to the item
@@ -209,7 +175,6 @@ function TopicCategoryGridComponent({
 
             return item; // Return item without progress if fetch failed or wasn't applicable
           } catch (error) {
-            console.error(`Failed to fetch progress for item ${item.id} (Level: ${level}):`, error);
             return item; // Return item without progress data on error
           }
         })
@@ -244,10 +209,8 @@ function TopicCategoryGridComponent({
         };
       });
 
-      console.log('Items with progress data:', validatedProgressData);
       setItemsWithProgress(validatedProgressData);
     } catch (error) {
-      console.error('Failed to process progress data:', error);
       // Set items with default progress on error
       setItemsWithProgress(baseItems.map(item => ({
           ...item,
@@ -259,14 +222,11 @@ function TopicCategoryGridComponent({
   // Define event handlers with useCallback at component level
   const handleQuestionCompleted = useCallback((event: Event) => {
     const customEvent = event as CustomEvent;
-    console.log('Question completed event detected:', customEvent.detail);
-    console.log(`Refreshing progress data due to question completion (Level: ${level})`);
     fetchProgress(true); // Force refresh on completion event
   }, [fetchProgress, level]);
 
   const handleQuestionCompletionFailed = useCallback((event: Event) => {
     const customEvent = event as CustomEvent;
-    console.log('Question completion failed event detected:', customEvent.detail);
     // Potentially force a refresh to revert optimistic changes in parent components
     fetchProgress(true);
   }, [fetchProgress]);
@@ -274,11 +234,9 @@ function TopicCategoryGridComponent({
   const handleSectionProgressUpdate = useCallback((event: Event) => {
     const customEvent = event as CustomEvent;
     const detail = customEvent.detail;
-    console.log('Section progress update event detected:', detail);
 
     // Only refresh if this grid is showing sections and the event matches the domain
     if (level === 'section' && domain && detail && detail.domain === domain) {
-      console.log(`Refreshing progress data for section ${detail.sectionName || 'unknown'} in domain ${detail.domain}`);
       fetchProgress(true); // Force refresh
     }
   }, [level, domain, fetchProgress]);

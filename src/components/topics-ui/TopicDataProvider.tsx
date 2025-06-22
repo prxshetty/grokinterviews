@@ -43,23 +43,19 @@ export default function TopicDataProvider({
 
   const performFetch = useCallback(async (mountedChecker: () => boolean) => {
     if (isFetchingRef.current) {
-      console.log('TopicDataProvider - performFetch: Already fetching.');
       return;
     }
     isFetchingRef.current = true;
     // isLoading should already be true if this function is called by the effect.
 
-    console.log('TopicDataProvider - performFetch: Starting API call...');
     try {
       const data = await TopicDataService.getAllTopicData();
       if (mountedChecker()) {
-        console.log('TopicDataProvider - performFetch: Fetched data from API:', data);
         setTopicData(data);
         localStorage.setItem(TOPIC_DATA_CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
         setError(null); // Clear any previous error on successful fetch
       }
     } catch (err) {
-      console.error('Error fetching topic data from API:', err);
       if (mountedChecker()) {
         setError('Failed to load topic data from API.');
       }
@@ -72,7 +68,6 @@ export default function TopicDataProvider({
   }, [setTopicData, setIsLoading, setError]); // Dependencies for the fetch operation itself
 
   const refetchData = useCallback(async () => {
-    console.log('TopicDataProvider - refetchData: Triggered');
     TopicDataService.clearCache(); // Clear any in-memory cache in the service
     localStorage.removeItem(TOPIC_DATA_CACHE_KEY); // Clear local storage cache
     
@@ -85,12 +80,9 @@ export default function TopicDataProvider({
     let isMounted = true;
     const mountedChecker = () => isMounted; // Closure to check if component is still mounted
 
-    console.log(`TopicDataProvider - useEffect: isLoading: ${isLoading}`);
-
     // If not currently loading, it means data is either present from initial props,
     // or a previous load (cache/fetch) has completed.
     if (!isLoading) {
-      console.log('TopicDataProvider - useEffect: Not loading. Current cycle complete or initial data was sufficient.');
       return;
     }
 
@@ -98,7 +90,6 @@ export default function TopicDataProvider({
     // 1. Initial mount and initialTopicData was empty.
     // 2. refetchData() was called, which set isLoading to true.
     async function loadDataSequentially() {
-      console.log('TopicDataProvider - useEffect: Starting data load sequence (isLoading is true).');
       // 1. Try to load from local storage cache first
       try {
         const cachedDataString = localStorage.getItem(TOPIC_DATA_CACHE_KEY);
@@ -106,25 +97,19 @@ export default function TopicDataProvider({
           const cachedData = JSON.parse(cachedDataString);
           if (Date.now() - cachedData.timestamp < CACHE_EXPIRY_MS) {
             if (isMounted) {
-              console.log('TopicDataProvider - useEffect: Using valid cached data.');
               setTopicData(cachedData.data);
               setError(null); // Clear error if cache is used
               setIsLoading(false); // Cache hit, loading done for this cycle.
             }
             return; // Exit: data loaded from cache, further steps in sequence not needed.
           }
-          console.log('TopicDataProvider - useEffect: Cache expired.');
-        } else {
-          console.log('TopicDataProvider - useEffect: No cached data found in localStorage.');
         }
       } catch (err) {
-        console.error('Error reading from cache:', err);
         // Do not set main error here; proceed to fetch if cache read fails, as fetch is the fallback.
       }
 
       // 2. If cache miss or stale, and we are in a loading state, perform fetch.
       // (performFetch already checks isFetchingRef)
-      console.log('TopicDataProvider - useEffect: Cache miss/stale or no cache. Calling performFetch.');
       await performFetch(mountedChecker);
       // performFetch will set isLoading to false upon completion (success or error).
     }
