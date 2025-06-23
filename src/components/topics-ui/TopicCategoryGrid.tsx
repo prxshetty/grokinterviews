@@ -25,6 +25,19 @@ interface SubtopicProgress {
   totalCategories: number;
 }
 
+// Define a more specific type for cached progress data
+interface CacheableProgressData {
+  questionsCompleted: number;
+  totalQuestions: number;
+  completionPercentage: number;
+  // Optional fields if we want to be more precise for section progress
+  completed_children?: number;
+  total_children?: number;
+  subtopicsCompleted?: number;
+  partiallyCompletedSubtopics?: number;
+  totalSubtopics?: number;
+}
+
 // Define the possible levels this grid can represent
 type HierarchyLevel = 'section' | 'topic' | 'category';
 
@@ -38,7 +51,7 @@ interface TopicCategoryGridProps {
   isLoading?: boolean; // Optional loading state controlled by parent
   error?: string | null; // Optional error state controlled by parent
   subtopicProgress?: Record<string, SubtopicProgress>;
-  dataCache?: Record<string, any>;
+  dataCache?: Record<string, CacheableProgressData>; // Updated type for dataCache
   showDomainTitle?: boolean; // New prop to control domain title visibility
 }
 
@@ -149,11 +162,11 @@ function TopicCategoryGridComponent({
                     // If the API call failed, fall back to the section progress endpoint
                     progress = await fetchSectionProgress(domain, item.label, forceRefresh); // Pass forceRefresh here too
                   }
-                } catch (error) {
+                } catch { // Removed unused 'error' variable
                    // Retry might be excessive here, just use fallback or default
                   try {
                     progress = await fetchSectionProgress(domain, item.label, forceRefresh);
-                  } catch (fallbackError) {
+                  } catch { // Removed unused 'fallbackError' variable
                     progress = {
                       questionsCompleted: 0,
                       totalQuestions: 0,
@@ -174,7 +187,7 @@ function TopicCategoryGridComponent({
             }
 
             return item; // Return item without progress if fetch failed or wasn't applicable
-          } catch (error) {
+          } catch { // Removed unused 'error' variable for the main catch of fetchProgress
             return item; // Return item without progress data on error
           }
         })
@@ -210,7 +223,7 @@ function TopicCategoryGridComponent({
       });
 
       setItemsWithProgress(validatedProgressData);
-    } catch (error) {
+    } catch { // Removed unused 'error' variable for the main catch of fetchProgress
       // Set items with default progress on error
       setItemsWithProgress(baseItems.map(item => ({
           ...item,
@@ -220,13 +233,11 @@ function TopicCategoryGridComponent({
   }, [baseItems, level, domain, subtopicProgress, dataCache]);
 
   // Define event handlers with useCallback at component level
-  const handleQuestionCompleted = useCallback((event: Event) => {
-    const customEvent = event as CustomEvent;
+  const handleQuestionCompleted = useCallback((_event: Event) => {
     fetchProgress(true); // Force refresh on completion event
-  }, [fetchProgress, level]);
+  }, [fetchProgress]);
 
-  const handleQuestionCompletionFailed = useCallback((event: Event) => {
-    const customEvent = event as CustomEvent;
+  const handleQuestionCompletionFailed = useCallback((_event: Event) => {
     // Potentially force a refresh to revert optimistic changes in parent components
     fetchProgress(true);
   }, [fetchProgress]);

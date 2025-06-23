@@ -124,9 +124,10 @@ function QuestionWithAnswerComponent({
       if (!response.ok) throw new Error(`Error: ${response.statusText}`);
       const data = await response.json();
       setGeneratedAnswer(data.answer);
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate answer.');
-      toast.error(err.message || 'Failed to generate answer.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate answer due to an unexpected error.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -144,9 +145,8 @@ function QuestionWithAnswerComponent({
       markQuestionAsViewed(questionId, actualTopicId ?? undefined, actualCategoryId ?? undefined)
         .then((success) => {
           if (success) setIsViewed(true);
-          // console.log(`Question ${questionId} marked as viewed: ${success}`);
         })
-        .catch(err => console.error('Failed to mark question as viewed:', err));
+        .catch(_err => { /* setError('Failed to mark question as viewed.') */ });
     }
 
     if (isOpen && !hasPredefinedAnswer && !generatedAnswer && !isGenerating && questionId) {
@@ -202,8 +202,7 @@ function QuestionWithAnswerComponent({
               toast.error("Failed to save completion status.");
             }
           })
-          .catch(err => {
-            console.error('Error marking question as completed:', err);
+          .catch(_err => {
             setIsCompletedState(false); // Revert on error
             onCompletionChange?.(questionId, false, actualTopicId ?? undefined, actualCategoryId ?? undefined);
             toast.error("Error saving completion status.");
