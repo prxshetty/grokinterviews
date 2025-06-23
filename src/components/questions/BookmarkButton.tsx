@@ -45,8 +45,8 @@ export function BookmarkButton({
           }
         }
       }
-    } catch (error) {
-      console.error('Failed to fetch topic ID from category:', error);
+    } catch {
+      // Removed console.error for fetching topic ID
     }
     
     return null;
@@ -74,8 +74,8 @@ export function BookmarkButton({
       if (onBookmarkChange) {
         onBookmarkChange(newBookmarkState);
       }
-    } catch (error) {
-      console.error('Error toggling bookmark:', error);
+    } catch {
+      // Removed console.error for toggling bookmark
       // Revert state on error
       setIsBookmarked(isBookmarked);
     } finally {

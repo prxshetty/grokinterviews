@@ -2,14 +2,13 @@
 
 import React from 'react';
 import { useEffect, useState, useMemo } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
 import { Pagination } from '@/components/ui';
 import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView } from './';
 import { LoadingSpinner } from '@/components/ui';
 import { createClient } from "@/utils/supabase/client";
-import type { Database as _Database } from '@/types/database.types';
 
 // Import necessary types
 interface QuestionType {
@@ -113,12 +112,8 @@ export default function ContentDisplay({
   categoryProgressData,
   currentSubtopicProgress,
 }: ContentDisplayProps) {
-  const [_topics, _setTopics] = useState<TopicItem[]>([]);
-  const _router = useRouter();
   const pathname = usePathname();
-  const _searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
-  const [_activeTopic, _setActiveTopic] = useState<TopicItem | null>(null);
 
   // New state for bookmarks
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
@@ -150,13 +145,11 @@ export default function ContentDisplay({
             .in('question_id', questionIds);
 
           if (error) {
-            console.error('Error fetching bookmarks in ContentDisplay:', error);
             setBookmarkedQuestions(new Set()); // Reset on error
             return;
           }
           setBookmarkedQuestions(new Set(bookmarksData.map(b => b.question_id)));
-        } catch (e) {
-          console.error('Exception fetching bookmarks in ContentDisplay:', e);
+        } catch {
           setBookmarkedQuestions(new Set()); // Reset on error
         }
       } else {
@@ -275,20 +268,38 @@ export default function ContentDisplay({
     if (isLoading.sections) {
       return <LoadingSpinner centered text="Loading category details..." />;
     }
-    return (
-      <CategoryDetailView
-        categoryId={selectedCategory}
-        categoryDetails={categoryDetails}
-        highlightedQuestionId={highlightedQuestionId}
-        selectedDifficulty={selectedDifficulty}
-        onDifficultyChange={onDifficultyChange}
-        domain={domain}
-        onBackToMainCategories={onBackToMainCategories}
-        subtopicProgressData={subtopicProgressData}
-        categoryProgressData={categoryProgressData}
-        currentSubtopicProgress={currentSubtopicProgress}
-      />
-    );
+    const categoryDetailViewProps: React.ComponentProps<typeof CategoryDetailView> = {
+      categoryId: selectedCategory,
+      categoryDetails: categoryDetails,
+    };
+
+    // Only add optional props if they have defined values
+    if (highlightedQuestionId !== undefined) {
+      categoryDetailViewProps.highlightedQuestionId = highlightedQuestionId;
+    }
+    if (selectedDifficulty !== undefined) {
+      categoryDetailViewProps.selectedDifficulty = selectedDifficulty;
+    }
+    if (onDifficultyChange !== undefined) {
+      categoryDetailViewProps.onDifficultyChange = onDifficultyChange;
+    }
+    if (domain !== undefined) {
+      categoryDetailViewProps.domain = domain;
+    }
+    if (onBackToMainCategories !== undefined) {
+      categoryDetailViewProps.onBackToMainCategories = onBackToMainCategories;
+    }
+    if (subtopicProgressData !== undefined) {
+      categoryDetailViewProps.subtopicProgressData = subtopicProgressData;
+    }
+    if (categoryProgressData !== undefined) {
+      categoryDetailViewProps.categoryProgressData = categoryProgressData;
+    }
+    if (currentSubtopicProgress !== undefined) {
+      categoryDetailViewProps.currentSubtopicProgress = currentSubtopicProgress;
+    }
+
+    return <CategoryDetailView {...categoryDetailViewProps} />;
   }
   
   if (selectedTopic) {
@@ -303,11 +314,10 @@ export default function ContentDisplay({
               <TopicCategoryGrid 
                 categories={topicCategories}
                 onSelectCategory={onSelectCategory}
-                topicId={selectedTopic}
                 domain={selectedTopic}
                 level="section"
                 isLoading={isLoading.categories}
-                subtopicProgress={subtopicProgressData}
+                subtopicProgress={subtopicProgressData ?? {}}
               />
             ) : (
               <div className="w-full text-center py-6">
@@ -329,15 +339,6 @@ export default function ContentDisplay({
   
   // Default view when nothing is selected - we're either on the main topics page or a 
   // specific domain page but no topic is selected yet
-  if (!selectedTopic) {
-            // Return nothing - the topics page will handle this case with MainNavigation
-    return null;
-  }
-}
-
-// Main topics with their corresponding colors - prefix with _ if unused or verify usage
-const _mainTopics = [
-  { id: 'ml', label: 'Machine Learning', color: 'bg-blue-500' },
-  { id: 'ai', label: 'Artificial Intelligence', color: 'bg-red-500' },
-  // ... existing code ...
-]; 
+  // Return nothing - the topics page will handle this case with MainNavigation
+  return null;
+} 

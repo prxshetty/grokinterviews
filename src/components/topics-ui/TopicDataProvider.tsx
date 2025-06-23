@@ -55,7 +55,7 @@ export default function TopicDataProvider({
         localStorage.setItem(TOPIC_DATA_CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
         setError(null); // Clear any previous error on successful fetch
       }
-    } catch (err) {
+    } catch {
       if (mountedChecker()) {
         setError('Failed to load topic data from API.');
       }
@@ -104,7 +104,7 @@ export default function TopicDataProvider({
             return; // Exit: data loaded from cache, further steps in sequence not needed.
           }
         }
-      } catch (err) {
+      } catch {
         // Do not set main error here; proceed to fetch if cache read fails, as fetch is the fallback.
       }
 

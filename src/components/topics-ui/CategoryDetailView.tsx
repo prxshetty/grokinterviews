@@ -12,9 +12,21 @@ import FloatingSettings from './FloatingSettings';
 import { QuestionType } from '@/types/topics';
 import { SubtopicProgress, CategoryProgress } from '@/types/topic-page.types';
 
+// Local type definition for DisplayItem (mimicking TopicCategoryGrid.tsx)
+interface DisplayItem {
+  id: string;
+  label: string;
+  progress?: {
+    questionsCompleted: number;
+    totalQuestions: number;
+    completionPercentage: number;
+  };
+}
+
 // Local types that remain (or are specific to this component's internal API handling)
 // Type definitions for component-specific data structures or direct API response shapes
 // not covered by shared types.
+// Restoring TopicItem definition
 type TopicItem = {
   id?: string;
   label: string;
@@ -22,7 +34,7 @@ type TopicItem = {
   questions?: QuestionType[];
   categoryId?: number;
   subtopicId?: number;
-  subtopics?: Record<string, TopicItem>;
+  subtopics?: Record<string, TopicItem>; // Allows for nested TopicItems
   isGenerated?: boolean;
 };
 
@@ -85,16 +97,21 @@ export default function CategoryDetailView({
   // Progress tracking states
   const [categoryProgress, setCategoryProgress] = useState<CategoryProgress | null>(null);
   
-  const [_subtopicProgress, setSubtopicProgress] = useState<SubtopicProgress | null>(null);
-  
   // Update type for subtopicsProgress to include category counts
   const [subtopicsProgress, setSubtopicsProgress] = useState<Record<string, SubtopicProgress>>({});
   
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
-  const [isSubtopicProgressLoading, _setIsSubtopicProgressLoading] = useState(false);
+  const [isSubtopicProgressLoading, ] = useState(false);
   
   // Local state to store bookmark status
   const [bookmarkStatus, setBookmarkStatus] = useState<Record<number, boolean>>({});
+  
+  // TODO: PERSISTENT LINTER ERROR - The isBookmarked prop in QuestionWithAnswer components
+  // is causing "Type 'boolean | undefined' is not assignable to type 'boolean'" errors
+  // despite multiple attempts to fix with ??, !!, === true, etc. This may require:
+  // 1. Reviewing QuestionWithAnswer component's prop types
+  // 2. Checking if bookmarkStatus state initialization is correct
+  // 3. Investigating if there's a TypeScript config issue with exactOptionalPropertyTypes
   
   // State for Accordion: stores the value (questionId.toString()) of the currently open item.
   const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(
@@ -102,7 +119,6 @@ export default function CategoryDetailView({
   );
 
   // Check if this is section/header or specific topic
-  const _isSectionHeader = categoryId.startsWith('header-');
   const hasSubtopics = categoryDetails?.subtopics && Object.keys(categoryDetails.subtopics).length > 0;
   const hasRealSubtopics = hasSubtopics && Object.keys(categoryDetails?.subtopics || {}).some(id => id.startsWith('topic-'));
   const hasQuestions = categoryDetails?.questions && categoryDetails.questions.length > 0;
@@ -121,17 +137,10 @@ export default function CategoryDetailView({
     if (!questionsToFilter || questionsToFilter.length === 0) return [];
     
     if (propSelectedDifficulty) {
-      return questionsToFilter.filter(q => q.difficulty === propSelectedDifficulty);
+      return questionsToFilter.filter((q: QuestionType) => q.difficulty === propSelectedDifficulty);
     }
     return questionsToFilter;
   }, [questionsToFilter, propSelectedDifficulty]);
-
-  // Available difficulty levels - memoized since it's static
-  const _difficulties = useMemo(() => [
-    { id: 'beginner', label: 'Beginner' },
-    { id: 'intermediate', label: 'Intermediate' },
-    { id: 'advanced', label: 'Advanced' },
-  ], []);
 
   // Memoize the expensive questionsByCategory grouping operation
   const questionsByCategory = useMemo(() => {
@@ -139,7 +148,7 @@ export default function CategoryDetailView({
     
     if (memoizedFilteredQuestions.length > 0) {
       // Group questions by their category
-      memoizedFilteredQuestions.forEach(question => {
+      memoizedFilteredQuestions.forEach((question: QuestionType) => {
         if (question.categories) {
           const categoryId = question.categories.id;
           if (!grouped[categoryId]) {
@@ -165,17 +174,21 @@ export default function CategoryDetailView({
     
     return Object.entries(categoryDetails.subtopics)
       .filter(([id]) => id.startsWith('topic-'))
-      .map(([id, subtopic]) => {
+      .map(([id, subtopicData]) => {
+        const subtopic = subtopicData as TopicItem; // Type assertion for subtopic
         const progress = subtopicsProgress[id];
-        return {
+        const item: DisplayItem = {
           id,
           label: subtopic.label,
-          progress: progress ? {
+        };
+        if (progress) {
+          item.progress = {
             questionsCompleted: progress.questionsCompleted,
             totalQuestions: progress.totalQuestions,
             completionPercentage: progress.completionPercentage,
-          } : undefined, // Let TopicCategoryGrid fetch if not provided
-        };
+          };
+        }
+        return item;
       });
   }, [categoryDetails?.subtopics, subtopicsProgress]);
 
@@ -195,7 +208,6 @@ export default function CategoryDetailView({
       ...prevStatus,
       [questionId]: newStatus,
     }));
-    console.log(`Bookmark status updated by child for QID ${questionId}: ${newStatus}`);
   }, []);
 
   // Update filtered questions when calculation changes
@@ -213,9 +225,9 @@ export default function CategoryDetailView({
 
   useEffect(() => {
     if (currentSubtopicProgress) {
-      setSubtopicProgress(currentSubtopicProgress);
+      setSubtopicsProgress(prev => ({ ...prev, [selectedSubtopic || '']: currentSubtopicProgress }));
     }
-  }, [currentSubtopicProgress]);
+  }, [selectedSubtopic, currentSubtopicProgress]);
 
   // Fetch bookmark status for each question
   const fetchBookmarkStatus = async (questions: QuestionType[]) => {
@@ -252,7 +264,7 @@ export default function CategoryDetailView({
           if (!isNaN(numericId) && !currentSubtopicProgress) { // Fetch only if not provided
             const progress = await fetchSubtopicProgress(numericId, true);
             if (!signal.aborted) {
-              setSubtopicProgress(progress);
+              setSubtopicsProgress(prev => ({ ...prev, [selectedSubtopic]: progress }));
             }
           }
         }
@@ -263,17 +275,16 @@ export default function CategoryDetailView({
         
         if (questionIds.length > 0) {
           try {
-            const completedResults = await Promise.all(questionIds.map(id => isQuestionCompleted(id)));
+            const completedResults = await Promise.all(questionIds.map((id: number) => isQuestionCompleted(id)));
             
             if (!signal.aborted) {
               const newCompletedStatus: Record<number, boolean> = {};
-              questionIds.forEach((id, index) => {
-                newCompletedStatus[id] = completedResults[index];
+              questionIds.forEach((id: number, index: number) => {
+                newCompletedStatus[id] = completedResults[index] ?? false;
               });
               setCompletedQuestions(newCompletedStatus);
             }
-          } catch (error) {
-            console.error(`Error fetching batch completion status:`, error);
+          } catch {
             if (!signal.aborted) {
               setCompletedQuestions({}); // Fallback on error
             }
@@ -286,12 +297,11 @@ export default function CategoryDetailView({
         const newBookmarkStatus = await fetchBookmarkStatus(questions);
         if (!signal.aborted) {
           setBookmarkStatus(newBookmarkStatus);
-          console.log('Fetched initial bookmark statuses in CategoryDetailView:', newBookmarkStatus);
         }
 
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
-          console.error('Error fetching progress:', error);
+          // console.error('Error in fetchProgressAndBookmarks:', error); // Example of logging if needed
         }
       }
     };
@@ -322,12 +332,10 @@ export default function CategoryDetailView({
   const handleSubtopicSelect = useCallback(async (topicId: string) => {
     try {
       setIsLoading(true);
-      console.log(`Fetching details for subtopic: ${topicId}`);
       
       // Fetch the subtopic details
       const topicNumericId = parseInt(topicId.replace('topic-', ''));
       if (isNaN(topicNumericId)) {
-        console.error('Invalid topic ID format:', topicId);
         setIsLoading(false);
         return;
       }
@@ -340,7 +348,6 @@ export default function CategoryDetailView({
       }
       
       const data: TopicResponse = await response.json();
-      console.log('API Response for subtopic:', data);
       
       // Format the response into the expected TopicItem structure
       if (data && data.topic) {
@@ -361,15 +368,14 @@ export default function CategoryDetailView({
           subtopicId: data.topic.id
         };
         
-        console.log('Formatted subtopic data:', formattedSubtopic);
         setSubtopicDetails(formattedSubtopic);
         setSelectedSubtopic(topicId);
         setOpenQuestionId(undefined); // Close any previously open question
       } else {
-        console.error('Invalid subtopic data structure:', data);
+        // console.error('Invalid subtopic data structure:', data); // Example of logging if needed
       }
-    } catch (error) {
-      console.error('Error fetching subtopic details:', error);
+    } catch { // This catch correctly has no 'error' parameter as it's unused.
+      // console.error('Error fetching subtopic details:', error); // Example of logging if needed
     } finally {
       setIsLoading(false);
     }
@@ -406,9 +412,8 @@ export default function CategoryDetailView({
     if (selectedSubtopic && subtopicDetails) {
       const currentViewSubtopicId = subtopicDetails.subtopicId ?? parseInt(selectedSubtopic.replace('topic-', ''));
       if (!isNaN(currentViewSubtopicId)) {
-        console.log(`Question completion changed in subtopic ${currentViewSubtopicId}. Re-fetching its progress with forceRefresh.`);
         const progress = await fetchSubtopicProgress(currentViewSubtopicId, true); // forceRefresh = true
-        setSubtopicProgress(progress);
+        setSubtopicsProgress(prev => ({ ...prev, [selectedSubtopic]: progress }));
       }
     } else if (!selectedSubtopic && categoryId && !categoryId.startsWith('header-')) {
       // We are in a "category-like" view. Re-fetch its progress.
@@ -416,7 +421,6 @@ export default function CategoryDetailView({
       const numericViewId = parseInt(categoryId.replace(/^(topic-|category-)/, ''));
       if (!isNaN(numericViewId)) {
         // This assumes numericViewId is a valid category_id for fetchCategoryProgress
-        console.log(`Question completion changed in main view ${categoryId} (parsed as ${numericViewId}). Re-fetching its category progress with forceRefresh.`);
         const progress = await fetchCategoryProgress(numericViewId, true); // forceRefresh = true
         setCategoryProgress(progress);
       }
@@ -426,7 +430,7 @@ export default function CategoryDetailView({
     subtopicDetails, 
     categoryId, 
     setCompletedQuestions, 
-    setSubtopicProgress, 
+    setSubtopicsProgress, 
     setCategoryProgress
   ]);
 
@@ -502,7 +506,7 @@ export default function CategoryDetailView({
             type="single" 
             collapsible 
             className="w-full space-y-2" // Added space-y-2 for spacing between items
-            value={openQuestionId}
+            value={openQuestionId || ""}
             onValueChange={handleOpenQuestionChange}
           >
             {Object.entries(questionsByCategory).map(([catId, category]) => (
@@ -529,10 +533,9 @@ export default function CategoryDetailView({
                     key={question.id}
                     question={question}
                     questionIndex={index}
-                    // isHighlighted is not used directly by QWA for expansion control anymore
-                    topicId={category.topic_id}
+                    topicId={question.categories?.topic_id ?? 0}
                     onCompletionChange={handleCompletionChange}
-                    isBookmarked={bookmarkStatus[question.id] || false}
+                    isBookmarked={bookmarkStatus[question.id] ?? false}
                     onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
                     isOpen={openQuestionId === question.id.toString()}
                     onRequestClose={() => handleOpenQuestionChange("")}
@@ -549,7 +552,7 @@ export default function CategoryDetailView({
               type="single" 
               collapsible 
               className="w-full space-y-2"
-              value={openQuestionId}
+              value={openQuestionId || ""}
               onValueChange={handleOpenQuestionChange}
             >
               {memoizedFilteredQuestions.map((question, index) => (
@@ -557,9 +560,9 @@ export default function CategoryDetailView({
                   key={question.id}
                   question={question}
                   questionIndex={index}
-                  topicId={subtopicDetails?.subtopicId ?? undefined}
+                  topicId={subtopicDetails?.subtopicId ?? 0}
                   onCompletionChange={handleCompletionChange}
-                  isBookmarked={bookmarkStatus[question.id] || false}
+                  isBookmarked={bookmarkStatus[question.id] ?? false}
                   onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
                   isOpen={openQuestionId === question.id.toString()}
                   onRequestClose={() => handleOpenQuestionChange("")}
@@ -622,7 +625,7 @@ export default function CategoryDetailView({
               items={subtopicItemsForGrid}
               level="topic"
               onSelectItem={handleSubtopicSelect}
-              domain={domain}
+              domain={domain || ""}
               isLoading={isSubtopicProgressLoading}
             />
           )}
@@ -646,7 +649,7 @@ export default function CategoryDetailView({
               type="single" 
               collapsible 
               className="w-full space-y-2" // Added for consistent spacing
-              value={openQuestionId}
+              value={openQuestionId || ""}
               onValueChange={handleOpenQuestionChange}
             >
               {memoizedFilteredQuestions.map((question, index) => (
@@ -654,11 +657,11 @@ export default function CategoryDetailView({
                   key={question.id}
                   question={question}
                   questionIndex={index}
-                  topicId={question.topic_id ?? undefined}
+                  topicId={question.topic_id ?? 0}
                   onCompletionChange={handleCompletionChange}
-                  isBookmarked={bookmarkStatus[question.id] || false}
+                  isBookmarked={bookmarkStatus[question.id] ?? false}
                   onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
-                  isOpen={openQuestionId === question.id.toString()} // Pass isOpen prop
+                  isOpen={openQuestionId === question.id.toString()}
                   onRequestClose={() => handleOpenQuestionChange("")}
                 />
               ))}
