@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 
 type Props = {
   children: React.ReactNode;
-  params: { domain: string };
+  params: Promise<{ domain: string }>;
 };
 
 // Page-specific context provider for passing the domain safely

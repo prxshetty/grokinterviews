@@ -59,10 +59,11 @@ export async function GET(request: NextRequest) {
     const topicsBySection: Record<string, any[]> = {};
     sectionHeaders.forEach(topic => {
       if (topic.section_name) {
-        if (!topicsBySection[topic.section_name]) {
-          topicsBySection[topic.section_name] = [];
+        const sectionName = topic.section_name;
+        if (!topicsBySection[sectionName]) {
+          topicsBySection[sectionName] = [];
         }
-        topicsBySection[topic.section_name].push(topic);
+        topicsBySection[sectionName].push(topic);
       }
     });
 
@@ -230,7 +231,7 @@ export async function GET(request: NextRequest) {
       if (!categoriesByTopicDebug[c.topic_id]) {
         categoriesByTopicDebug[c.topic_id] = [];
       }
-      categoriesByTopicDebug[c.topic_id].push(c);
+      categoriesByTopicDebug[c.topic_id]?.push(c);
     });
 
     // Log a summary instead of individual topics
@@ -242,7 +243,7 @@ export async function GET(request: NextRequest) {
       if (!categoriesBySubtopic[category.topic_id]) {
         categoriesBySubtopic[category.topic_id] = [];
       }
-      categoriesBySubtopic[category.topic_id].push(category);
+      categoriesBySubtopic[category.topic_id]?.push(category);
     });
 
     const allCategoryIds = categories.map(category => category.id);
@@ -262,7 +263,7 @@ export async function GET(request: NextRequest) {
       if (!questionsByCategory[question.category_id]) {
         questionsByCategory[question.category_id] = [];
       }
-      questionsByCategory[question.category_id].push(question);
+      questionsByCategory[question.category_id]?.push(question);
     });
 
     // Define completedQuestionIds

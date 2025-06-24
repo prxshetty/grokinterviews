@@ -42,18 +42,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Group topics by section_name to identify subtopics
-    const topicsBySection = {};
+    type TopicQueryResult = {
+      id: number;
+      name: string;
+      section_name: string | null;
+    };
+    const topicsBySection: Record<string, TopicQueryResult[]> = {};
     sectionHeaders.forEach(topic => {
       if (topic.section_name) {
         if (!topicsBySection[topic.section_name]) {
           topicsBySection[topic.section_name] = [];
         }
-        topicsBySection[topic.section_name].push(topic);
+        topicsBySection[topic.section_name]?.push(topic);
       }
     });
 
     // Get all subtopics (individual topics within sections)
-    const subtopics = [];
+    const subtopics: Array<{ id: number; name: string; section_name: string }> = [];
     Object.values(topicsBySection).forEach(topics => {
       if (topics.length > 0) {
         // Add each topic as a subtopic
@@ -61,7 +66,7 @@ export async function GET(request: NextRequest) {
           subtopics.push({
             id: topic.id,
             name: topic.name,
-            section_name: topic.section_name
+            section_name: topic.section_name || ''
           });
         });
       }

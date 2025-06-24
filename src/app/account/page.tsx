@@ -20,7 +20,6 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingApiKey, setSavingApiKey] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const isMounted = useRef(true);
@@ -49,7 +48,7 @@ export default function AccountPage() {
     custom_formatting_instructions: '',
   });
 
-  const [apiKeyInput, setApiKeyInput] = useState('');
+
 
   useEffect(() => {
     isMounted.current = true;
@@ -69,7 +68,7 @@ export default function AccountPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, username, avatar_url, custom_api_key')
+          .select('full_name, username, avatar_url')
           .eq('id', fetchedUser.id)
           .single();
 
@@ -98,7 +97,7 @@ export default function AccountPage() {
               full_name: profileData.full_name,
               username: profileData.username,
               avatar_url: profileData.avatar_url,
-              custom_api_key: profileData.custom_api_key
+              custom_api_key: null
           });
           setFormData(prev => ({
             ...prev,
@@ -106,7 +105,7 @@ export default function AccountPage() {
             username: profileData.username || '',
             email: fetchedUser.email || '',
           }));
-          setApiKeyInput(profileData.custom_api_key || '');
+
         } else if (fetchedUser.email) {
           setFormData(prev => ({ ...prev, email: fetchedUser.email! }));
         }
@@ -154,9 +153,7 @@ export default function AccountPage() {
     }));
   };
 
-  const handleApiKeyInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setApiKeyInput(e.target.value);
-  };
+
 
   const handleSwitchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
@@ -232,34 +229,7 @@ export default function AccountPage() {
     }
   };
 
-  const saveApiKey = async () => {
-    if (!user) {
-      console.error('No user found. Cannot save API key.');
-      toast.error('You must be signed in to save the API key.');
-      return;
-    }
-    setSavingApiKey(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ custom_api_key: apiKeyInput || null })
-        .eq('id', user.id);
 
-      if (error) {
-        console.error('Error saving API key:', error);
-        toast.error(`Failed to save API key: ${error.message}`);
-      } else {
-        console.log('API key saved successfully.');
-        setProfile(prev => prev ? { ...prev, custom_api_key: apiKeyInput || null } : null);
-        toast.success('API key saved successfully!');
-      }
-    } catch (error: any) {
-      console.error('Unexpected error saving API key:', error);
-      toast.error(`An unexpected error occurred: ${error.message || 'Please try again.'}`);
-    } finally {
-      setSavingApiKey(false);
-    }
-  };
 
   const getSelectedModelDetails = () => {
     return availableGroqModels.find(model => model.id === formData.specific_model_id);
@@ -379,11 +349,7 @@ export default function AccountPage() {
             {activeTab === 'ai-settings' && (
               <AiSettingsSection
                 formData={{ specific_model_id: formData.specific_model_id }}
-                apiKeyInput={apiKeyInput}
                 availableGroqModels={availableGroqModels}
-                handleApiKeyInputChange={handleApiKeyInputChange}
-                saveApiKey={saveApiKey}
-                savingApiKey={savingApiKey}
                 getSelectedModelDetails={getSelectedModelDetails}
                 renderSaveChangesButton={renderSaveChangesButton}
                 setFormData={setFormData}

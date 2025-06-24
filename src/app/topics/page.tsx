@@ -1,8 +1,16 @@
-'use client';
+import { createClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
 
-import withAuth from '@/components/auth/withAuth';
+export default async function TopicsPage() {
+  const supabase = await createClient();
+  
+  // Check if user is authenticated
+  const { data: { user }, error } = await supabase.auth.getUser();
+  
+  if (error || !user) {
+    redirect('/signin');
+  }
 
-function TopicsPage() {
   return (
     <div className="bg-white dark:bg-black min-h-screen">
       {/* Empty content area - the TopicNav is now provided by MainNavigation */}
@@ -14,5 +22,3 @@ function TopicsPage() {
     </div>
   );
 }
-
-export default withAuth(TopicsPage);
