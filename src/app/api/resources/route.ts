@@ -5,9 +5,6 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const questionId = url.searchParams.get('questionId');
-    const categoryId = url.searchParams.get('categoryId');
-    const topicId = url.searchParams.get('topicId');
-    const domain = url.searchParams.get('domain');
 
     if (!questionId) {
       return NextResponse.json(
