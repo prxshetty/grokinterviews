@@ -29,7 +29,7 @@ export default function StatsSection() {
       const observer = new IntersectionObserver(
         ([entry]) => {
           // When the section is 20% visible, trigger the animation
-          if (entry.isIntersecting) {
+          if (entry && entry.isIntersecting) {
             setIsVisible(true);
             observer.unobserve(entry.target);
           }

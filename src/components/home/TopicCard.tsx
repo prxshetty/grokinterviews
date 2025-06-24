@@ -265,7 +265,7 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
         >
           {/* Tech icon */}
           <div className="text-2xl md:text-3xl">
-            <IconComponent />
+            {IconComponent && <IconComponent />}
           </div>
         </div>
 

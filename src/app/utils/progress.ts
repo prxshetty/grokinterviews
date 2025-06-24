@@ -701,7 +701,6 @@ export const fetchDomainProgress = async (
     console.error(`Failed to fetch domain progress data for ${domain}:`, error);
     return {
       subtopics: {},
-      sectionProgress: undefined,
       timestamp: Date.now()
     };
   }

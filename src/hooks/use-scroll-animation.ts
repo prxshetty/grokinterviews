@@ -19,7 +19,7 @@ export function useScrollAnimation(threshold = 0.2): ScrollAnimationHook {
     const timer = setTimeout(() => {
       const observer = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) {
+          if (entry && entry.isIntersecting) {
             setIsVisible(true);
             observer.unobserve(entry.target);
           }

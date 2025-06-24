@@ -5,15 +5,27 @@ import { Toaster as Sonner } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
+  const { resolvedTheme } = useTheme()
+
+  // Determine the theme to use from the hook, defaulting to "system"
+  const effectiveThemeFromHook: "system" | "light" | "dark" =
+    resolvedTheme === "light" || resolvedTheme === "dark"
+      ? resolvedTheme
+      : "system";
+
+  // Determine the final theme to pass to Sonner
+  const finalTheme: "system" | "light" | "dark" =
+    themeFromProps === "light" || themeFromProps === "dark" || themeFromProps === "system"
+      ? themeFromProps
+      : effectiveThemeFromHook;
 
   // Determine if light mode is active
   // const isLight = theme === 'light' || (theme === 'system' && typeof window !== 'undefined' && !window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={finalTheme}
       className="toaster group"
       toastOptions={{
         classNames: {
@@ -25,7 +37,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
-      {...props}
+      {...otherProps}
     />
   )
 }

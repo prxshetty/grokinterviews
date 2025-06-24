@@ -223,8 +223,7 @@ const DropdownMenuItem = React.forwardRef<
       <DropdownMenuPrimitive.Item
         ref={ref}
         className="relative"
-        {...props}
-        disabled={disabled}
+        {...{ ...props, disabled: disabled ?? false }}
         onMouseEnter={(e) => {
           handleMouseEnter(e);
           props.onMouseEnter?.(e);
@@ -311,9 +310,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
       <DropdownMenuPrimitive.CheckboxItem
         ref={ref}
         className="relative"
-        {...props}
-        checked={checked}
-        disabled={disabled}
+        {...{ ...props, disabled: disabled ?? false, checked: checked ?? false }}
         onMouseEnter={(e) => {
           handleMouseEnter(e);
           props.onMouseEnter?.(e);
@@ -404,8 +401,7 @@ const DropdownMenuRadioItem = React.forwardRef<
       <DropdownMenuPrimitive.RadioItem
         ref={ref}
         className="relative"
-        {...props}
-        disabled={disabled}
+        {...{ ...props, disabled: disabled ?? false }}
         onMouseEnter={(e) => {
           handleMouseEnter(e);
           props.onMouseEnter?.(e);

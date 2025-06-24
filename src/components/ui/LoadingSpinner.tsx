@@ -104,12 +104,17 @@ export default function LoadingSpinner({
 
 // Specialized loading components for common use cases
 export function InlineLoadingSpinner({ text, size = 'sm' }: { text?: string; size?: 'sm' | 'md' }) {
+  const spinnerProps: LoadingSpinnerProps = {
+    size: size,
+    color: "muted",
+    centered: false,
+  };
+
+  if (text !== undefined) {
+    spinnerProps.text = text;
+  }
+
   return (
-    <LoadingSpinner 
-      size={size}
-      color="muted" 
-      text={text}
-      centered={false}
-    />
+    <LoadingSpinner {...spinnerProps} />
   );
 } 

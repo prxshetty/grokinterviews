@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     const questionsByCategory: { [key: number]: number[] } = {};
     questions.forEach(q => {
       if (!questionsByCategory[q.category_id]) questionsByCategory[q.category_id] = [];
-      questionsByCategory[q.category_id].push(q.id);
+      questionsByCategory[q.category_id]?.push(q.id);
     });
 
     let categoriesCompleted = 0;
