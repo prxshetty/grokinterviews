@@ -28,7 +28,6 @@ export function AnswerDisplay({
   isLoading,
   error,
   isCompleted,
-  _scrollProgress,
 }: AnswerDisplayProps) {
   const toastId = useRef<string | number | undefined>(undefined);
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { motion, MotionConfigContext, LayoutGroup } from 'framer-motion';
+import { motion, MotionConfigContext, LayoutGroup, MotionStyle } from 'framer-motion';
 
 // Types
 interface Props {
@@ -115,6 +115,27 @@ export const IconHover3D: React.FC<Props> = ({
   // }
   // };
 
+  const baseMotionDivStyle: MotionStyle = {
+    backgroundColor: "rgb(var(--background))",
+    alignContent: "center",
+    alignItems: "center",
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    gap: "16px", // Reduced from 40px
+    height: "min-content",
+    justifyContent: "center",
+    overflow: "visible",
+    padding: "16px", // Reduced from 20px
+    position: "relative",
+    width: "min-content",
+    border: "1px solid color-mix(in srgb, rgb(var(--foreground)) 10%, transparent)",
+  };
+
+  const combinedStyleForMotionDiv = {
+    ...baseMotionDivStyle,
+    ...style, // Spread React.CSSProperties here
+  };
 
 
   return (
@@ -129,23 +150,8 @@ export const IconHover3D: React.FC<Props> = ({
               data-highlight={true}
               ref={refBinding}
               onMouseEnter={handleMouseEnter}
-              onMouseLeave={currentVariant === 'Hover' ? handleMouseLeave : undefined}              style={{
-                backgroundColor: "rgb(var(--background))",
-                alignContent: "center",
-                alignItems: "center",
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "nowrap",
-                gap: "16px", // Reduced from 40px
-                height: "min-content",
-                justifyContent: "center",
-                overflow: "visible",
-                padding: "16px", // Reduced from 20px
-                position: "relative",
-                width: "min-content",
-                border: "1px solid color-mix(in srgb, rgb(var(--foreground)) 10%, transparent)",
-                ...style
-              }}
+              onMouseLeave={currentVariant === 'Hover' ? handleMouseLeave : undefined}
+              style={combinedStyleForMotionDiv as any} // Cast to any
             >
               {/* Icon Container */}
               <motion.div

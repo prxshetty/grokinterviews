@@ -43,8 +43,8 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // URL parameters
   const searchParams = useSearchParams();
-  const _pageParam = searchParams.get('page');
-  const _questionIdParam = searchParams.get('questionId');
+  // const _pageParam = searchParams.get('page');
+  // const _questionIdParam = searchParams.get('questionId');
 
   // Use the new hook for filter logic
   const {

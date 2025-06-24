@@ -125,7 +125,7 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
   for (let i = 0; i < 7; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() - today.getDay() + i);
-    currentWeekDates.push(date.toISOString().split('T')[0]);
+    currentWeekDates.push(date.toISOString().split('T')[0] || '');
   }
 
   // Format total time spent
@@ -221,7 +221,7 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
                       // Calculate the date for this position
                       const date = new Date();
                       date.setDate(date.getDate() - (weekIndex * 28 + dayIndex));
-                      const dateStr = date.toISOString().split('T')[0];
+                      const dateStr = date.toISOString().split('T')[0] || '';
 
                       // Find activity for this date or default to 0
                       const activity = activityData.find(item => item.date === dateStr) || { date: dateStr, count: 0 };

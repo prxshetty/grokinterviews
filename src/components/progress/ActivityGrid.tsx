@@ -95,7 +95,7 @@ export default function ActivityGrid({ className = "" }: ActivityGridProps) {
   for (let i = 0; i < 7; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() - today.getDay() + i);
-    currentWeekDates.push(date.toISOString().split('T')[0]);
+    currentWeekDates.push(date.toISOString().split('T')[0] || '');
   }
 
   return (

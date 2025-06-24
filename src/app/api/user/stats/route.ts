@@ -47,7 +47,10 @@ export async function GET(_request: NextRequest) {
       let lastTimestamp: Date | null = null; // Type for lastTimestamp
 
       for (let i = 0; i < activityData.length; i++) {
-        const currentTime = new Date(activityData[i].created_at);
+        const activity = activityData[i];
+        if (!activity?.created_at) continue;
+        
+        const currentTime = new Date(activity.created_at);
         if (lastTimestamp) {
           const diffMinutes = (currentTime.getTime() - lastTimestamp.getTime()) / (1000 * 60);
           if (diffMinutes > 0 && diffMinutes < 30) {
@@ -58,7 +61,7 @@ export async function GET(_request: NextRequest) {
       }
       stats.totalTimeSpent = Math.round(totalMinutes);
       if (activityData.length > 0) {
-        stats.lastActive = activityData[activityData.length - 1].created_at;
+        stats.lastActive = activityData[activityData.length - 1]?.created_at || null;
       }
     }
 
