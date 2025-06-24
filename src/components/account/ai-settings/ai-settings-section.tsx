@@ -1,17 +1,10 @@
 'use client'
 
-import type { ChangeEvent } from 'react'
-import { DemoButton } from '@/components/ui'
-import type { GroqModel, AccountFormData } from '@/app/account/types' // Added AccountFormData
+import type { GroqModel, AccountFormData } from '@/app/account/types'
 
 interface AiSettingsSectionProps {
   formData: Pick<AccountFormData, 'specific_model_id'> // Use Pick for relevant part of AccountFormData
-  apiKeyInput: string
   availableGroqModels: GroqModel[]
-  // handleInputChange is not directly used for model selection in this component
-  handleApiKeyInputChange: (e: ChangeEvent<HTMLInputElement>) => void
-  saveApiKey: () => Promise<void>
-  savingApiKey: boolean
   getSelectedModelDetails: () => GroqModel | undefined
   renderSaveChangesButton: () => React.ReactElement
   setFormData: React.Dispatch<React.SetStateAction<AccountFormData>> // Use AccountFormData
@@ -19,11 +12,7 @@ interface AiSettingsSectionProps {
 
 export function AiSettingsSection({
   formData,
-  apiKeyInput,
   availableGroqModels,
-  handleApiKeyInputChange,
-  saveApiKey,
-  savingApiKey,
   getSelectedModelDetails,
   renderSaveChangesButton,
   setFormData,
@@ -95,58 +84,7 @@ export function AiSettingsSection({
              {renderSaveChangesButton()}
           </section>
 
-          {/* Groq API Key Sub-section */}
-          <section className="pt-8 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Groq API Key</h3>
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="custom_api_key" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Your Groq API Key
-                </label>
-                <input
-                  type="password"
-                  name="custom_api_key"
-                  id="custom_api_key"
-                  value={apiKeyInput}
-                  onChange={handleApiKeyInputChange}
-                  className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm pl-3 py-2"
-                  placeholder="Enter your Groq API key (starts with gsk_...)"
-                  autoComplete="off"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Provide your own API key from Groq to use the selected model. Your key is required for generation.
-                </p>
-              </div>
 
-              {/* Security Information Box */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-md border border-yellow-200 dark:border-yellow-700/50">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-yellow-400 dark:text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Important Security Information</h4>
-                    <div className="mt-2 text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
-                      <p>Your API key is stored securely in the database.</p>
-                      <p>Using your own API key means any usage will be billed to your personal Groq account.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-8 pt-5 border-t border-gray-200 dark:border-gray-800 flex justify-end">
-              <DemoButton
-                onClick={saveApiKey}
-                isLoading={savingApiKey}
-                buttonText="Save API Key"
-                className="bg-emerald-500 hover:bg-emerald-600 text-black dark:text-white border-none focus:ring-emerald-400 px-3.5 py-1.5 text-sm"
-              >
-                Save API Key
-              </DemoButton>
-            </div>
-          </section>
         </div>
       </div>
 
@@ -229,17 +167,17 @@ export function AiSettingsSection({
         )}
 
         <div className="mt-auto">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Status</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model Status</h4>
           <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${apiKeyInput ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div className={`w-3 h-3 rounded-full mr-2 ${selectedModelDetails ? 'bg-green-500' : 'bg-gray-400'}`}></div>
             <span className="text-sm text-gray-600 dark:text-gray-300">
-              {apiKeyInput ? 'API Key Provided' : 'No API Key'}
+              {selectedModelDetails ? 'Model Selected' : 'No Model Selected'}
             </span>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            {apiKeyInput
-              ? 'Your API key is set. You can generate answers with the selected model.'
-              : 'Please provide a Groq API key to use this model for generating answers.'}
+            {selectedModelDetails
+              ? 'Your model is selected and ready for generating answers.'
+              : 'Please select a model to use for generating answers.'}
           </p>
         </div>
       </div>

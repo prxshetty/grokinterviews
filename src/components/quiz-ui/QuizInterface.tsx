@@ -79,6 +79,11 @@ export default function QuizInterface({
   };
 
   const handleShowAnswer = async () => {
+    if (!currentQuestion) {
+      setError('No question available');
+      return;
+    }
+
     if (showAnswer) {
       setShowAnswer(false);
       return;
@@ -120,7 +125,7 @@ export default function QuizInterface({
         setError(data.message);
         setGeneratedAnswer(null);
       } else {
-        setGeneratedAnswer(data.answer);
+        setGeneratedAnswer(data.answer_text);
       }
 
       setShowAnswer(true);
@@ -143,7 +148,7 @@ export default function QuizInterface({
     );
   }
 
-  if (questions.length === 0) {
+  if (questions.length === 0 || !currentQuestion) {
     return (
       <div className="text-center py-20">
         <h2 className="text-xl font-semibold mb-4">No questions available for this topic</h2>

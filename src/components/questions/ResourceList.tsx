@@ -130,7 +130,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
         if (finalCategoryId) queryParams.append('categoryId', finalCategoryId.toString());
         if (finalSubcategoryId) queryParams.append('subcategoryId', finalSubcategoryId.toString());
         
-        const response = await fetch(`/api/questions/answer?${queryParams.toString()}`);
+        const response = await fetch(`/api/resources?${queryParams.toString()}`);
         
         if (!isMounted) {
           return;

@@ -12,7 +12,7 @@ interface TopicWithCategoriesDetailed extends Topic {
 
 const PAGE_SIZE = 1000; // Max rows Supabase/PostgREST seems to return by default or by its own max-rows config
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     let allTopics: TopicWithCategoriesDetailed[] = [];
     let page = 0;

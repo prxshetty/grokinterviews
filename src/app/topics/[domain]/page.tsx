@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'; // Import redirect
 
 // Define the expected props structure for the Server Component page
 interface PageProps {
-  params: { domain: string };
+  params: Promise<{ domain: string }>;
 }
 
 // Define a simple loading component
@@ -22,7 +22,7 @@ function LoadingFallback() {
 
 // This is the Server Component - now async
 export default async function Page({ params }: PageProps) {
-  const { domain } = params; // No need to await params, it's an object
+  const { domain } = await params;
 
   // If the domain is 'ai', redirect to the main topics page
   if (domain === 'ai') {

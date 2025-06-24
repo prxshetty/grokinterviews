@@ -4,7 +4,7 @@ import { LoadingSpinner } from '@/components/ui';
 
 // Define the expected props structure for the Server Component page
 interface PageProps {
-  params: { domain: string };
+  params: Promise<{ domain: string }>;
 }
 
 // Define a simple loading component
@@ -29,7 +29,7 @@ const mainTopics = [
 
 // This is the Server Component
 export default async function Page({ params }: PageProps) {
-  const { domain } = params;
+  const { domain } = await params;
 
   // Find the corresponding topic label
   const domainName = mainTopics.find(topic => topic.id === domain)?.label || 'Quiz';

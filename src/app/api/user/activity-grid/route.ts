@@ -58,16 +58,20 @@ export async function GET(_request: NextRequest) {
     // Initialize all dates in the range with 0 count
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0];
-      activityByDate[dateStr] = 0;
+      if (dateStr) {
+        activityByDate[dateStr] = 0;
+      }
     }
 
     // Count activities for each date
     data?.forEach(item => {
       const dateStr = new Date(item.created_at).toISOString().split('T')[0];
-      if (activityByDate[dateStr] !== undefined) {
-        activityByDate[dateStr]++;
-      } else {
-        activityByDate[dateStr] = 1;
+      if (dateStr) {
+        if (activityByDate[dateStr] !== undefined) {
+          activityByDate[dateStr]++;
+        } else {
+          activityByDate[dateStr] = 1;
+        }
       }
     });
 

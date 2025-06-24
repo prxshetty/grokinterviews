@@ -123,7 +123,7 @@ function QuestionWithAnswerComponent({
       });
       if (!response.ok) throw new Error(`Error: ${response.statusText}`);
       const data = await response.json();
-      setGeneratedAnswer(data.answer);
+      setGeneratedAnswer(data.answer_text);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate answer due to an unexpected error.';
       setError(errorMessage);
