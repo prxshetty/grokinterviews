@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       if (!categoriesBySubtopic[category.topic_id]) {
         categoriesBySubtopic[category.topic_id] = [];
       }
-      categoriesBySubtopic[category.topic_id].push(category.id);
+      categoriesBySubtopic[category.topic_id]?.push(category.id);
     });
 
     // Get all category IDs
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
       if (!questionsByCategory[question.category_id]) {
         questionsByCategory[question.category_id] = [];
       }
-      questionsByCategory[question.category_id].push(question.id);
+      questionsByCategory[question.category_id]?.push(question.id);
     });
 
     // Get all completed questions for this user
