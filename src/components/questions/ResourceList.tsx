@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import Image, { type ImageProps } from 'next/image';
-import { InlineLoadingSpinner, Tabs, TabsContent, TabsList, TabsTrigger, Card, CardContent, Button, Badge, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
+import { InlineLoadingSpinner, Card, Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import { TabNav } from '@/components/ui/tab-nav';
 import { ExternalLink, Video, FileText, Globe, BookOpen, Image as ImageIcon, ArrowUpRight } from 'lucide-react';
 import { type Database } from '@/types/database.types';
@@ -33,7 +33,7 @@ function getWebsiteFavicon(url: string): string | null {
 }
 
 // Helper function to create gradient backgrounds based on resource type
-function getGradientForType(type: string): string {
+function getGradientForType(_type: string): string {
   // Using a standard gradient for all types to maintain consistency
   return 'from-gray-600 to-slate-600';
 }
@@ -45,7 +45,7 @@ interface YouTubeThumbnailWithFallbackProps extends Omit<ImageProps, 'src' | 'al
 }
 
 function YouTubeThumbnailWithFallback({ videoId, alt, className, ...props }: YouTubeThumbnailWithFallbackProps) {
-  const qualities: string[] = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault'];
+  const qualities = useMemo(() => ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault'], []);
   const [currentQualityIndex, setCurrentQualityIndex] = useState(0);
   const [imgSrc, setImgSrc] = useState(`https://img.youtube.com/vi/${videoId}/${qualities[0]}.jpg`);
 
@@ -53,7 +53,7 @@ function YouTubeThumbnailWithFallback({ videoId, alt, className, ...props }: You
     // Reset when videoId changes
     setCurrentQualityIndex(0);
     setImgSrc(`https://img.youtube.com/vi/${videoId}/${qualities[0]}.jpg`);
-  }, [videoId]);
+  }, [videoId, qualities]);
 
   const handleError = () => {
     if (currentQualityIndex < qualities.length - 1) {
