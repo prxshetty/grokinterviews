@@ -255,7 +255,7 @@ function QuestionWithAnswerComponent({
           ) : (
             <div className="mr-2 w-5 h-5 flex-shrink-0 mt-1"> {/* Placeholder for alignment */}
                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                <circle cx="12" cy="12" r="10" />
               </svg>
             </div>
           )}
@@ -284,6 +284,12 @@ function QuestionWithAnswerComponent({
       <AccordionContent 
         className="px-4 pt-0 pb-4 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 relative"
       >
+        {isExpandedState && ( // Only render resources if expanded, to avoid loading if not seen
+          <Suspense fallback={<ResourceListSkeleton />}>
+            <ResourceList questionId={questionId} />
+          </Suspense>
+        )}
+        
         <div ref={answerRef} className="prose dark:prose-invert max-w-none overflow-y-auto pt-3" style={{maxHeight: '400px'}}>
           <AnswerDisplay
             answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
@@ -293,12 +299,6 @@ function QuestionWithAnswerComponent({
             isCompleted={isCompletedState}
           />
         </div>
-        
-        {isExpandedState && ( // Only render resources if expanded, to avoid loading if not seen
-          <Suspense fallback={<ResourceListSkeleton />}>
-            <ResourceList questionId={questionId} />
-          </Suspense>
-        )}
 
         {isExpandedState && onRequestClose && (
           <div className="mt-4 flex justify-end">

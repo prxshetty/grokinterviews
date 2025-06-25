@@ -127,7 +127,7 @@ const Faq3 = ({
             {supportDescription}
           </p>
           <div className="flex w-full flex-col justify-center gap-2 sm:flex-row">
-            <Button className="w-full sm:w-auto" asChild>
+            <Button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white rounded-full" asChild>
               <a href={supportButtonUrl} target="_blank">
                 {supportButtonText}
               </a>

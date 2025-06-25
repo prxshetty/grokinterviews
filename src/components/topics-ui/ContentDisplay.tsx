@@ -4,7 +4,7 @@ import React from 'react';
 import { useEffect, useState, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
-import { Pagination } from '@/components/ui';
+import { Pagination, Accordion } from '@/components/ui';
 import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView } from './';
 import { LoadingSpinner } from '@/components/ui';
@@ -115,8 +115,13 @@ export default function ContentDisplay({
   const pathname = usePathname();
   const supabase = useMemo(() => createClient(), []);
 
-  // New state for bookmarks
+  // State for bookmarked questions
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
+  
+  // State for Accordion: stores the value (questionId.toString()) of the currently open item.
+  const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(
+    highlightedQuestionId ? highlightedQuestionId.toString() : undefined
+  );
 
   // Scroll to highlighted question if it exists
   useEffect(() => {
@@ -177,6 +182,11 @@ export default function ContentDisplay({
     });
   };
 
+  // Handler for Accordion's onValueChange
+  const handleOpenQuestionChange = (value: string) => {
+    setOpenQuestionId(value);
+  };
+
   // Decide what content to display based on current selection state
   if (isLoading.difficultyQuestions) {
     return <LoadingSpinner centered text="Loading questions..." />;
@@ -232,7 +242,13 @@ export default function ContentDisplay({
         {difficultyQuestions.length > 0 ? (
           <>
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Accordion 
+                type="single" 
+                collapsible 
+                className="w-full space-y-2"
+                value={openQuestionId || ""}
+                onValueChange={handleOpenQuestionChange}
+              >
                 {difficultyQuestions.map((question, index) => (
                   <QuestionWithAnswer
                     key={question.id}
@@ -240,9 +256,11 @@ export default function ContentDisplay({
                     questionIndex={index}
                     isBookmarked={bookmarkedQuestions.has(question.id)}
                     onBookmarkStatusChange={handleBookmarkChange}
+                    isOpen={openQuestionId === question.id.toString()}
+                    onRequestClose={() => handleOpenQuestionChange("")}
                   />
                 ))}
-              </div>
+              </Accordion>
             </div>
             
             {totalPages > 1 && (
