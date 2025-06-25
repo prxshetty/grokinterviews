@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, Suspense } from 'react';
 import DashboardNav from '../DashboardNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 
 interface Activity {
@@ -120,9 +121,12 @@ export default function ActivityPage() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
-            </div>
+            <LoadingSpinner 
+              size="lg" 
+              color="accent" 
+              text="Loading your activity..." 
+              centered={true}
+            />
           ) : error ? (
             <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
               <p className="text-red-500 dark:text-red-400">{error}</p>
