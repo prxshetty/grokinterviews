@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 
 interface TabNavItem {
@@ -24,7 +24,7 @@ export function TabNav({ items, activeTab, onTabChange, className = "" }: TabNav
   });
 
   // Function to get active tab element and set position
-  const setActiveTabPosition = () => {
+  const setActiveTabPosition = useCallback(() => {
     const activeTabElement = document.querySelector(`[data-tab-id="${activeTab}"]`);
     if (activeTabElement) {
       const { width } = activeTabElement.getBoundingClientRect();
@@ -35,11 +35,11 @@ export function TabNav({ items, activeTab, onTabChange, className = "" }: TabNav
         left,
       });
     }
-  };
+  }, [activeTab]);
 
   useEffect(() => {
     setActiveTabPosition();
-  }, [activeTab]);
+  }, [setActiveTabPosition]);
 
   return (
     <div className={`flex items-center w-full ${className}`}>
