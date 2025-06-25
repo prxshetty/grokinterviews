@@ -47,7 +47,7 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Follow Us',
 		links: [
-			{ title: 'Twitter', href: '#', icon: TwitterIcon },
+			{ title: 'Twitter', href: 'https://x.com/prxshetty', icon: TwitterIcon },
 			{ title: 'LinkedIn', href: '#', icon: LinkedinIcon },
 			{ title: 'Instagram', href: '#', icon: InstagramIcon },
 		],

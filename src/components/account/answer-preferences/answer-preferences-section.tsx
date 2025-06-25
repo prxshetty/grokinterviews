@@ -40,7 +40,7 @@ const contentSources: ReadonlyArray<{ id: ContentSourceKey; name: string; tag: s
   { id: 'use_paper_sources', name: 'Papers', tag: 'Research', description: 'Academic research papers' },
   { id: 'use_website_sources', name: 'Websites', tag: 'Articles', description: 'Relevant web articles' },
   { id: 'use_book_sources', name: 'Books', tag: 'References', description: 'Amazon book links' },
-  { id: 'use_image_sources', name: 'Visual Guides', tag: 'Diagrams', description: 'Articles with diagrams & illustrations' }
+  { id: 'use_image_sources', name: 'Illustrations', tag: 'Diagrams', description: 'Articles with diagrams & illustrations' }
 ];
 
 const answerFormats: ReadonlyArray<{ id: AnswerFormat; name: string; tag: string }> = [
