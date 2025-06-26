@@ -5,9 +5,21 @@ import { Footer } from '@/components';
 import { Toaster } from "@/components/ui";
 import { janelotus, playfairDisplay } from './fonts';
 import type { Metadata } from 'next';
+
 export const metadata: Metadata = {
   title: 'GrokInterviews - AI-Powered Interview Preparation',
   description: 'Ace your tech interviews with an AI-enhanced platform. 3.6M+ resources, 81K+ questions across AI, Web Dev, System Design, DSA, and ML.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/logo.svg', type: 'image/svg+xml', sizes: '32x32' },
+    ],
+    apple: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.svg',
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({
