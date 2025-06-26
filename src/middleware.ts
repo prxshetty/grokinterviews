@@ -43,10 +43,10 @@ export async function middleware(req: NextRequest) {
     if (isAuthRoute && user) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-  } catch (error) {
-    console.error('Middleware error:', error);
+  } catch {
     // If there's an error with authentication, allow the request to continue
     // This prevents authentication errors from blocking the entire site
+    // Error is handled silently to prevent authentication errors from blocking the site
   }
 
   return res;

@@ -21,7 +21,8 @@ import {
   SheetTrigger,
   SheetClose,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
+  Logo
 } from '@/components/ui';
 import { MAIN_NAV_TOPICS, type NavTopic } from '@/config/navigation.constants';
 import type { Tables } from '@/types/database.types'; // Import Tables
@@ -147,7 +148,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   const logoElement = (
     <Link href="/" className="flex items-center whitespace-nowrap">
-      <span className="text-lg md:text-xl font-normal tracking-tight text-black dark:text-white">Grok Interviews</span>
+      <Logo 
+        size="md" 
+        showText={true} 
+        className="text-black dark:text-white" 
+        textClassName="text-lg md:text-xl"
+      />
     </Link>
   );
 
