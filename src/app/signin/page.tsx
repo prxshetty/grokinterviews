@@ -102,10 +102,14 @@ function SignInForm() {
     setError(null);
 
     try {
+      const redirectUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://grokinterviews.vercel.app/auth/callback'
+        : `${window.location.origin}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
         },
       });
 
@@ -121,10 +125,14 @@ function SignInForm() {
     setError(null);
 
     try {
+      const redirectUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://grokinterviews.vercel.app/auth/callback'
+        : `${window.location.origin}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
         },
       });
 
