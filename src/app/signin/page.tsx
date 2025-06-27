@@ -168,7 +168,7 @@ function SignInForm() {
 
     try {
       const redirectUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://grokinterviews.vercel.app/auth/callback'
+        ? 'https://grokinterviews.org/auth/callback'
         : `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -191,7 +191,7 @@ function SignInForm() {
 
     try {
       const redirectUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://grokinterviews.vercel.app/auth/callback'
+        ? 'https://grokinterviews.org/auth/callback'
         : `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOAuth({
