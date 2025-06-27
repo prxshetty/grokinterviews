@@ -12,13 +12,7 @@ import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
 import type { UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
 import { availableGroqModels, DEFAULT_GROQ_MODEL_ID } from './types';
-import type { User } from '@supabase/supabase-js'
-
-interface AccountPageProps {
-  user: User | null;
-}
-
-function AccountPage({ user: authUser }: AccountPageProps) {
+function AccountPage() {
   const [activeTab, setActiveTab] = useState('personal');
   const { user, profile, loading: authLoading, refreshAuth, supabase } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -57,10 +51,10 @@ function AccountPage({ user: authUser }: AccountPageProps) {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && !user && !authUser) {
+    if (!authLoading && !user) {
       router.push('/signin');
     }
-  }, [user, authUser, authLoading, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const fetchUserPreferences = async () => {
