@@ -39,21 +39,21 @@ export async function GET(_request: NextRequest) {
     // ... (handle countError)
 
     const { count: completedQuestions, error: _completedError } = await supabase // Use session client
-      .from('user_activity')
+      .from('user_progress')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'completed');
     // ... (handle completedError)
 
     const { count: viewedQuestions, error: _viewedError } = await supabase // Use session client
-      .from('user_activity')
+      .from('user_progress')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('status', 'viewed');
     // ... (handle viewedError)
 
     const { data: userProgress, error: _progressError } = await supabase // Use session client
-      .from('user_activity')
+      .from('user_progress')
       .select('question_id')
       .eq('user_id', userId)
       .eq('status', 'completed');

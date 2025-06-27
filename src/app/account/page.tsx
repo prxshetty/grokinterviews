@@ -12,7 +12,6 @@ import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
 import type { UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
 import { availableGroqModels, DEFAULT_GROQ_MODEL_ID } from './types';
-import withAuth from '@/components/auth/withAuth';
 import type { User } from '@supabase/supabase-js'
 
 interface AccountPageProps {
@@ -348,4 +347,4 @@ function AccountPage({ user: authUser }: AccountPageProps) {
   );
 }
 
-export default withAuth(AccountPage);
+export default AccountPage;

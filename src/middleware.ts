@@ -31,6 +31,7 @@ export async function middleware(req: NextRequest) {
     // Check if the request is for a protected route
     const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard');
     const isAuthRoute = req.nextUrl.pathname.startsWith('/auth') || req.nextUrl.pathname.startsWith('/signin');
+    const isConfirmRoute = req.nextUrl.pathname === '/auth/confirm';
 
     // If trying to access a protected route without being logged in
     if (isProtectedRoute && !user) {
@@ -39,7 +40,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    // If trying to access auth routes while logged in
+    // Allow access to /auth/confirm even if user is authenticated (for email confirmation)
+    if (isConfirmRoute) {
+      return res;
+    }
+
+    // If trying to access other auth routes while logged in
     if (isAuthRoute && user) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }

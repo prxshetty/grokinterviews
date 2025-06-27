@@ -7,7 +7,7 @@ import { janelotus, playfairDisplay } from './fonts';
 import type { Metadata } from 'next';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import AuthProvider from '@/components/AuthProvider';
+import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
 import { GeistSans, GeistMono } from 'geist/font';
 

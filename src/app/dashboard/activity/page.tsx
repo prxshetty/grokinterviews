@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, Suspense } from 'react';
 import DashboardNav from '../DashboardNav';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 
 interface Activity {
@@ -32,8 +33,7 @@ export default function ActivityPage() {
         }
         const data = await response.json();
         setActivities(data.activities || []);
-      } catch (err) {
-        console.error('Error fetching activities:', err);
+      } catch {
         setError('Failed to load your recent activities');
       } finally {
         setLoading(false);
@@ -114,15 +114,13 @@ export default function ActivityPage() {
             <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">
               Recent Activity
             </h2>
-            <Suspense fallback={<div className="text-center p-4">Loading Nav...</div>}>
+            <Suspense fallback={<LoadingSpinner text="Loading navigation..." size="sm" />}>
               <DashboardNav />
             </Suspense>
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
-            </div>
+            <LoadingSpinner text="Loading your recent activities..." />
           ) : error ? (
             <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
               <p className="text-red-500 dark:text-red-400">{error}</p>
