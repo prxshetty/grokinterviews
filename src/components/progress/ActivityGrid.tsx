@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
+import { LoadingSpinner } from '@/components/ui';
 
 interface ActivityData {
   date: string;
@@ -44,26 +45,26 @@ export default function ActivityGrid({ className = "" }: ActivityGridProps) {
 
   // Get color based on activity count
   const getActivityColor = (count: number, isToday: boolean = false) => {
-    // Define color scales for light and dark modes with orange tones
+    // Define color scales for light and dark modes with blue tones
     const lightModeColors = [
       'bg-gray-100 text-gray-700', // 0 activities
-      'bg-orange-100 text-orange-800', // 1-2 activities
-      'bg-orange-300 text-orange-900', // 3-5 activities
-      'bg-orange-500 text-white', // 6-9 activities
-      'bg-orange-700 text-white', // 10+ activities
+      'bg-blue-100 text-blue-800', // 1-2 activities
+      'bg-blue-300 text-blue-900', // 3-5 activities
+      'bg-blue-500 text-white', // 6-9 activities
+      'bg-blue-700 text-white', // 10+ activities
     ];
 
     const darkModeColors = [
       'bg-gray-800 text-gray-300', // 0 activities
-      'bg-orange-900 text-orange-100', // 1-2 activities
-      'bg-orange-700 text-white', // 3-5 activities
-      'bg-orange-500 text-white', // 6-9 activities
-      'bg-orange-400 text-orange-900', // 10+ activities
+      'bg-blue-900 text-blue-100', // 1-2 activities
+      'bg-blue-700 text-white', // 3-5 activities
+      'bg-blue-500 text-white', // 6-9 activities
+      'bg-blue-400 text-blue-900', // 10+ activities
     ];
 
     // If it's today, use a special highlight color
     if (isToday) {
-      return isDarkMode ? 'bg-orange-500 text-white ring-2 ring-orange-300' : 'bg-orange-600 text-white ring-2 ring-orange-300';
+      return isDarkMode ? 'bg-blue-500 text-white ring-2 ring-blue-300' : 'bg-blue-600 text-white ring-2 ring-blue-300';
     }
 
     const colors = isDarkMode ? darkModeColors : lightModeColors;
@@ -87,15 +88,18 @@ export default function ActivityGrid({ className = "" }: ActivityGridProps) {
     });
   };
 
-  // Get the current week's dates
+  // Get the current week's dates (Monday to Sunday)
   const today = new Date();
   const currentWeekDates: string[] = [];
 
-  // Fill in the current week dates (7 days)
+  const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust when day is Sunday
+  const monday = new Date(today.setDate(diff));
+
   for (let i = 0; i < 7; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - today.getDay() + i);
-    currentWeekDates.push(date.toISOString().split('T')[0] || '');
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + i);
+    currentWeekDates.push(day.toISOString().split('T')[0] || '');
   }
 
   return (
@@ -105,9 +109,11 @@ export default function ActivityGrid({ className = "" }: ActivityGridProps) {
       </div>
 
       {loading ? (
-        <div className="h-auto flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
-        </div>
+        <LoadingSpinner 
+          size="lg" 
+          color="primary" 
+          centered={true}
+        />
       ) : error ? (
         <div className="h-auto flex items-center justify-center py-8 text-red-500 dark:text-red-400">
           {error}

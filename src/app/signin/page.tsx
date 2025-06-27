@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { createClient } from '@/utils/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -18,10 +18,22 @@ function SignInForm() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
+  const { user, refreshAuth, supabase } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   useEffect(() => {
     setMounted(true);
+
+    // Check for mode parameter to auto-switch to signup
+    const mode = searchParams.get('mode');
+    if (mode === 'signup') {
+      setIsSignUp(true);
+    }
 
     // Check for error or message in URL params
     const errorParam = searchParams.get('error');
@@ -40,10 +52,57 @@ function SignInForm() {
     setLoading(true);
     setError(null);
     setMessage(null);
+    if (!supabase) return;
 
     try {
       if (isSignUp) {
-        // Sign up
+        // Production-ready check:
+        // Layer 1: Check if the user exists in the core auth system at all.
+        const { data: userExists, error: existenceCheckError } = await supabase
+          .rpc('user_exists', { user_email: email });
+
+        if (existenceCheckError) {
+          throw new Error('Could not verify email. Please try again.');
+        }
+
+        // Layer 2: If the user exists, check if they have a full profile and which provider they used.
+        if (userExists) {
+          // Check for a public profile to see if we can give a specific provider message.
+          const { data: existingProfile, error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', email)
+            .maybeSingle();
+
+          if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+            throw new Error('Error checking user profile.');
+          }
+
+          if (existingProfile) {
+            // User has a profile, so we can check their specific auth providers (google, github, etc.)
+            const { data: identities, error: identityError } = await supabase
+              .rpc('get_user_identities', { user_email: email });
+
+            if (!identityError && identities && identities.length > 0) {
+              const providers = identities.map((identity: any) => identity.provider);
+              if (providers.includes('google')) {
+                setError('An account with this email already exists. Please sign in with Google instead.');
+                return;
+              }
+              if (providers.includes('github')) {
+                setError('An account with this email already exists. Please sign in with GitHub instead.');
+                return;
+              }
+            }
+          }
+          
+          // If the user exists in auth.users but has no public profile, or if provider check fails,
+          // give a generic but accurate error. This catches "stuck" users.
+          setError('An account with this email already exists. Please try signing in or use the password reset option.');
+          return;
+        }
+
+        // If user does not exist in auth.users, proceed with signup.
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -53,15 +112,21 @@ function SignInForm() {
               last_name: lastName,
               full_name: `${firstName} ${lastName}`.trim(),
             },
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
           },
         });
 
         if (error) throw error;
 
         if (data?.user && !data.session) {
-          setMessage('Check your email for the confirmation link!');
+          setMessage('Please check your email for a confirmation link. You must verify your email before you can sign in.');
+          // Clear form to prevent confusion
+          setEmail('');
+          setPassword('');
+          setFirstName('');
+          setLastName('');
         } else if (data?.session) {
-          router.push('/dashboard');
+          await refreshAuth();
         }
       } else {
         // Sign in
@@ -70,10 +135,17 @@ function SignInForm() {
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          // Check if it's an email not confirmed error
+          if (error.message.includes('Email not confirmed')) {
+            setError('Please check your email and click the confirmation link before signing in.');
+            return;
+          }
+          throw error;
+        }
 
         if (data?.session) {
-          router.push('/dashboard');
+          await refreshAuth();
         }
       }
     } catch (error: any) {
@@ -100,12 +172,17 @@ function SignInForm() {
   const handleSignInWithGoogle = async () => {
     setLoading(true);
     setError(null);
+    if (!supabase) return;
 
     try {
+      const redirectUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://grokinterviews.org/auth/callback'
+        : `${window.location.origin}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
         },
       });
 
@@ -119,12 +196,17 @@ function SignInForm() {
   const handleSignInWithGitHub = async () => {
     setLoading(true);
     setError(null);
+    if (!supabase) return;
 
     try {
+      const redirectUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://grokinterviews.org/auth/callback'
+        : `${window.location.origin}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
         },
       });
 

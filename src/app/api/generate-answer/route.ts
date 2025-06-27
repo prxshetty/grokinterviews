@@ -2,7 +2,30 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createClient } from '@/utils/supabase/server';
-import { kv } from '@vercel/kv'; // Ensure @vercel/kv is installed
+
+// Try to import KV, but handle gracefully if not available
+let kv: any = null;
+let kvInitialized = false;
+
+async function initializeKV() {
+  if (kvInitialized) return;
+  
+  const hasKVEnvVars = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
+  
+  if (hasKVEnvVars) {
+    try {
+      const kvModule = await import('@vercel/kv');
+      kv = kvModule.kv;
+      console.log('KV available - using KV-based API key rotation');
+    } catch {
+      console.log('KV module not available - using local fallback for API key rotation');
+    }
+  } else {
+    console.log('KV environment variables not set - using local fallback for API key rotation');
+  }
+  
+  kvInitialized = true;
+}
 
 interface Resource {
   id: number;
@@ -32,24 +55,65 @@ if (apiKeys.length === 0) console.error('CRITICAL: No Groq API keys configured. 
 
 const KV_KEY_GROQ_API_INDEX = 'groq_api_key_index_v1';
 
+// Local fallback for development when KV is not available
+let localApiKeyIndex = 0;
+
 async function getNextGroqApiKey(): Promise<string | null> {
   if (apiKeys.length === 0) {
     console.error("No API keys available.");
     return null;
   }
+
+  // If only one API key, return it directly
+  if (apiKeys.length === 1) {
+    return apiKeys[0] || null;
+  }
+
+  // Initialize KV if not already done
+  await initializeKV();
+
   try {
-    let currentIndex = await kv.get<number>(KV_KEY_GROQ_API_INDEX);
-    if (typeof currentIndex !== 'number' || currentIndex < 0 || currentIndex >= apiKeys.length) currentIndex = 0;
-    const apiKeyToUse = apiKeys[currentIndex];
-    if (!apiKeyToUse) {
-      console.error(`API key at index ${currentIndex} is undefined`);
-      return apiKeys.find(key => key) || null; // Return first defined key or null
+    let currentIndex: number;
+    
+    if (kv) {
+      // Production: Use Vercel KV for persistence across requests
+      currentIndex = await kv.get(KV_KEY_GROQ_API_INDEX);
+      if (typeof currentIndex !== 'number' || currentIndex < 0 || currentIndex >= apiKeys.length) {
+        currentIndex = 0;
+      }
+      
+      const apiKeyToUse = apiKeys[currentIndex];
+      if (!apiKeyToUse) {
+        console.error(`API key at index ${currentIndex} is undefined`);
+        const fallbackKey = apiKeys.find(key => key);
+        return fallbackKey ? fallbackKey : null;
+      }
+      
+      // Update index for next request
+      await kv.set(KV_KEY_GROQ_API_INDEX, (currentIndex + 1) % apiKeys.length);
+      console.log(`Using Groq API key ${currentIndex} (KV-based rotation)`);
+      return apiKeyToUse;
+    } else {
+      // Local development: Use in-memory rotation
+      currentIndex = localApiKeyIndex;
+      const apiKeyToUse = apiKeys[currentIndex];
+      
+      if (!apiKeyToUse) {
+        console.error(`API key at index ${currentIndex} is undefined`);
+        const fallbackKey = apiKeys.find(key => key);
+        return fallbackKey || null;
+      }
+      
+      // Update index for next request (in-memory)
+      localApiKeyIndex = (localApiKeyIndex + 1) % apiKeys.length;
+      console.log(`Using Groq API key ${currentIndex} (local rotation)`);
+      return apiKeyToUse;
     }
-    await kv.set(KV_KEY_GROQ_API_INDEX, (currentIndex + 1) % apiKeys.length);
-    return apiKeyToUse;
   } catch (error) {
-    console.error('KV error rotating API key:', error);
+    console.error('Error rotating API key:', error);
+    // Fallback: return first available key
     const fallbackKey = apiKeys.find(key => key);
+    console.log('Using fallback API key due to rotation error');
     return fallbackKey || null;
   }
 }

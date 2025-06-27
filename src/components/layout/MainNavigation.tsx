@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
-import { type User } from '@supabase/supabase-js';
+import { useAuth } from '@/components/AuthProvider';
 import { LogOut, Moon, Sun, User as UserIcon, Menu } from 'lucide-react';
 import {
   Button,
@@ -21,23 +20,20 @@ import {
   SheetTrigger,
   SheetClose,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
+  Logo,
 } from '@/components/ui';
 import { MAIN_NAV_TOPICS, type NavTopic } from '@/config/navigation.constants';
-import type { Tables } from '@/types/database.types'; // Import Tables
-
-// Define UserProfile using the actual database type
-type UserProfile = Tables<'profiles'>;
 
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
+  
+  // Use the shared auth state from the provider
+  const { user, profile, signOut } = useAuth();
 
   // Filter out the AI domain from the navigation topics
   const displayedNavTopics = MAIN_NAV_TOPICS.filter(topic => topic.id !== 'ai');
@@ -63,68 +59,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     setIsDarkMode(isDark);
   }, []);
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('Error fetching user in MainNavigation:', userError);
-        setUser(null);
-        setProfile(null);
-        return;
-      }
-
-      if (fetchedUser) {
-        setUser(fetchedUser);
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', fetchedUser.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile in MainNavigation:', profileError);
-          setProfile(null);
-        } else if (profileData) {
-          setProfile(profileData);
-        }
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-    };
-
-    checkUser();
-  }, [supabase]);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      if (session?.user) {
-        const fetchProfile = async () => {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error('Error fetching profile on auth change in MainNavigation:', profileError);
-            setProfile(null);
-          } else if (profileData) {
-            setProfile(profileData);
-          }
-        };
-        fetchProfile();
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
-
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
@@ -139,23 +73,27 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-    router.refresh();
     setIsMobileMenuOpen(false);
+    await signOut();
+    router.push('/');
   };
 
   const logoElement = (
     <Link href="/" className="flex items-center whitespace-nowrap">
-      <span className="text-lg md:text-xl font-normal tracking-tight text-black dark:text-white">Grok Interviews</span>
+      <Logo 
+        size="md" 
+        showText={true} 
+        className="text-black dark:text-white" 
+        textClassName="text-lg md:text-xl"
+      />
     </Link>
   );
 
   if (!mounted) {
     return (
       <>
-        {/* Simplified skeleton or nothing to avoid layout shifts */}
-        <div style={{ height: '60px' }} /> {/* Placeholder for navbar */}
+        {/* Placeholder for navbar */}
+        <div style={{ height: '60px' }} />
         {children}
       </>
     );
