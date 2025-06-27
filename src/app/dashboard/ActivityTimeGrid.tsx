@@ -155,7 +155,9 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
       </div>
 
       {loading ? (
-        <LoadingSpinner />
+        <div className="flex h-48 items-center justify-center">
+          <LoadingSpinner />
+        </div>
       ) : error ? (
         <div className="h-auto flex items-center justify-center py-8 text-red-500 dark:text-red-400">
           {error}

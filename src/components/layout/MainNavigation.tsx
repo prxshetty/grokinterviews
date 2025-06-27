@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
-import { type User } from '@supabase/supabase-js';
+import { useAuth } from '@/components/AuthProvider';
 import { LogOut, Moon, Sun, User as UserIcon, Menu } from 'lucide-react';
 import {
   Button,
@@ -22,23 +21,20 @@ import {
   SheetClose,
   SheetHeader,
   SheetTitle,
-  Logo
+  Logo,
+  LoadingSpinner
 } from '@/components/ui';
 import { MAIN_NAV_TOPICS, type NavTopic } from '@/config/navigation.constants';
-import type { Tables } from '@/types/database.types'; // Import Tables
-
-// Define UserProfile using the actual database type
-type UserProfile = Tables<'profiles'>;
 
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
+  
+  // Use the shared auth state from the provider
+  const { user, profile, signOut, loading: authLoading } = useAuth();
 
   // Filter out the AI domain from the navigation topics
   const displayedNavTopics = MAIN_NAV_TOPICS.filter(topic => topic.id !== 'ai');
@@ -64,68 +60,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     setIsDarkMode(isDark);
   }, []);
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('Error fetching user in MainNavigation:', userError);
-        setUser(null);
-        setProfile(null);
-        return;
-      }
-
-      if (fetchedUser) {
-        setUser(fetchedUser);
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', fetchedUser.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile in MainNavigation:', profileError);
-          setProfile(null);
-        } else if (profileData) {
-          setProfile(profileData);
-        }
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-    };
-
-    checkUser();
-  }, [supabase]);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      if (session?.user) {
-        const fetchProfile = async () => {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error('Error fetching profile on auth change in MainNavigation:', profileError);
-            setProfile(null);
-          } else if (profileData) {
-            setProfile(profileData);
-          }
-        };
-        fetchProfile();
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
-
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
@@ -140,9 +74,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-    router.refresh();
+    await signOut();
     setIsMobileMenuOpen(false);
   };
 
@@ -160,8 +92,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   if (!mounted) {
     return (
       <>
-        {/* Simplified skeleton or nothing to avoid layout shifts */}
-        <div style={{ height: '60px' }} /> {/* Placeholder for navbar */}
+        {/* Placeholder for navbar */}
+        <div style={{ height: '60px' }} />
         {children}
       </>
     );
@@ -250,7 +182,11 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
           {/* Desktop User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-            {user ? (
+            {authLoading ? (
+              <div className="flex h-[40px] w-[90px] items-center justify-center">
+                <LoadingSpinner className="h-6 w-6" />
+              </div>
+            ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -380,7 +316,11 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 </nav>
 
                 <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  {user ? (
+                  {authLoading ? (
+                    <div className="flex items-center justify-center p-4">
+                      <LoadingSpinner className="h-8 w-8" />
+                    </div>
+                  ) : user ? (
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
                          {profile?.avatar_url && 
