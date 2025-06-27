@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { TopicCategoryGrid } from './index';
 import { Pagination, Accordion } from '@/components/ui';
 import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView } from './';
 import { LoadingSpinner } from '@/components/ui';
-import { createClient } from "@/utils/supabase/client";
+import { supabase } from "@/utils/supabase/client";
 
 // Import necessary types
 interface QuestionType {
@@ -113,7 +113,6 @@ export default function ContentDisplay({
   currentSubtopicProgress,
 }: ContentDisplayProps) {
   const pathname = usePathname();
-  const supabase = useMemo(() => createClient(), []);
 
   // State for bookmarked questions
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
@@ -167,7 +166,7 @@ export default function ContentDisplay({
     } else {
         setBookmarkedQuestions(new Set()); // Ensure bookmarks are cleared if questions are cleared
     }
-  }, [supabase, difficultyQuestions]);
+  }, [difficultyQuestions]);
 
   // Handler for bookmark changes from QuestionWithAnswer
   const handleBookmarkChange = (questionId: number, newStatus: boolean) => {

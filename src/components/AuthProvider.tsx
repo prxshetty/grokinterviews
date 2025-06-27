@@ -1,9 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-import { usePathname } from 'next/navigation';
+import { supabase } from '@/utils/supabase/client';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface UserProfile {
   id: string;
@@ -14,6 +14,7 @@ interface UserProfile {
 }
 
 interface AuthContextType {
+  supabase: SupabaseClient | null;
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
@@ -23,6 +24,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({
+  supabase: null,
   user: null,
   profile: null,
   loading: true,
@@ -38,12 +40,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const pathname = usePathname();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const fetchUserProfile = useCallback(async (userId: string) => {
     try {
@@ -63,125 +59,74 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       console.error('Exception fetching profile:', error);
       return null;
     }
-  }, [supabase]);
-
-  const refreshAuth = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
-
-      if (error) {
-        throw error;
-      }
-
-      if (fetchedUser) {
-        setUser(fetchedUser);
-        const profileData = await fetchUserProfile(fetchedUser.id);
-        setProfile(profileData);
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-    } catch (error: any) {
-      console.error('Error refreshing auth:', error);
-      setError(error.message || 'An error occurred while refreshing authentication');
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, fetchUserProfile]);
+  }, []);
 
   const signOut = async () => {
     try {
-      console.log('Signing out...');
+      setLoading(true);
       const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
-
-      console.log('Sign out successful');
+      if (error) throw error;
       setUser(null);
       setProfile(null);
-
-      // Use window.location.href to force a full page reload
       window.location.href = '/';
     } catch (error: any) {
       console.error('Error signing out:', error);
-      setError(error.message || 'An error occurred while signing out');
+      setError(error.message || 'An error occurred during sign-out.');
+    } finally {
+      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        console.log('AuthProvider - Checking user');
-        const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
-
-        console.log('AuthProvider - User check result:', {
-          hasUser: !!fetchedUser,
-          userId: fetchedUser?.id,
-          cookies: document.cookie.split(';').map(c => c.trim().split('=')[0])
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        if (fetchedUser) {
-          setUser(fetchedUser);
-          const profileData = await fetchUserProfile(fetchedUser.id);
-          setProfile(profileData);
-        }
-      } catch (error: any) {
-        console.error('Error checking auth:', error);
-        setError(error.message || 'An error occurred while checking authentication');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+  
+  const handleAuthStateChange = useCallback(async (event: AuthChangeEvent, session: Session | null) => {
+    try {
+      setLoading(true);
       console.log('AuthProvider - Auth state changed:', event, session?.user?.id);
-      console.log('AuthProvider - Cookies after state change:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
+      
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
 
-      if (session?.user) {
-        setUser(session.user);
-        const profileData = await fetchUserProfile(session.user.id);
-        setProfile(profileData);
-
-        if (pathname === '/signin') {
-          console.log('AuthProvider - Redirecting from sign-in to dashboard');
-          window.location.href = '/dashboard?refresh=true';
-        }
+      if (currentUser) {
+        const userProfile = await fetchUserProfile(currentUser.id);
+        setProfile(userProfile);
       } else {
-        setUser(null);
         setProfile(null);
       }
+    } catch (err: any) {
+      console.error("Error in auth state change handler:", err);
+      setError(err.message || "An unexpected error occurred.");
+      setUser(null);
+      setProfile(null);
+    } finally {
       setLoading(false);
-    });
+    }
+  }, [fetchUserProfile]);
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase, fetchUserProfile, pathname]);
+  const refreshAuth = useCallback(async () => {
+    console.log("AuthProvider - Refreshing auth state...");
+    try {
+      const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      // Construct a fake session-like object for handler
+      const session = fetchedUser ? { user: fetchedUser } : null;
+      await handleAuthStateChange('MANUAL_REFRESH' as AuthChangeEvent, session as any);
+    } catch (err: any) {
+      console.error('Error in refreshAuth:', err);
+      setError(err.message || 'Error refreshing authentication');
+      setLoading(false);
+    }
+  }, [handleAuthStateChange]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('refresh') === 'true') {
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('refresh');
-        window.history.replaceState({}, '', newUrl.toString());
-        refreshAuth();
-      }
-    }
-  }, [pathname, refreshAuth]);
+    refreshAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [refreshAuth, handleAuthStateChange]);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, signOut, refreshAuth }}>
+    <AuthContext.Provider value={{ supabase, user, profile, loading, error, signOut, refreshAuth }}>
       {children}
     </AuthContext.Provider>
   );
