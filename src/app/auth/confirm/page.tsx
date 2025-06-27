@@ -51,7 +51,7 @@ export default function ConfirmPage() {
             router.push('/dashboard');
           }, 2000);
         }
-      } catch (error) {
+      } catch (_error) {
         setStatus('error');
         setMessage('An unexpected error occurred. Please try again.');
       }
