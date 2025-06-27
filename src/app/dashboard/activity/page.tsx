@@ -33,8 +33,7 @@ export default function ActivityPage() {
         }
         const data = await response.json();
         setActivities(data.activities || []);
-      } catch (err) {
-        console.error('Error fetching activities:', err);
+      } catch {
         setError('Failed to load your recent activities');
       } finally {
         setLoading(false);
@@ -115,18 +114,13 @@ export default function ActivityPage() {
             <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">
               Recent Activity
             </h2>
-            <Suspense fallback={<div className="text-center p-4">Loading Nav...</div>}>
+            <Suspense fallback={<LoadingSpinner text="Loading navigation..." size="sm" />}>
               <DashboardNav />
             </Suspense>
           </div>
 
           {loading ? (
-            <LoadingSpinner 
-              size="lg" 
-              color="accent" 
-              text="Loading your activity..." 
-              centered={true}
-            />
+            <LoadingSpinner text="Loading your recent activities..." />
           ) : error ? (
             <div className="bg-white dark:bg-black p-6 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
               <p className="text-red-500 dark:text-red-400">{error}</p>

@@ -36,7 +36,66 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         if (error.code === 'PGRST116') { // No rows returned
-          // Return default values if no data found
+          // Try to refresh the materialized view
+          try {
+            const { error: refreshError } = await supabase.rpc('refresh_section_progress');
+            if (refreshError) {
+              console.error(`Error refreshing section progress:`, refreshError);
+            } else {
+              
+              // Retry the query after refresh
+              const { data: retryData, error: retryError } = await supabase
+                .from('user_section_subtopic_progress_mv')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('domain', domain)
+                .eq('section_name', sectionName)
+                .single();
+                
+              if (!retryError && retryData) {
+                const response = {
+                  completion_percentage: retryData.section_completion_percentage || 0,
+                  questions_completed: 0,
+                  total_questions: 0,
+                  completed_children: retryData.completed_children || 0,
+                  partially_completed_children: retryData.partially_completed_children || 0,
+                  total_children: retryData.total_children || 0,
+                  timestamp: Date.now()
+                };
+                return NextResponse.json(response);
+              }
+            }
+          } catch (refreshError) {
+            console.error(`Error calling refresh function:`, refreshError);
+          }
+          
+          // Fall back to the section-progress API
+          try {
+            const fallbackResponse = await fetch(`${request.nextUrl.origin}/api/user/progress/section-progress?domain=${domain}&section=${encodeURIComponent(sectionName)}`, {
+              headers: {
+                'Cookie': request.headers.get('cookie') || '',
+              }
+            });
+            
+            if (fallbackResponse.ok) {
+              const fallbackData = await fallbackResponse.json();
+              
+              // Map the section-progress API response to the expected format
+              return NextResponse.json({
+                completion_percentage: fallbackData.completionPercentage || 0,
+                questions_completed: fallbackData.questionsCompleted || 0,
+                total_questions: fallbackData.totalQuestions || 0,
+                completed_children: fallbackData.subtopicsCompleted || 0,
+                partially_completed_children: fallbackData.partiallyCompletedSubtopics || 0,
+                total_children: fallbackData.totalSubtopics || 0,
+                timestamp: Date.now()
+              });
+            }
+          } catch (fallbackError) {
+            console.error(`Fallback API call failed:`, fallbackError);
+          }
+          
+          // Return default values if fallback also fails
           return NextResponse.json({
             completion_percentage: 0,
             questions_completed: 0,
@@ -67,13 +126,14 @@ export async function GET(request: NextRequest) {
       }
 
       // Map the materialized view fields to the expected response format
+      // Handle null values properly
       const response = {
-        completion_percentage: data.section_completion_percentage,
+        completion_percentage: data.section_completion_percentage || 0,
         questions_completed: 0, // Materialized view doesn't track individual questions
         total_questions: 0, // Materialized view doesn't track individual questions
-        completed_children: data.completed_children,
-        partially_completed_children: data.partially_completed_children,
-        total_children: data.total_children,
+        completed_children: data.completed_children || 0,
+        partially_completed_children: data.partially_completed_children || 0,
+        total_children: data.total_children || 0,
         timestamp: Date.now()
       };
 

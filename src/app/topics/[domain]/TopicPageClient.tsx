@@ -14,7 +14,6 @@ import { useFilterLogic } from '@/hooks/use-filter-logic.hook';
 import { fetchDomainProgress, fetchCategoryProgress } from '@/app/utils/progress';
 import { LoadingSpinner } from '@/components/ui';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
-import withAuth from '@/components/auth/withAuth';
 
 // Import types from global definitions
 import {
@@ -502,4 +501,4 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   );
 }
 
-export default withAuth(TopicPageClient); 
+export default TopicPageClient; 

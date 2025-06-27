@@ -19,6 +19,7 @@ export { Footer as FooterSection } from './footer-section';
 export { IconHover3D } from './icon-3d-hover';
 export { Input } from './input';
 export { default as LoadingSpinner, InlineLoadingSpinner } from './LoadingSpinner';
+export { Logo } from './Logo';
 export { MessageLoading } from './message-loading';
 export { default as Pagination } from './Pagination';
 export { default as ProgressBar } from './ProgressBar';

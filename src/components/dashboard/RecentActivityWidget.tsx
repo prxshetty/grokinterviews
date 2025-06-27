@@ -39,11 +39,11 @@ export default function RecentActivityWidget({ activityData }: RecentActivityWid
   const getActivityColor = (activityType: string) => {
     switch (activityType) {
       case 'question_completed':
-        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
       case 'question_viewed':
         return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
       default:
-        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
     }
   };
 
@@ -56,13 +56,13 @@ export default function RecentActivityWidget({ activityData }: RecentActivityWid
       <div className="space-y-3">
         {activityData.loading ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 dark:border-purple-500 border-t-transparent mb-3" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 dark:border-blue-500 border-t-transparent mb-3" />
             <p className="text-sm text-gray-500 dark:text-gray-400">Loading activities...</p>
           </div>
                   ) : activityData.error ? (
             <div className="text-center py-8">
-              <AlertCircle className="size-10 mx-auto text-purple-400 dark:text-purple-500 mb-3" />
-              <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mb-2">{activityData.error}</p>
+              <AlertCircle className="size-10 mx-auto text-blue-400 dark:text-blue-500 mb-3" />
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">{activityData.error}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Unable to load recent activity</p>
             </div>
         ) : activityData.activities.length === 0 ? (
@@ -72,7 +72,7 @@ export default function RecentActivityWidget({ activityData }: RecentActivityWid
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Start learning to track your progress</p>
             <Link 
               href="/topics" 
-              className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-md transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors"
             >
               <ArrowRight className="size-4 mr-1" />
               Start Learning
@@ -85,7 +85,7 @@ export default function RecentActivityWidget({ activityData }: RecentActivityWid
                 {getActivityIcon(activity.activityType)}
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-900 dark:text-white font-medium group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors">
+                <p className="text-sm text-gray-900 dark:text-white font-medium group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
                   {activity.displayText}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

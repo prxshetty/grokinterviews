@@ -1,9 +1,10 @@
 'use client';
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'framer-motion';
 import {InstagramIcon, LinkedinIcon, TwitterIcon } from 'lucide-react';
 import Link from 'next/link';
+import { Logo } from './Logo';
 
 interface FooterLink {
 	title: string;
@@ -30,8 +31,8 @@ const footerLinks: FooterSection[] = [
 		label: 'Company',
 		links: [
 			{ title: 'About Us', href: '/about' },
-			// { title: 'Privacy Policy', href: '/privacy' },
-			// { title: 'Terms of Service', href: '/terms' },
+			{ title: 'Privacy Policy', href: '/privacy' },
+			{ title: 'Terms of Service', href: '/terms' },
 			// { title: 'Contact', href: '/contact' },
 		],
 	},
@@ -65,8 +66,12 @@ export function Footer() {
 					href="/"
 					className="flex items-center space-x-2 text-2xl md:text-3xl font-light tracking-tight text-center text-gray-800 dark:text-gray-200"
 				>
-					{/* <FrameIcon className="h-7 w-7" /> */}
-					<span>GrokInterviews</span>
+					<Logo 
+						size="lg" 
+						showText={true} 
+						className="text-gray-800 dark:text-gray-200" 
+						textClassName="text-2xl md:text-3xl"
+					/>
 				</Link>
 			</div>
 

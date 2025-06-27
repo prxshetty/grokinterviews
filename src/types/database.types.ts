@@ -694,6 +694,13 @@ export type Database = {
           color: string
         }[]
       }
+      get_user_identities: {
+        Args: { user_email: string }
+        Returns: {
+          provider: string
+          user_id: string
+        }[]
+      }
       populate_initial_progress_data: {
         Args: { p_user_id?: string }
         Returns: number
@@ -757,6 +764,10 @@ export type Database = {
           p_activity_type: string
           p_metadata: Json
         }
+        Returns: boolean
+      }
+      user_exists: {
+        Args: { user_email: string }
         Returns: boolean
       }
     }

@@ -141,7 +141,7 @@ const Tab = ({
   );
 };
 
-const Cursor = ({ position }: { position: any }) => {
+const Cursor = ({ position }: { position: { left: number; width: number; opacity: number } }) => {
   return (
     <motion.li
       animate={position}

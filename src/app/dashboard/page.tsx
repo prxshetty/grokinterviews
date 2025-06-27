@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import ProgressSaver from '@/components/progress/ProgressSaver';
 import { ActivityGrid } from '@/components/progress';
 import { Calendar } from '@/components/ui';
@@ -17,14 +17,6 @@ import {
   MetricCards
 } from '@/components/dashboard';
 
-interface UserProfile {
-  id: string;
-  username: string;
-  full_name: string;
-  avatar_url: string | null;
-  email: string;
-}
-
 interface ActivityItem {
   id: string;
   activityType: string;
@@ -37,6 +29,8 @@ interface ActivityItem {
   createdAt: string;
   displayText: string;
   timeAgo: string;
+  completionPercentage: number;
+  color: string;
 }
 
 interface DomainStat {
@@ -49,8 +43,7 @@ interface DomainStat {
 }
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading: authLoading } = useAuth();
   const [showCalendarView, setShowCalendarView] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const isMounted = useRef(true);
@@ -62,7 +55,8 @@ export default function DashboardPage() {
     totalQuestions: 0,
     completionPercentage: 0,
     domainsSolved: 0,
-    totalDomains: 0
+    totalDomains: 0,
+    loading: true
   });
 
   const [activityData, setActivityData] = useState<{
@@ -136,202 +130,126 @@ export default function DashboardPage() {
 
   useEffect(() => {
     isMounted.current = true;
-    const supabase = createClient();
-    const checkUserAndProfile = async () => {
-      try {
-        const { data: { user } , error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !user) {
-          console.error("Error fetching user or user not found for dashboard:", userError);
-          if (isMounted.current) {
-            router.push('/signin');
-          }
-          return;
-        }
-
-        // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          if (isMounted.current) {
-            setProfile(null);
-          }
-        } else if (profileData && isMounted.current) {
-          setProfile(profileData);
-        }
-
-        // Fetch user progress data only if still mounted and user exists
-        if (isMounted.current && user) {
-          try {
-            const response = await fetch('/api/user/progress');
-            if (response.ok) {
-              const data = await response.json();
-              if (isMounted.current) {
-                if (data.totalQuestions > 0) {
-                  data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
-                } else {
-                  data.completionPercentage = 0;
-                }
-                setProgressData(data);
-              }
-            } else {
-              console.error('Failed to fetch progress data');
-            }
-          } catch (err) {
-            console.error('Error fetching progress data:', err);
-          }
-        }
-      } catch (error) {
-        console.error("An unexpected error occurred during initial dashboard load:", error);
-      } finally {
-        if (isMounted.current) {
-          setLoading(false);
-        }
-      }
-    };
-
-    checkUserAndProfile();
-
     return () => {
       isMounted.current = false;
     };
-  }, [router]);
-
-  // Fetch additional data when loading is complete
+  }, []);
+  
   useEffect(() => {
-    if (loading || !profile) return;
+    if (!authLoading && !user) {
+      router.push('/signin');
+    }
+  }, [user, authLoading, router]);
 
-    const fetchActivityData = async () => {
-      setActivityData(prev => ({ ...prev, loading: true, error: null }));
+  // Fetch dashboard data using existing API endpoints
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    const fetchDashboardData = async () => {
+      if (!isMounted.current) return;
+      
       try {
-        const response = await fetch('/api/user/activity?limit=3');
-        if (response.ok) {
-          const data = await response.json();
-          setActivityData({
-            activities: data.activities,
-            loading: false,
-            error: null
-          });
-        } else {
-          setActivityData(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Failed to fetch activity data'
-          }));
+        // Fetch user stats using existing API endpoints
+        const [
+          progressRes,
+          activityRes,
+          bookmarksRes,
+          userStatsRes,
+          domainStatsRes,
+          activityChartRes
+        ] = await Promise.all([
+          fetch('/api/user/progress'),
+          fetch('/api/user/activity?limit=3'),
+          fetch('/api/user/bookmarks'),
+          fetch('/api/user/stats'),
+          fetch('/api/user/domains'),
+          fetch('/api/user/activity-grid')
+        ]);
+
+        if (isMounted.current) {
+          // Handle progress data
+          if (progressRes.ok) {
+            const data = await progressRes.json();
+            if (data.totalQuestions > 0) {
+              data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
+            } else {
+              data.completionPercentage = 0;
+            }
+            setProgressData({...data, loading: false});
+          } else {
+            setProgressData(prev => ({ ...prev, loading: false }));
+          }
+
+          // Handle activity data
+          if (activityRes.ok) {
+            const activityResult = await activityRes.json();
+            setActivityData({ activities: activityResult.activities || [], loading: false, error: null });
+          } else {
+            setActivityData({ activities: [], loading: false, error: 'Failed to fetch activity' });
+          }
+
+          // Handle user stats (including bookmarks)
+          let bookmarksCount = 0;
+          if (bookmarksRes.ok) {
+            const bookmarksResult = await bookmarksRes.json();
+            bookmarksCount = bookmarksResult.bookmarks?.length || 0;
+          }
+
+          if (userStatsRes.ok) {
+            const statsData = await userStatsRes.json();
+            setUserStats({
+              ...statsData,
+              bookmarksCount,
+              joinDate: user?.created_at || null,
+              loading: false, 
+              error: null
+            });
+          } else {
+             setUserStats(prev => ({ ...prev, bookmarksCount, loading: false, error: 'Failed to load user stats' }));
+          }
+
+          // Handle domain stats
+          if (domainStatsRes.ok) {
+            const domainData = await domainStatsRes.json();
+            setDomainStats({
+              domains: domainData.domains || [],
+              totalDomains: domainData.totalDomains || 0,
+              loading: false,
+              error: null
+            });
+          } else {
+            setDomainStats(prev => ({...prev, loading: false, error: 'Failed to load domain stats' }));
+          }
+          
+          // Handle activity chart data
+          if (activityChartRes.ok) {
+            const chartResult = await activityChartRes.json();
+             const chartData = (chartResult.activityData || []).map((item: any) => ({
+                date: item.date,
+                questionsAnswered: item.count || 0,
+                questionsViewed: Math.floor((item.count || 0) * 1.5) 
+            }));
+            setActivityChartData({ data: chartData, loading: false, error: null });
+          } else {
+            setActivityChartData({ data: [], loading: false, error: 'Failed to fetch chart data'});
+          }
         }
       } catch (error) {
-        console.error('Error fetching activity data:', error);
-        setActivityData(prev => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Error fetching activity data'
-        }));
-      }
-    };
-
-    const fetchUserStats = async () => {
-      setUserStats(prev => ({ ...prev, loading: true, error: null }));
-      try {
-        const response = await fetch('/api/user/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setUserStats({
-            ...data,
-            loading: false,
-            error: null
-          });
-        } else {
-          setUserStats(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Failed to fetch user stats'
-          }));
+        console.error('Error fetching dashboard data:', error);
+        if (isMounted.current) {
+          setProgressData(prev => ({ ...prev, loading: false }));
+          setActivityData(prev => ({ ...prev, loading: false, error: 'Fetch error' }));
+          setUserStats(prev => ({ ...prev, loading: false, error: 'Fetch error' }));
+          setDomainStats(prev => ({ ...prev, loading: false, error: 'Fetch error' }));
+          setActivityChartData(prev => ({ ...prev, loading: false, error: 'Fetch error' }));
         }
-      } catch (error) {
-        console.error('Error fetching user stats:', error);
-        setUserStats(prev => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Error fetching user stats'
-        }));
       }
     };
+    
+    fetchDashboardData();
+  }, [authLoading, user]);
 
-    const fetchDomainStats = async () => {
-      setDomainStats(prev => ({ ...prev, loading: true, error: null }));
-      try {
-        const response = await fetch('/api/user/domains');
-        if (response.ok) {
-          const data = await response.json();
-          setDomainStats({
-            domains: data.domains,
-            totalDomains: data.totalDomains,
-            loading: false,
-            error: null
-          });
-        } else {
-          setDomainStats(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Failed to fetch domain stats'
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching domain stats:', error);
-        setDomainStats(prev => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Error fetching domain stats'
-        }));
-      }
-    };
-
-    const fetchActivityChartData = async () => {
-      setActivityChartData(prev => ({ ...prev, loading: true, error: null }));
-      try {
-        const response = await fetch('/api/user/activity-grid');
-        if (response.ok) {
-          const data = await response.json();
-          // Transform the activity grid data to chart format
-          const chartData = data.activityData.map((item: any) => ({
-            date: item.date,
-            questionsAnswered: item.count || 0,
-            questionsViewed: Math.floor((item.count || 0) * 1.5) // Approximation, you might want to track this separately
-          }));
-          setActivityChartData({
-            data: chartData,
-            loading: false,
-            error: null
-          });
-        } else {
-          setActivityChartData(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Failed to fetch activity chart data'
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching activity chart data:', error);
-        setActivityChartData(prev => ({
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Error fetching activity chart data'
-        }));
-      }
-    };
-
-    fetchActivityData();
-    fetchUserStats();
-    fetchDomainStats();
-    fetchActivityChartData();
-  }, [loading, profile]);
-
-  if (loading) {
+  if (authLoading || !profile) {
     return (
       <LoadingSpinner 
         size="xl" 
@@ -395,6 +313,7 @@ export default function DashboardPage() {
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
+                    weekStartsOn={1}
                     className="rounded-md border border-gray-200 dark:border-gray-700 w-full"
                     modifiers={{
                       lowActivity: (date: Date) => {
@@ -420,17 +339,17 @@ export default function DashboardPage() {
                     }}
                     modifiersStyles={{
                       lowActivity: {
-                        backgroundColor: 'rgb(254 215 170)', // orange-200
-                        color: 'rgb(154 52 18)', // orange-800
+                        backgroundColor: 'rgb(191 219 254)', // blue-200
+                        color: 'rgb(30 58 138)', // blue-800
                         fontWeight: '500'
                       },
                       mediumActivity: {
-                        backgroundColor: 'rgb(251 146 60)', // orange-400
+                        backgroundColor: 'rgb(96 165 250)', // blue-400
                         color: 'white',
                         fontWeight: '600'
                       },
                       highActivity: {
-                        backgroundColor: 'rgb(234 88 12)', // orange-600
+                        backgroundColor: 'rgb(37 99 235)', // blue-600
                         color: 'white',
                         fontWeight: 'bold'
                       },
@@ -449,15 +368,15 @@ export default function DashboardPage() {
                       <span className="text-gray-600 dark:text-gray-400">None</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-orange-200"></div>
+                      <div className="w-2 h-2 rounded-sm bg-blue-200"></div>
                       <span className="text-gray-600 dark:text-gray-400">1-2</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-orange-400"></div>
+                      <div className="w-2 h-2 rounded-sm bg-blue-400"></div>
                       <span className="text-gray-600 dark:text-gray-400">3-5</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-orange-600"></div>
+                      <div className="w-2 h-2 rounded-sm bg-blue-600"></div>
                       <span className="text-gray-600 dark:text-gray-400">6+</span>
                     </div>
                   </div>
@@ -480,13 +399,13 @@ export default function DashboardPage() {
                             let badgeText = 'None';
                             
                             if (dayActivity.questionsAnswered >= 6) {
-                              badgeColor = 'bg-orange-600 text-white';
+                              badgeColor = 'bg-blue-600 text-white';
                               badgeText = 'High';
                             } else if (dayActivity.questionsAnswered >= 3) {
-                              badgeColor = 'bg-orange-400 text-white';
+                              badgeColor = 'bg-blue-400 text-white';
                               badgeText = 'Medium';
                             } else if (dayActivity.questionsAnswered >= 1) {
-                              badgeColor = 'bg-orange-200 text-orange-800';
+                              badgeColor = 'bg-blue-200 text-blue-800';
                               badgeText = 'Low';
                             }
                             
@@ -509,7 +428,7 @@ export default function DashboardPage() {
                         const dayActivity = activityChartData.data.find(item => item.date === dateStr);
                         return dayActivity && dayActivity.questionsAnswered > 0 ? (
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                               {dayActivity.questionsAnswered}
                             </div>
                             <div className="text-xs text-gray-600 dark:text-gray-400">

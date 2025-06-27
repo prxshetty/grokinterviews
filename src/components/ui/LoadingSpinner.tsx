@@ -71,12 +71,11 @@ export default function LoadingSpinner({
 
   const content = (
     <div className={cn(
-      'flex flex-col items-center justify-center',
-      text && 'space-y-3'
+      'flex flex-col items-center justify-center gap-4',
     )}>
       {spinner}
       {text && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 animate-pulse">
+        <p className="text-sm tracking-widest text-gray-600 dark:text-gray-400 animate-pulse">
           {text}
         </p>
       )}
