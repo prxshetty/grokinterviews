@@ -1,46 +1,42 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
+import { supabase } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { LoadingSpinner } from '@/components/ui'
 import SignIn from '@/app/signin/page'
 
 interface WithAuthProps {
-  children?: React.ReactNode
+  user: User | null
 }
 
 export default function withAuth<P extends object>(
-  WrappedComponent: React.ComponentType<P>
+  WrappedComponent: React.ComponentType<P & WithAuthProps>
 ) {
-  const WithAuth: React.FC<P & WithAuthProps> = (props) => {
-    const supabase = createClient()
+  const WithAuth: React.FC<P> = (props) => {
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-      async function fetchUser() {
-        const {
-          data: { user: fetchedUser },
-        } = await supabase.auth.getUser()
-        if (fetchedUser) {
-          setUser(fetchedUser)
-        }
-        setLoading(false)
-      }
-      fetchUser()
-
       const { data: authListener } = supabase.auth.onAuthStateChange(
-        (_event, session) => {
+        (event, session) => {
+          console.log('withAuth event', event)
           setUser(session?.user ?? null)
           setLoading(false)
         }
       )
 
+      // Initial check
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          setLoading(false)
+        }
+      })
+
       return () => {
         authListener.subscription.unsubscribe()
       }
-    }, [supabase.auth])
+    }, [])
 
     if (loading) {
       return (
@@ -61,7 +57,7 @@ export default function withAuth<P extends object>(
       )
     }
 
-    return <WrappedComponent {...(props as P)} />
+    return <WrappedComponent {...(props as P)} user={user} />
   }
   WithAuth.displayName = `WithAuth(${
     WrappedComponent.displayName || WrappedComponent.name || 'Component'

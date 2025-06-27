@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { createClient } from '@/utils/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -18,7 +18,13 @@ function SignInForm() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
+  const { user, refreshAuth, supabase } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   useEffect(() => {
     setMounted(true);
@@ -46,6 +52,7 @@ function SignInForm() {
     setLoading(true);
     setError(null);
     setMessage(null);
+    if (!supabase) return;
 
     try {
       if (isSignUp) {
@@ -119,7 +126,7 @@ function SignInForm() {
           setFirstName('');
           setLastName('');
         } else if (data?.session) {
-          router.push('/dashboard');
+          await refreshAuth();
         }
       } else {
         // Sign in
@@ -138,7 +145,7 @@ function SignInForm() {
         }
 
         if (data?.session) {
-          router.push('/dashboard');
+          await refreshAuth();
         }
       }
     } catch (error: any) {
@@ -165,6 +172,7 @@ function SignInForm() {
   const handleSignInWithGoogle = async () => {
     setLoading(true);
     setError(null);
+    if (!supabase) return;
 
     try {
       const redirectUrl = process.env.NODE_ENV === 'production' 
@@ -188,6 +196,7 @@ function SignInForm() {
   const handleSignInWithGitHub = async () => {
     setLoading(true);
     setError(null);
+    if (!supabase) return;
 
     try {
       const redirectUrl = process.env.NODE_ENV === 'production' 

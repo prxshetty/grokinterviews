@@ -22,7 +22,6 @@ import {
   SheetHeader,
   SheetTitle,
   Logo,
-  LoadingSpinner
 } from '@/components/ui';
 import { MAIN_NAV_TOPICS, type NavTopic } from '@/config/navigation.constants';
 
@@ -34,7 +33,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   const pathname = usePathname();
   
   // Use the shared auth state from the provider
-  const { user, profile, signOut, loading: authLoading } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   // Filter out the AI domain from the navigation topics
   const displayedNavTopics = MAIN_NAV_TOPICS.filter(topic => topic.id !== 'ai');
@@ -75,6 +74,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   const handleSignOut = async () => {
     await signOut();
+    router.push('/');
     setIsMobileMenuOpen(false);
   };
 
@@ -182,11 +182,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
           {/* Desktop User Profile / Auth */}
           <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-            {authLoading ? (
-              <div className="flex h-[40px] w-[90px] items-center justify-center">
-                <LoadingSpinner className="h-6 w-6" />
-              </div>
-            ) : user ? (
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -316,11 +312,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 </nav>
 
                 <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  {authLoading ? (
-                    <div className="flex items-center justify-center p-4">
-                      <LoadingSpinner className="h-8 w-8" />
-                    </div>
-                  ) : user ? (
+                  {user ? (
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
                          {profile?.avatar_url && 

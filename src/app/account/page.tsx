@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, ChangeEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import { useAuth } from '@/components/AuthProvider';
 import { DemoButton } from '@/components/ui';
 import { LoadingSpinner } from '@/components/ui';
 import { toast } from 'sonner';
@@ -11,17 +10,20 @@ import { AccountTab, Cursor } from '@/components/account/account-tabs';
 import { PersonalInfoSection } from '@/components/account/personal-info/personal-info-section';
 import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-section';
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
-import type { UserProfile, UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
+import type { UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
 import { availableGroqModels, DEFAULT_GROQ_MODEL_ID } from './types';
+import withAuth from '@/components/auth/withAuth';
+import type { User } from '@supabase/supabase-js'
 
-export default function AccountPage() {
+interface AccountPageProps {
+  user: User | null;
+}
+
+function AccountPage({ user: authUser }: AccountPageProps) {
   const [activeTab, setActiveTab] = useState('personal');
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading: authLoading, refreshAuth, supabase } = useAuth();
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
   const isMounted = useRef(true);
 
   const [position, setPosition] = useState({
@@ -48,71 +50,34 @@ export default function AccountPage() {
     custom_formatting_instructions: '',
   });
 
-
-
   useEffect(() => {
     isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
-    const checkUser = async () => {
-      try {
-        const { data: { user: fetchedUser }, error: userError } = await supabase.auth.getUser();
-        if (userError || !fetchedUser) {
-          if (isMounted.current) {
-            router.push('/signin');
-          }
-          return;
-        }
+  useEffect(() => {
+    if (!authLoading && !user && !authUser) {
+      router.push('/signin');
+    }
+  }, [user, authUser, authLoading, router]);
 
-        if (!isMounted.current) return;
-        setUser(fetchedUser);
-
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, username, avatar_url')
-          .eq('id', fetchedUser.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        }
-
-        if (!isMounted.current) return;
-
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      if (user && isMounted.current && supabase) {
         const { data: preferencesData, error: prefError } = await supabase
           .from('user_preferences')
           .select('*')
-          .eq('user_id', fetchedUser.id)
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (prefError) {
           console.error('Error fetching preferences:', prefError);
-        }
-        
-        if (!isMounted.current) return;
-
-        if (profileData) {
-          setProfile({
-              id: fetchedUser.id,
-              email: fetchedUser.email || '',
-              full_name: profileData.full_name,
-              username: profileData.username,
-              avatar_url: profileData.avatar_url,
-              custom_api_key: null
-          });
-          setFormData(prev => ({
-            ...prev,
-            full_name: profileData.full_name || '',
-            username: profileData.username || '',
-            email: fetchedUser.email || '',
-          }));
-
-        } else if (fetchedUser.email) {
-          setFormData(prev => ({ ...prev, email: fetchedUser.email! }));
+          toast.error('Could not load your preferences.');
         }
 
-        if (!isMounted.current) return;
-
-        if (preferencesData) {
+        if (isMounted.current && preferencesData) {
           setFormData(prev => ({
             ...prev,
             specific_model_id: preferencesData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
@@ -129,21 +94,19 @@ export default function AccountPage() {
             custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
           }));
         }
-      } catch (error) {
-        console.error('An unexpected error occurred in checkUser:', error);
-      } finally {
-        if (isMounted.current) {
-          setLoading(false);
-        }
       }
     };
-
-    checkUser();
-
-    return () => {
-      isMounted.current = false;
-    };
-  }, [router, supabase]);
+    
+    if (profile && user) {
+      setFormData(prev => ({
+        ...prev,
+        full_name: profile.full_name || '',
+        username: profile.username || '',
+        email: user.email || '',
+      }));
+      fetchUserPreferences();
+    }
+  }, [profile, user, supabase]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -152,8 +115,6 @@ export default function AccountPage() {
       [name]: value
     }));
   };
-
-
 
   const handleSwitchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
@@ -171,6 +132,11 @@ export default function AccountPage() {
     }
 
     setSaving(true);
+    if (!supabase) {
+      toast.error("Database connection not available.");
+      setSaving(false);
+      return;
+    }
     console.log("Saving changes for user:", user.id);
     console.log("Form data:", formData);
 
@@ -219,7 +185,7 @@ export default function AccountPage() {
       }
       console.log("User preferences upserted successfully.");
 
-      setProfile(prev => prev ? { ...prev, full_name: formData.full_name, username: formData.username } : null);
+      await refreshAuth();
       toast.success('Settings saved successfully!');
     } catch (error: any) {
       console.error('Unexpected error during saveChanges:', error);
@@ -228,8 +194,6 @@ export default function AccountPage() {
       setSaving(false);
     }
   };
-
-
 
   const getSelectedModelDetails = () => {
     return availableGroqModels.find(model => model.id === formData.specific_model_id);
@@ -249,12 +213,12 @@ export default function AccountPage() {
   }, [activeTab]);
 
   useEffect(() => {
-    if (!loading) {
+    if (!authLoading) {
       setInitialCursorPosition();
     }
-  }, [loading, activeTab, setInitialCursorPosition]);
+  }, [authLoading, activeTab, setInitialCursorPosition]);
 
-  if (loading) {
+  if (authLoading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="xl" text="Loading Account..." fullScreen={false} />
@@ -383,3 +347,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+export default withAuth(AccountPage);

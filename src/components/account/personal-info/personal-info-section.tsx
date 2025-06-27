@@ -1,9 +1,16 @@
 'use client'
 
 import Image from 'next/image'
-import type { UserProfile } from '@/app/account/types' // Corrected import path
 import { Input } from '@/components/ui'
 import type { ReactElement } from 'react'; // Import ReactElement
+
+interface UserProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url: string | null;
+  email: string;
+}
 
 interface PersonalInfoSectionProps {
   formData: {

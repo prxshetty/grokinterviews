@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/utils/supabase/client';
 import Image, { type ImageProps } from 'next/image';
 import { InlineLoadingSpinner, Card, Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import { TabNav } from '@/components/ui/tab-nav';
@@ -156,8 +156,6 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [activeTabType, setActiveTabType] = useState<string | null>(null);
-
-  const supabase = useMemo(() => createClient(), []);
 
   // Effect for fetching main resource data
   useEffect(() => {
@@ -317,7 +315,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
       isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, [supabase, questionId, domain, topicId, categoryId, subcategoryId, isLoggedIn, userPreferences, loadingPrefs]);
+  }, [questionId, domain, topicId, categoryId, subcategoryId, isLoggedIn, userPreferences, loadingPrefs]);
 
   // Effect for Fetching User Preferences when isLoggedIn status changes
   useEffect(() => {
@@ -368,7 +366,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
     }
     loadUserPreferences();
     return () => { isMounted = false; };
-  }, [isLoggedIn, supabase]);
+  }, [isLoggedIn]);
 
   const getResourcesByType = useCallback((typeValue: string) => resources
     .filter(r => r.type === typeValue)
