@@ -73,9 +73,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   };
 
   const handleSignOut = async () => {
+    setIsMobileMenuOpen(false);
     await signOut();
     router.push('/');
-    setIsMobileMenuOpen(false);
   };
 
   const logoElement = (

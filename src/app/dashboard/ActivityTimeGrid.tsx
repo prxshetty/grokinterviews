@@ -156,7 +156,7 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
 
       {loading ? (
         <div className="flex h-48 items-center justify-center">
-          <LoadingSpinner />
+          <LoadingSpinner text="Loading activity data..." />
         </div>
       ) : error ? (
         <div className="h-auto flex items-center justify-center py-8 text-red-500 dark:text-red-400">
@@ -167,7 +167,7 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="bg-black bg-opacity-70 text-white px-6 py-4 rounded-lg text-center">
               <p className="text-lg font-medium">Sign in to use this feature</p>
-              <a href="/signin" className="mt-2 inline-block bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded transition-colors">
+              <a href="/signin" className="mt-2 inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors">
                 Sign In
               </a>
             </div>

@@ -313,6 +313,7 @@ export default function DashboardPage() {
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
+                    weekStartsOn={1}
                     className="rounded-md border border-gray-200 dark:border-gray-700 w-full"
                     modifiers={{
                       lowActivity: (date: Date) => {
@@ -338,17 +339,17 @@ export default function DashboardPage() {
                     }}
                     modifiersStyles={{
                       lowActivity: {
-                        backgroundColor: 'rgb(254 215 170)', // orange-200
-                        color: 'rgb(154 52 18)', // orange-800
+                        backgroundColor: 'rgb(191 219 254)', // blue-200
+                        color: 'rgb(30 58 138)', // blue-800
                         fontWeight: '500'
                       },
                       mediumActivity: {
-                        backgroundColor: 'rgb(251 146 60)', // orange-400
+                        backgroundColor: 'rgb(96 165 250)', // blue-400
                         color: 'white',
                         fontWeight: '600'
                       },
                       highActivity: {
-                        backgroundColor: 'rgb(234 88 12)', // orange-600
+                        backgroundColor: 'rgb(37 99 235)', // blue-600
                         color: 'white',
                         fontWeight: 'bold'
                       },
@@ -367,15 +368,15 @@ export default function DashboardPage() {
                       <span className="text-gray-600 dark:text-gray-400">None</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-orange-200"></div>
+                      <div className="w-2 h-2 rounded-sm bg-blue-200"></div>
                       <span className="text-gray-600 dark:text-gray-400">1-2</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-orange-400"></div>
+                      <div className="w-2 h-2 rounded-sm bg-blue-400"></div>
                       <span className="text-gray-600 dark:text-gray-400">3-5</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-orange-600"></div>
+                      <div className="w-2 h-2 rounded-sm bg-blue-600"></div>
                       <span className="text-gray-600 dark:text-gray-400">6+</span>
                     </div>
                   </div>
@@ -398,13 +399,13 @@ export default function DashboardPage() {
                             let badgeText = 'None';
                             
                             if (dayActivity.questionsAnswered >= 6) {
-                              badgeColor = 'bg-orange-600 text-white';
+                              badgeColor = 'bg-blue-600 text-white';
                               badgeText = 'High';
                             } else if (dayActivity.questionsAnswered >= 3) {
-                              badgeColor = 'bg-orange-400 text-white';
+                              badgeColor = 'bg-blue-400 text-white';
                               badgeText = 'Medium';
                             } else if (dayActivity.questionsAnswered >= 1) {
-                              badgeColor = 'bg-orange-200 text-orange-800';
+                              badgeColor = 'bg-blue-200 text-blue-800';
                               badgeText = 'Low';
                             }
                             
@@ -427,7 +428,7 @@ export default function DashboardPage() {
                         const dayActivity = activityChartData.data.find(item => item.date === dateStr);
                         return dayActivity && dayActivity.questionsAnswered > 0 ? (
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                               {dayActivity.questionsAnswered}
                             </div>
                             <div className="text-xs text-gray-600 dark:text-gray-400">

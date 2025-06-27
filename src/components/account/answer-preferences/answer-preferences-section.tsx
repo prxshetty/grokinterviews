@@ -58,50 +58,148 @@ export function AnswerPreferencesSection({
   renderSaveChangesButton,
 }: AnswerPreferencesSectionProps) {
   return (
-    <div className="flex gap-8">
-      {/* Left Panel - Preferences Form (60%) */}
-      <div className="w-3/5 bg-white dark:bg-black/60 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Answer Preferences</h2>
-        <div className="space-y-8">
+    <div className="flex flex-col xl:flex-row gap-4 lg:gap-8">
+      {/* Answer Preview Panel - Mobile First */}
+      <div className="xl:order-2 w-full xl:w-2/5 bg-gradient-to-br from-gray-50 to-white dark:from-black/90 dark:to-black rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col">
+        <h3 className="text-sm sm:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">Answer Preview</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 lg:p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-4 lg:mb-6 overflow-auto max-h-[400px] lg:max-h-[500px]">
+          <div className="prose dark:prose-invert prose-sm max-w-none">
+            {/* Markdown Preview */}
+            {formData.preferred_answer_format === 'markdown' && (
+              <div>
+                <h4>Binary Search Tree Implementation</h4>
+                <p>A Binary Search Tree (BST) is a data structure where each node has at most two children:</p>
+                <ul>
+                  <li>Left child contains value less than the node</li>
+                  <li>Right child contains value greater than the node</li>
+                </ul>
+                <p>Here's a basic implementation in JavaScript:</p>
+                {formData.include_code_snippets && (
+                  <pre className="bg-gray-100 dark:bg-gray-900 p-2 rounded">
+                    <code className="text-xs">{`class Node {\n  constructor(value) {\n    this.value = value;\n    this.left = null;\n    this.right = null;\n  }\n}`}</code>
+                  </pre>
+                )}
+                {formData.include_latex_formulas && (
+                  <p>{`Example LaTeX: $$\sum_{i=1}^n i = \frac{n(n+1)}{2}$$`}</p>
+                )}
+              </div>
+            )}
+            {/* Bullet Points Preview */}
+            {formData.preferred_answer_format === 'bullet_points' && (
+              <div>
+                <p><strong>Binary Search Tree Implementation:</strong></p>
+                <ul>
+                  <li>BST is a tree data structure with specific ordering properties</li>
+                  <li>Each node has at most two children (left and right)</li>
+                  <li>Left subtree contains values less than the node's value</li>
+                  <li>Right subtree contains values greater than the node's value</li>
+                  {formData.include_code_snippets && <li>Implementation requires a Node class</li>}
+                  <li>Common operations: insert, search, delete, traverse</li>
+                  {formData.include_latex_formulas && <li>{`LaTeX Example: $E=mc^2$`}</li>}
+                </ul>
+              </div>
+            )}
+            {/* Paragraph Preview */}
+            {formData.preferred_answer_format === 'paragraph' && (
+              <div>
+                <p>{`A Binary Search Tree (BST) is a fundamental data structure... ${formData.include_code_snippets ? 'It can be implemented with a Node class.' : ''} ${formData.include_latex_formulas ? 'Mathematical principles like $O(\log n)$ are relevant.' : ''}`}</p>
+              </div>
+            )}
+            {/* Table Preview */}
+            {formData.preferred_answer_format === 'table' && (
+              <div>
+                <p><strong>Binary Search Tree Operations</strong></p>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-gray-800">
+                        <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Operation</th>
+                        <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Complexity</th>
+                        {formData.include_code_snippets && <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Code Hint</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-2">Insert</td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-2">O(log n)</td>
+                        {formData.include_code_snippets && <td className="border border-gray-300 dark:border-gray-700 px-3 py-2">Node creation</td>}
+                      </tr>
+                       {formData.include_latex_formulas && (
+                        <tr>
+                            <td colSpan={formData.include_code_snippets ? 3 : 2} className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-center">{`Formula: $T(n) = 2T(n/2) + O(1)$`}</td>
+                        </tr>
+                       )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-auto">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Settings</h4>
+          <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+            <p><span className="font-medium">Format:</span> {formData.preferred_answer_format.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+            <p><span className="font-medium">Depth:</span> {formData.preferred_answer_depth.charAt(0).toUpperCase() + formData.preferred_answer_depth.slice(1)}</p>
+            <p><span className="font-medium">Add-ons:</span>
+              {[formData.include_code_snippets ? 'Code Snippets' : null,
+                formData.include_latex_formulas ? 'LaTeX Formulas' : null]
+                .filter(Boolean)
+                .join(', ') || 'None'}
+            </p>
+            <p><span className="font-medium">Sources:</span> {(Object.keys(formData) as Array<ContentSourceKey>)
+                .filter(key => contentSources.some(cs => cs.id === key) && formData[key] === true)
+                .map(key => contentSources.find(cs => cs.id === key)?.name || key.replace('use_','').replace('_sources','').replace('_', ' '))
+                .join(', ') || 'None selected'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Preferences Form Panel */}
+      <div className="xl:order-1 flex-1 bg-white dark:bg-black/60 rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 lg:mb-6">Answer Preferences</h2>
+        <div className="space-y-6 lg:space-y-8">
           {/* Content Sources */}
           <section>
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Content Sources</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Select which types of supplementary resources should be considered when generating answers.</p>
-            <div className="grid grid-cols-3 gap-3 mt-2">
+            <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">Content Sources</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 lg:mb-4">Select which types of supplementary resources should be considered when generating answers.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
               {contentSources.map((source) => {
                 const isSelected = formData[source.id]
                 const isComingSoon = false;
-                return (
-                  <div
-                    key={source.id}
-                    className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-4 ${isComingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-500'} transition-colors`}
-                    onClick={() => {
-                      if (!isComingSoon) {
-                        setFormData(prev => ({
-                          ...prev,
-                          [source.id]: !isSelected
-                        }))
-                      }
-                    }}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">{source.name}</h4>
-                        <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${isComingSoon ? 'border-amber-500 dark:border-amber-400 text-amber-600 dark:text-amber-400' : 'border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200'} bg-transparent`}>
-                          {source.tag}
-                        </span>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{source.description}</p>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
-                        {isSelected && (
-                          <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                          </svg>
-                        )}
+                                  return (
+                    <div
+                      key={source.id}
+                      className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-3 lg:p-4 ${isComingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-500'} transition-colors`}
+                      onClick={() => {
+                        if (!isComingSoon) {
+                          setFormData(prev => ({
+                            ...prev,
+                            [source.id]: !isSelected
+                          }))
+                        }
+                      }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm lg:text-base font-medium text-gray-900 dark:text-white">{source.name}</h4>
+                          <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${isComingSoon ? 'border-amber-500 dark:border-amber-400 text-amber-600 dark:text-amber-400' : 'border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200'} bg-transparent`}>
+                            {source.tag}
+                          </span>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{source.description}</p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center flex-shrink-0 ml-2`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                            </svg>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
+                  )
               })}
             </div>
             <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
@@ -110,17 +208,17 @@ export function AnswerPreferencesSection({
           </section>
 
           {/* Answer Format */}
-          <section className="pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Answer Format</h3>
-            <div className="mb-6">
+          <section className="pt-4 lg:pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">Answer Format</h3>
+            <div className="mb-4 lg:mb-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format Style</label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 {answerFormats.map((format) => {
                   const isSelected = formData.preferred_answer_format === format.id
                   return (
                     <div
                       key={format.id}
-                      className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
+                      className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-3 lg:p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
                       onClick={() => {
                         setFormData(prev => ({
                           ...prev,
@@ -129,13 +227,13 @@ export function AnswerPreferencesSection({
                       }}
                     >
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium text-gray-900 dark:text-white">{format.name}</h4>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm lg:text-base font-medium text-gray-900 dark:text-white">{format.name}</h4>
                           <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
                             {format.tag}
                           </span>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center`}>
+                        <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center flex-shrink-0 ml-2`}>
                           {isSelected && (
                             <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
@@ -243,9 +341,9 @@ export function AnswerPreferencesSection({
           </section>
 
           {/* Custom Instructions */}
-          <section className="pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Custom Instructions</h3>
-            <div className="mb-6">
+          <section className="pt-4 lg:pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">Custom Instructions</h3>
+            <div className="mb-4 lg:mb-6">
               <label htmlFor="custom_formatting_instructions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Additional Formatting Instructions
               </label>
@@ -255,7 +353,7 @@ export function AnswerPreferencesSection({
                 rows={3}
                 value={formData.custom_formatting_instructions || ''}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm px-4 py-3"
+                className="mt-1 block w-full rounded-md border-2 border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white text-sm shadow-sm px-3 lg:px-4 py-2 lg:py-3"
                 placeholder="e.g., Start with a summary. Use bold for key terms."
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -263,104 +361,8 @@ export function AnswerPreferencesSection({
               </p>
             </div>
           </section>
-          {renderSaveChangesButton()}
-        </div>
-      </div>
-
-      {/* Right Panel - Answer Preview (40%) */}
-      <div className="w-2/5 bg-gradient-to-br from-gray-50 to-white dark:from-black/90 dark:to-black rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col">
-        <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-4">Answer Preview</h3>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-6 overflow-auto max-h-[500px]">
-          <div className="prose dark:prose-invert prose-sm max-w-none">
-            {/* Markdown Preview */}
-            {formData.preferred_answer_format === 'markdown' && (
-              <div>
-                <h4>Binary Search Tree Implementation</h4>
-                <p>A Binary Search Tree (BST) is a data structure where each node has at most two children:</p>
-                <ul>
-                  <li>Left child contains value less than the node</li>
-                  <li>Right child contains value greater than the node</li>
-                </ul>
-                <p>Here's a basic implementation in JavaScript:</p>
-                {formData.include_code_snippets && (
-                  <pre className="bg-gray-100 dark:bg-gray-900 p-2 rounded">
-                    <code className="text-xs">{`class Node {\n  constructor(value) {\n    this.value = value;\n    this.left = null;\n    this.right = null;\n  }\n}`}</code>
-                  </pre>
-                )}
-                {formData.include_latex_formulas && (
-                  <p>{`Example LaTeX: $$\sum_{i=1}^n i = \frac{n(n+1)}{2}$$`}</p>
-                )}
-              </div>
-            )}
-            {/* Bullet Points Preview */}
-            {formData.preferred_answer_format === 'bullet_points' && (
-              <div>
-                <p><strong>Binary Search Tree Implementation:</strong></p>
-                <ul>
-                  <li>BST is a tree data structure with specific ordering properties</li>
-                  <li>Each node has at most two children (left and right)</li>
-                  <li>Left subtree contains values less than the node's value</li>
-                  <li>Right subtree contains values greater than the node's value</li>
-                  {formData.include_code_snippets && <li>Implementation requires a Node class</li>}
-                  <li>Common operations: insert, search, delete, traverse</li>
-                  {formData.include_latex_formulas && <li>{`LaTeX Example: $E=mc^2$`}</li>}
-                </ul>
-              </div>
-            )}
-            {/* Paragraph Preview */}
-            {formData.preferred_answer_format === 'paragraph' && (
-              <div>
-                <p>{`A Binary Search Tree (BST) is a fundamental data structure... ${formData.include_code_snippets ? 'It can be implemented with a Node class.' : ''} ${formData.include_latex_formulas ? 'Mathematical principles like $O(\log n)$ are relevant.' : ''}`}</p>
-              </div>
-            )}
-            {/* Table Preview */}
-            {formData.preferred_answer_format === 'table' && (
-              <div>
-                <p><strong>Binary Search Tree Operations</strong></p>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="bg-gray-100 dark:bg-gray-800">
-                        <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Operation</th>
-                        <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Complexity</th>
-                        {formData.include_code_snippets && <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Code Hint</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-2">Insert</td>
-                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-2">O(log n)</td>
-                        {formData.include_code_snippets && <td className="border border-gray-300 dark:border-gray-700 px-3 py-2">Node creation</td>}
-                      </tr>
-                       {formData.include_latex_formulas && (
-                        <tr>
-                            <td colSpan={formData.include_code_snippets ? 3 : 2} className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-center">{`Formula: $T(n) = 2T(n/2) + O(1)$`}</td>
-                        </tr>
-                       )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-auto">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Settings</h4>
-          <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-            <p><span className="font-medium">Format:</span> {formData.preferred_answer_format.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-            <p><span className="font-medium">Depth:</span> {formData.preferred_answer_depth.charAt(0).toUpperCase() + formData.preferred_answer_depth.slice(1)}</p>
-            <p><span className="font-medium">Add-ons:</span>
-              {[formData.include_code_snippets ? 'Code Snippets' : null,
-                formData.include_latex_formulas ? 'LaTeX Formulas' : null]
-                .filter(Boolean)
-                .join(', ') || 'None'}
-            </p>
-            <p><span className="font-medium">Sources:</span> {(Object.keys(formData) as Array<ContentSourceKey>)
-                .filter(key => contentSources.some(cs => cs.id === key) && formData[key] === true)
-                .map(key => contentSources.find(cs => cs.id === key)?.name || key.replace('use_','').replace('_sources','').replace('_', ' '))
-                .join(', ') || 'None selected'}
-            </p>
+          <div className="mt-4 lg:mt-6">
+            {renderSaveChangesButton()}
           </div>
         </div>
       </div>

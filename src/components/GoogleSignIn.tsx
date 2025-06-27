@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
+import { supabase } from '@/utils/supabase/client';
 
 export default function GoogleSignIn() {
   const router = useRouter();
@@ -16,10 +16,6 @@ export default function GoogleSignIn() {
       if (!googleSignInAttempt) return;
 
       // Check if the user is now logged in
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
       const { data: { user }, error } = await supabase.auth.getUser();
 
       if (error) {
@@ -42,9 +38,12 @@ export default function GoogleSignIn() {
     setLoading(true);
 
     try {
-      // Instead of handling the OAuth flow directly, redirect to our dedicated page
-      // Use window.location.href to force a full page reload
-      window.location.href = '/auth/google-signin';
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${location.origin}/auth/callback`,
+        },
+      });
     } catch (error: any) {
       console.error('Google sign in error:', error);
       setLoading(false);

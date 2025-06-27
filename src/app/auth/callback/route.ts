@@ -52,6 +52,38 @@ export async function GET(request: NextRequest) {
           console.error('Error creating profile for OAuth user:', insertError)
           return NextResponse.redirect(`${origin}/auth/auth-code-error?error=ProfileCreationFailed`);
         }
+
+        // Create default user preferences for OAuth user
+        console.log('Creating default user preferences for OAuth user:', user.id)
+        const defaultPreferences = {
+          user_id: user.id,
+          specific_model_id: 'llama-3.1-8b-instant',
+          preferred_model: 'groq',
+          use_youtube_sources: true,
+          use_pdf_sources: true,
+          use_paper_sources: true,
+          use_website_sources: true,
+          use_book_sources: false,
+          use_image_sources: true,
+          preferred_answer_format: 'markdown',
+          preferred_answer_depth: 'standard',
+          include_code_snippets: true,
+          include_latex_formulas: false,
+          custom_formatting_instructions: null,
+          theme: 'system',
+          email_notifications: true,
+        }
+
+        const { error: preferencesError } = await supabase
+          .from('user_preferences')
+          .insert(defaultPreferences)
+
+        if (preferencesError) {
+          console.error('Error creating default preferences for OAuth user:', preferencesError)
+          // Don't fail the entire flow, just log the error
+        } else {
+          console.log('Default preferences created successfully for OAuth user:', user.id)
+        }
       }
       return NextResponse.redirect(`${origin}/dashboard`)
     }
