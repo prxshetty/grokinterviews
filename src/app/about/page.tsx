@@ -94,7 +94,7 @@ export default function AboutPage() {
             supportHeading="Still have questions or feedback?"
             supportDescription="We're here to help and always looking to improve. Let us know what's on your mind."
             supportButtonText="Email Us"
-            supportButtonUrl="mailto:support@grokinterviews.com"
+            supportButtonUrl="mailto:hello@grokinterviews.org"
           />
         </section>
       </main>
