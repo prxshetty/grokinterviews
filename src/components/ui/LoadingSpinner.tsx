@@ -45,10 +45,10 @@ const sizeClasses = {
 };
 
 const colorClasses = {
-  primary: 'text-purple-600 dark:text-purple-400',
-  secondary: 'text-gray-600 dark:text-gray-400', 
-  accent: 'text-orange-500 dark:text-orange-400',
-  muted: 'text-gray-400 dark:text-gray-500'
+  primary: 'text-gray-900 dark:text-white',
+  secondary: 'text-gray-900 dark:text-white', 
+  accent: 'text-gray-900 dark:text-white',
+  muted: 'text-gray-700 dark:text-white/80'
 };
 
 export default function LoadingSpinner({
@@ -62,10 +62,9 @@ export default function LoadingSpinner({
   const spinner = (
     <div className={cn(
       sizeClasses[size],
-      colorClasses[color],
       className
     )}>
-      <MessageLoading />
+      <MessageLoading className={colorClasses[color]} />
     </div>
   );
 

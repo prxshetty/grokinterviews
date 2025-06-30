@@ -1,12 +1,17 @@
 // @hidden
-function MessageLoading() {
+import { cn } from '@/lib/utils';
+
+type MessageLoadingProps = React.SVGProps<SVGSVGElement>;
+
+function MessageLoading({ className, ...props }: MessageLoadingProps) {
   return (
     <svg
       width="24"
       height="24"
       viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
-      className="text-foreground"
+      className={cn('text-foreground', className)}
+      {...props}
     >
       <circle cx="4" cy="12" r="2" fill="currentColor">
         <animate
