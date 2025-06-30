@@ -6,6 +6,7 @@ import { useAuth } from '@/components/AuthProvider';
 import ProgressSaver from '@/components/progress/ProgressSaver';
 import { ActivityGrid } from '@/components/progress';
 import { Calendar } from '@/components/ui';
+import { DomainStat, ActivityItem } from '@/types/dashboard.types';
 import DashboardNav from './DashboardNav';
 import { LoadingSpinner } from '@/components/ui';
 
@@ -16,31 +17,6 @@ import {
   UserActivityChart,
   MetricCards
 } from '@/components/dashboard';
-
-interface ActivityItem {
-  id: string;
-  activityType: string;
-  topicId: string;
-  topicName: string;
-  categoryId: string;
-  categoryName: string;
-  questionId: number;
-  questionText: string;
-  createdAt: string;
-  displayText: string;
-  timeAgo: string;
-  completionPercentage: number;
-  color: string;
-}
-
-interface DomainStat {
-  domain: string;
-  domainName: string;
-  totalQuestions: number;
-  completedQuestions: number;
-  completionPercentage: number;
-  color: string;
-}
 
 export default function DashboardPage() {
   const { user, profile, loading: authLoading } = useAuth();

@@ -39,17 +39,17 @@ export default function StatsSection() {
       </div>
 
       {/* Stats Display */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-0 mb-24">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 mb-24">
         {highlightedStats.map((stat, index) => (
           <div
             key={index}
-            className="flex flex-col items-center text-center md:border-r md:last:border-r-0 border-gray-200 dark:border-gray-700 py-8 px-8 transition-all duration-700"
+            className="flex flex-col items-center text-center border-b md:border-b-0 md:border-r last:border-b-0 md:last:border-r-0 border-gray-200 dark:border-gray-700 py-12 md:py-8 px-8 transition-all duration-700"
             style={{
               transitionDelay: `${isVisible ? index * 200 : 0}ms`,
               opacity: isVisible ? 1 : 0,
               transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
             }}>
-            <p className="text-5xl md:text-6xl lg:text-7xl font-normal mb-10 tracking-tight">
+            <p className="text-5xl md:text-6xl lg:text-7xl font-normal mb-6 md:mb-10 tracking-tight">
               {stat.value}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-[200px] mx-auto">

@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface UserStatsWidgetProps {
   userStats: {
@@ -62,7 +63,7 @@ export default function UserStatsWidget({ userStats }: UserStatsWidgetProps) {
 
       {userStats.loading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 dark:border-purple-500 border-t-transparent" />
+          <LoadingSpinner />
         </div>
       ) : userStats.error ? (
         <div className="text-center py-4">

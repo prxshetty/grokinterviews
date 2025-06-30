@@ -143,7 +143,7 @@ export default function TopicCarousel() {
           {containerWidth > 0 && visibleTopics.map((topic, index) => {
             // Calculate position in a perfect arc
             const totalCards = visibleTopics.length;
-            const visibleCards = Math.min(totalCards, 9); // Limit visible cards to avoid overcrowding
+            const visibleCards = Math.min(totalCards, 5); // Limit visible cards to avoid overcrowding
 
             // Calculate the index relative to the active card
             const relativeIndex = ((index - activeIndex) + totalCards) % totalCards;
@@ -154,7 +154,7 @@ export default function TopicCarousel() {
             if (!isVisible) return null;
 
             // Add additional spacing between cards by adjusting the relative index
-            const spacingFactor = 1.25; // Increased for more space between cards
+            const spacingFactor = 0.8; // Adjust spacing to fit 5 cards
             const spacedRelativeIndex = adjustedRelativeIndex * spacingFactor;
 
             // Calculate position on a perfect arc

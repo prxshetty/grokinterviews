@@ -192,7 +192,7 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
     <div
       key={topic.id}
       className={`
-        group relative flex-shrink-0 w-[120px] h-[160px] md:w-[140px] md:h-[180px] rounded-xl overflow-hidden
+        group relative flex-shrink-0 w-[60px] h-[100px] sm:w-[100px] sm:h-[140px] md:w-[140px] md:h-[180px] rounded-xl overflow-hidden
         transition-all duration-300 ease-out cursor-pointer
         ${isActive ? 'z-10 shadow-xl' : 'z-0 shadow-lg'}
         ${showHoverEffect ? 'z-20 shadow-xl' : ''}

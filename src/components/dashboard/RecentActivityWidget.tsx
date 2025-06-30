@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Eye, History, Activity, AlertCircle, ArrowRight } from 'lucide-react';
-
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 interface ActivityItem {
   id: string;
   activityType: string;
@@ -56,10 +56,9 @@ export default function RecentActivityWidget({ activityData }: RecentActivityWid
       <div className="space-y-3">
         {activityData.loading ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 dark:border-blue-500 border-t-transparent mb-3" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading activities...</p>
+            <LoadingSpinner />
           </div>
-                  ) : activityData.error ? (
+        ) : activityData.error ? (
             <div className="text-center py-8">
               <AlertCircle className="size-10 mx-auto text-blue-400 dark:text-blue-500 mb-3" />
               <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">{activityData.error}</p>

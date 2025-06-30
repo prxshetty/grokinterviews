@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 import {
   Card,
@@ -67,7 +68,7 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
           <CardDescription>Your learning activity over time</CardDescription>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <div className="h-[250px] w-full animate-pulse rounded-lg bg-muted" />
+          <LoadingSpinner />
         </CardContent>
       </Card>
     );

@@ -1,14 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-
-interface DomainStat {
-  domain: string;
-  domainName: string;
-  totalQuestions: number;
-  completedQuestions: number;
-  completionPercentage: number;
-  color: string;
-}
+import { DomainStat } from '@/types/dashboard.types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface DomainCompletionWidgetProps {
   domainStats: {
@@ -28,7 +21,7 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
 
       {domainStats.loading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 dark:border-purple-500 border-t-transparent" />
+          <LoadingSpinner />
         </div>
               ) : domainStats.error ? (
           <div className="text-center py-4">
@@ -54,7 +47,7 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
       ) : (
         <>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            Progress across {domainStats.domains.length} of {domainStats.totalDomains} domains
+            Progress across 4 domains 
           </p>
           
           <div className="space-y-3">
@@ -71,10 +64,9 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
                 
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
-                    className="h-2 rounded-full transition-all duration-300"
+                    className="h-2 rounded-full transition-all duration-300 text-gray-500 dark:text-gray-400"
                     style={{
                       width: `${Math.max(0.5, domain.completionPercentage)}%`,
-                      backgroundColor: domain.color
                     }}
                   />
                 </div>
