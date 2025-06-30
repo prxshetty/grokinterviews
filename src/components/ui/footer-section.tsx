@@ -57,35 +57,35 @@ const footerLinks: FooterSection[] = [
 
 export function Footer() {
 	return (
-		<footer className="md:rounded-t-6xl relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-6 py-12 lg:py-16">
+		<footer className="relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl md:rounded-t-6xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
 			<div className="bg-foreground/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
 
 			{/* Branding Section */}
-			<div className="mb-10 flex flex-col items-center">
+			<div className="mb-8 sm:mb-10 flex flex-col items-center">
 				<Link
 					href="/"
-					className="flex items-center space-x-2 text-2xl md:text-3xl font-light tracking-tight text-center text-gray-800 dark:text-gray-200"
+					className="flex items-center space-x-2 text-xl sm:text-2xl md:text-3xl font-light tracking-tight text-center text-gray-800 dark:text-gray-200"
 				>
 					<Logo 
 						size="lg" 
 						showText={true} 
 						className="text-gray-800 dark:text-gray-200" 
-						textClassName="text-2xl md:text-3xl"
+						textClassName="text-xl sm:text-2xl md:text-3xl"
 					/>
 				</Link>
 			</div>
 
-			<div className="grid w-full grid-cols-2 gap-8 md:grid-cols-3">
+			<div className="grid w-full grid-cols-1 sm:grid-cols-3 gap-8 text-center sm:text-left">
 				{footerLinks.map((section, index) => (
 					<AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
-						<div className="mb-10 md:mb-0">
-							<h3 className="text-xs font-medium uppercase tracking-wider">{section.label}</h3>
-							<ul className="text-muted-foreground mt-4 space-y-2 text-sm">
+						<div className="mb-6 sm:mb-0">
+							<h3 className="text-sm font-medium uppercase tracking-wider">{section.label}</h3>
+							<ul className="text-muted-foreground mt-4 space-y-2">
 								{section.links.map((link) => (
 									<li key={link.title}>
 										<Link
 											href={link.href}
-											className="hover:text-foreground inline-flex items-center transition-all duration-300"
+											className="hover:text-foreground inline-flex items-center transition-all duration-300 justify-center sm:justify-start"
 										>
 											{link.icon && <link.icon className="me-1 size-4" />}
 											{link.title}
@@ -97,7 +97,7 @@ export function Footer() {
 					</AnimatedContainer>
 				))}
 			</div>
-			<p className="text-muted-foreground mt-12 text-center text-sm">
+			<p className="text-muted-foreground mt-10 sm:mt-12 text-center text-xs sm:text-sm">
 				© {new Date().getFullYear()} GrokInterviews. All rights reserved.
 			</p>
 			<p className="text-muted-foreground mt-2 text-center text-xs">

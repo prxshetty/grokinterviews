@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
 // import { cookies } from 'next/headers'; // Old import
 import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
+import { DomainStat } from '@/types/dashboard.types';
 
 export const revalidate = 0;
 
@@ -36,9 +37,9 @@ export async function GET(_request: NextRequest) {
       if (countError) {
         console.error('Error fetching total domains count:', countError);
       }
-      
+
       return NextResponse.json({
-        domains: domainStats || [],
+        domains: domainStats,
         totalDomains: totalDomains || 0
       });
     } else {

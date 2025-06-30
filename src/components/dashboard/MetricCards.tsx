@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 interface ProgressData {
   questionsCompleted: number;
   questionsViewed: number;
