@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'; // Old import
 // import { cookies } from 'next/headers'; // Old import
 import { createClient } from '@/utils/supabase/server'; // New import for @supabase/ssr server client
-import { DomainStat } from '@/types/dashboard.types';
 
 export const revalidate = 0;
 
