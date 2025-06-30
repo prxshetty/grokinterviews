@@ -2,7 +2,7 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { FaTwitter, FaLinkedinIn, FaDiscord } from 'react-icons/fa';
+
 import Link from 'next/link';
 import { Logo } from './Logo';
 
@@ -15,11 +15,13 @@ interface FooterLink {
 interface FooterSection {
 	label: string;
 	links: FooterLink[];
+	className?: string;
 }
 
 const footerLinks: FooterSection[] = [
 	{
 		label: 'Product',
+		className: 'hidden sm:block',
 		links: [
 			{ title: 'Topics', href: '/topics' },
 			{ title: 'Dashboard', href: '/dashboard' },
@@ -47,9 +49,9 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Connect',
 		links: [
-			{ title: 'Twitter', href: 'https://x.com/prxshetty', icon: FaTwitter },
-			{ title: 'LinkedIn', href: '#', icon: FaLinkedinIn },
-			{ title: 'Discord', href: '#', icon: FaDiscord },
+			{ title: 'Twitter', href: 'https://x.com/prxshetty' },
+			{ title: 'LinkedIn', href: '#' },
+			{ title: 'Discord', href: '#' },
 		],
 	},
 ];
@@ -74,27 +76,35 @@ export function Footer() {
 				</Link>
 			</div>
 
-			<div className="grid w-full grid-cols-1 sm:grid-cols-3 gap-8 text-center sm:text-left">
-				{footerLinks.map((section, index) => (
-					<AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
-						<div className="mb-6 sm:mb-0">
-							<h3 className="text-xs sm:text-sm font-medium uppercase tracking-wider text-gray-800 dark:text-white">{section.label}</h3>
-							<ul className="text-muted-foreground mt-4 space-y-2">
-								{section.links.map((link) => (
-									<li key={link.title}>
-										<Link
-											href={link.href}
-											className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white inline-flex items-center transition-all duration-200 hover:translate-x-1 justify-center sm:justify-start"
-										>
-											{link.icon && <link.icon className="me-2" />}
-											{link.title}
-										</Link>
-									</li>
-								))}
-							</ul>
-						</div>
-					</AnimatedContainer>
-				))}
+			<div className="w-full">
+				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 text-center sm:text-left">
+					{footerLinks.map((section, index) => (
+						<AnimatedContainer 
+							key={section.label} 
+							delay={0.1 + index * 0.1}
+							className={`col-span-1 ${section.className || ''}`}
+						>
+							<div className="mb-4">
+								<h3 className="text-xs sm:text-sm font-medium uppercase tracking-wider text-gray-800 dark:text-white mb-3 sm:mb-4">
+									{section.label}
+								</h3>
+								<ul className="space-y-2">
+									{section.links.map((link) => (
+										<li key={link.title}>
+											<Link
+												href={link.href}
+												className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white inline-flex items-center transition-all duration-200 hover:translate-x-1 w-full justify-center sm:justify-start"
+											>
+												{link.icon && <link.icon className="me-2" />}
+												{link.title}
+											</Link>
+										</li>
+									))}
+								</ul>
+							</div>
+						</AnimatedContainer>
+					))}
+				</div>
 			</div>
 			<p className="text-gray-600 dark:text-gray-300 mt-10 sm:mt-12 text-center text-[10px] sm:text-xs md:text-sm">
 				{new Date().getFullYear()} GrokInterviews. All rights reserved.

@@ -47,11 +47,12 @@ export default function StatsSection() {
               transitionDelay: `${isVisible ? index * 200 : 0}ms`,
               opacity: isVisible ? 1 : 0,
               transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
-            }}>
-            <p className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal mb-4 sm:mb-6 md:mb-10 tracking-tight">
+            }}
+          >
+            <p className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal mb-2 sm:mb-4 md:mb-6 tracking-tight">
               {stat.value}
             </p>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-[200px] mx-auto">
+            <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2 md:mt-3 whitespace-nowrap overflow-hidden text-ellipsis">
               {stat.description}
             </p>
           </div>
