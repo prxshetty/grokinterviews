@@ -25,3 +25,4 @@ export { default as Pagination } from './Pagination';
 export { default as ProgressBar } from './ProgressBar';
 export { Toaster } from './sonner';
 export { TabNav } from './tab-nav';
+export { ThemeSwitcher } from './theme-switcher';

@@ -39,14 +39,14 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
     return (
       <>
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="@container/card animate-pulse">
+          <Card key={i} className="@container/card animate-pulse bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
             <CardHeader className="relative">
-              <CardDescription className="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
-              <CardTitle className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+              <CardDescription className="h-4 bg-gray-200 dark:bg-gray-800 rounded" />
+              <CardTitle className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-24 mt-2" />
             </CardHeader>
-            <CardFooter className="flex-col items-start gap-1">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" />
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-40" />
+            <CardFooter className="flex-col items-start gap-2">
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-32" />
+              <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-40" />
             </CardFooter>
           </Card>
         ))}

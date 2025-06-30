@@ -2,7 +2,7 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import {InstagramIcon, LinkedinIcon, TwitterIcon } from 'lucide-react';
+import { FaTwitter, FaLinkedinIn, FaDiscord } from 'react-icons/fa';
 import Link from 'next/link';
 import { Logo } from './Logo';
 
@@ -23,7 +23,6 @@ const footerLinks: FooterSection[] = [
 		links: [
 			{ title: 'Topics', href: '/topics' },
 			{ title: 'Dashboard', href: '/dashboard' },
-			{ title: 'Bookmarks', href: '/dashboard/bookmarks' },
 			{ title: 'Activity', href: '/dashboard/activity' },
 		],
 	},
@@ -46,11 +45,11 @@ const footerLinks: FooterSection[] = [
 	// 	],
 	// },
 	{
-		label: 'Follow Us',
+		label: 'Connect',
 		links: [
-			{ title: 'Twitter', href: 'https://x.com/prxshetty', icon: TwitterIcon },
-			{ title: 'LinkedIn', href: '#', icon: LinkedinIcon },
-			{ title: 'Instagram', href: '#', icon: InstagramIcon },
+			{ title: 'Twitter', href: 'https://x.com/prxshetty', icon: FaTwitter },
+			{ title: 'LinkedIn', href: '#', icon: FaLinkedinIn },
+			{ title: 'Discord', href: '#', icon: FaDiscord },
 		],
 	},
 ];
@@ -79,15 +78,15 @@ export function Footer() {
 				{footerLinks.map((section, index) => (
 					<AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
 						<div className="mb-6 sm:mb-0">
-							<h3 className="text-sm font-medium uppercase tracking-wider">{section.label}</h3>
+							<h3 className="text-xs sm:text-sm font-medium uppercase tracking-wider text-gray-800 dark:text-white">{section.label}</h3>
 							<ul className="text-muted-foreground mt-4 space-y-2">
 								{section.links.map((link) => (
 									<li key={link.title}>
 										<Link
 											href={link.href}
-											className="hover:text-foreground inline-flex items-center transition-all duration-300 justify-center sm:justify-start"
+											className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white inline-flex items-center transition-all duration-200 hover:translate-x-1 justify-center sm:justify-start"
 										>
-											{link.icon && <link.icon className="me-1 size-4" />}
+											{link.icon && <link.icon className="me-2" />}
 											{link.title}
 										</Link>
 									</li>
@@ -97,11 +96,8 @@ export function Footer() {
 					</AnimatedContainer>
 				))}
 			</div>
-			<p className="text-muted-foreground mt-10 sm:mt-12 text-center text-xs sm:text-sm">
-				© {new Date().getFullYear()} GrokInterviews. All rights reserved.
-			</p>
-			<p className="text-muted-foreground mt-2 text-center text-xs">
-				Made with ❤️ in a corner of the internet.
+			<p className="text-gray-600 dark:text-gray-300 mt-10 sm:mt-12 text-center text-[10px] sm:text-xs md:text-sm">
+				{new Date().getFullYear()} GrokInterviews. All rights reserved.
 			</p>
 		</footer>
 	);

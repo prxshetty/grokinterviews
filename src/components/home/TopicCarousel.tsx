@@ -143,26 +143,25 @@ export default function TopicCarousel() {
           {containerWidth > 0 && visibleTopics.map((topic, index) => {
             // Calculate position in a perfect arc
             const totalCards = visibleTopics.length;
-            const visibleCards = Math.min(totalCards, 5); // Limit visible cards to avoid overcrowding
+            const visibleCards = isMobile ? 3 : 5; // Show 3 cards on mobile, 5 on larger screens
 
             // Calculate the index relative to the active card
             const relativeIndex = ((index - activeIndex) + totalCards) % totalCards;
             const adjustedRelativeIndex = relativeIndex > totalCards / 2 ? relativeIndex - totalCards : relativeIndex;
 
-            // Only show cards that are within the visible range (reduced for more spacing)
-            const isVisible = Math.abs(adjustedRelativeIndex) <= Math.floor(visibleCards / 2);
-            if (!isVisible) return null;
+            // Only show cards that are within the visible range
+            const isCardVisible = Math.abs(adjustedRelativeIndex) <= Math.floor(visibleCards / 2);
 
-            // Add additional spacing between cards by adjusting the relative index
-            const spacingFactor = 0.8; // Adjust spacing to fit 5 cards
+            // Adjust spacing based on screen size
+            const spacingFactor = isMobile ? 0.6 : 0.8; // Wider spacing on mobile for 3 cards
             const spacedRelativeIndex = adjustedRelativeIndex * spacingFactor;
 
             // Calculate position on a perfect arc
             const maxCards = Math.floor(visibleCards / 2);
 
             // Arc parameters
-            const arcWidth = containerWidth * 0.95; // Use 95% of container width for spacing
-            const arcHeight = isMobile ? 100 : 120; // Height of the arc (adjusted for flatter curve)
+            const arcWidth = containerWidth * (isMobile ? 0.9 : 0.95); // Slightly less width on mobile
+            const arcHeight = isMobile ? 80 : 120; // Flatter arc on mobile
 
             // Calculate x position using linear distribution with increased spacing
             const x = maxCards > 0 ? spacedRelativeIndex * (arcWidth / (maxCards * 2)) : 0;
@@ -187,10 +186,11 @@ export default function TopicCarousel() {
             const rotationDeg = 0;
 
             // Calculate card style for positioning
-            const cardStyle = {
+            const cardStyle: React.CSSProperties = {
               transform: `translate(${x}px, ${adjustedY}px) rotate(${rotationDeg}deg) scale(${scale})`,
               zIndex: zIndex,
-              opacity: isActive ? 1 : 0.7 + ((1 - normalizedY) * 0.3), // Ensure active card is fully opaque
+              opacity: isCardVisible ? (isActive ? 1 : isMobile ? 0.9 : 0.7 + ((1 - normalizedY) * 0.3)) : 0,
+              pointerEvents: isCardVisible ? 'auto' : 'none',
             };
 
             return (

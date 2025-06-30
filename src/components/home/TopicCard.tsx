@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, type ReactElement } from 'react';
+import React, { useState } from 'react';
 
 interface TopicCardProps {
   topic: {
@@ -119,32 +119,71 @@ const TechIcons = {
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
       <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
     </svg>
+  ),
+  'Cloud Computing': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Databases': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Networking': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Operating Systems': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Object-Oriented Programming': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Functional Programming': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Concurrency': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Testing': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'DevOps': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Frontend Development': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Backend Development': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
+  ),
+  'Mobile Development': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+    </svg>
   )
 };
 
 // Update the techIcons mapping to use the new SVG components
-const techIcons: Record<string, () => ReactElement> = {
-  'JavaScript': TechIcons.JavaScript,
-  'React': TechIcons.React,
-  'TypeScript': TechIcons.TypeScript,
-  'Python': TechIcons.Python,
-  'Node.js': TechIcons.Node,
-  'Docker': TechIcons.Docker,
-  'GraphQL': TechIcons.GraphQL,
-  'MongoDB': TechIcons.MongoDB,
-  'CSS': TechIcons.CSS,
-  'HTML': TechIcons.HTML,
-  'Git': TechIcons.Git,
-  'Redux': TechIcons.Redux,
-  'System Design': TechIcons['System Design'],
-  'Data Structures': TechIcons['Data Structures'],
-  'Algorithms': TechIcons.Algorithms,
-  'Web Performance': TechIcons['Web Performance'],
-  'Machine Learning': TechIcons['Machine Learning'],
-  'Security': TechIcons.Security,
-  'Microservices': TechIcons.Microservices,
-  'default': TechIcons.default
-};
+
 
 // Helper function to get color with opacity
 const getColorWithOpacity = (shade: string, opacity: number) => {
@@ -186,17 +225,18 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
     : style.transform;
 
   // Get the appropriate icon for this tech stack
-  const IconComponent = techIcons[topic.title] || techIcons['default'];
+  const IconComponent = TechIcons[topic.title as keyof typeof TechIcons] || TechIcons['default'];
 
   return (
     <div
       key={topic.id}
       className={`
-        group relative flex-shrink-0 w-[60px] h-[100px] sm:w-[100px] sm:h-[140px] md:w-[140px] md:h-[180px] rounded-xl overflow-hidden
-        transition-all duration-300 ease-out cursor-pointer
+        group relative flex-shrink-0 w-[70px] h-[130px] sm:w-[120px] sm:h-[180px] md:w-[160px] md:h-[220px] rounded-xl overflow-hidden
+        transition-all duration-400 ease-[cubic-bezier(0.25,0.1,0.25,1)] cursor-pointer
         ${isActive ? 'z-10 shadow-xl' : 'z-0 shadow-lg'}
         ${showHoverEffect ? 'z-20 shadow-xl' : ''}
         backdrop-blur-md
+        will-change-transform,opacity,box-shadow
       `}
       style={{
         ...style,
@@ -241,17 +281,17 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
 
       {/* Hover state overlay */}
       <div
-        className={`absolute inset-0 bg-white dark:bg-white transition-all duration-300 ${
+        className={`absolute inset-0 bg-white dark:bg-white transition-opacity duration-500 ease-out ${
           showHoverEffect ? 'opacity-10' : 'opacity-0'
         }`}
       ></div>
 
       {/* Card content with icon and text */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white">
+      <div className="absolute inset-0 flex flex-col items-center justify-start pt-6 pb-4 px-4 text-white">
         {/* Icon container with glow effect */}
         <div
           className={`
-            w-16 h-16 mb-4 flex items-center justify-center rounded-full
+            w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 mb-2 sm:mb-3 md:mb-4 flex items-center justify-center rounded-full
             ${isActive ? 'scale-110' : 'scale-100'}
             transition-all duration-300 animate-pulse-slow
           `}
@@ -264,17 +304,21 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
           }}
         >
           {/* Tech icon */}
-          <div className="text-2xl md:text-3xl">
+          <div className="text-xl sm:text-2xl md:text-4xl transition-transform duration-400 ease-out group-hover:scale-110">
             {IconComponent && <IconComponent />}
           </div>
         </div>
 
         {/* Text content */}
         <div className="text-center mt-2">
-          <h3 className="text-sm md:text-base font-medium">{topic.title}</h3>
-          {showHoverEffect && (
-            <div className="mt-1 text-[10px] md:text-xs text-gray-400">{topic.subtitle}</div>
-          )}
+          <h3 className="text-[10px] sm:text-xs md:text-base font-medium transition-all duration-300 group-hover:translate-y-[-1px]">
+            {topic.title}
+          </h3>
+          <div className={`mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] md:text-xs text-gray-400 transition-all duration-400 ease-out overflow-visible whitespace-normal leading-tight ${
+            showHoverEffect ? 'opacity-100' : 'opacity-0 h-0'
+          }`}>
+            {topic.subtitle}
+          </div>
         </div>
 
         {/* Active indicator */}

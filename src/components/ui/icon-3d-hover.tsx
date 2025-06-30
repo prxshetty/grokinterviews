@@ -864,7 +864,6 @@ export const IconHover3D: React.FC<Props> = ({
                       position: "relative",
                       whiteSpace: "pre",
                       width: "auto",
-                      fontFamily: '"Inter", "Inter Placeholder", sans-serif',
                       fontWeight: "600",
                       fontSize: "16px", // Reduced from 18px
                       color: "rgb(var(--foreground))",
@@ -928,7 +927,6 @@ export const IconHover3D: React.FC<Props> = ({
                     width: "350px", // Increased from 200px
                     wordBreak: "break-word",
                     wordWrap: "break-word",
-                    fontFamily: '"Inter", "Inter Placeholder", sans-serif',
                     fontWeight: "400", // Reduced weight for better readability
                     fontSize: "14px", // Reduced from 16px
                     lineHeight: "1.5em", // Improved line height

@@ -477,7 +477,7 @@ export default function CategoryDetailView({
     return (
       <div className="p-4 animate-fadeIn">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">
+          <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl dark:text-white">
             {subtopicDetails.label}
           </h1>
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -512,8 +512,8 @@ export default function CategoryDetailView({
             {Object.entries(questionsByCategory).map(([catId, category]) => (
               <div key={catId} className="mb-12"> {/* Keep existing margin for category groups */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
-                  <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl">{category.name}</h2>
-                  <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl dark:text-white">{category.name}</h2>
+                  <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300">
                     {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
                   </span>
                 </div>
@@ -571,7 +571,7 @@ export default function CategoryDetailView({
             </Accordion>
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-300">
             <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this topic.'}</p>
           </div>
         )}
@@ -584,7 +584,7 @@ export default function CategoryDetailView({
     <div className="p-4 animate-fadeIn">
       {/* Title and back button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-        <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">
+        <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl text-gray-900 dark:text-white">
           {categoryDetails?.label}
         </h1>
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -598,7 +598,7 @@ export default function CategoryDetailView({
           <button
             onClick={handleBackToMainCategories}
             className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            title={`Back to ${domain}`}
+            title="Back"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -610,7 +610,7 @@ export default function CategoryDetailView({
       {/* If the category has subtopics, show them */}
       {hasRealSubtopics && categoryDetails?.subtopics && (
         <div className="mb-8">
-          <h2 className="text-2xl sm:text-3xl font-light tracking-wide mb-4">Topics</h2>
+          <h2 className="text-2xl sm:text-3xl font-light tracking-wide mb-4 text-gray-900 dark:text-white">Topics</h2>
           {isSubtopicProgressLoading ? (
             // Loading indicator
             <LoadingSpinner 
@@ -627,6 +627,7 @@ export default function CategoryDetailView({
               onSelectItem={handleSubtopicSelect}
               domain={domain || ""}
               isLoading={isSubtopicProgressLoading}
+              showDomainTitle={false}
             />
           )}
         </div>
@@ -635,11 +636,11 @@ export default function CategoryDetailView({
       {/* Show questions if available */}
       {hasQuestions && (
         <div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2 sm:gap-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2 sm:gap-0 text-gray-900 dark:text-white">
             <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">Questions</h2>
             {categoryProgress && (
               <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed
+                {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed     
               </span>
             )}
           </div>
@@ -663,11 +664,11 @@ export default function CategoryDetailView({
                   onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
                   isOpen={openQuestionId === question.id.toString()}
                   onRequestClose={() => handleOpenQuestionChange("")}
-                />
+                />  
               ))}
             </Accordion>
           ) : (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-300">
               <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
             </div>
           )}

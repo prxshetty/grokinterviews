@@ -21,8 +21,7 @@ export default function StatsSection() {
   return (
     <div
       ref={ref}
-      className={`max-w-screen-xl mx-auto py-24 px-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-    >
+      className={`max-w-screen-xl mx-auto pt-12 pb-24 px-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
       {/* About Section Header */}
       <div
         className="text-center mb-20 transition-all duration-700"
@@ -32,27 +31,27 @@ export default function StatsSection() {
           transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
         }}
       >
-        <h2 className="text-3xl md:text-4xl mb-6 font-light">Grok Interviews</h2>
-        <p className="text-base font-serif italic text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4 sm:mb-6 font-light">Grok Interviews</h2>
+        <p className="text-sm sm:text-base font-serif italic text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
           Curated by AI<br className="hidden md:block" /> Just for You.
         </p>
       </div>
 
       {/* Stats Display */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 mb-24">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-0 mb-24">
         {highlightedStats.map((stat, index) => (
           <div
             key={index}
-            className="flex flex-col items-center text-center border-b md:border-b-0 md:border-r last:border-b-0 md:last:border-r-0 border-gray-200 dark:border-gray-700 py-12 md:py-8 px-8 transition-all duration-700"
+            className="flex flex-col items-center text-center border-b md:border-b-0 md:border-r md:last:border-r-0 border-gray-200 dark:border-gray-700 py-12 md:py-8 px-8 transition-all duration-700"
             style={{
               transitionDelay: `${isVisible ? index * 200 : 0}ms`,
               opacity: isVisible ? 1 : 0,
               transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
             }}>
-            <p className="text-5xl md:text-6xl lg:text-7xl font-normal mb-6 md:mb-10 tracking-tight">
+            <p className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal mb-4 sm:mb-6 md:mb-10 tracking-tight">
               {stat.value}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-[200px] mx-auto">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-[200px] mx-auto">
               {stat.description}
             </p>
           </div>

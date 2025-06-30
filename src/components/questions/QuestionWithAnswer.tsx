@@ -15,6 +15,7 @@ import {
 
 import { BookmarkButton } from './BookmarkButton'; // Keep BookmarkButton
 import { AnswerDisplay } from './AnswerDisplay';
+import { DifficultyTag } from './DifficultyTag';
 
 // Lazy load ResourceList component for better performance
 const ResourceList = React.lazy(() => 
@@ -289,9 +290,16 @@ function QuestionWithAnswerComponent({
               </svg>
             </div>
           )}
-          <span className="text-base font-medium text-gray-800 dark:text-gray-100 flex-1 whitespace-normal break-words">
-            {question.question_text || 'Question text not available'}
-          </span>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words">
+              {question.question_text || 'Question text not available'}
+            </div>
+            {question.difficulty && (
+              <div className="mt-1">
+                <DifficultyTag difficulty={question.difficulty} />
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="flex items-center flex-shrink-0 space-x-2 pl-2">
