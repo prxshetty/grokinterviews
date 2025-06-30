@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { IconHover3D } from '@/components/ui';
 import styles from './TopicCategoryGrid.module.css';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
@@ -53,6 +54,7 @@ interface TopicCategoryGridProps {
   subtopicProgress?: Record<string, SubtopicProgress>;
   dataCache?: Record<string, CacheableProgressData>; // Updated type for dataCache
   showDomainTitle?: boolean; // New prop to control domain title visibility
+  basePath?: string; // New prop for base path for navigation
 }
 
 // Renaming original component
@@ -67,11 +69,13 @@ function TopicCategoryGridComponent({
   error = null,      // Default to no error
   subtopicProgress,
   dataCache,
-  showDomainTitle = false // Default to false
+  showDomainTitle = true, // Default to false
+  basePath, // Destructure new prop
 }: TopicCategoryGridProps) {
   const [itemsWithProgress, setItemsWithProgress] = useState<DisplayItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const router = useRouter(); // Initialize useRouter
 
   // Memoize the base items to avoid recalculating on every render
   const baseItems = useMemo(() => {
@@ -92,8 +96,9 @@ function TopicCategoryGridComponent({
   const handleItemSelect = useCallback((itemId: string) => {
     setSelectedItemId(itemId);
 
-    // Call the appropriate callback based on what was provided
-    if (onSelectItem) {
+    if (basePath) {
+      router.push(`${basePath}/${itemId}`);
+    } else if (onSelectItem) {
       onSelectItem(itemId, level); // Pass the selected item ID and the current level
     } else if (onSelectCategory) {
       onSelectCategory(itemId); // For backward compatibility
@@ -105,7 +110,7 @@ function TopicCategoryGridComponent({
     } else {
       setExpandedItemId(itemId);
     }
-  }, [onSelectItem, onSelectCategory, level, expandedItemId]);
+  }, [onSelectItem, onSelectCategory, level, expandedItemId, basePath, router]); // Add basePath and router to dependencies
 
   // Define fetchProgress function
   const fetchProgress = useCallback(async (forceRefresh = false) => {
@@ -162,11 +167,11 @@ function TopicCategoryGridComponent({
                     // If the API call failed, fall back to the section progress endpoint
                     progress = await fetchSectionProgress(domain, item.label, forceRefresh); // Pass forceRefresh here too
                   }
-                } catch { // Removed unused 'error' variable
+                } catch { // Error intentionally unused
                    // Retry might be excessive here, just use fallback or default
                   try {
                     progress = await fetchSectionProgress(domain, item.label, forceRefresh);
-                  } catch { // Removed unused 'fallbackError' variable
+                  } catch { // Error intentionally unused
                     progress = {
                       questionsCompleted: 0,
                       totalQuestions: 0,
@@ -187,7 +192,7 @@ function TopicCategoryGridComponent({
             }
 
             return item; // Return item without progress if fetch failed or wasn't applicable
-          } catch { // Removed unused 'error' variable for the main catch of fetchProgress
+          } catch { // Error intentionally unused
             return item; // Return item without progress data on error
           }
         })
@@ -223,7 +228,7 @@ function TopicCategoryGridComponent({
       });
 
       setItemsWithProgress(validatedProgressData);
-    } catch { // Removed unused 'error' variable for the main catch of fetchProgress
+    } catch { // Error intentionally unused
       // Set items with default progress on error
       setItemsWithProgress(baseItems.map(item => ({
           ...item,

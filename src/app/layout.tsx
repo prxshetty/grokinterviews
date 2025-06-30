@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
 import { GeistSans, GeistMono } from 'geist/font';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'GrokInterviews - AI-Powered Interview Preparation',
@@ -39,21 +40,27 @@ export default function RootLayout({
         GeistSans.variable,
         GeistMono.variable
       )}>
-        <AuthProvider>
-          <TopicDataProvider>
-            <div className="flex flex-col min-h-screen">
-              <div className="flex-grow">
-                <MainNavigation>
-                  {children}
-                </MainNavigation>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+        >
+          <AuthProvider>
+            <TopicDataProvider>
+              <div className="flex flex-col min-h-screen">
+                <div className="flex-grow">
+                  <MainNavigation>
+                    {children}
+                  </MainNavigation>
+                </div>
+                <Footer />
               </div>
-              <Footer />
-            </div>
-          </TopicDataProvider>
-          <Toaster />
-          <SpeedInsights />
-          <Analytics />
-        </AuthProvider>
+            </TopicDataProvider>
+            <Toaster />
+            <SpeedInsights />
+            <Analytics />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

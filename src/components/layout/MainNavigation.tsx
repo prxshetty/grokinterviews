@@ -5,28 +5,29 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { LogOut, Moon, Sun, User as UserIcon, Menu } from 'lucide-react';
+import { LogOut, User as UserIcon, Menu, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Sheet,
   SheetContent,
   SheetTrigger,
   SheetClose,
   SheetHeader,
   SheetTitle,
-  Logo,
-} from '@/components/ui';
+} from '@/components/ui/sheet';
+import { ThemeSwitcher } from '@/components/ui/theme-switcher';
+import { Logo } from '@/components/ui/Logo';
 import { MAIN_NAV_TOPICS, type NavTopic } from '@/config/navigation.constants';
 
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -55,22 +56,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   useEffect(() => {
     setMounted(true);
-    const isDark = document.documentElement.classList.contains('dark');
-    setIsDarkMode(isDark);
   }, []);
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.theme = 'dark';
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.theme = 'light';
-    }
-    setIsMobileMenuOpen(false);
-  };
 
   const handleSignOut = async () => {
     setIsMobileMenuOpen(false);
@@ -181,58 +167,60 @@ export default function MainNavigation({ children }: { children: React.ReactNode
           </div>
 
           {/* Desktop User Profile / Auth */}
-          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0 bg-transparent">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
-                    className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300 flex items-center space-x-1 focus:outline-none border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1"
+                  <Button
+                    variant="ghost"
+                    className="group h-8 rounded-full px-3 gap-1.5 text-sm text-foreground hover:bg-transparent hover:bg-gray-100/50 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors border border-transparent hover:border-border/40"
                   >
-                    <span>
+                    <span className="truncate max-w-[120px] sm:max-w-[160px]">
                       {profile?.full_name || profile?.username || user?.email?.split('@')[0] || 'User'}
                     </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="w-4 h-4 transition-transform ml-1"
-                    >
-                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-70 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md overflow-hidden animate-in fade-in-80 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2">
-                  <DropdownMenuLabel className="text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10">
-                    <div>
-                      <p className="font-medium">{profile?.full_name || 'User'}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-300 truncate font-normal">{user?.email || 'No email provided'}</p>
+                <DropdownMenuContent 
+                  align="end" 
+                  sideOffset={8}
+                  className="w-56 bg-white/80 dark:bg-black/80 backdrop-blur-md border border-border/50 shadow-lg rounded-lg overflow-hidden p-1.5 mt-1"
+                >
+                  <DropdownMenuLabel className="p-3 pb-2 border-b border-border/20">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium text-foreground">{profile?.full_name || 'User'}</p>
+                      <p className="text-xs text-foreground/80 truncate">
+                        {user?.email || 'No email provided'}
+                      </p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => { router.push('/account'); setIsMobileMenuOpen(false); }} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
-                      <UserIcon className="mr-2 h-4 w-4" />
+                  <DropdownMenuGroup className="mt-1">
+                    <DropdownMenuItem 
+                      onClick={() => { 
+                        router.push('/account'); 
+                        setIsMobileMenuOpen(false); 
+                      }} 
+                      className="px-2 py-1.5 text-sm rounded-md cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground transition-colors"
+                    >
+                      <UserIcon className="mr-2 h-4 w-4 opacity-70" />
                       <span>Account</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={toggleDarkMode} className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10">
-                      {isDarkMode ? (
-                        <>
-                          <Sun className="mr-2 h-4 w-4" />
-                          <span>Light Mode</span>
-                        </>
-                      ) : (
-                        <>
-                          <Moon className="mr-2 h-4 w-4" />
-                          <span>Dark Mode</span>
-                        </>
-                      )}
-                    </DropdownMenuItem>
                   </DropdownMenuGroup>
-                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:bg-gray-100 dark:focus:bg-white/10">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
-                  </DropdownMenuItem>
+                  <div className="p-1.5 pt-2 flex items-center justify-between border-t border-border/20 mt-1">
+                    <ThemeSwitcher className="bg-transparent dark:bg-transparent" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSignOut();
+                      }} 
+                      className="h-8 w-8 rounded-full text-red-500 border border-red-200 hover:bg-red-500/10 transition-colors dark:border-red-800/50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="sr-only">Sign Out</span>
+                    </Button>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -334,15 +322,21 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                           <UserIcon className="mr-2 h-4 w-4" /> Account
                         </Button>
                       </SheetClose>
-                      <Button variant="ghost" onClick={toggleDarkMode} className="w-full justify-start text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white">
-                        {isDarkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-                        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-                      </Button>
-                      <SheetClose asChild>
-                        <Button variant="ghost" onClick={handleSignOut} className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
-                          <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                      <div className="flex items-center justify-between w-full pt-2">
+                        <ThemeSwitcher />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSignOut();
+                          }} 
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-full border border-transparent hover:border-red-200 dark:hover:border-red-900/50 transition-colors"
+                        >
+                          <LogOut className="h-5 w-5" />
+                          <span className="sr-only">Sign Out</span>
                         </Button>
-                      </SheetClose>
+                      </div>
                     </div>
                   ) : (
                     <SheetClose asChild>
