@@ -1,140 +1,43 @@
 'use client';
 import React from 'react';
-import type { ComponentProps, ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-
 import Link from 'next/link';
 import { Logo } from './Logo';
 
-interface FooterLink {
-	title: string;
-	href: string;
-	icon?: React.ComponentType<{ className?: string }>;
-}
-
-interface FooterSection {
-	label: string;
-	links: FooterLink[];
-	className?: string;
-}
-
-const footerLinks: FooterSection[] = [
-	{
-		label: 'Product',
-		className: 'hidden sm:block',
-		links: [
-			{ title: 'Topics', href: '/topics' },
-			{ title: 'Dashboard', href: '/dashboard' },
-			{ title: 'Activity', href: '/dashboard/activity' },
-		],
-	},
-	{
-		label: 'Company',
-		links: [
-			{ title: 'About Us', href: '/about' },
-			{ title: 'Privacy Policy', href: '/privacy' },
-			{ title: 'Terms of Service', href: '/terms' },
-			// { title: 'Contact', href: '/contact' },
-		],
-	},
-	// {
-	// 	label: 'Resources',
-	// 	links: [
-	// 		{ title: 'Blog', href: '/blog' },
-	// 		{ title: 'Help Center', href: '/help' },
-	// 		{ title: 'Documentation', href: '/docs' },
-	// 		{ title: 'API', href: '/api-docs' },
-	// 	],
-	// },
-	{
-		label: 'Connect',
-		links: [
-			{ title: 'Twitter', href: 'https://x.com/prxshetty' },
-			{ title: 'LinkedIn', href: '#' },
-			{ title: 'Discord', href: '#' },
-		],
-	},
+const footerLinks = [
+	{ title: 'About', href: '/about' },
+	{ title: 'Privacy', href: '/privacy' },
+	{ title: 'Terms', href: '/terms' },
+	{ title: 'Topics', href: '/topics' },
+	{ title: 'Dashboard', href: '/dashboard' },
 ];
 
 export function Footer() {
 	return (
-		<footer className="relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl md:rounded-t-6xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
-			<div className="bg-foreground/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
+<footer className="w-full border-t bg-background px-16 py-3">
+	<div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+		{/* Logo and Copyright */}
+		<div className="flex items-center space-x-4">
+			<Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+				<Logo size="sm" showText={true} />
+			</Link>
+			<span className="text-gray-600 dark:text-gray-400">
+				© {new Date().getFullYear()} GrokInterviews
+			</span>
+		</div>
 
-			{/* Branding Section */}
-			<div className="mb-8 sm:mb-10 flex flex-col items-center">
-				<Link
-					href="/"
-					className="flex items-center space-x-2 text-xl sm:text-2xl md:text-3xl font-light tracking-tight text-center text-gray-800 dark:text-gray-200"
-				>
-					<Logo 
-						size="lg" 
-						showText={true} 
-						className="text-gray-800 dark:text-gray-200" 
-						textClassName="text-xl sm:text-2xl md:text-3xl"
-					/>
-				</Link>
-			</div>
-
-			<div className="w-full">
-				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 text-center sm:text-left">
-					{footerLinks.map((section, index) => (
-						<AnimatedContainer 
-							key={section.label} 
-							delay={0.1 + index * 0.1}
-							className={`col-span-1 ${section.className || ''}`}
+				{/* Navigation Links */}
+				<div className="flex items-center space-x-4">
+					{footerLinks.map((link) => (
+						<Link
+							key={link.title}
+							href={link.href}
+							className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
 						>
-							<div className="mb-4">
-								<h3 className="text-xs sm:text-sm font-medium uppercase tracking-wider text-gray-800 dark:text-white mb-3 sm:mb-4">
-									{section.label}
-								</h3>
-								<ul className="space-y-2">
-									{section.links.map((link) => (
-										<li key={link.title}>
-											<Link
-												href={link.href}
-												className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white inline-flex items-center transition-all duration-200 hover:translate-x-1 w-full justify-center sm:justify-start"
-											>
-												{link.icon && <link.icon className="me-2" />}
-												{link.title}
-											</Link>
-										</li>
-									))}
-								</ul>
-							</div>
-						</AnimatedContainer>
+							{link.title}
+						</Link>
 					))}
 				</div>
 			</div>
-			<p className="text-gray-600 dark:text-gray-300 mt-10 sm:mt-12 text-center text-[10px] sm:text-xs md:text-sm">
-				{new Date().getFullYear()} GrokInterviews. All rights reserved.
-			</p>
 		</footer>
-	);
-}
-
-type ViewAnimationProps = {
-	delay?: number;
-	className?: ComponentProps<typeof motion.div>['className'];
-	children: ReactNode;
-};
-
-function AnimatedContainer({ className, delay = 0.1, children }: ViewAnimationProps) {
-	const shouldReduceMotion = useReducedMotion();
-
-	if (shouldReduceMotion) {
-		return <div className={className}>{children}</div>;
-	}
-
-	return (
-		<motion.div
-			initial={{ filter: 'blur(4px)', y: -8, opacity: 0 }}
-			whileInView={{ filter: 'blur(0px)', y: 0, opacity: 1 }}
-			viewport={{ once: true }}
-			transition={{ delay, duration: 0.8 }}
-			className={className}
-		>
-			{children}
-		</motion.div>
 	);
 } 

@@ -5,10 +5,11 @@ import type { AccountFormData, AnswerFormat, AnswerDepth } from '@/app/account/t
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { ChevronDown } from 'lucide-react'
 
 interface AnswerPreferencesSectionProps {
   formData: Pick<
@@ -37,7 +38,7 @@ type ContentSourceKey = Extract<keyof AccountFormData, `use_${string}_sources`>;
 const contentSources: ReadonlyArray<{ id: ContentSourceKey; name: string; tag: string; description: string }> = [
   { id: 'use_youtube_sources', name: 'YouTube', tag: 'Relevant videos', description: 'Videos based on keywords' },
   { id: 'use_pdf_sources', name: 'PDF', tag: 'Documents', description: 'Notes from Reddit, blogs, drives' },
-  { id: 'use_paper_sources', name: 'Papers', tag: 'Research', description: 'Academic research papers' },
+  { id: 'use_paper_sources', name: 'Papers', tag: 'Beta', description: 'Academic research papers' },
   { id: 'use_website_sources', name: 'Websites', tag: 'Articles', description: 'Relevant web articles' },
   { id: 'use_book_sources', name: 'Books', tag: 'References', description: 'Amazon book links' },
   { id: 'use_image_sources', name: 'Illustrations', tag: 'Diagrams', description: 'Articles with diagrams & illustrations' }
@@ -168,42 +169,40 @@ export function AnswerPreferencesSection({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
               {contentSources.map((source) => {
                 const isSelected = formData[source.id]
-                const isComingSoon = false;
-                                  return (
-                    <div
-                      key={source.id}
-                      className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-3 lg:p-4 ${isComingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-500'} transition-colors`}
-                      onClick={() => {
-                        if (!isComingSoon) {
-                          setFormData(prev => ({
-                            ...prev,
-                            [source.id]: !isSelected
-                          }))
-                        }
-                      }}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm lg:text-base font-medium text-gray-900 dark:text-white">{source.name}</h4>
-                          <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${isComingSoon ? 'border-amber-500 dark:border-amber-400 text-amber-600 dark:text-amber-400' : 'border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200'} bg-transparent`}>
-                            {source.tag}
-                          </span>
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{source.description}</p>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center flex-shrink-0 ml-2`}>
-                          {isSelected && (
-                            <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                            </svg>
-                          )}
-                        </div>
+                const isBeta = source.tag === 'Beta';
+                return (
+                  <div
+                    key={source.id}
+                    className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-3 lg:p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        [source.id]: !isSelected
+                      }))
+                    }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm lg:text-base font-medium text-gray-900 dark:text-white">{source.name}</h4>
+                        <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border ${isBeta ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200'} bg-transparent`}>
+                          {source.tag}
+                        </span>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{source.description}</p>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center flex-shrink-0 ml-2`}>
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                          </svg>
+                        )}
                       </div>
                     </div>
-                  )
+                  </div>
+                )
               })}
             </div>
             <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-              Select the sources you want to include in your answers. <span className="text-amber-600 dark:text-amber-400">Coming Soon</span> features will be available in future updates.
+              Resources are shown when their relevance score is closer to your desired topic and context.
             </p>
           </section>
 
@@ -302,38 +301,42 @@ export function AnswerPreferencesSection({
             {/* Answer Depth */}
             <div className="mb-6">
               <div className="flex items-center justify-between">
-                <label htmlFor="preferred_answer_depth" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="preferred_answer_depth" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                   Answer Depth
                 </label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className="mt-1 block w-auto rounded-md border-gray-300 dark:border-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:bg-gray-900 dark:text-white sm:text-sm shadow-sm pl-3 pr-8 py-2 text-left capitalize"
+                    <Button
+                      variant="outline"
+                      className="min-w-[140px] justify-between text-sm capitalize bg-white dark:text-gray-200 dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       {formData.preferred_answer_depth || 'Select depth'}
-                    </button>
+                      <ChevronDown className="h-4 w-4 opacity-70" />
+                    </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md backdrop-blur-md">
-                    <DropdownMenuRadioGroup
-                      value={formData.preferred_answer_depth}
-                      onValueChange={(value) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          preferred_answer_depth: value as AnswerDepth
-                        }));
-                      }}
-                    >
-                      {(['brief', 'standard', 'comprehensive'] as AnswerDepth[]).map((depth) => (
-                        <DropdownMenuRadioItem
-                          key={depth}
-                          value={depth}
-                          className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10 capitalize"
-                        >
-                          {depth}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
+                  <DropdownMenuContent 
+                    align="end" 
+                    sideOffset={8}
+                    className="w-40 bg-white/80 dark:bg-black/80 backdrop-blur-md border border-border/50 shadow-lg rounded-lg overflow-hidden p-1.5 mt-1"
+                  >
+                    {(['brief', 'standard', 'comprehensive'] as AnswerDepth[]).map((depth) => (
+                      <DropdownMenuItem
+                        key={depth}
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            preferred_answer_depth: depth
+                          }));
+                        }}
+                        className={`px-2 py-1.5 text-sm rounded-md cursor-pointer font-normal transition-colors capitalize ${
+                          formData.preferred_answer_depth === depth
+                            ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100' 
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+                        }`}
+                      >
+                        {depth}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
