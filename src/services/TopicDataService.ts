@@ -442,28 +442,6 @@ class TopicDataService {
             label: String(topicNameForSlug),
             subtopics: {}
           };
-
-          if (topic.categories && topic.categories.length > 0) {
-            for (const category of topic.categories) {
-              const categorySlug = slugify(category.name);
-              if (!categorySlug) {
-                console.warn(`TopicDataService.getAllTopicData - Category under topic ${currentTopicSlug} has no name, skipping.`);
-                continue;
-              }
-              const topicEntry = newTopicTree[currentTopicSlug];
-              if (topicEntry) {
-                topicEntry.subtopics[categorySlug] = {
-                  id: categorySlug, // This is the category's slug
-                  label: category.name,
-                  categoryId: category.id, // Store original category ID
-                  // subtopics here would represent questions or further nested items if your structure supports it
-                  // For now, aligning with previous structure, it's an empty object, 
-                  // actual questions are fetched later by getCategoryDetails
-                  subtopics: {}
-                };
-              }
-            }
-          }
         }
 
         this.cache.topics = newTopicTree;

@@ -6,7 +6,7 @@ import {
   TopicCategoryGrid,
   TopicDataProvider,
   ContentDisplay,
-  useTopicData,
+  // useTopicData,
 } from '@/components/topics-ui';
 import ProgressSaver from '@/components/utils/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
@@ -31,7 +31,7 @@ interface TopicPageClientProps {
 
 function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const [domain, setDomain] = useState<string>(initialDomain);
-  const { refetchData } = useTopicData();
+  // const { refetchData } = useTopicData();
 
   // Sync internal domain state with initialDomain prop
   useEffect(() => {
@@ -388,10 +388,6 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
       const loadData = async () => {
         setIsLoading(prev => ({ ...prev, categories: true, sections: true }));
         
-        // Refetch global topic data to ensure it's up-to-date
-        // This will clear caches in TopicDataProvider and TopicDataService
-        await refetchData(); 
-
         await loadTopicCategories(domain);
         await preloadSubtopicProgressForDomain(domain);
 
