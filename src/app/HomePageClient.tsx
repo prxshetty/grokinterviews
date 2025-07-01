@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   StatsSection,
@@ -9,28 +8,8 @@ import {
   FeatureSection,
 } from '@/components/home';
 import { BackgroundPathsOnly } from '@/components/home/background';
-import { LoadingSpinner } from '@/components/ui';
 
 export default function HomePageClient() {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate loading for 1.5 seconds
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-white dark:bg-black">
-        <LoadingSpinner size="xl" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full pt-4 relative font-sans animate-fade-in">
       {/* Hero Section */}
