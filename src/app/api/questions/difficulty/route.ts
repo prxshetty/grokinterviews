@@ -79,30 +79,39 @@ export async function GET(request: NextRequest) {
     const categoryIds = categoriesData.map(category => category.id);
     console.log(`Found ${categoryIds.length} categories for domain ${domain}`);
     
-    // 3. Get questions that match both difficulty and category_id
+    // 3. Get user ID for progress lookup
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
+
+    // 4. Get questions that match both difficulty and category_id
     const countQuery = supabase
       .from('questions')
       .select('id', { count: 'exact', head: true })
       .eq('difficulty', difficulty)
       .in('category_id', categoryIds);
     
-    const questionsQuery = supabase
+    let questionsQuery = supabase
       .from('questions')
       .select(`
-        *,
-        categories:category_id (
-          id,
-          name,
-          topic_id,
-          topics (
-            id, 
-            name,
-            domain
-          )
+        id,
+        question_text,
+        difficulty,
+        category_id,
+        created_at,
+        keywords,
+        user_progress (
+          status
         )
       `)
       .eq('difficulty', difficulty)
-      .in('category_id', categoryIds)
+      .in('category_id', categoryIds);
+      
+    // If we have a user, filter the sub-query
+    if (userId) {
+        questionsQuery = questionsQuery.eq('user_progress.user_id', userId);
+    }
+
+    questionsQuery = questionsQuery
       .order('id', { ascending: true })
       .range(from, to);
     
@@ -131,16 +140,16 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${totalCount} questions for difficulty "${difficulty}" in domain "${domain}"`);
     console.log(`Returning page ${page} of ${totalPages} (${questions?.length || 0} questions)`);
     
-    // Log the first 2 questions to verify correct data is being returned
-    if (questions && questions.length > 0) {
-      questions.slice(0, 2).forEach((q, i) => {
-        console.log(`Question ${i+1}: ID=${q.id}, difficulty=${q.difficulty}, category=${q.category_id}, domain=${q.categories?.topics?.domain}`);
-      });
-    }
-    
+    // Simplified Question type for the final output
+    const processedQuestions = questions?.map(q => ({
+      ...q,
+      status: (q.user_progress || []).length > 0 && q.user_progress[0] ? q.user_progress[0].status : 'unseen',
+      user_progress: undefined // Remove the nested object
+    })) || [];
+        
     return NextResponse.json(
       { 
-        questions: questions || [],
+        questions: processedQuestions,
         domain,
         difficulty,
         pagination: {

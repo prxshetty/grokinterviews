@@ -100,21 +100,22 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   // Fetch questions by difficulty
   const fetchDifficultyQuestions = useCallback(async (difficulty: string, page: number = 1) => {
     if (!domain) return; // Ensure domain is available
-    console.log(`Fetching ${difficulty} questions for domain ${domain}, page ${page}`);
+    const pageSize = 20; // Define pageSize
+    console.log(`Fetching ${difficulty} questions for domain ${domain}, page ${page}, pageSize ${pageSize}`);
     setIsLoading(prev => ({ ...prev, difficultyQuestions: true }));
     try {
-      const response = await fetch(`/api/questions/difficulty?difficulty=${difficulty}&domain=${domain}&page=${page}&limit=10`);
+      const response = await fetch(`/api/questions/difficulty?difficulty=${difficulty}&domain=${domain}&page=${page}&pageSize=${pageSize}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       console.log('Difficulty questions data:', data);
 
-      if (data && data.questions) {
+      if (data && data.questions && data.pagination) {
         setDifficultyQuestions(data.questions);
-        setTotalPages(data.totalPages || 1);
-        setTotalResults(data.totalResults || 0);
-        setCurrentPage(data.currentPage || 1); // Ensure currentPage is updated from response
+        setTotalPages(data.pagination.totalPages || 1);
+        setTotalResults(data.pagination.totalCount || 0);
+        setCurrentPage(data.pagination.page || 1); // Ensure currentPage is updated from response
       } else {
         setDifficultyQuestions([]);
         setTotalPages(1);
