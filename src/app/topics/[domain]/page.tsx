@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import TopicPageClient from './TopicPageClient'; // Import the new client component
 import { LoadingSpinner } from '@/components/ui';
+import { TopicDataProvider } from '@/components';
 import { redirect } from 'next/navigation'; // Import redirect
 
 // Define the expected props structure for the Server Component page
@@ -30,8 +31,10 @@ export default async function Page({ params }: PageProps) {
   }
 
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <TopicPageClient initialDomain={domain} />
-    </Suspense>
+    <TopicDataProvider>
+      <Suspense fallback={<LoadingFallback />}>
+        <TopicPageClient initialDomain={domain} />
+      </Suspense>
+    </TopicDataProvider>
   );
 } 

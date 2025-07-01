@@ -1,6 +1,5 @@
 import './globals.css';
 import { MainNavigation } from '@/components';
-import { TopicDataProvider } from '@/components';
 import { Footer } from '@/components';
 import { Toaster } from "@/components/ui/sonner";
 import { janelotus, playfairDisplay } from './fonts';
@@ -46,16 +45,14 @@ export default function RootLayout({
           enableSystem
         >
           <AuthProvider>
-            <TopicDataProvider>
-              <div className="flex flex-col min-h-screen">
-                <div className="flex-grow">
-                  <MainNavigation>
-                    {children}
-                  </MainNavigation>
-                </div>
-                <Footer />
+            <div className="flex flex-col min-h-screen">
+              <div className="flex-grow">
+                <MainNavigation>
+                  {children}
+                </MainNavigation>
               </div>
-            </TopicDataProvider>
+              <Footer />
+            </div>
             <Toaster />
             <SpeedInsights />
             <Analytics />
