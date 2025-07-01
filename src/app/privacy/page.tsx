@@ -202,12 +202,12 @@ export default function PrivacyPolicy() {
               If you have any questions about this Privacy Policy or our practices, please contact us at:
             </p>
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mt-4">
-              <p><strong>Email:</strong> privacy@grokinterviews.com</p>
-              <p><strong>Website:</strong> https://grokinterviews.com</p>
+              <p><strong>Email:</strong> hello@grokinterviews.org</p>
+              <p><strong>Website:</strong> www.grokinterviews.org</p>
             </div>
             <p className="mt-4">
-              For data protection inquiries or to exercise your rights, please include "Privacy Request" 
-              in your email subject line.
+              For any questions or to exercise your rights regarding your data, please contact us using 
+              the email address above.
             </p>
           </section>
 

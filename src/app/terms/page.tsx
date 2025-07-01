@@ -251,8 +251,8 @@ export default function TermsOfService() {
               If you have any questions about these Terms of Service, please contact us at:
             </p>
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mt-4">
-              <p><strong>Email:</strong> legal@grokinterviews.com</p>
-              <p><strong>Website:</strong> https://grokinterviews.com</p>
+              <p><strong>Email:</strong> hello@grokinterviews.org</p>
+              <p><strong>Website:</strong> www.grokinterviews.org</p>
             </div>
           </section>
 
