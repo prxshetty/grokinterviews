@@ -11,17 +11,20 @@ export default function CompanyList() {
     const style = document.createElement('style');
     style.textContent = `
       @keyframes scroll {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(calc(-50%)); }
+        0% { transform: translate3d(0, 0, 0); }
+        100% { transform: translate3d(calc(-50%), 0, 0); }
       }
       
       .animate-scroll-smooth {
         animation: scroll 30s linear infinite;
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
       }
       
       @media (max-width: 768px) {
         .animate-scroll-smooth {
-          animation: scroll 60s linear infinite;
+          animation: scroll 40s linear infinite;
         }
       }
     `;
@@ -61,7 +64,7 @@ export default function CompanyList() {
           <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-black dark:via-black/80 dark:to-transparent z-10"></div>
 
           {/* Main carousel with animation */}
-          <div className="flex whitespace-nowrap animate-scroll-smooth">
+          <div className="flex whitespace-nowrap animate-scroll-smooth" style={{ transform: 'translateZ(0)' }}>
             {/* Duplicate companies for infinite scroll effect */}
             {[...companies, ...companies].map((company, index) => (
               <div
