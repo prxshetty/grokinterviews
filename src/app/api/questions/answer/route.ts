@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient(); // Create client instance
   try {
     const url = new URL(request.url);
     const questionId = url.searchParams.get('questionId');
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     console.log(`API - Fetching answer for question ID: ${questionId}`);
 
     // Query for the question data (without answer - it will be generated)
-    const { data: question, error } = await supabaseServer
+    const { data: question, error } = await supabase
       .from('questions')
       .select(`
         id,

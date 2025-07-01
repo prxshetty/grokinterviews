@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 import { Topic, TopicWithCategories } from '@/types/database';
 
 // Removed legacy TopicItem and TopicData types
@@ -9,11 +9,12 @@ import { Topic, TopicWithCategories } from '@/types/database';
 // Removed mergeWithMarkdownContent helper function (was a no-op)
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const domain = url.searchParams.get('domain');
 
-    let query = supabaseServer.from('topics').select('*');
+    let query = supabase.from('topics').select('*');
 
     if (domain) {
       query = query.eq('domain', domain);
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const { topicId } = await request.json();
 
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
     let topic: Topic | null = null;
 
     if (typeof topicId === 'number' || !isNaN(Number(topicId))) {
-      const { data, error } = await supabaseServer
+      const { data, error } = await supabase
         .from('topics')
         .select('*')
         .eq('id', topicId)
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
       topic = data;
     } else {
-      const { data, error } = await supabaseServer
+      const { data, error } = await supabase
         .from('topics')
         .select('*')
         .eq('slug', topicId)
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: categories, error: categoriesError } = await supabaseServer
+    const { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('*')
       .eq('topic_id', topic.id)

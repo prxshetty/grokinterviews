@@ -26,7 +26,7 @@ export function Footer() {
 		</div>
 
 				{/* Navigation Links */}
-				<div className="flex items-center space-x-4">
+				<div className="flex items-center space-x-4 ml-auto">
 					{footerLinks.map((link) => (
 						<Link
 							key={link.title}

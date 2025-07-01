@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const domain = url.searchParams.get('domain');
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     // - Categories have a topic_id that refers to a subtopic
 
     // First, get all topics (section headers) for this domain
-    const { data: sectionHeaders, error: sectionHeadersError } = await supabaseServer
+    const { data: sectionHeaders, error: sectionHeadersError } = await supabase
       .from('topics')
       .select('id, name, section_name')
       .eq('domain', domain)
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     // Get all categories for these subtopics to verify they have categories
     const subtopicIds = subtopics.map(subtopic => subtopic.id);
-    const { data: categories, error: categoriesError } = await supabaseServer
+    const { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('id, topic_id')
       .in('topic_id', subtopicIds);

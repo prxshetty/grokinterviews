@@ -226,11 +226,14 @@ export default function DashboardPage() {
   }, [authLoading, user]);
 
   if (authLoading || !profile) {
+    // Distinguish between initial load and the state during sign-out
+    const spinnerText = authLoading ? "Loading dashboard..." : "Redirecting...";
+    
     return (
       <LoadingSpinner 
         size="xl" 
         color="primary" 
-        text="Loading dashboard..." 
+        text={spinnerText}
         fullScreen={true}
       />
     );

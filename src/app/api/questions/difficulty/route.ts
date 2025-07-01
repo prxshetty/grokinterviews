@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const difficulty = url.searchParams.get('difficulty');
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 1. First get the topic IDs for the specified domain
-    const { data: topicsData, error: topicsError } = await supabaseServer
+    const { data: topicsData, error: topicsError } = await supabase
       .from('topics')
       .select('id')
       .eq('domain', domain);
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${topicIds.length} topics for domain ${domain}: ${topicIds.join(', ')}`);
     
     // 2. Now get the categories for these topics
-    const { data: categoriesData, error: categoriesError } = await supabaseServer
+    const { data: categoriesData, error: categoriesError } = await supabase
       .from('categories')
       .select('id')
       .in('topic_id', topicIds);
@@ -79,13 +80,13 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${categoryIds.length} categories for domain ${domain}`);
     
     // 3. Get questions that match both difficulty and category_id
-    const countQuery = supabaseServer
+    const countQuery = supabase
       .from('questions')
       .select('id', { count: 'exact', head: true })
       .eq('difficulty', difficulty)
       .in('category_id', categoryIds);
     
-    const questionsQuery = supabaseServer
+    const questionsQuery = supabase
       .from('questions')
       .select(`
         *,
