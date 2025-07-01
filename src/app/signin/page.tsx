@@ -37,9 +37,17 @@ function SignInForm() {
   // Redirect to dashboard if user exists
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      // PRODUCTION FIX: Use window.location.href for more reliable redirect
+      // This ensures the middleware runs with the updated session
+      const timer = setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 100); // Small delay to ensure auth state is fully synchronized
+      
+      return () => clearTimeout(timer);
     }
-  }, [user, router]);
+    // Return undefined if user is not present
+    return undefined;
+  }, [user]);
 
   useEffect(() => {
     setMounted(true);
@@ -88,8 +96,6 @@ function SignInForm() {
       setLoading(false);
     }
   };
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,6 +177,7 @@ function SignInForm() {
           setLastName('');
         } else if (data?.session) {
           await refreshAuth();
+          // Don't redirect here - let the useEffect handle it after auth state updates
         }
       } else {
         // Sign in
@@ -189,7 +196,22 @@ function SignInForm() {
         }
 
         if (data?.session) {
+          // PRODUCTION FIX: Ensure session is properly set before redirect
           await refreshAuth();
+          
+          // Add a small delay to ensure session cookies are set in production
+          setTimeout(async () => {
+            // Verify session is actually set before redirecting
+            const { data: verifyData } = await supabase.auth.getUser();
+            if (verifyData?.user) {
+              // Force a full page navigation instead of client-side routing
+              // This ensures the middleware runs with the updated session
+              window.location.href = '/dashboard';
+            } else {
+              // Fallback: refresh auth and let useEffect handle redirect
+              await refreshAuth();
+            }
+          }, 500); // 500ms delay for production session synchronization
         }
       }
     } catch (error: any) {

@@ -115,69 +115,152 @@ const TechIcons = {
       <path d="M12 20.25c2.685 0 5.19-.586 7.078-1.609a8.282 8.282 0 001.897-1.384c.016.121.025.244.025.368 0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.284 8.284 0 001.897 1.384C6.809 19.664 9.315 20.25 12 20.25z"/>
     </svg>
   ),
-  default: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
-    </svg>
-  ),
   'Cloud Computing': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
     </svg>
   ),
   'Databases': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M12 3C7.58 3 4 4.79 4 7s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4z"/>
+      <path d="M4 9v3c0 2.21 3.58 4 8 4s8-1.79 8-4V9c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/>
+      <path d="M4 14v3c0 2.21 3.58 4 8 4s8-1.79 8-4v-3c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/>
     </svg>
   ),
   'Networking': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM3.75 19.125a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 19.125a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0z"/>
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m7.5 14.25l5.25-5.25m6.75 4.5l-3.75-3.75"/>
     </svg>
   ),
   'Operating Systems': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602L2.37 16.022c-.076.327-.12.66-.12 1.03v.228a4.5 4.5 0 009 0v-.228c0-.37-.044-.703-.12-1.03L9.878 8.65a1.125 1.125 0 011.095-.9h1.054c.497 0 .935.355 1.095.9l-1.252 7.372c-.076.327-.12.66-.12 1.03v.228a4.5 4.5 0 009 0z"/>
     </svg>
   ),
   'Object-Oriented Programming': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M6 3a3 3 0 00-3 3v12a3 3 0 003 3h12a3 3 0 003-3V6a3 3 0 00-3-3H6zM5.25 6A.75.75 0 016 5.25h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75H6A.75.75 0 015.25 9V6zM14.25 6a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-3a.75.75 0 01-.75-.75V6zM5.25 15a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75H6a.75.75 0 01-.75-.75v-3zM14.25 15a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-3a.75.75 0 01-.75-.75v-3z"/>
     </svg>
   ),
   'Functional Programming': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M15.75 17.25L12 21l-3.75-3.75L12 13.5l3.75 3.75zM12 12l-8.25-8.25a1.125 1.125 0 01.21-1.77l5.25-2.25a3.375 3.375 0 013.16 0l5.25 2.25a1.125 1.125 0 01.21 1.77L12 12z"/>
     </svg>
   ),
   'Concurrency': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/>
+      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM8.25 12l3.75 3.75L15.75 12l-3.75-3.75L8.25 12z"/>
     </svg>
   ),
   'Testing': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9m0 0l-3-3m3 3l3-3"/>
+      <path d="M9 12l2 2 4-4"/>
     </svg>
   ),
   'DevOps': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/>
     </svg>
   ),
   'Frontend Development': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      {/* Browser window frame */}
+      <path d="M3 4a2 2 0 012-2h14a2 2 0 012 2v16a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Browser dots */}
+      <circle cx="6" cy="6.5" r="1" fill="currentColor"/>
+      <circle cx="9" cy="6.5" r="1" fill="currentColor"/>
+      <circle cx="12" cy="6.5" r="1" fill="currentColor"/>
+      {/* HTML/CSS brackets */}
+      <path d="M7 11l-1.5 1.5L7 14m3-3l1.5 1.5L10 14m4-6h3v2h-3v-2zm0 3h3v2h-3v-2z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      {/* Responsive design elements */}
+      <rect x="6" y="16" width="4" height="3" stroke="currentColor" strokeWidth="1" fill="none" rx="0.5"/>
+      <rect x="11" y="15.5" width="6" height="4" stroke="currentColor" strokeWidth="1" fill="none" rx="0.5"/>
     </svg>
   ),
   'Backend Development': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      {/* Server rack */}
+      <rect x="4" y="3" width="16" height="18" stroke="currentColor" strokeWidth="1.5" fill="none" rx="2"/>
+      {/* Server units */}
+      <rect x="6" y="5" width="12" height="2.5" fill="currentColor" opacity="0.7" rx="0.5"/>
+      <rect x="6" y="8.5" width="12" height="2.5" fill="currentColor" opacity="0.5" rx="0.5"/>
+      <rect x="6" y="12" width="12" height="2.5" fill="currentColor" opacity="0.7" rx="0.5"/>
+      <rect x="6" y="15.5" width="12" height="2.5" fill="currentColor" opacity="0.5" rx="0.5"/>
+      {/* Server indicators/LEDs */}
+      <circle cx="7.5" cy="6.25" r="0.4" fill="currentColor"/>
+      <circle cx="9" cy="6.25" r="0.4" fill="currentColor"/>
+      <circle cx="7.5" cy="9.75" r="0.4" fill="currentColor"/>
+      <circle cx="9" cy="9.75" r="0.4" fill="currentColor"/>
+      <circle cx="7.5" cy="13.25" r="0.4" fill="currentColor"/>
+      <circle cx="9" cy="13.25" r="0.4" fill="currentColor"/>
+      <circle cx="7.5" cy="16.75" r="0.4" fill="currentColor"/>
+      <circle cx="9" cy="16.75" r="0.4" fill="currentColor"/>
+      {/* Database cylinders */}
+      <ellipse cx="14" cy="6.25" rx="1.8" ry="0.8" fill="currentColor" opacity="0.6"/>
+      <ellipse cx="14" cy="9.75" rx="1.8" ry="0.8" fill="currentColor" opacity="0.6"/>
+      {/* API/Connection lines */}
+      <path d="M2 12h2m18 0h-2m-8-8v2m0 12v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   ),
   'Mobile Development': () => (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm16.5 1.5h-15v15h15v-15z"/>
+      <path d="M10.5 1.875a1.125 1.125 0 012.25 0v2.25a1.125 1.125 0 01-2.25 0v-2.25z"/>
+      <path fillRule="evenodd" d="M6.75 6.75C6.75 5.784 7.784 5.25 9 5.25h6c1.216 0 2.25.534 2.25 1.5v11.25c0 .966-1.034 1.5-2.25 1.5H9c-1.216 0-2.25-.534-2.25-1.5V6.75zm1.5 4.5a.75.75 0 01.75-.75h6a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H9z" clipRule="evenodd"/>
+    </svg>
+  ),
+  'API Development': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/>
+    </svg>
+  ),
+  'Kubernetes': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"/>
+    </svg>
+  ),
+  'AWS': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M6.09 16.227l-1.214 3.355a.643.643 0 01-.619.418.643.643 0 01-.62-.418L2.423 16.23a.643.643 0 01.619-.868h2.428c.26 0 .5.157.6.397l.03.095zm4.181-3.474v5.604a.643.643 0 01-.643.643h-.643a.643.643 0 01-.643-.643v-5.604a.643.643 0 01.643-.643h.643c.355 0 .643.288.643.643zm4.18 1.929l1.215 3.675a.643.643 0 01-.62.643.643.643 0 01-.619-.643l-1.214-3.675a.643.643 0 01.619-.643h.619z"/>
+      <path d="M19.5 8.25l-7.5 12L4.5 8.25H19.5z"/>
+    </svg>
+  ),
+  'Azure': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM7.5 15.75l9-7.5-2.25 9.75L7.5 15.75z"/>
+    </svg>
+  ),
+  'Google Cloud': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+      <path d="M12 8l4 4-4 4-4-4 4-4z"/>
+    </svg>
+  ),
+  'Linux': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+  ),
+  'Windows': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M3 5.45l7.5-1.03V11.1H3V5.45zm0 7.28h7.5v6.67L3 18.37v-5.64zm8.5-8.13L21 3.7V11h-9.5V4.6zm0 7.4H21v7.3l-9.5-1.33v-5.97z"/>
+    </svg>
+  ),
+  'PostgreSQL': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M17.128 0C15.02-.322 13.906.696 13.906 2.316v.316c-.632-.632-1.896-.947-3.16-.947C6.98 1.685 4.396 5.581 4.396 10.32c0 3.16 1.264 5.687 3.16 6.32.632.211 1.264.211 1.896 0v6.006c0 1.264.632 1.58 1.58 1.58.948 0 1.58-.316 1.58-1.58v-1.896h1.264c3.792 0 6.32-2.528 6.32-6.32V2.632c0-1.62-1.264-2.638-2.952-2.316zm-.316 14.218c0 2.422-1.58 4.212-4.212 4.212h-1.264v-2.106c.632.211 1.264.211 1.896 0 1.896-.632 3.16-3.16 3.16-6.32 0-4.739-2.584-8.635-6.32-8.635-1.264 0-2.528.316-3.16.947V2.316c0-.632.316-.948.948-.948 3.792 0 6.32 2.528 6.32 6.32v10.214h2.632z"/>
+    </svg>
+  ),
+  'MySQL': () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M16.405 5.501c-.115 0-.193.014-.274.033v.013h.014c.054.104.146.18.214.274.054.107.1.214.154.32l.014-.015c.094-.066.14-.172.14-.333-.04-.047-.046-.094-.08-.14-.04-.067-.126-.1-.18-.153zM5.77 18.695h-.927a50.854 50.854 0 00-.27-4.41h-.008l-1.41 4.41H2.45l-1.4-4.41h-.01a72.892 72.892 0 00-.195 4.41H.178c.195-1.798.74-5.115 1.123-7.734h.9L3.285 15.7h.01l1.2-4.739h.877c.442 2.67.9 5.115 1.398 7.734zM9.678 15.793c.007-.176.013-.357.013-.557 0-1.99-.644-2.618-1.618-2.618-1.888 0-1.92 1.756-1.92 2.618 0 .857.032 2.6 1.92 2.6 1.897 0 1.605-2.4 1.605-2.043zm-.717-.007c0 .68-.036 1.31-.888 1.31-.85 0-.888-.63-.888-1.31 0-.68.037-1.31.888-1.31.851 0 .888.63.888 1.31zM16.878 18.695c-.5-2.034-.76-4.08-1.036-6.126h.877c.18 1.52.404 3.06.608 4.578h.010c.199-1.518.436-3.058.646-4.578h.877c.18 1.52.332 3.058.474 4.578h.010c.204-1.52.424-3.058.644-4.578h.877c-.286 2.046-.536 4.092-1.046 6.126h-.877c-.18-1.52-.332-3.058-.474-4.578h-.010c-.199 1.52-.424 3.058-.634 4.578h-.946zM22.814 18.695h-.878c-.472-2.67-.878-5.115-1.320-7.734h.9l1.202 4.739h.010l1.083-4.739h.877c-.418 2.619-.963 5.936-1.158 7.734z"/>
+    </svg>
+  ),
+  default: () => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 6.75a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 0112 6.75z"/>
     </svg>
   )
 };
