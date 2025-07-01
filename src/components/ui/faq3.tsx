@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Accordion,
   AccordionContent,
@@ -6,6 +8,8 @@ import {
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useImagePreloader } from "@/hooks";
+import { AVATAR_URLS } from "@/config";
 
 interface FaqItem {
   id: string;
@@ -76,6 +80,12 @@ const Faq3 = ({
   supportButtonText = "Contact Support",
   supportButtonUrl = "https://www.shadcnblocks.com",
 }: Faq3Props) => {
+  // Preload all avatar images for better performance
+  useImagePreloader([
+    AVATAR_URLS.DEFAULT,
+    AVATAR_URLS.AVATAR_2,
+    AVATAR_URLS.AVATAR_3
+  ], true);
   return (
     <section className="py-32">
       <div className="container space-y-16">
@@ -108,15 +118,15 @@ const Faq3 = ({
         <div className="mx-auto flex max-w-4xl flex-col items-center rounded-lg bg-accent p-4 text-center md:rounded-xl md:p-6 lg:p-8">
           <div className="relative">
             <Avatar className="absolute mb-4 size-16 origin-bottom -translate-x-[60%] scale-[80%] border md:mb-5">
-              <AvatarImage src="https://shadcnblocks.com/images/block/avatar-2.webp" />
+              <AvatarImage src={AVATAR_URLS.AVATAR_2} />
               <AvatarFallback>SU</AvatarFallback>
             </Avatar>
             <Avatar className="absolute mb-4 size-16 origin-bottom translate-x-[60%] scale-[80%] border md:mb-5">
-              <AvatarImage src="https://shadcnblocks.com/images/block/avatar-3.webp" />
+              <AvatarImage src={AVATAR_URLS.AVATAR_3} />
               <AvatarFallback>SU</AvatarFallback>
             </Avatar>
             <Avatar className="mb-4 size-16 border md:mb-5">
-              <AvatarImage src="https://shadcnblocks.com/images/block/avatar-1.webp" />
+              <AvatarImage src={AVATAR_URLS.DEFAULT} />
               <AvatarFallback>SU</AvatarFallback>
             </Avatar>
           </div>
@@ -127,7 +137,7 @@ const Faq3 = ({
             {supportDescription}
           </p>
           <div className="flex w-full flex-col justify-center gap-2 sm:flex-row">
-            <Button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white rounded-full" asChild>
+            <Button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 rounded-full" asChild>
               <a href={supportButtonUrl} target="_blank">
                 {supportButtonText}
               </a>

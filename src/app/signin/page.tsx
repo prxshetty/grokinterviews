@@ -20,6 +20,21 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const { user, refreshAuth, supabase } = useAuth();
 
+  // CRITICAL: Check for password recovery IMMEDIATELY and SYNCHRONOUSLY
+  // This must run before any other effects to prevent race conditions
+  useEffect(() => {
+    // Check for password recovery mode from both URL hash and query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    
+    if (window.location.hash.includes('type=recovery') || urlParams.get('type') === 'recovery' || hashParams.get('type') === 'recovery') {
+      // Redirect to account settings page with password reset flag
+      router.push('/account?tab=password-security&mode=reset');
+      return;
+    }
+  }, [router]); // Empty dependency array - runs only once on mount
+
+  // Redirect to dashboard if user exists
   useEffect(() => {
     if (user) {
       router.push('/dashboard');
@@ -29,13 +44,11 @@ function SignInForm() {
   useEffect(() => {
     setMounted(true);
 
-    // Check for mode parameter to auto-switch to signup
     const mode = searchParams.get('mode');
     if (mode === 'signup') {
       setIsSignUp(true);
     }
 
-    // Check for error or message in URL params
     const errorParam = searchParams.get('error');
     const messageParam = searchParams.get('message');
     
@@ -46,6 +59,37 @@ function SignInForm() {
       setMessage(decodeURIComponent(messageParam));
     }
   }, [searchParams]);
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address to reset your password.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    if (!supabase) return;
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/account?tab=password-security&mode=reset`,
+      });
+
+      if (error) {
+        console.error('Forgot password error:', error);
+      }
+      
+      setMessage('If your email is in our system, you will receive a password reset link shortly.');
+
+    } catch (error: any) {
+      console.error('Forgot password exception:', error);
+      setMessage('If your email is in our system, you will receive a password reset link shortly.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,6 +365,19 @@ function SignInForm() {
             />
           </div>
 
+          {!isSignUp && (
+            <div className="mb-4 text-right">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-black dark:text-white hover:underline focus:outline-none disabled:opacity-50"
+                disabled={loading}
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -339,6 +396,28 @@ function SignInForm() {
             )}
           </button>
         </form>
+
+        {/* Terms and Privacy Agreement - only show during signup */}
+        {isSignUp && (
+          <div className="mt-4 mb-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              By signing up you agree to our{' '}
+              <Link 
+                href="/terms" 
+                className="text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
+              >
+                Terms of Service
+              </Link>
+              {' '}and{' '}
+              <Link 
+                href="/privacy" 
+                className="text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
+              >
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
+        )}
 
         {/* Divider - show only in sign in mode */}
         <div className={`flex items-center w-full my-6 transition-all duration-500 ${isSignUp ? 'opacity-0' : 'opacity-100'}`}>
@@ -377,6 +456,26 @@ function SignInForm() {
             </svg>
             Sign in with GitHub
           </button>
+
+          {/* Terms and Privacy Agreement - only show during signin */}
+          <div className="mt-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              By signing in you agree to our{' '}
+              <Link 
+                href="/terms" 
+                className="text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
+              >
+                Terms of Service
+              </Link>
+              {' '}and{' '}
+              <Link 
+                href="/privacy" 
+                className="text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors"
+              >
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

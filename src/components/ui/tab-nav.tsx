@@ -2,10 +2,12 @@
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 interface TabNavItem {
   id: string;
   label: string;
+  href?: string; // Optional href for link-based navigation
   onClick?: () => void;
 }
 
@@ -14,9 +16,16 @@ interface TabNavProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
   className?: string;
+  variant?: 'button' | 'link'; // Determines whether to render buttons or links
 }
 
-export function TabNav({ items, activeTab, onTabChange, className = "" }: TabNavProps) {
+export function TabNav({ 
+  items, 
+  activeTab, 
+  onTabChange, 
+  className = "",
+  variant = 'button'
+}: TabNavProps) {
   const [position, setPosition] = useState({
     left: 0,
     width: 0,
@@ -57,6 +66,7 @@ export function TabNav({ items, activeTab, onTabChange, className = "" }: TabNav
             isActive={activeTab === item.id}
             position={position}
             onTabChange={onTabChange}
+            variant={variant}
           />
         ))}
 
@@ -76,6 +86,7 @@ interface TabProps {
   isActive?: boolean;
   position: { left: number; width: number; opacity: number };
   onTabChange: (tabId: string) => void;
+  variant: 'button' | 'link';
 }
 
 const Tab = ({
@@ -84,6 +95,7 @@ const Tab = ({
   isActive = false,
   position,
   onTabChange,
+  variant,
 }: TabProps) => {
   const ref = useRef<HTMLLIElement>(null);
   
@@ -108,6 +120,17 @@ const Tab = ({
     position.opacity === 1 &&
     Math.abs(position.left - ref.current.offsetLeft) < 1;
 
+  const handleClick = () => {
+    onTabChange(item.id);
+    item.onClick?.();
+  };
+
+  const commonClassName = `relative block px-5 py-2 text-sm font-normal transition-colors ${
+    isUnderCursor || isActive
+      ? 'text-white dark:text-black'
+      : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+  }`;
+
   return (
     <li
       ref={ref}
@@ -124,19 +147,15 @@ const Tab = ({
       }}
       className="relative z-10 block cursor-pointer"
     >
-      <button
-        onClick={() => {
-          onTabChange(item.id);
-          item.onClick?.();
-        }}
-        className={`relative block px-5 py-2 text-sm font-normal transition-colors ${
-          isUnderCursor
-            ? 'text-white dark:text-black'
-            : 'text-gray-700 dark:text-gray-300'
-        }`}
-      >
-        {item.label}
-      </button>
+      {variant === 'link' && item.href ? (
+        <Link href={item.href} className={commonClassName}>
+          {item.label}
+        </Link>
+      ) : (
+        <button onClick={handleClick} className={commonClassName}>
+          {item.label}
+        </button>
+      )}
     </li>
   );
 };

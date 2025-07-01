@@ -1,29 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback, ChangeEvent, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, ChangeEvent, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { DemoButton } from '@/components/ui';
 import { LoadingSpinner } from '@/components/ui';
+import { TabNav } from '@/components/ui/tab-nav';
 import { toast } from 'sonner';
-import { AccountTab, Cursor } from '@/components/account/account-tabs';
 import { PersonalInfoSection } from '@/components/account/personal-info/personal-info-section';
 import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-section';
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
+import { PasswordSecuritySection } from '@/components/account/password-security/password-security-section';
 import type { UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
 import { availableGroqModels, DEFAULT_GROQ_MODEL_ID } from './types';
-function AccountPage() {
+
+function AccountPageContent() {
   const [activeTab, setActiveTab] = useState('personal');
   const { user, profile, loading: authLoading, refreshAuth, supabase } = useAuth();
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isMounted = useRef(true);
-
-  const [position, setPosition] = useState({
-    left: 0,
-    width: 0,
-    opacity: 0,
-  });
 
   const [formData, setFormData] = useState<AccountFormData>({
     full_name: '',
@@ -43,12 +40,27 @@ function AccountPage() {
     custom_formatting_instructions: '',
   });
 
+  // Define account tabs
+  const accountTabs = [
+    { id: 'personal', label: 'Personal' },
+    { id: 'ai-settings', label: 'AI Settings' },
+    { id: 'answer-preferences', label: 'Answer Preferences' },
+    { id: 'password-security', label: 'Password Security' },
+  ];
+
   useEffect(() => {
     isMounted.current = true;
+    
+    // Check for tab parameter in URL and set initial tab
+    const tab = searchParams.get('tab');
+    if (tab && ['personal', 'ai-settings', 'answer-preferences', 'password-security'].includes(tab)) {
+      setActiveTab(tab);
+    }
+    
     return () => {
       isMounted.current = false;
     };
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -192,25 +204,6 @@ function AccountPage() {
     return availableGroqModels.find(model => model.id === formData.specific_model_id);
   };
 
-  const setInitialCursorPosition = useCallback(() => {
-    const activeTabElement = document.querySelector(`[data-tab-value="${activeTab}"]`) as HTMLElement;
-    if (activeTabElement) {
-      const { width } = activeTabElement.getBoundingClientRect();
-      const left = activeTabElement.offsetLeft;
-      setPosition({
-        width,
-        opacity: 1,
-        left,
-      });
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (!authLoading) {
-      setInitialCursorPosition();
-    }
-  }, [authLoading, activeTab, setInitialCursorPosition]);
-
   if (authLoading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -240,53 +233,12 @@ function AccountPage() {
         <div className="flex flex-col">
           <div className="w-full flex-shrink-0 mb-8">
             <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">Account</h2>
-            <nav className="relative">
-              <ul
-                className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1"
-                onMouseLeave={() => {
-                  const activeTabElement = document.querySelector(`[data-tab-value="${activeTab}"]`) as HTMLElement;
-                  if (activeTabElement) {
-                    const { width } = activeTabElement.getBoundingClientRect();
-                    setPosition({
-                      left: activeTabElement.offsetLeft,
-                      width,
-                      opacity: 1,
-                    });
-                  } else {
-                    setPosition(pv => ({ ...pv, opacity: 0 }));
-                  }
-                }}
-              >
-                <AccountTab
-                  tabValue="personal"
-                  currentActiveTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  setPosition={setPosition}
-                  position={position}
-                >
-                  Personal
-                </AccountTab>
-                <AccountTab
-                  tabValue="ai-settings"
-                  currentActiveTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  setPosition={setPosition}
-                  position={position}
-                >
-                  AI Settings
-                </AccountTab>
-                <AccountTab
-                  tabValue="answer-preferences"
-                  currentActiveTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  setPosition={setPosition}
-                  position={position}
-                >
-                  Answer Preferences
-                </AccountTab>
-                <Cursor position={position} />
-              </ul>
-            </nav>
+            <TabNav
+              items={accountTabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              variant="button"
+            />
           </div>
 
           <div className="w-full">
@@ -334,10 +286,30 @@ function AccountPage() {
                 renderSaveChangesButton={renderSaveChangesButton}
               />
             )}
+
+            {activeTab === 'password-security' && (
+              <PasswordSecuritySection
+                renderSaveChangesButton={renderSaveChangesButton}
+              />
+            )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function AccountPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <LoadingSpinner size="xl" text="Loading Account..." fullScreen={false} />
+        </div>
+      }
+    >
+      <AccountPageContent />
+    </Suspense>
   );
 }
 
