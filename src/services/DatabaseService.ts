@@ -756,7 +756,7 @@ class DatabaseService {
     try {
       const { data, error } = await supabase
         .from('topics')
-        .select('*, categories(*)')
+        .select('*')
         .order('name', { ascending: true }); // Order topics by name
 
       if (error) {
