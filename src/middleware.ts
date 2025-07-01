@@ -25,8 +25,31 @@ export async function middleware(req: NextRequest) {
       }
     )
 
-    // Check if the user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
+    // PRODUCTION FIX: More robust authentication check
+    let user = null;
+    let retryCount = 0;
+    const maxRetries = 2;
+
+    // Retry logic for session verification in case of timing issues
+    while (!user && retryCount < maxRetries) {
+      try {
+        const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+        if (!error && currentUser) {
+          user = currentUser;
+          break;
+        }
+        retryCount++;
+        if (retryCount < maxRetries) {
+          // Small delay before retry
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } catch (authError) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          console.error('Auth verification failed after retries:', authError);
+        }
+      }
+    }
 
     // Check if the request is for a protected route
     const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard');
@@ -49,10 +72,10 @@ export async function middleware(req: NextRequest) {
     if (isAuthRoute && user) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-  } catch {
+  } catch (error) {
     // If there's an error with authentication, allow the request to continue
     // This prevents authentication errors from blocking the entire site
-    // Error is handled silently to prevent authentication errors from blocking the site
+    console.error('Middleware auth error (non-blocking):', error);
   }
 
   return res;
