@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const domain = url.searchParams.get('domain');
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Query for distinct section_name values for the given domain
     // Include created_at for sorting
-    const { data: sectionData, error } = await supabaseServer
+    const { data: sectionData, error } = await supabase
       .from('topics')
       .select('section_name, created_at')
       .eq('domain', domain)

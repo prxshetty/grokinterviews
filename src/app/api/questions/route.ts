@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     // Get query parameters
     const url = new URL(request.url);
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // If no specific parameters, return recent questions
     if (!categoryId && !topicId && !difficulty && !query) {
-      const { data: questions, error } = await supabaseServer
+      const { data: questions, error } = await supabase
         .from('questions')
         .select(`
           id,
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     try {
       // If a search query is provided
       if (query) {
-        let dbQuery = supabaseServer
+        let dbQuery = supabase
           .from('questions')
           .select(`
             *,
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
             dbQuery = dbQuery.eq('category_id', categoryId);
           } else {
             // First get the category by slug
-            const { data: categoryData } = await supabaseServer
+            const { data: categoryData } = await supabase
               .from('categories')
               .select('id')
               .eq('slug', categoryId)
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest) {
         // Check if categoryId is a slug
         if (typeof categoryId === 'string' && isNaN(Number(categoryId))) {
           // Get the category ID from the slug
-          const { data: categoryData } = await supabaseServer
+          const { data: categoryData } = await supabase
             .from('categories')
             .select('id')
             .eq('slug', categoryId)
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Get questions for this category
-        const { data: questions, error } = await supabaseServer
+        const { data: questions, error } = await supabase
           .from('questions')
           .select('*')
           .eq('category_id', categoryIdValue)
@@ -167,6 +168,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const body = await request.json();
     const { categoryId, query, difficulty, topicId } = body;
@@ -175,7 +177,7 @@ export async function POST(request: NextRequest) {
     try {
       // If a search query is provided
       if (query) {
-        let dbQuery = supabaseServer
+        let dbQuery = supabase
           .from('questions')
           .select(`
             *,
@@ -198,7 +200,7 @@ export async function POST(request: NextRequest) {
             dbQuery = dbQuery.eq('category_id', categoryId);
           } else {
             // First get the category by slug
-            const { data: categoryData } = await supabaseServer
+            const { data: categoryData } = await supabase
               .from('categories')
               .select('id')
               .eq('slug', categoryId)
@@ -229,7 +231,7 @@ export async function POST(request: NextRequest) {
         // Check if categoryId is a slug
         if (typeof categoryId === 'string' && isNaN(Number(categoryId))) {
           // Get the category ID from the slug
-          const { data: categoryData } = await supabaseServer
+          const { data: categoryData } = await supabase
             .from('categories')
             .select('id')
             .eq('slug', categoryId)
@@ -243,7 +245,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get questions for this category
-        const { data: questions, error } = await supabaseServer
+        const { data: questions, error } = await supabase
           .from('questions')
           .select('*')
           .eq('category_id', categoryIdValue)

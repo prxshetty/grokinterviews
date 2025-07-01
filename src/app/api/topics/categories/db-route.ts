@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 import { Category, CategoryWithQuestions } from '@/types/database';
 
 // Removed convertCategoriesToLegacyFormat (will be fully removed if not used elsewhere after refactor)
 // Removed convertQuestionsToLegacyFormat (will be fully removed if not used elsewhere after refactor)
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const categoryId = url.searchParams.get('categoryId');
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
         // For this path, we primarily need topicId for the categories.topic_id match.
         // If topicId is 'any', it's problematic for a specific category query. Assume valid topicId.
 
-        const { data: categoryData, error: categoryError } = await supabaseServer
+        const { data: categoryData, error: categoryError } = await supabase
           .from('categories')
           .select(`
             *,
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
         if (!isNaN(Number(topicId))) {
           topicIdResolved = Number(topicId);
         } else {
-          const { data: topicData, error: topicError } = await supabaseServer
+          const { data: topicData, error: topicError } = await supabase
             .from('topics')
             .select('id')
             .or(`name.eq.${topicId},slug.eq.${topicId},domain.eq.${topicId}`) // Added slug here
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
           topicIdResolved = topicData.id;
         }
 
-        const { data: categories, error: categoriesError } = await supabaseServer
+        const { data: categories, error: categoriesError } = await supabase
           .from('categories')
           .select('*')
           .eq('topic_id', topicIdResolved)
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
     // For now, we assume DatabaseService calls will specify topicId or categoryId+topicId.
     try {
       console.time('all-topics-with-categories-query');
-      const { data: joinData, error: joinError } = await supabaseServer
+      const { data: joinData, error: joinError } = await supabase
         .from('topics')
         .select('id, domain, name, slug, categories:categories(*)') // Added slug
         .order('name');

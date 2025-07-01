@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 import { GET as dbGet } from './db-route';
-import supabaseServer from '@/utils/supabase-server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   const url = new URL(request.url);
   const categoryId = url.searchParams.get('categoryId');
   const getTopicOnly = url.searchParams.get('getTopicOnly');
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
   // Handle the simple case: just return topic_id for a specific category_id
   if (categoryId && getTopicOnly === 'true') {
     try {
-      const { data: category, error } = await supabaseServer
+      const { data: category, error } = await supabase
         .from('categories')
         .select('topic_id')
         .eq('id', categoryId)

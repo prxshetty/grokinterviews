@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 import { Topic, Category } from '@/types/database'; // Import Category
 
 // Define the expected structure for a topic with its categories
@@ -13,6 +13,7 @@ interface TopicWithCategoriesDetailed extends Topic {
 const PAGE_SIZE = 1000; // Max rows Supabase/PostgREST seems to return by default or by its own max-rows config
 
 export async function GET(_request: NextRequest) {
+  const supabase = await createClient();
   try {
     let allTopics: TopicWithCategoriesDetailed[] = [];
     let page = 0;
@@ -24,7 +25,7 @@ export async function GET(_request: NextRequest) {
 
       console.log(`Fetching topics from ${from} to ${to}`);
 
-      const { data: topicsPage, error } = await supabaseServer
+      const { data: topicsPage, error } = await supabase
         .from('topics')
         .select('*, categories(*)')
         .order('name', { ascending: true })

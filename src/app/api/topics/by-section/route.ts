@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const domain = url.searchParams.get('domain');
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     console.log(`API - Fetching topics for domain: ${domain}, section: ${sectionName}`);
 
     // Query for topics in the given section and domain
-    const { data: topics, error } = await supabaseServer
+    const { data: topics, error } = await supabase
       .from('topics')
       .select('*')
       .eq('domain', domain)

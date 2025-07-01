@@ -3,7 +3,7 @@
  * Service for interacting with the Supabase database
  */
 
-import supabase from '@/utils/supabase';
+import { supabase } from '@/utils/supabase/client';
 import { isBrowser } from '@/utils/environment';
 import {
   Topic,

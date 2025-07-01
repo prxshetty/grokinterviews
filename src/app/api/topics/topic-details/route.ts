@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseServer from '@/utils/supabase-server';
+import { createClient } from '@/utils/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Category } from '@/types/database';
 
 // Function to get categories for a specific topic ID
-async function getCategoriesForTopic(topicId: number) {
+async function getCategoriesForTopic(supabase: SupabaseClient, topicId: number) {
   console.log(`API - Direct query for categories with topic_id = ${topicId}`);
 
   try {
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('categories')
       .select('*')
       .eq('topic_id', topicId)
@@ -30,12 +32,12 @@ async function getCategoriesForTopic(topicId: number) {
 }
 
 // Function to get questions for a category
-async function getQuestionsForCategory(categoryId: number) {
+async function getQuestionsForCategory(supabase: SupabaseClient, categoryId: number) {
   console.log(`API - Fetching questions for category ID ${categoryId}`);
 
   try {
     // Direct SQL query to get questions for this category
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .from('questions')
       .select('*')
       .eq('category_id', categoryId)
@@ -54,7 +56,7 @@ async function getQuestionsForCategory(categoryId: number) {
       console.log(`API - No questions found, trying direct database query`);
 
       // Try a different approach - direct SQL query
-      const { data: directData, error: directError } = await supabaseServer
+      const { data: directData, error: directError } = await supabase
         .from('questions')
         .select('*')
         .filter('category_id', 'eq', categoryId)
@@ -76,7 +78,7 @@ async function getQuestionsForCategory(categoryId: number) {
 
       // Try to get the category name from the database
       try {
-        const { data: categoryData, error: categoryError } = await supabaseServer
+        const { data: categoryData, error: categoryError } = await supabase
           .from('categories')
           .select('name, description')
           .eq('id', categoryId)
@@ -170,6 +172,7 @@ async function getQuestionsForCategory(categoryId: number) {
 }
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const topicId = url.searchParams.get('topicId');
@@ -191,7 +194,7 @@ export async function GET(request: NextRequest) {
       console.log(`API - Extracted numeric ID ${queryTopicId} from ${topicId} for topic query`);
     }
 
-    const { data: topic, error: topicError } = await supabaseServer
+    const { data: topic, error: topicError } = await supabase
       .from('topics')
       .select('*')
       .eq('id', queryTopicId)
@@ -230,15 +233,15 @@ export async function GET(request: NextRequest) {
 
     try {
       // Get categories
-      const categories = await getCategoriesForTopic(numericId);
+      const categories = await getCategoriesForTopic(supabase, numericId);
 
       if (categories && categories.length > 0) {
         console.log(`API - Found ${categories.length} categories for topic ID ${topicId}`);
 
         // For each category, get its questions
         const categoriesWithQuestions = await Promise.all(
-          categories.map(async (category) => {
-            const questions = await getQuestionsForCategory(category.id);
+          categories.map(async (category: Category) => {
+            const questions = await getQuestionsForCategory(supabase, category.id);
 
             return {
               ...category,
