@@ -10,6 +10,8 @@ import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
 import { GeistSans, GeistMono } from 'geist/font';
 import { ThemeProvider } from '@/components/theme-provider';
+import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
+import { ReactPlugin } from '@21st-extension/react';
 
 export const metadata: Metadata = {
   title: 'GrokInterviews - AI-Powered Interview Preparation',
@@ -39,6 +41,7 @@ export default function RootLayout({
         GeistSans.variable,
         GeistMono.variable
       )}>
+        <TwentyFirstToolbar config={{ plugins: [ReactPlugin] }} />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

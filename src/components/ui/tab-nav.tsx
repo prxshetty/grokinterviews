@@ -53,7 +53,7 @@ export function TabNav({
   return (
     <div className={`flex items-center w-full ${className}`}>
       <ul
-        className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1"
+        className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
         onMouseLeave={() => {
           setActiveTabPosition();
         }}
@@ -125,7 +125,7 @@ const Tab = ({
     item.onClick?.();
   };
 
-  const commonClassName = `relative block px-5 py-2 text-sm font-normal transition-colors ${
+  const commonClassName = `relative block px-4 py-2 text-xs font-normal transition-colors ${
     isUnderCursor || isActive
       ? 'text-white dark:text-black'
       : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
@@ -164,7 +164,7 @@ const Cursor = ({ position }: { position: { left: number; width: number; opacity
   return (
     <motion.li
       animate={position}
-      className="absolute z-0 h-9 rounded-full bg-black dark:bg-white"
+      className="absolute z-0 h-full top-0 rounded-full bg-black dark:bg-white"
       transition={{
         type: "spring",
         stiffness: 300,

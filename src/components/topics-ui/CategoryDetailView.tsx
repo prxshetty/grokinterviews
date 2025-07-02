@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion, type Variants } from 'framer-motion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { QuestionWithAnswer } from '@/components/questions';
 import { ProgressBar, LoadingSpinner, Accordion } from '@/components/ui';
@@ -11,6 +12,15 @@ import FloatingSettings from './FloatingSettings';
 // Imported shared types
 import { QuestionType } from '@/types/topics';
 import { SubtopicProgress, CategoryProgress } from '@/types/topic-page.types';
+
+// Animation variants that don't use transforms
+const fadeInVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.3, ease: "easeOut" as const }
+  }
+};
 
 // Local type definition for DisplayItem (mimicking TopicCategoryGrid.tsx)
 interface DisplayItem {
@@ -475,7 +485,12 @@ export default function CategoryDetailView({
   // If a subtopic is selected, show its details
   if (selectedSubtopic && subtopicDetails) {
     return (
-      <div className="p-4 animate-fadeIn">
+      <motion.div 
+        className="p-4"
+        initial="hidden"
+        animate="visible"
+        variants={fadeInVariants}
+      >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
           <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl dark:text-white">
             {subtopicDetails.label}
@@ -575,13 +590,18 @@ export default function CategoryDetailView({
             <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this topic.'}</p>
           </div>
         )}
-      </div>
+      </motion.div>
     );
   }
   
   // Render category details
   return (
-    <div className="p-4 animate-fadeIn">
+    <motion.div 
+      className="p-4"
+      initial="hidden"
+      animate="visible"
+      variants={fadeInVariants}
+    >
       {/* Title and back button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
         <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl text-gray-900 dark:text-white">
@@ -681,6 +701,6 @@ export default function CategoryDetailView({
           <p>No content available for this category.</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 } 

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence, LayoutGroup, useReducedMotion, type Variants } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import Image, { type ImageProps } from 'next/image';
 import { InlineLoadingSpinner, Card, Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import { TabNav } from '@/components/ui/tab-nav';
-import { ExternalLink, Video, FileText, Globe, BookOpen, Image as ImageIcon, ArrowUpRight } from 'lucide-react';
+import { ExternalLink, Video, FileText, Globe, BookOpen, Image as ImageIcon, ArrowUpRight, X } from 'lucide-react';
 import { type Database } from '@/types/database.types';
 
 // Helper function to extract YouTube video ID from URL
@@ -74,10 +75,10 @@ function YouTubeThumbnailWithFallback({ videoId, alt, className, ...props }: You
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_70%)]"></div>
         </div>
         <div className="relative z-10 flex flex-col items-center">
-          <div className="bg-white/20 backdrop-blur-sm rounded-full p-6 mb-3 shadow-lg">
-            <Video className="w-12 h-12 text-white drop-shadow-lg" />
+          <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4 mb-2 shadow-lg">
+            <Video className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
           </div>
-          <span className="text-white/95 text-sm font-medium uppercase tracking-wider">
+          <span className="text-white/95 text-xs sm:text-sm font-medium uppercase tracking-wider">
             Preview Unavailable
           </span>
         </div>
@@ -130,7 +131,7 @@ const TYPE_DISPLAY_ORDER: string[] = ['video', 'pdf', 'paper', 'website', 'book'
 const TYPE_DISPLAY_INFO: { [key: string]: { Icon: React.ElementType, title: string } } = {
   video: { Icon: Video, title: 'Videos' },
   pdf: { Icon: FileText, title: 'PDFs' },
-  paper: { Icon: FileText, title: 'Research Papers' },
+  paper: { Icon: FileText, title: 'Papers' },
   website: { Icon: Globe, title: 'Websites' },
   book: { Icon: BookOpen, title: 'Books' },
   image: { Icon: ImageIcon, title: 'Illustrations' },
@@ -156,6 +157,8 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [activeTabType, setActiveTabType] = useState<string | null>(null);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   // Effect for fetching main resource data
   useEffect(() => {
@@ -455,173 +458,122 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
 
   const activeTab = displayableTabs.find(tab => tab.type === activeTabType);
 
+  const cardVariants: Variants = {
+    hidden: { 
+      opacity: 0, 
+      y: 30,
+      scale: 0.9,
+      filter: "blur(6px)",
+    },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: { 
+        stiffness: 300, 
+        damping: 28,
+        mass: 0.8,
+      }
+    }
+  };
+
   return (
-    <div className="w-full space-y-1 pt-3">
-      <TabNav 
-        items={tabNavItems}
-        activeTab={activeTabType || ''}
-        onTabChange={setActiveTabType}
-        className="mb-4"
-      />
-      
-      {activeTab && (
-        <div className="mt-0 pt-1 relative">
-          {/* Left scroll arrow */}
-          <button 
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
-            onClick={() => {
-              const container = document.querySelector('.resource-scroll-container');
-              if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+    <LayoutGroup>
+      <div className="w-full space-y-1 pt-3">
+        <TabNav 
+          items={tabNavItems}
+          activeTab={activeTabType || ''}
+          onTabChange={setActiveTabType}
+          className="mb-4"
+        />
+        
+        {activeTab && (
+          <motion.div 
+            className="mt-0 pt-1 relative"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.1 } }
             }}
-            aria-label="Scroll left"
           >
-            <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          {/* Right scroll arrow */}
-          <button 
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
-            onClick={() => {
-              const container = document.querySelector('.resource-scroll-container');
-              if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
-            }}
-            aria-label="Scroll right"
-          >
-            <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          
-          <div className="resource-scroll-container flex items-start overflow-x-auto space-x-4 py-4 scrollbar-none mx-8" style={{ paddingBottom: '1rem'}}>
-            {activeTab.resources.map((resource, index) => (
-              <Card 
-                key={resource.id} 
-                className="overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col bg-white dark:bg-gray-900 rounded-3xl group w-[320px] flex-shrink-0 border-0"
-              >
-                {/* Image Section - Fixed height */}
-                <div className="relative h-48 w-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                  {(resource.type === 'video' || resource.type === 'youtube') && resource.videoId ? (
-                    <YouTubeThumbnailWithFallback
-                      videoId={resource.videoId}
-                      alt={resource.title || 'YouTube video preview'}
-                      layout="fill"
-                      objectFit="cover"
-                      className="rounded-t-3xl"
-                      priority={index < 3} // Prioritize loading for first few images
-                    />
-                  ) : resource.previewUrl ? (
-                    <div className="relative h-full w-full"> {/* Wrapper for layout fill */}
-                      <Image 
-                        src={resource.previewUrl} 
-                        alt={resource.title || 'Resource preview'} 
-                        layout="fill" 
-                        objectFit="cover" 
-                        className="rounded-t-3xl" 
+            <div className="resource-scroll-container flex items-start overflow-x-auto space-x-4 py-4 scrollbar-none" style={{ paddingBottom: '1rem'}}>
+              {activeTab.resources.map((resource, index) => (
+                <motion.div
+                  key={resource.id}
+                  layoutId={`resource-card-${resource.id}`}
+                  variants={cardVariants}
+                  whileHover={!shouldReduceMotion ? { 
+                    y: -4,
+                    scale: 1.01,
+                    transition: { type: "spring", stiffness: 400, damping: 25 }
+                  } : {}}
+                  onClick={() => setSelectedResource(resource)}
+                  className="overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col bg-white dark:bg-gray-900 rounded-3xl group w-[132px] sm:w-[156px] md:w-[168px] flex-shrink-0 border-0 cursor-pointer"
+                >
+                  {/* Image Section - Fixed height */}
+                  <motion.div layoutId={`resource-image-${resource.id}`} className="relative h-20 sm:h-24 w-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                    {(resource.type === 'video' || resource.type === 'youtube') && resource.videoId ? (
+                      <YouTubeThumbnailWithFallback
+                        videoId={resource.videoId}
+                        alt={resource.title || 'YouTube video preview'}
+                        layout="fill"
+                        objectFit="cover"
+                        className="rounded-t-3xl"
+                        priority={index < 3} // Prioritize loading for first few images
                       />
-                      {/* Special handling for website favicons if previewUrl is a favicon */}
-                      {resource.type === 'website' && resource.previewUrl.includes('google.com/s2/favicons') && (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${getGradientForType(resource.type)} rounded-t-3xl flex items-center justify-center`}>
-                          <div className="bg-white/95 dark:bg-gray-800/95 rounded-full p-6 shadow-lg">
-                            <Image 
-                              src={resource.previewUrl} 
-                              alt="Website favicon" 
-                              width={48} 
-                              height={48} 
-                              className="rounded-lg"
-                            />
+                    ) : resource.previewUrl ? (
+                      <div className="relative h-full w-full"> {/* Wrapper for layout fill */}
+                        <Image 
+                          src={resource.previewUrl} 
+                          alt={resource.title || 'Resource preview'} 
+                          layout="fill" 
+                          objectFit="cover" 
+                          className="rounded-t-3xl" 
+                        />
+                        {/* Special handling for website favicons if previewUrl is a favicon */}
+                        {resource.type === 'website' && resource.previewUrl.includes('google.com/s2/favicons') && (
+                          <div className={`absolute inset-0 bg-gradient-to-br ${getGradientForType(resource.type)} rounded-t-3xl flex items-center justify-center`}>
+                            <div className="bg-white/95 dark:bg-gray-800/95 rounded-full p-6 shadow-lg">
+                              <Image 
+                                src={resource.previewUrl} 
+                                alt="Website favicon" 
+                                width={48} 
+                                height={48} 
+                                className="rounded-lg"
+                              />
+                            </div>
                           </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getGradientForType(resource.type || 'other')} rounded-t-3xl relative overflow-hidden`}>
+                        <div className="absolute inset-0 opacity-10">
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_70%)]"></div>
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getGradientForType(resource.type || 'other')} rounded-t-3xl relative overflow-hidden`}>
-                      <div className="absolute inset-0 opacity-10">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent_70%)]"></div>
-                      </div>
-                      <div className="relative z-10 flex flex-col items-center">
-                        {(() => {
-                          const Info = TYPE_DISPLAY_INFO[resource.type || 'other'];
-                          return Info ? (
-                            <div className="bg-white/20 backdrop-blur-sm rounded-full p-6 mb-3 shadow-lg">
-                              <Info.Icon className="w-12 h-12 text-white drop-shadow-lg" />
-                            </div>
-                          ) : (
-                            <div className="bg-white/20 backdrop-blur-sm rounded-full p-6 mb-3 shadow-lg">
-                              <ExternalLink className="w-12 h-12 text-white drop-shadow-lg" />
-                            </div>
-                          );
-                        })()}
-                        <span className="text-white/95 text-sm font-medium uppercase tracking-wider">
-                          {TYPE_DISPLAY_INFO[resource.type || 'other']?.title || 'Resource'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content Section - Fixed layout within remaining space */}
-                <div className="p-6 flex flex-col min-h-0">
-                  {/* Title section - no longer taking flex space */}
-                  <div className="mb-4">
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <h3 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white line-clamp-3 leading-tight">
-                            {resource.title || 'Untitled Resource'}
-                          </h3>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" align="start" className="max-w-xs">
-                          <p>{resource.title || 'Untitled Resource'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-
-                  {/* Stats Section with Open Resource Button - Directly below title */}
-                  <div className="flex items-center justify-between text-sm pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-1">
-                        {(() => {
-                          const Info = TYPE_DISPLAY_INFO[resource.type || 'other'];
-                          return Info ? (
-                            <Info.Icon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-                          ) : (
-                            <ExternalLink className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-                          );
-                        })()}
-                        <span className="font-medium text-gray-700 dark:text-gray-300 text-xs">
-                          {TYPE_DISPLAY_INFO[resource.type || 'other']?.title || 'Resource'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="font-medium text-gray-700 dark:text-gray-300 text-xs">
-                          {resource.relevance_score ? Math.round(resource.relevance_score * 100) : 95}%
-                        </span>
-                      </div>
-                      
-                      {resource.type === 'video' && resource.duration && (
-                        <div className="flex items-center space-x-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="font-medium text-gray-700 dark:text-gray-300 text-xs">
-                            {resource.duration}
+                        <div className="relative z-10 flex flex-col items-center">
+                          {(() => {
+                            const Info = TYPE_DISPLAY_INFO[resource.type || 'other'];
+                            return Info ? (
+                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4 mb-2 shadow-lg">
+                                <Info.Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
+                              </div>
+                            ) : (
+                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-4 mb-2 shadow-lg">
+                                <ExternalLink className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-lg" />
+                              </div>
+                            );
+                          })()}
+                          <span className="text-white/95 text-xs sm:text-sm font-medium uppercase tracking-wider">
+                            {TYPE_DISPLAY_INFO[resource.type || 'other']?.title || 'Resource'}
                           </span>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Smaller Open Resource Button */}
+                      </div>
+                    )}
                     <Button 
-                      variant="default" 
+                      variant="ghost" 
                       size="icon"
-                      className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-full font-medium w-8 h-8 flex items-center justify-center text-xs transition-colors flex-shrink-0"
+                      className="absolute bottom-1 right-1 bg-black/50 hover:bg-black/75 backdrop-blur-sm text-white rounded-full w-5 h-5 flex-shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (resource.url) {
@@ -630,15 +582,170 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
                       }}
                       aria-label="Open Resource"
                     >
-                      <ArrowUpRight className="h-4 w-4" strokeWidth={2.5} />
+                      <ArrowUpRight className="h-2.5 w-2.5" strokeWidth={2.5} />
+                    </Button>
+                  </motion.div>
+
+                  {/* Content Section */}
+                  <motion.div layoutId={`resource-content-${resource.id}`} className="p-2 sm:p-3 flex flex-col flex-grow">
+                    <motion.h3 layoutId={`resource-title-${resource.id}`} className="text-xs sm:text-sm font-semibold tracking-tight text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary-500 transition-colors">
+                      {resource.title || 'Untitled Resource'}
+                    </motion.h3>
+                  </motion.div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {selectedResource && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"
+              onClick={() => setSelectedResource(null)}
+            />
+            
+            <motion.div
+              layoutId={`resource-card-${selectedResource.id}`}
+              className="relative w-[90vw] max-w-4xl max-h-[90vh] bg-card border border-border rounded-xl overflow-hidden flex flex-col"
+            >
+              <motion.button
+                className="absolute top-4 right-4 w-8 h-8 bg-background/80 hover:bg-background rounded-full flex items-center justify-center z-20"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                onClick={() => setSelectedResource(null)}
+              >
+                <X className="w-4 h-4" />
+              </motion.button>
+
+              <motion.div
+                layoutId={`resource-image-${selectedResource.id}`}
+                className="relative w-full aspect-video bg-black flex-shrink-0 z-10"
+              >
+                {(selectedResource.type === 'video' || selectedResource.type === 'youtube') && selectedResource.videoId ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${selectedResource.videoId}?autoplay=1&rel=0&showinfo=0`}
+                    title={selectedResource.title || 'YouTube video player'}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full"
+                  ></iframe>
+                ) : selectedResource.previewUrl ? (
+                  <Image 
+                    src={selectedResource.previewUrl} 
+                    alt={selectedResource.title || 'Resource preview'} 
+                    layout="fill" 
+                    objectFit="cover" 
+                  />
+                ) : (
+                  <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getGradientForType(selectedResource.type || 'other')}`}>
+                    {(() => {
+                        const Info = TYPE_DISPLAY_INFO[selectedResource.type || 'other'];
+                        return Info ? <Info.Icon className="w-24 h-24 text-white/50" /> : <ExternalLink className="w-24 h-24 text-white/50" />;
+                    })()}
+                  </div>
+                )}
+              </motion.div>
+              
+{/* Title section for videos */}
+              {(selectedResource.type === 'video' || selectedResource.type === 'youtube') && (
+                <div className="px-4 md:px-6 pt-4 pb-2">
+                  <motion.h1 
+                    layoutId={`resource-title-${selectedResource.id}`} 
+                    className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    {selectedResource.title}
+                  </motion.h1>
+                </div>
+              )}
+
+              {!(selectedResource.type === 'video' || selectedResource.type === 'youtube') && (
+                <div className="overflow-y-auto">
+                  <motion.div layoutId={`resource-content-${selectedResource.id}`} className="p-4 md:p-6">
+                    <motion.h1 layoutId={`resource-title-${selectedResource.id}`} className="text-xl md:text-2xl font-bold mb-3">
+                      {selectedResource.title}
+                    </motion.h1>
+                    
+                    <motion.div 
+                      className="prose dark:prose-invert max-w-none text-muted-foreground"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <p className="text-sm">{selectedResource.description || "No description available for this resource."}</p>
+                    </motion.div>
+                  </motion.div>
+                </div>
+              )}
+
+              <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-6 bg-card mt-auto">
+                   <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-1">
+                        {(() => {
+                          const Info = TYPE_DISPLAY_INFO[selectedResource.type || 'other'];
+                          return Info ? (
+                            <Info.Icon className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                          ) : (
+                            <ExternalLink className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                          );
+                        })()}
+                        <span className="font-medium text-gray-700 dark:text-gray-300 text-xs">
+                          {TYPE_DISPLAY_INFO[selectedResource.type || 'other']?.title || 'Resource'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="font-medium text-gray-700 dark:text-gray-300 text-xs">
+                          {selectedResource.relevance_score ? Math.round(selectedResource.relevance_score * 100) : 95}%
+                        </span>
+                      </div>
+                      
+                      {selectedResource.type === 'video' && selectedResource.duration && (
+                        <div className="flex items-center space-x-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="font-medium text-gray-700 dark:text-gray-300 text-xs">
+                            {selectedResource.duration}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button 
+                      variant="default"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (selectedResource.url) {
+                          window.open(selectedResource.url, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                      aria-label="Open Resource in New Tab"
+                    >
+                      Open Original <ArrowUpRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </LayoutGroup>
   );
 }
