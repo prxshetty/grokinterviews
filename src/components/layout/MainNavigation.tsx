@@ -478,7 +478,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                       size="sm"
                       className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}
                     >
-                      <Link href="/signup">
+                      <Link href="/signin?mode=signup">
                         <span>Get Started</span>
                       </Link>
                     </Button>
