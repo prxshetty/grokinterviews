@@ -18,6 +18,12 @@
   --muted: 210 40% 96.1%;
   --muted-foreground: 215.4 16.3% 46.9%;
 
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+
   /* Chart color variables for light mode */
   --chart-1: 220 9% 46%;
   --chart-2: 220 13% 69%;
@@ -57,6 +63,12 @@
   --foreground-hsl: 210 40% 98%;
   --muted: 217.2 32.6% 17.5%;
   --muted-foreground: 217.9 10.6% 64.9%;
+
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 84% 4.9%;
 
   /* Chart color variables for dark mode */
   --chart-1: 220 13% 69%;

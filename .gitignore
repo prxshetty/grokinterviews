@@ -6,6 +6,7 @@ TODOIST.md
 NOTES.md
 REFACTOR_TOPIC_SERVICES.md
 DEPLOYMENT.md
+RESEARCH_ARTICLE_ENHANCEMENT_PLAN.md
 # dependencies
 /node_modules
 /.pnp
@@ -18,7 +19,7 @@ DEPLOYMENT.md
 interview_prep.db
 # testing
 /coverage
-
+.vscode
 # next.js
 /.next/
 /out/
