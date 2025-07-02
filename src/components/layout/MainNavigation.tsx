@@ -171,106 +171,116 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                       aria-label={
                         isMobileMenuOpen == true ? 'Close Menu' : 'Open Menu'
                       }
-                      className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden"
+                      className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden group"
                     >
-                      <Menu className="in-data-[state=active]:rotate-180 group-data-[state=active]:scale-0 group-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
-                      <X className="group-data-[state=active]:rotate-0 group-data-[state=active]:scale-100 group-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
+                      <Menu className="group-data-[state=open]:rotate-180 group-data-[state=open]:scale-0 group-data-[state=open]:opacity-0 m-auto size-6 duration-300 ease-in-out" />
+                      <X className="group-data-[state=open]:rotate-0 group-data-[state=open]:scale-100 group-data-[state=open]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-300 ease-in-out" />
                     </button>
                   </SheetTrigger>
                   <SheetContent
                     side="right"
-                    className="w-[300px] sm:w-[400px] bg-white/95 dark:bg-black/95 border-l border-gray-200 dark:border-white/10 p-6 pt-10 flex flex-col h-full"
+                    className="w-full bg-white dark:bg-black border-none p-0 flex flex-col h-full"
                   >
-                    <SheetHeader>
-                      <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                    {/* Header with logo */}
+                    <div className="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-800">
+                      <Logo size="sm" showText={true} className="text-black dark:text-white" textClassName="text-lg" />
+                    </div>
+                    
+                    <SheetHeader className="sr-only">
+                      <SheetTitle>Mobile Menu</SheetTitle>
                     </SheetHeader>
-                    <nav className="flex flex-col space-y-4 mt-4">
-                      <SheetClose asChild>
-                        <Link
-                          href="/topics"
-                          onClick={handleTopicsLinkClick}
-                          className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                        >
-                          Topics
-                        </Link>
-                      </SheetClose>
-                      {user && (
-                        <>
-                          <SheetClose asChild>
-                            <Link
-                              href="/dashboard"
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                            >
-                              Dashboard
-                            </Link>
-                          </SheetClose>
-                          <SheetClose asChild>
-                            <Link
-                              href="/dashboard/activity"
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                            >
-                              Activity
-                            </Link>
-                          </SheetClose>
-                        </>
-                      )}
-                      <SheetClose asChild>
-                        <Link
-                          href="/about"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
-                        >
-                          About
-                        </Link>
-                      </SheetClose>
-
-                      {isTopicPage && (
-                        <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                          <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                            Switch Subject Area
-                          </p>
-                          {displayedNavTopics.map((topic: NavTopic) => (
-                            <SheetClose asChild key={topic.id}>
+                    {/* Main navigation content */}
+                    <div className="flex-1 flex flex-col px-6 py-8">
+                      <nav className="flex flex-col space-y-6">
+                        <SheetClose asChild>
+                          <Link
+                            href="/topics"
+                            onClick={handleTopicsLinkClick}
+                            className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
+                          >
+                            Topics
+                          </Link>
+                        </SheetClose>
+                        {user && (
+                          <>
+                            <SheetClose asChild>
                               <Link
-                                href={`/topics/${topic.id}`}
-                                onClick={e => {
-                                  if (
-                                    extractDomainFromPath(pathname, 'topics') ===
-                                    topic.id
-                                  ) {
-                                    e.preventDefault();
-                                    window.dispatchEvent(
-                                      new CustomEvent('resetCategorySelection', {
-                                        detail: { domain: topic.id },
-                                      }),
-                                    );
-                                    router.replace(`/topics/${topic.id}`);
-                                  }
-                                  setIsMobileMenuOpen(false);
-                                }}
-                                className={`block py-2 text-md font-medium transition-colors duration-300 ${
-                                  extractDomainFromPath(pathname, 'topics') ===
-                                  topic.id
-                                    ? 'text-black dark:text-white'
-                                    : 'text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white'
-                                }`}
+                                href="/dashboard"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
                               >
-                                {topic.label}
+                                Dashboard
                               </Link>
                             </SheetClose>
-                          ))}
-                        </div>
-                      )}
-                    </nav>
+                            <SheetClose asChild>
+                              <Link
+                                href="/dashboard/activity"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
+                              >
+                                Activity
+                              </Link>
+                            </SheetClose>
+                          </>
+                        )}
+                        <SheetClose asChild>
+                          <Link
+                            href="/about"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
+                          >
+                            About
+                          </Link>
+                        </SheetClose>
 
-                    {/* Account and Settings Section - Moved to bottom for easier access */}
-                    <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
+                        {isTopicPage && (
+                          <div className="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                            <p className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-4">
+                              Switch Subject Area
+                            </p>
+                            <div className="space-y-3">
+                              {displayedNavTopics.map((topic: NavTopic) => (
+                                <SheetClose asChild key={topic.id}>
+                                  <Link
+                                    href={`/topics/${topic.id}`}
+                                    onClick={e => {
+                                      if (
+                                        extractDomainFromPath(pathname, 'topics') ===
+                                        topic.id
+                                      ) {
+                                        e.preventDefault();
+                                        window.dispatchEvent(
+                                          new CustomEvent('resetCategorySelection', {
+                                            detail: { domain: topic.id },
+                                          }),
+                                        );
+                                        router.replace(`/topics/${topic.id}`);
+                                      }
+                                      setIsMobileMenuOpen(false);
+                                    }}
+                                    className={`block py-3 text-xl font-light transition-colors duration-300 border-b border-gray-100 dark:border-gray-800 ${
+                                      extractDomainFromPath(pathname, 'topics') ===
+                                      topic.id
+                                        ? 'text-primary dark:text-primary'
+                                        : 'text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary'
+                                    }`}
+                                  >
+                                    {topic.label}
+                                  </Link>
+                                </SheetClose>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </nav>
+                    </div>
+
+                    {/* Account and Settings Section - Fixed at bottom */}
+                    <div className="mt-auto p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
                       {user ? (
                         <div className="space-y-4">
-                          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/50">
-                            <Avatar className="w-12 h-12">
+                          <div className="flex items-center space-x-4 p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700">
+                            <Avatar className="w-14 h-14">
                               <AvatarImage
                                 src={
                                   profile?.avatar_url &&
@@ -289,12 +299,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                              <p className="text-lg font-medium text-gray-900 dark:text-gray-100 truncate">
                                 {profile?.full_name ||
                                   profile?.username ||
                                   'User'}
                               </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                 {user?.email || 'No email provided'}
                               </p>
                             </div>
@@ -308,16 +318,16 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                 router.push('/account');
                                 setIsMobileMenuOpen(false);
                               }}
-                              className="w-full justify-start font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 h-12 text-base"
+                              className="w-full justify-start font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 h-14 text-lg rounded-xl"
                             >
-                              <UserIcon className="mr-3 h-5 w-5" /> Account Settings
+                              <UserIcon className="mr-4 h-6 w-6" /> Account Settings
                             </Button>
                           </SheetClose>
                           
                           {/* Theme Switcher and Sign Out */}
-                          <div className="flex items-center justify-between w-full pt-2">
+                          <div className="flex items-center justify-between w-full pt-4">
                             <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-600 dark:text-gray-400">Theme:</span>
+                              <span className="text-base text-gray-600 dark:text-gray-400">Theme:</span>
                               <ThemeSwitcher />
                             </div>
                             <Button
@@ -327,9 +337,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                 e.stopPropagation();
                                 handleSignOut();
                               }}
-                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors px-3 py-2"
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors px-4 py-3 rounded-xl text-base"
                             >
-                              <LogOut className="h-4 w-4 mr-2" />
+                              <LogOut className="h-5 w-5 mr-3" />
                               Sign Out
                             </Button>
                           </div>
@@ -346,7 +356,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                             <Link
                               href="/signin"
                               onClick={() => setIsMobileMenuOpen(false)}
-                              className="block w-full text-center px-4 py-3 text-base font-medium text-white bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 rounded-lg transition-all duration-200"
+                              className="block w-full text-center px-6 py-4 text-lg font-medium text-white bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 rounded-xl transition-all duration-200"
                             >
                               Sign In
                             </Link>
