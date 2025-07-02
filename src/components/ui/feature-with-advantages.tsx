@@ -1,8 +1,24 @@
 import { Check } from "lucide-react";
+import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 
 function Feature() {
+  const { ref, isVisible, mounted } = useScrollAnimation();
+
+  if (!mounted) {
+    return (
+      <div className="w-full py-20 lg:py-40 opacity-0">
+        {/* Skeleton content */}
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full py-20 lg:py-40">
+    <div 
+      ref={ref}
+      className={`w-full py-20 lg:py-40 transition-all duration-1000 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+      }`}
+    >
       <div className="container mx-auto">
         <div className="flex gap-4 flex-col items-start">
           <div className="flex gap-2 flex-col">

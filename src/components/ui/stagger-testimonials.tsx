@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 
 const SQRT_5000 = Math.sqrt(5000);
 
@@ -201,6 +202,7 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
 };
 
 export const StaggerTestimonials: React.FC = () => {
+  const { ref, isVisible, mounted } = useScrollAnimation();
   const [cardSize, setCardSize] = useState(365);
   const [testimonialsList, setTestimonialsList] = useState(testimonials);
 
@@ -233,9 +235,20 @@ export const StaggerTestimonials: React.FC = () => {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
+  if (!mounted) {
+    return (
+      <div className="relative w-full overflow-hidden opacity-0" style={{ height: 600 }}>
+        {/* Skeleton content */}
+      </div>
+    );
+  }
+
   return (
     <div
-      className="relative w-full overflow-hidden bg-muted/30"
+      ref={ref}
+      className={`relative w-full overflow-hidden transition-all duration-1000 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+      }`}
       style={{ height: 600 }}
     >
       {testimonialsList.map((testimonial, index) => {

@@ -158,13 +158,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
           >
             <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
               <div className="flex w-full justify-between lg:w-auto">
-                <Link
-                  href="/"
-                  aria-label="home"
-                  className="flex items-center space-x-2"
-                >
+                <div className="flex items-center space-x-2">
                   {logoElement}
-                </Link>
+                </div>
 
                 <Sheet
                   open={isMobileMenuOpen}
@@ -183,7 +179,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   </SheetTrigger>
                   <SheetContent
                     side="right"
-                    className="w-[300px] sm:w-[400px] bg-white/95 dark:bg-black/95 border-l border-gray-200 dark:border-white/10 p-6 pt-10"
+                    className="w-[300px] sm:w-[400px] bg-white/95 dark:bg-black/95 border-l border-gray-200 dark:border-white/10 p-6 pt-10 flex flex-col h-full"
                   >
                     <SheetHeader>
                       <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
@@ -269,10 +265,11 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                       )}
                     </nav>
 
-                    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    {/* Account and Settings Section - Moved to bottom for easier access */}
+                    <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
                       {user ? (
                         <div className="space-y-4">
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/50">
                             <Avatar className="w-12 h-12">
                               <AvatarImage
                                 src={
@@ -291,8 +288,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                 />
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <p className="font-normal text-gray-900 dark:text-gray-100">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
                                 {profile?.full_name ||
                                   profile?.username ||
                                   'User'}
@@ -302,6 +299,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                               </p>
                             </div>
                           </div>
+                          
+                          {/* Account Button */}
                           <SheetClose asChild>
                             <Button
                               variant="ghost"
@@ -309,37 +308,50 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                 router.push('/account');
                                 setIsMobileMenuOpen(false);
                               }}
-                              className="w-full justify-start font-normal text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                              className="w-full justify-start font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 h-12 text-base"
                             >
-                              <UserIcon className="mr-2 h-4 w-4" /> Account
+                              <UserIcon className="mr-3 h-5 w-5" /> Account Settings
                             </Button>
                           </SheetClose>
+                          
+                          {/* Theme Switcher and Sign Out */}
                           <div className="flex items-center justify-between w-full pt-2">
-                            <ThemeSwitcher />
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Theme:</span>
+                              <ThemeSwitcher />
+                            </div>
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="sm"
                               onClick={e => {
                                 e.stopPropagation();
                                 handleSignOut();
                               }}
-                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-full border border-transparent hover:border-red-200 dark:hover:border-red-900/50 transition-colors"
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors px-3 py-2"
                             >
-                              <LogOut className="h-5 w-5" />
-                              <span className="sr-only">Sign Out</span>
+                              <LogOut className="h-4 w-4 mr-2" />
+                              Sign Out
                             </Button>
                           </div>
                         </div>
                       ) : (
-                        <SheetClose asChild>
-                          <Link
-                            href="/signin"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="block w-full text-center px-4 py-2 text-md font-medium text-gray-600 dark:text-gray-300 bg-gradient-to-b from-gray-50 to-gray-100 hover:to-gray-200 dark:from-gray-900 dark:to-gray-800 border border-transparent dark:border-gray-700/50 rounded-lg hover:text-black dark:hover:text-white transition-all duration-200"
-                          >
-                            Login
-                          </Link>
-                        </SheetClose>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Theme:</span>
+                              <ThemeSwitcher />
+                            </div>
+                          </div>
+                          <SheetClose asChild>
+                            <Link
+                              href="/signin"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className="block w-full text-center px-4 py-3 text-base font-medium text-white bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 rounded-lg transition-all duration-200"
+                            >
+                              Sign In
+                            </Link>
+                          </SheetClose>
+                        </div>
                       )}
                     </div>
                   </SheetContent>
@@ -463,12 +475,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   </DropdownMenu>
                 ) : (
                   <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className={cn(isScrolled && 'lg:hidden')}
-                    >
+                    <Button asChild variant="ghost" size="sm" className={cn(isScrolled && 'lg:hidden')}>
                       <Link href="/signin">
                         <span>Login</span>
                       </Link>

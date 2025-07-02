@@ -3,79 +3,101 @@
 @tailwind utilities;
 
 :root {
-  --primary-color: #F84C1E;
-  --background-color: #dfe3ec;
-  --card-background: #f5f9fc;
-  --text-color: #333333;
-
-  /* Variables for IconHover3D */
-  --background: 255 255 255;
-  --foreground: 0 0 0;
-
-  /* TiltedScroll component variables */
-  --border: 215.4 16.3% 46.9%;
-  --foreground-hsl: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-
+  /* Brand Colors */
+  --brand-primary: #000000; /* Black */
+  --brand-secondary: #2563eb; /* Blue */
+  
+  /* Design System - Light Mode */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
-
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-
-  /* Chart color variables for light mode */
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 0 0% 0%; /* Black primary */
+  --primary-foreground: 0 0% 100%; /* White text on black */
+  --primary-50: 0 0% 95%;
+  --primary-100: 0 0% 90%;
+  --primary-200: 0 0% 80%;
+  --primary-300: 0 0% 70%;
+  --primary-400: 0 0% 60%;
+  --primary-500: 0 0% 50%;
+  --primary-600: 0 0% 40%;
+  --primary-700: 0 0% 30%;
+  --primary-800: 0 0% 20%;
+  --primary-900: 0 0% 10%;
+  --primary-950: 0 0% 0%; /* Pure black */
+  --secondary: 217 91% 60%; /* Blue secondary */
+  --secondary-foreground: 0 0% 100%; /* White text on blue */
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 13 95% 58%;
+  --radius: 0.5rem;
+  
+  /* Chart Colors */
   --chart-1: 220 9% 46%;
   --chart-2: 220 13% 69%;
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
-
-  /* Topic card colors */
-  --tw-red-600: #dc2626;
-  --tw-red-700: #b91c1c;
-  --tw-yellow-500: #eab308;
-  --tw-orange-500: #f97316;
-  --tw-amber-600: #d97706;
-  --tw-lime-600: #65a30d;
-  --tw-green-600: #16a34a;
-  --tw-emerald-600: #059669;
-  --tw-teal-600: #0d9488;
-  --tw-cyan-600: #0891b2;
-  --tw-sky-600: #0284c7;
-  --tw-blue-600: #2563eb;
-  --tw-indigo-600: #4f46e5;
-  --tw-violet-600: #7c3aed;
-  --tw-purple-600: #9333ea;
-  --tw-fuchsia-600: #c026d3;
-  --tw-pink-600: #db2777;
-  --tw-rose-600: #e11d48;
+  
+  /* Legacy Support (for existing components) */
+  --background-color: hsl(var(--background));
+  --card-background: hsl(var(--card));
+  --text-color: hsl(var(--foreground));
+  --primary-color: var(--brand-primary);
 }
 
 .dark {
-  --background-color: #000000;
-
-  /* Variables for IconHover3D */
-  --background: 0 0 0;
-  --foreground: 255 255 255;
-
-  --border: 217.2 32.6% 17.5%;
-  --foreground-hsl: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 217.9 10.6% 64.9%;
-
+  /* Design System - Dark Mode */
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
   --card: 222.2 84% 4.9%;
   --card-foreground: 210 40% 98%;
-
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 84% 4.9%;
-
-  /* Chart color variables for dark mode */
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 0 0% 100%; /* White primary in dark mode */
+  --primary-foreground: 0 0% 0%; /* Black text on white */
+  --primary-50: 0 0% 5%;
+  --primary-100: 0 0% 10%;
+  --primary-200: 0 0% 20%;
+  --primary-300: 0 0% 30%;
+  --primary-400: 0 0% 40%;
+  --primary-500: 0 0% 50%;
+  --primary-600: 0 0% 60%;
+  --primary-700: 0 0% 70%;
+  --primary-800: 0 0% 80%;
+  --primary-900: 0 0% 90%;
+  --primary-950: 0 0% 100%; /* Pure white */
+  --secondary: 217 91% 60%; /* Blue secondary (same as light mode) */
+  --secondary-foreground: 0 0% 100%; /* White text on blue */
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 13 95% 58%;
+  
+  /* Chart Colors - Dark Mode */
   --chart-1: 220 13% 69%;
   --chart-2: 220 9% 46%;
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
+  
+  /* Legacy Support */
+  --background-color: hsl(var(--background));
+  --card-background: hsl(var(--card));
+  --text-color: hsl(var(--foreground));
 }
 
 body {
