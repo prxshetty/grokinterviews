@@ -588,7 +588,7 @@ export function ResourceList({ questionId, domain, topicId, categoryId, subcateg
 
                   {/* Content Section */}
                   <motion.div layoutId={`resource-content-${resource.id}`} className="p-2 sm:p-3 flex flex-col flex-grow">
-                    <motion.h3 layoutId={`resource-title-${resource.id}`} className="text-xs sm:text-sm font-semibold tracking-tight text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary-500 transition-colors">
+                    <motion.h3 layoutId={`resource-title-${resource.id}`} className="text-xs sm:text-sm font-semibold tracking-tight text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                       {resource.title || 'Untitled Resource'}
                     </motion.h3>
                   </motion.div>

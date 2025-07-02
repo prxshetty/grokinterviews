@@ -61,7 +61,7 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
             {isActive && (
               <motion.div
                 layoutId="activeTheme"
-                className="absolute inset-0 rounded-full bg-secondary dark:bg-secondary/80"
+                className="absolute inset-0 rounded-full bg-primary dark:bg-primary/80"
                 transition={{ type: 'spring', duration: 0.5 }}
               />
             )}
@@ -69,7 +69,7 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
               className={cn(
                 'relative m-auto h-4 w-4 transition-all duration-200',
                 isActive 
-                  ? 'text-foreground scale-110' 
+                  ? 'text-primary-foreground scale-110' 
                   : 'text-muted-foreground/60 hover:text-muted-foreground/90 dark:text-muted-foreground dark:hover:text-foreground/90 hover:scale-105'
               )}
             />
