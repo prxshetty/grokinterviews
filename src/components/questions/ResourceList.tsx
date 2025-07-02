@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useReducedMotion, type Variants } from 'framer-motion';
 import { supabase } from '@/utils/supabase/client';
 import Image, { type ImageProps } from 'next/image';
-import { InlineLoadingSpinner, Card, Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
+import { InlineLoadingSpinner, Button } from '@/components/ui';
 import { TabNav } from '@/components/ui/tab-nav';
 import { ExternalLink, Video, FileText, Globe, BookOpen, Image as ImageIcon, ArrowUpRight, X } from 'lucide-react';
 import { type Database } from '@/types/database.types';
