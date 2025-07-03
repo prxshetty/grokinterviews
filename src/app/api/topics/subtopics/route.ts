@@ -22,55 +22,52 @@ export async function GET(request: NextRequest) {
     // - Subtopics are individual rows with a section_name that matches a topic
     // - Categories have a topic_id that refers to a subtopic
 
-    // First, get all topics (section headers) for this domain
-    const { data: sectionHeaders, error: sectionHeadersError } = await supabase
+    // Get all topics for the domain using normalized structure
+    const { data: topics, error } = await supabase
       .from('topics')
-      .select('id, name, section_name')
-      .eq('domain', domain)
-      .order('created_at');
+      .select('id, name, sections!inner(name), domains!inner(code)')
+      .eq('domains.code', domain);
 
-    if (sectionHeadersError) {
-      console.error(`Error fetching section headers for domain ${domain}:`, sectionHeadersError);
+    if (error) {
+      console.error('Error fetching topics:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch section headers' },
+        { error: 'Failed to fetch topics' },
         { status: 500 }
       );
     }
 
-    if (!sectionHeaders || sectionHeaders.length === 0) {
-      console.log(`No section headers found for domain ${domain}`);
-      return NextResponse.json([]);
-    }
-
-    // Group topics by section_name to identify subtopics
-    type TopicQueryResult = {
+    // Group topics by section name to identify subtopics
+    const topicsBySection: Record<string, Array<{
       id: number;
       name: string;
       section_name: string | null;
-    };
-    const topicsBySection: Record<string, TopicQueryResult[]> = {};
-    sectionHeaders.forEach(topic => {
-      if (topic.section_name) {
-        if (!topicsBySection[topic.section_name]) {
-          topicsBySection[topic.section_name] = [];
+    }>> = {};
+
+    topics?.forEach(topic => {
+      const sectionName = (topic.sections as any)?.name;
+      if (sectionName) {
+        if (!topicsBySection[sectionName]) {
+          topicsBySection[sectionName] = [];
         }
-        topicsBySection[topic.section_name]?.push(topic);
+        topicsBySection[sectionName]?.push({
+          id: topic.id,
+          name: topic.name,
+          section_name: sectionName
+        });
       }
     });
 
-    // Get all subtopics (individual topics within sections)
+    // Convert grouped topics to subtopics format
     const subtopics: Array<{ id: number; name: string; section_name: string }> = [];
-    Object.values(topicsBySection).forEach(topics => {
-      if (topics.length > 0) {
-        // Add each topic as a subtopic
-        topics.forEach(topic => {
-          subtopics.push({
-            id: topic.id,
-            name: topic.name,
-            section_name: topic.section_name || ''
-          });
+    
+    Object.entries(topicsBySection).forEach(([sectionName, topicsInSection]) => {
+      topicsInSection.forEach(topic => {
+        subtopics.push({
+          id: topic.id,
+          name: topic.name,
+          section_name: sectionName
         });
-      }
+      });
     });
 
     console.log(`Found ${subtopics.length} subtopics for domain ${domain}`);

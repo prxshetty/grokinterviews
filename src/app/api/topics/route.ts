@@ -17,10 +17,24 @@ export async function GET(request: NextRequest) {
     let query = supabase.from('topics').select('*');
 
     if (domain) {
-      query = query.eq('domain', domain);
+      // First get the domain ID from the domain code
+      const { data: domainData, error: domainError } = await supabase
+        .from('domains')
+        .select('id')
+        .eq('code', domain)
+        .single();
+      
+      if (domainError || !domainData) {
+        return NextResponse.json(
+          { error: 'Domain not found' },
+          { status: 404 }
+        );
+      }
+      
+      query = query.eq('domain_id', domainData.id);
     }
 
-    const { data: topics, error } = await query.order('name');
+    const { data: topics, error } = await query.order('created_at', { ascending: true });
 
     if (error) {
       throw error;
@@ -84,7 +98,7 @@ export async function POST(request: NextRequest) {
       .from('categories')
       .select('*')
       .eq('topic_id', topic.id)
-      .order('name');
+      .order('created_at', { ascending: true });
 
     if (categoriesError) throw categoriesError;
 

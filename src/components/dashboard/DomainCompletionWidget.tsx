@@ -47,7 +47,7 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
       ) : (
         <>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            Progress across 4 domains 
+            Progress across {domainStats.totalDomains} domains 
           </p>
           
           <div className="space-y-3">
@@ -64,7 +64,7 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
                 
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
-                    className="h-2 rounded-full transition-all duration-300 text-gray-500 dark:text-gray-400"
+                    className="h-2 rounded-full transition-all duration-300 bg-gray-800 dark:bg-gray-300"
                     style={{
                       width: `${Math.max(0.5, domain.completionPercentage)}%`,
                     }}

@@ -28,6 +28,7 @@ export type TopicTree = {
 type CategoryItem = {
   id: string;
   label: string;
+  display_order?: number; // Add display_order for proper section ordering
 };
 
 // Helper function (ideally in a utils file, define or import it as needed)
@@ -80,7 +81,8 @@ class TopicDataService {
       // Convert to CategoryItem format
       const result = sectionHeaders.map((header: any) => ({
         id: `header-${header.id}`,
-        label: header.name
+        label: header.name,
+        display_order: header.display_order
       }));
 
       // Cache the result

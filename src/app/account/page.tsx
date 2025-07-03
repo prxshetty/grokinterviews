@@ -152,7 +152,6 @@ function AccountPageContent() {
           id: user.id,
           full_name: formData.full_name,
           username: formData.username,
-          updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
       if (profileError) {

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     const { data: bookmarks, error: bookmarksError } = await supabase
       .from('user_bookmarks')
-      .select('id, question_id, category_id, topic_id, domain, section_name, created_at')
+      .select('id, question_id, category_id, topic_id, section_name, created_at, domains!inner(code)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
       topicName: bookmark.topic_id ? topicNames[bookmark.topic_id] || 'Unknown topic' : null,
       categoryId: bookmark.category_id,
       categoryName: bookmark.category_id ? categoryNames[bookmark.category_id] || 'Unknown category' : null,
-      domain: bookmark.domain,
+      domain: (bookmark as any).domains?.code,
       sectionName: bookmark.section_name,
       createdAt: bookmark.created_at,
       timeAgo: formatTimeAgo(new Date(bookmark.created_at))
@@ -190,26 +190,57 @@ export async function POST(request: NextRequest) {
       // --- Add bookmark --- 
       console.log(`Adding bookmark: User ${userId}, Q:${questionId}, Topic:${topicId}, Cat:${categoryId}`);
 
-      // 1. Fetch domain and section_name from topics table
-      let domain: string | null = null;
+      // 1. Fetch domain and section info from topics table using new schema
+      let domainCode: string | null = null;
       let sectionName: string | null = null;
       try {
+          // Get topic with domain_id and section_id
           const { data: topicData, error: topicError } = await supabase
               .from('topics')
-              .select('domain, section_name')
+              .select('domain_id, section_id')
               .eq('id', topicId)
               .maybeSingle();
           
           if (topicError) {
               console.warn(`Failed to get topic details for bookmark: ${topicError.message}`);
-              // Proceed without domain/section if lookup fails
           } else if (topicData) {
-              domain = topicData.domain;
-              sectionName = topicData.section_name;
+              // Get domain code from domain_id
+              if (topicData.domain_id) {
+                  const { data: domainData } = await supabase
+                      .from('domains')
+                      .select('code')
+                      .eq('id', topicData.domain_id)
+                      .maybeSingle();
+                  domainCode = domainData?.code || null;
+              }
+              
+              // Get section name from section_id
+              if (topicData.section_id) {
+                  const { data: sectionData } = await supabase
+                      .from('sections')
+                      .select('name')
+                      .eq('id', topicData.section_id)
+                      .maybeSingle();
+                  sectionName = sectionData?.name || null;
+              }
           }
       } catch (fetchError: any) {
           console.error('Error fetching topic details:', fetchError.message);
           // Proceed without domain/section
+      }
+
+      // First, get the domain_id from the domain code
+      let domainId: number | null = null;
+      if (domainCode) {
+        const { data: domainData, error: domainError } = await supabase
+          .from('domains')
+          .select('id')
+          .eq('code', domainCode)
+          .maybeSingle();
+        
+        if (!domainError && domainData) {
+          domainId = domainData.id;
+        }
       }
 
       // 2. Insert into user_bookmarks
@@ -220,7 +251,7 @@ export async function POST(request: NextRequest) {
           question_id: questionId,
           category_id: categoryId,
           topic_id: topicId,
-          domain: domain, // Can be null if lookup failed
+          domain_id: domainId, // Use domain_id instead of domain
           section_name: sectionName, // Can be null if lookup failed
           // created_at defaults to now()
         });

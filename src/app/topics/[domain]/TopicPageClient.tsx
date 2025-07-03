@@ -456,8 +456,8 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
               {!isLoading.sections && showTopicGrid && (
                 <TopicCategoryGrid
-                  categories={topicCategories}
-                  onSelectCategory={handleCategorySelect}
+                  items={topicCategories}
+                  onSelectItem={handleCategorySelect}
                   isLoading={isLoading.categories}
                   domain={domain} // Pass domain
                   level="section" // Add the missing level prop - showing sections when domain is selected

@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
           const { data: topicData, error: topicError } = await supabase
             .from('topics')
             .select('id')
-            .or(`name.eq.${topicId},slug.eq.${topicId},domain.eq.${topicId}`) // Added slug here
+            .or(`name.eq.${topicId},slug.eq.${topicId}`) // Removed domain match since domain is now normalized
             .maybeSingle();
 
           if (topicError || !topicData) {
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
           .from('categories')
           .select('*')
           .eq('topic_id', topicIdResolved)
-          .order('name');
+          .order('created_at', { ascending: true });
 
         console.timeEnd('categories-for-topic-query');
 
@@ -129,8 +129,8 @@ export async function GET(request: NextRequest) {
       console.time('all-topics-with-categories-query');
       const { data: joinData, error: joinError } = await supabase
         .from('topics')
-        .select('id, domain, name, slug, categories:categories(*)') // Added slug
-        .order('name');
+        .select('id, name, slug, domains!inner(code), categories:categories(*)') // Updated to use domains join
+        .order('created_at', { ascending: true });
 
       if (joinError) {
         console.error('Error fetching topics with categories:', joinError);
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 
 
       for (const topic of joinData || []) {
-        const key = topic.slug || topic.domain || topic.name; // Prioritize slug, then domain, then name
+        const key = topic.slug || topic.name; // Prioritize slug, then name
         categoriesByTopic[key] = convertCategoriesToLegacyFormat(topic.categories || []);
       }
       console.timeEnd('all-topics-with-categories-query');

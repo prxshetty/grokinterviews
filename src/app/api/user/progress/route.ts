@@ -82,20 +82,31 @@ export async function GET(_request: NextRequest) {
         if (topicIds.length > 0) {
           const { data: topicsData, error: _topicsError } = await supabase // Use session client
             .from('topics')
-            .select('id, domain')
+            .select('id, domain_id')
             .in('id', topicIds);
           // ... (handle topicsError)
-          const uniqueDomains = new Set(topicsData?.map(topic => topic.domain).filter(Boolean));
-          domainsSolved = uniqueDomains.size;
+          
+          // Get unique domain IDs from topics
+          const uniqueDomainIds = new Set(topicsData?.map((topic: any) => topic.domain_id).filter(Boolean));
+          
+          // Convert domain IDs back to domain codes for counting
+          if (uniqueDomainIds.size > 0) {
+            const { data: domainsData, error: _domainsDataError } = await supabase
+              .from('domains')
+              .select('code')
+              .in('id', Array.from(uniqueDomainIds));
+            // ... (handle domainsDataError)
+            domainsSolved = domainsData?.length || 0;
+          }
         }
       }
     }
 
     const { data: allDomains, error: _allDomainsError } = await supabase // Use session client
-      .from('topics')
-      .select('domain');
+      .from('domains')
+      .select('code');
     // ... (handle allDomainsError)
-    const uniqueAllDomains = new Set(allDomains?.map(item => item.domain).filter(Boolean));
+    const uniqueAllDomains = new Set(allDomains?.map(item => item.code).filter(Boolean));
     totalDomains = uniqueAllDomains.size;
 
     const completionPercentage = totalQuestions ? Math.round(((completedQuestions || 0) / totalQuestions) * 100) : 0;
@@ -128,7 +139,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { questionId, status, topicId, categoryId, domain, section_name, difficulty_level, tags } = await request.json();
+    const { questionId, status, topicId, categoryId } = await request.json();
     // ... (validation) ...
     if (!questionId || !status || !topicId || !categoryId) {
         return NextResponse.json({ error: 'Question ID, status, Topic ID, and Category ID are required' }, { status: 400 });
@@ -138,21 +149,15 @@ export async function POST(request: NextRequest) {
       .from('user_progress')
       .upsert({
           user_id: userId, question_id: questionId, topic_id: topicId,
-          category_id: categoryId, status: status, updated_at: new Date().toISOString()
+          category_id: categoryId, status: status
         },
         { onConflict: 'user_id, question_id' }
       );
     // ... (handle userProgressUpsertError) ...
 
-    const { error: _activityInsertError } = await supabase // Use session client
-      .from('user_activity')
-      .insert({
-          user_id: userId, activity_type: status === 'completed' ? 'question_completed' : 'question_viewed',
-          question_id: questionId, topic_id: topicId, category_id: categoryId,
-          domain, section_name, difficulty_level, tags
-        }
-      );
-    // ... (handle activityInsertError) ...
+    // ARCHITECTURE CLEANUP: Removed dual write to user_activity table
+    // Now using single source of truth: user_progress table only
+    // This eliminates data inconsistency issues and simplifies the architecture
 
     return NextResponse.json({ success: true, message: 'Progress updated successfully' });
 

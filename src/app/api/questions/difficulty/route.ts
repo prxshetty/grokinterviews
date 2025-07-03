@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     // 1. First get the topic IDs for the specified domain
     const { data: topicsData, error: topicsError } = await supabase
       .from('topics')
-      .select('id')
-      .eq('domain', domain);
+      .select('id, domains!inner(code)')
+      .eq('domains.code', domain);
     
     if (topicsError) {
       console.error('Error fetching topics for domain:', topicsError);

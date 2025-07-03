@@ -11,6 +11,7 @@ import { LoadingSpinner } from '@/components/ui';
 interface DisplayItem {
   id: string;
   label: string;
+  display_order?: number; // Add display_order for proper section ordering
   progress?: {
     questionsCompleted: number;
     totalQuestions: number;
@@ -88,9 +89,13 @@ function TopicCategoryGridComponent({
   }, [itemsWithProgress, baseItems]);
 
   // Memoize the format index function with useCallback
-  const formatIndex = useCallback((index: number) => {
+  const formatIndex = useCallback((index: number, item?: DisplayItem) => {
+    // For sections, use display_order if available, otherwise fall back to sequential index
+    if (level === 'section' && item && item.display_order !== undefined) {
+      return `${String(item.display_order).padStart(2, '0')}`;
+    }
     return `${String(index + 1).padStart(2, '0')}`;
-  }, []);
+  }, [level]);
 
   // Memoize the handle item select function
   const handleItemSelect = useCallback((itemId: string) => {
@@ -358,7 +363,7 @@ function TopicCategoryGridComponent({
                 heading={item.label}
                 text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
               />
-              <span className={styles.serialNumber}>{formatIndex(index)}</span>
+              <span className={styles.serialNumber}>{formatIndex(index, item)}</span>
             </div>
           );
         })}

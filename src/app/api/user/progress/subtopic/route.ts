@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: completedQuestionData, error: completedError } = await supabase // Use session client
-      .from('user_activity')
+      .from('user_progress')
       .select('question_id')
       .eq('user_id', userId)
       .eq('status', 'completed')
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
       }
 
       const { data: catCompletedQuestionData, error: catCompletedError } = await supabase // Use session client
-        .from('user_activity')
+        .from('user_progress')
         .select('question_id')
         .eq('user_id', userId)
         .eq('status', 'completed')

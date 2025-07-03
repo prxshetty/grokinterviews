@@ -3,9 +3,8 @@
 export interface Topic {
   id: number;
   name: string;
-  section_name?: string;
-  domain: string;
   section_id?: number;
+  domain_id: number;
   created_at: string;
 }
 

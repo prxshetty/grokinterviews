@@ -217,44 +217,124 @@ export async function POST(request: Request) {
     });
     const generatedAnswer = chatCompletion.choices[0]?.message?.content || 'No answer generated.';
 
-    await supabase.from('questions').update({ answer_text: generatedAnswer, last_generated_at: new Date().toISOString() }).eq('id', questionId);
+    // Note: We intentionally don't store answers in the database to save storage costs
+    // Answers are only kept in frontend state during the session
 
     if (userId) {
       try {
         const { data: qData, error: qFetchError } = await supabase
           .from('questions')
-          .select('category_id, categories!inner(topic_id, topics!inner(id, domain))')
+          .select('category_id')
           .eq('id', questionId)
           .single();
 
         if (qFetchError) {
           console.error('Activity Log QData Fetch Error:', qFetchError.message);
         } else if (qData) {
-          // Cast to unknown first, then to our expected type to handle Supabase type limitations
-          const typedQData = qData as unknown as {
-            category_id: number;
-            categories: {
-              topic_id: number;
-              topics: {
-                id: number;
-                domain: string;
-              };
-            };
-          };
+          // Get topic_id from category
+          const { data: categoryData, error: categoryError } = await supabase
+            .from('categories')
+            .select('topic_id')
+            .eq('id', qData.category_id)
+            .single();
           
-          if (typedQData.categories && typedQData.categories.topics) {
-            await supabase.from('user_activity').insert({
-              user_id: userId,
-              activity_type: 'answer_generated',
-              question_id: questionId,
-              category_id: typedQData.category_id,
-              topic_id: typedQData.categories.topic_id,
-              domain: typedQData.categories.topics.domain,
-              metadata: { model: current_specific_model_id, timestamp: new Date().toISOString() },
-              created_at: new Date().toISOString(),
-            });
-          } else {
-            console.warn('Activity log: Missing nested category/topic details in query result.');
+          if (categoryError) {
+            console.error('Activity Log Category Fetch Error:', categoryError.message);
+          } else if (categoryData) {
+            // Get domain_id from topic
+            const { data: topicData, error: topicError } = await supabase
+              .from('topics')
+              .select('domain_id')
+              .eq('id', categoryData.topic_id)
+              .single();
+            
+            if (topicError) {
+              console.error('Activity Log Topic Fetch Error:', topicError.message);
+            } else if (topicData) {
+              // Log the API call with comprehensive usage tracking
+              const apiCallMetadata = {
+                // API Request Info
+                model: current_specific_model_id,
+                temperature: 0.7,
+                max_tokens: max_tokens,
+                top_p: 1,
+                
+                // Response Metadata
+                response_id: chatCompletion.id,
+                response_model: chatCompletion.model,
+                response_object: chatCompletion.object,
+                created_timestamp: chatCompletion.created,
+                
+                // Usage Statistics (if available)
+                usage_prompt_tokens: chatCompletion.usage?.prompt_tokens,
+                usage_completion_tokens: chatCompletion.usage?.completion_tokens,
+                usage_total_tokens: chatCompletion.usage?.total_tokens,
+                
+                // Performance Metrics (if available)
+                usage_prompt_time: chatCompletion.usage?.prompt_time,
+                usage_completion_time: chatCompletion.usage?.completion_time,
+                usage_total_time: chatCompletion.usage?.total_time,
+                usage_queue_time: chatCompletion.usage?.queue_time,
+                
+                // Response Quality
+                finish_reason: chatCompletion.choices[0]?.finish_reason,
+                system_fingerprint: chatCompletion.system_fingerprint,
+                
+                // User Preferences Context
+                answer_format: preferences.format,
+                answer_depth: preferences.depth,
+                include_code: preferences.include_code,
+                include_latex: preferences.include_latex,
+                
+                // Resource Context
+                resources_count: filteredResources.length,
+                resource_types: [...new Set(filteredResources.map(r => r.type))],
+                
+                // Timestamp
+                logged_at: new Date().toISOString()
+              };
+
+              // Insert activity log with retry logic for database concurrency issues
+              const insertActivityLog = async (retryCount = 0) => {
+                try {
+                  const { error: activityInsertError } = await supabase.from('user_activity').insert({
+                    user_id: userId,
+                    activity_type: 'answer_generated',
+                    question_id: questionId,
+                    category_id: qData.category_id,
+                    topic_id: categoryData.topic_id,
+                    domain_id: topicData.domain_id,
+                    metadata: apiCallMetadata
+                  });
+                  
+                  if (activityInsertError) {
+                    // Check if it's a materialized view concurrency issue
+                    if (activityInsertError.message.includes('materialized view') && retryCount < 2) {
+                      console.warn(`Materialized view concurrency issue, retrying... (attempt ${retryCount + 1})`);
+                      await new Promise(resolve => setTimeout(resolve, 100 * (retryCount + 1))); // Wait 100ms, 200ms
+                      return insertActivityLog(retryCount + 1);
+                    }
+                    
+                    console.error('Failed to log API call activity:', activityInsertError.message);
+                    return false;
+                  } else {
+                    console.log(`Successfully logged API call for question ${questionId}:`, {
+                      model: current_specific_model_id,
+                      tokens: `${apiCallMetadata.usage_prompt_tokens}→${apiCallMetadata.usage_completion_tokens} (${apiCallMetadata.usage_total_tokens} total)`,
+                      time: `${apiCallMetadata.usage_total_time}s`,
+                      finish_reason: apiCallMetadata.finish_reason
+                    });
+                    return true;
+                  }
+                } catch (insertError: any) {
+                  console.error('Exception during activity logging:', insertError.message);
+                  return false;
+                }
+              };
+              
+              // Execute the logging with retry logic (non-blocking)
+              insertActivityLog();
+            }
           }
         } else { 
           console.warn('Activity log: No data returned from question query.'); 
