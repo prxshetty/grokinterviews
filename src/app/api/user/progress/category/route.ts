@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: completedQuestionData, error: completedError } = await supabase // Use session client
-      .from('user_activity')
+      .from('user_progress')
       .select('question_id', { count: 'exact' })
       .eq('user_id', userId)
       .eq('status', 'completed')

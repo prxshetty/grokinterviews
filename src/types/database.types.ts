@@ -41,6 +41,24 @@ export type Database = {
           },
         ]
       }
+      domains: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: number
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -227,58 +245,70 @@ export type Database = {
           },
         ]
       }
-      section_headers: {
+      sections: {
         Row: {
           created_at: string | null
-          domain: string
+          domain_id: number
           id: number
           name: string
         }
         Insert: {
           created_at?: string | null
-          domain: string
+          domain_id: number
           id?: number
           name: string
         }
         Update: {
           created_at?: string | null
-          domain?: string
+          domain_id?: number
           id?: number
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_sections_domain"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       topics: {
         Row: {
           created_at: string | null
-          domain: string | null
+          domain_id: number | null
           id: number
           name: string
           section_id: number | null
-          section_name: string | null
         }
         Insert: {
           created_at?: string | null
-          domain?: string | null
+          domain_id?: number | null
           id?: number
           name: string
           section_id?: number | null
-          section_name?: string | null
         }
         Update: {
           created_at?: string | null
-          domain?: string | null
+          domain_id?: number | null
           id?: number
           name?: string
           section_id?: number | null
-          section_name?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "topics_section_id_fkey"
+            foreignKeyName: "fk_topics_domain"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_topics_section"
             columns: ["section_id"]
             isOneToOne: false
-            referencedRelation: "section_headers"
+            referencedRelation: "sections"
             referencedColumns: ["id"]
           },
         ]
@@ -286,44 +316,72 @@ export type Database = {
       user_activity: {
         Row: {
           activity_type: string
-          category_id: string | null
+          category_id: number | null
           created_at: string | null
-          domain: string | null
+          domain_id: number | null
           id: string
           metadata: Json | null
           question_id: number | null
           status: string | null
-          topic_id: string | null
+          topic_id: number | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           activity_type: string
-          category_id?: string | null
+          category_id?: number | null
           created_at?: string | null
-          domain?: string | null
+          domain_id?: number | null
           id?: string
           metadata?: Json | null
           question_id?: number | null
           status?: string | null
-          topic_id?: string | null
+          topic_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           activity_type?: string
-          category_id?: string | null
+          category_id?: number | null
           created_at?: string | null
-          domain?: string | null
+          domain_id?: number | null
           id?: string
           metadata?: Json | null
           question_id?: number | null
           status?: string | null
-          topic_id?: string | null
+          topic_id?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_user_activity_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_activity_domain"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_activity_question"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_activity_topic"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_activity_user_id_fkey"
             columns: ["user_id"]
@@ -337,7 +395,7 @@ export type Database = {
         Row: {
           category_id: number | null
           created_at: string | null
-          domain: string | null
+          domain_id: number | null
           id: string
           question_id: number
           section_name: string | null
@@ -347,7 +405,7 @@ export type Database = {
         Insert: {
           category_id?: number | null
           created_at?: string | null
-          domain?: string | null
+          domain_id?: number | null
           id?: string
           question_id: number
           section_name?: string | null
@@ -357,7 +415,7 @@ export type Database = {
         Update: {
           category_id?: number | null
           created_at?: string | null
-          domain?: string | null
+          domain_id?: number | null
           id?: string
           question_id?: number
           section_name?: string | null
@@ -365,6 +423,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_user_bookmarks_domain"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_bookmarks_question_id_fkey"
             columns: ["question_id"]
@@ -465,7 +530,6 @@ export type Database = {
       user_progress: {
         Row: {
           category_id: number | null
-          confidence_level: number | null
           created_at: string | null
           id: string
           notes: string | null
@@ -477,7 +541,6 @@ export type Database = {
         }
         Insert: {
           category_id?: number | null
-          confidence_level?: number | null
           created_at?: string | null
           id?: string
           notes?: string | null
@@ -489,7 +552,6 @@ export type Database = {
         }
         Update: {
           category_id?: number | null
-          confidence_level?: number | null
           created_at?: string | null
           id?: string
           notes?: string | null
@@ -531,80 +593,7 @@ export type Database = {
         ]
       }
     }
-    Views: {
-      section_progress_mv: {
-        Row: {
-          calculated_at: string | null
-          completed_questions: number | null
-          completed_topics: number | null
-          completion_percentage: number | null
-          domain: string | null
-          partially_completed_topics: number | null
-          section_name: string | null
-          total_questions: number | null
-          total_topics: number | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_activity_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      section_progress_view: {
-        Row: {
-          completed_subtopics: number | null
-          completion_percentage: number | null
-          domain: string | null
-          section_name: string | null
-          total_subtopics: number | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_activity_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      topics_by_header: {
-        Row: {
-          description: string | null
-          domain: string | null
-          header_name: string | null
-          topic_name: string | null
-        }
-        Relationships: []
-      }
-      user_section_subtopic_progress_mv: {
-        Row: {
-          completed_children: number | null
-          domain: string | null
-          last_refreshed_at: string | null
-          partially_completed_children: number | null
-          section_completion_percentage: number | null
-          section_name: string | null
-          total_children: number | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_progress_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
+    Views: Record<string, never>
     Functions: {
       calculate_entity_progress: {
         Args: {
@@ -691,7 +680,6 @@ export type Database = {
           totalQuestions: number
           completedQuestions: number
           completionPercentage: number
-          color: string
         }[]
       }
       get_user_identities: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, memo, useMemo, useCallback, Suspense } from 'react';
+import { useState, useEffect, useRef, memo, useMemo, Suspense } from 'react';
 import { isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed } from '@/app/utils/progress';
 import React from 'react';
 import { toast } from '@/hooks/use-toast';
@@ -66,6 +66,7 @@ interface QuestionWithAnswerProps {
   question: QuestionType;
   questionIndex: number;
   topicId?: number;
+  domain?: string | undefined; // Add domain prop for optimization (can be undefined)
   onCompletionChange?: (questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void;
   isBookmarked: boolean;
   onBookmarkStatusChange?: (questionId: number, newStatus: boolean) => void;
@@ -79,6 +80,7 @@ function QuestionWithAnswerComponent({
   question,
   questionIndex,
   topicId,
+  domain, // Add domain parameter
   onCompletionChange,
   isBookmarked: initialIsBookmarked, // Renamed to avoid conflict
   onBookmarkStatusChange,
@@ -98,6 +100,7 @@ function QuestionWithAnswerComponent({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isBookmarkedState, setIsBookmarkedState] = useState(initialIsBookmarked);
   const generationAttemptedRef = useRef<boolean>(false);
+  const viewedAttemptedRef = useRef<boolean>(false);
 
   const hasPredefinedAnswer = useMemo(() => {
     return Boolean(question.answer_text &&
@@ -108,54 +111,6 @@ function QuestionWithAnswerComponent({
   const actualCategoryId = useMemo(() => question.categories?.id ?? question.category_id, [question.categories?.id, question.category_id]);
   const actualTopicId = useMemo(() => question.topic_id ?? topicId, [question.topic_id, topicId]);
 
-  const generateAnswer = useCallback(async () => {
-    if (!questionId) return;
-    
-    // Check current state to prevent duplicate calls
-    if (isGenerating || generatedAnswer || generationAttemptedRef.current) return;
-    
-    generationAttemptedRef.current = true;
-    setIsGenerating(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/generate-answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          questionText: question.question_text,
-          questionId: question.id,
-          topicId: actualTopicId,
-          categoryId: actualCategoryId,
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API error for question ${questionId}:`, errorText);
-        throw new Error(`Error: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.requires_model_selection) {
-        setError(data.message || 'Please configure your AI model in Account Settings');
-      } else if (data.answer_text) {
-        setGeneratedAnswer(data.answer_text);
-      } else {
-        setError('No answer was generated');
-      }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to generate answer due to an unexpected error.';
-      console.error(`Generation error for question ${questionId}:`, errorMessage);
-      setError(errorMessage);
-      toast.error(errorMessage);
-      // Reset the ref on error so user can retry
-      generationAttemptedRef.current = false;
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [questionId, actualTopicId, actualCategoryId, question.question_text, question.id, generatedAnswer, isGenerating]);
-
   useEffect(() => {
     setIsBookmarkedState(initialIsBookmarked);
   }, [initialIsBookmarked]);
@@ -163,6 +118,7 @@ function QuestionWithAnswerComponent({
   // Reset generation state when question changes
   useEffect(() => {
     generationAttemptedRef.current = false;
+    viewedAttemptedRef.current = false;
     setGeneratedAnswer(null);
     setError(null);
     setIsGenerating(false);
@@ -172,18 +128,70 @@ function QuestionWithAnswerComponent({
   useEffect(() => {
     setIsExpandedState(isOpen || false); // Sync internal expansion state with isOpen prop
 
-    if (isOpen && !isViewed && questionId) {
-      markQuestionAsViewed(questionId, actualTopicId ?? undefined, actualCategoryId ?? undefined)
+    if (isOpen && !isViewed && questionId && !viewedAttemptedRef.current) {
+      viewedAttemptedRef.current = true;
+      markQuestionAsViewed(questionId, actualTopicId ?? undefined, actualCategoryId ?? undefined, domain)
         .then((success) => {
           if (success) setIsViewed(true);
         })
-        .catch(_err => { /* setError('Failed to mark question as viewed.') */ });
+        .catch(_err => { 
+          // Reset the ref on error so user can retry
+          viewedAttemptedRef.current = false;
+          /* setError('Failed to mark question as viewed.') */ 
+        });
     }
 
     if (isOpen && !hasPredefinedAnswer && !generatedAnswer && !isGenerating && questionId && !generationAttemptedRef.current) {
-      generateAnswer();
+      // Call generateAnswer directly without including it in dependencies
+      (async () => {
+        if (!questionId) return;
+        
+        // Check current state to prevent duplicate calls
+        if (isGenerating || generatedAnswer || generationAttemptedRef.current) return;
+        
+        generationAttemptedRef.current = true;
+        setIsGenerating(true);
+        setError(null);
+        try {
+          const response = await fetch('/api/generate-answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              questionText: question.question_text,
+              questionId: question.id,
+              topicId: actualTopicId,
+              categoryId: actualCategoryId,
+            }),
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`API error for question ${questionId}:`, errorText);
+            throw new Error(`Error: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.requires_model_selection) {
+            setError(data.message || 'Please configure your AI model in Account Settings');
+          } else if (data.answer_text) {
+            setGeneratedAnswer(data.answer_text);
+          } else {
+            setError('No answer was generated');
+          }
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to generate answer due to an unexpected error.';
+          console.error(`Generation error for question ${questionId}:`, errorMessage);
+          setError(errorMessage);
+          toast.error(errorMessage);
+          // Reset the ref on error so user can retry
+          generationAttemptedRef.current = false;
+        } finally {
+          setIsGenerating(false);
+        }
+      })();
     }
-  }, [isOpen, isViewed, questionId, actualTopicId, actualCategoryId, hasPredefinedAnswer, generatedAnswer, isGenerating, generateAnswer]);
+  }, [isOpen, isViewed, questionId, actualTopicId, actualCategoryId, hasPredefinedAnswer, generatedAnswer, isGenerating, domain, question.id, question.question_text]);
 
 
   useEffect(() => {
@@ -225,7 +233,7 @@ function QuestionWithAnswerComponent({
         onCompletionChange?.(questionId, true, actualTopicId ?? undefined, actualCategoryId ?? undefined);
         toast.success("Question marked as completed!");
 
-        markQuestionAsCompleted(questionId, actualTopicId ?? undefined, actualCategoryId ?? undefined)
+        markQuestionAsCompleted(questionId, actualTopicId ?? undefined, actualCategoryId ?? undefined, domain)
           .then((success) => {
             if (!success) { // Revert if backend update fails
               setIsCompletedState(false);
@@ -253,7 +261,7 @@ function QuestionWithAnswerComponent({
       answerElement.removeEventListener('scroll', handleScroll);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
-  }, [isExpandedState, hasPredefinedAnswer, question.answer_text, generatedAnswer, isGenerating, questionId, isCompletedState, onCompletionChange, actualTopicId, actualCategoryId]);
+  }, [isExpandedState, hasPredefinedAnswer, question.answer_text, generatedAnswer, isGenerating, questionId, isCompletedState, onCompletionChange, actualTopicId, actualCategoryId, domain]);
 
   // Adapter for BookmarkButton's onBookmarkChange
   const handleBookmarkChangeFromButton = (newStatus: boolean) => {
@@ -272,38 +280,45 @@ function QuestionWithAnswerComponent({
       value={questionId.toString()}
       className="group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md mb-3"
     >
-      <AccordionTrigger
-        // onClick={handleExpansionToggle} // Radix handles expansion. Effects are via `isOpen` prop.
-        className="flex items-start justify-between w-full px-4 py-3 text-left bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        <div className="flex items-start flex-1 pr-3 min-w-0"> {/* Ensure text wraps */}
-          {isCompletedState ? (
-            <div className="mr-2 text-green-500 dark:text-green-400 flex-shrink-0 mt-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-          ) : (
-            <div className="mr-2 w-5 h-5 flex-shrink-0 mt-1"> {/* Placeholder for alignment */}
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="text-base font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words">
-              {question.question_text || 'Question text not available'}
-            </div>
-            {question.difficulty && (
-              <div className="mt-1">
-                <DifficultyTag difficulty={question.difficulty} />
+      <div className="flex items-start justify-between w-full bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors">
+        <AccordionTrigger className="flex items-start justify-between flex-1 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <div className="flex items-start flex-1 pr-3 min-w-0"> {/* Ensure text wraps */}
+            {isCompletedState ? (
+              <div className="mr-2 text-green-500 dark:text-green-400 flex-shrink-0 mt-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+            ) : (
+              <div className="mr-2 w-5 h-5 flex-shrink-0 mt-1"> {/* Placeholder for alignment */}
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
               </div>
             )}
+            <div className="flex-1 min-w-0">
+              <div className="text-base font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words">
+                {question.question_text || 'Question text not available'}
+              </div>
+              {question.difficulty && (
+                <div className="mt-1">
+                  <DifficultyTag difficulty={question.difficulty} />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+          
+          <div className="flex items-center flex-shrink-0 space-x-2 pl-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400 group-data-[state=open]:text-gray-700 dark:group-data-[state=open]:text-gray-200">
+              Q{questionIndex + 1}
+            </span>
+            {/* Default Radix ChevronDownIcon will be rendered by AccordionTrigger from ui/accordion.tsx */}
+          </div>
+        </AccordionTrigger>
         
-        <div className="flex items-center flex-shrink-0 space-x-2 pl-2">
-          {(actualCategoryId !== null && actualCategoryId !== undefined) && (
+        {/* Bookmark button outside the trigger to avoid nested buttons */}
+        {(actualCategoryId !== null && actualCategoryId !== undefined) && (
+          <div className="flex items-center px-2 py-3">
             <BookmarkButton
               questionId={questionId}
               topicId={actualTopicId ?? null} 
@@ -311,13 +326,9 @@ function QuestionWithAnswerComponent({
               initialIsBookmarked={isBookmarkedState}
               onBookmarkChange={handleBookmarkChangeFromButton} 
             />
-          )}
-          <span className="text-xs text-gray-500 dark:text-gray-400 group-data-[state=open]:text-gray-700 dark:group-data-[state=open]:text-gray-200">
-            Q{questionIndex + 1}
-          </span>
-          {/* Default Radix ChevronDownIcon will be rendered by AccordionTrigger from ui/accordion.tsx */}
-        </div>
-      </AccordionTrigger>
+          </div>
+        )}
+      </div>
 
       <AccordionContent 
         className="px-4 pt-0 pb-4 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 relative"

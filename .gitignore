@@ -18,6 +18,8 @@ DB_Design.md
 !.yarn/releases
 !.yarn/versions
 interview_prep.db
+database-backups/*
+supabase/
 # testing
 /coverage
 .vscode

@@ -17,12 +17,12 @@ export async function GET(request: NextRequest) {
 
     console.log(`API - Fetching topics for domain: ${domain}, section: ${sectionName}`);
 
-    // Query for topics in the given section and domain
+    // Query for topics in the given section and domain using normalized structure
     const { data: topics, error } = await supabase
       .from('topics')
-      .select('*')
-      .eq('domain', domain)
-      .eq('section_name', sectionName)
+      .select('*, domains!inner(code), sections!inner(name)')
+      .eq('domains.code', domain)
+      .eq('sections.name', sectionName)
       .order('created_at', { ascending: true }); // Sort by created_at in ascending order (oldest first)
 
     // Log the number of results found

@@ -549,6 +549,7 @@ export default function CategoryDetailView({
                     question={question}
                     questionIndex={index}
                     topicId={question.categories?.topic_id ?? 0}
+                    domain={domain} // Pass domain for optimization
                     onCompletionChange={handleCompletionChange}
                     isBookmarked={bookmarkStatus[question.id] ?? false}
                     onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
@@ -576,6 +577,7 @@ export default function CategoryDetailView({
                   question={question}
                   questionIndex={index}
                   topicId={subtopicDetails?.subtopicId ?? 0}
+                  domain={domain} // Pass domain for optimization
                   onCompletionChange={handleCompletionChange}
                   isBookmarked={bookmarkStatus[question.id] ?? false}
                   onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
@@ -679,6 +681,7 @@ export default function CategoryDetailView({
                   question={question}
                   questionIndex={index}
                   topicId={question.topic_id ?? 0}
+                  domain={domain} // Pass domain for optimization
                   onCompletionChange={handleCompletionChange}
                   isBookmarked={bookmarkStatus[question.id] ?? false}
                   onBookmarkStatusChange={handleBookmarkChangeFromQuestion}

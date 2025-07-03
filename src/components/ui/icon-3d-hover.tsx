@@ -75,7 +75,7 @@ export const IconHover3D: React.FC<Props> = ({
 
   const cubeSliceVariants = {
     zEwHlJ7zp: {
-      "--border-color": "rgb(139, 47, 250)"
+      "--border-color": "hsl(var(--foreground))"
     }
   };
   // const titleVariants = {
@@ -116,7 +116,7 @@ export const IconHover3D: React.FC<Props> = ({
   // };
 
   const baseMotionDivStyle: MotionStyle = {
-    backgroundColor: "rgb(var(--background))",
+    backgroundColor: "hsl(var(--background))",
     alignContent: "center",
     alignItems: "center",
     display: "flex",
@@ -129,7 +129,7 @@ export const IconHover3D: React.FC<Props> = ({
     padding: "16px", // Reduced from 20px
     position: "relative",
     width: "min-content",
-    border: "1px solid color-mix(in srgb, rgb(var(--foreground)) 10%, transparent)",
+    border: "1px solid hsl(var(--foreground))",
   };
 
   const combinedStyleForMotionDiv = {
@@ -172,7 +172,7 @@ export const IconHover3D: React.FC<Props> = ({
                   position: "relative",
                   width: "64px", // Reduced from 100px
                   zIndex: 1,
-                  border: "1px solid color-mix(in srgb, rgb(var(--foreground)) 20%, transparent)"
+                  border: "1px solid hsl(var(--foreground))"
                 }}
               >
                 {/* BG Container */}
@@ -261,8 +261,8 @@ export const IconHover3D: React.FC<Props> = ({
                             padding: "0px",
                             position: "relative",
                             width: "240px",
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             zIndex: 120
                           }}
                           variants={cubeSliceVariants}
@@ -288,8 +288,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: 180,
                           }}
                           variants={cubeSliceVariants}
@@ -315,8 +315,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: 90
                           }}
                           variants={cubeSliceVariants}
@@ -342,8 +342,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: -90
                           }}
                           variants={cubeSliceVariants}
@@ -361,8 +361,8 @@ export const IconHover3D: React.FC<Props> = ({
                             right: "0px",
                             top: "-120px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateX: 90
                           }}
                           variants={cubeSliceVariants}
@@ -380,8 +380,8 @@ export const IconHover3D: React.FC<Props> = ({
                             right: "0px",
                             top: "-86px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateX: 90
                           }}
                           variants={cubeSliceVariants}
@@ -430,8 +430,8 @@ export const IconHover3D: React.FC<Props> = ({
                             padding: "0px",
                             position: "relative",
                             width: "240px",
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             zIndex: 120
                           }}
                           variants={cubeSliceVariants}
@@ -457,8 +457,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: 180,
                           }}
                           variants={cubeSliceVariants}
@@ -484,8 +484,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: 90
                           }}
                           variants={cubeSliceVariants}
@@ -511,8 +511,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: -90
                           }}
                           variants={cubeSliceVariants}
@@ -530,8 +530,8 @@ export const IconHover3D: React.FC<Props> = ({
                             right: "0px",
                             top: "-120px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateX: 90
                           }}
                           variants={cubeSliceVariants}
@@ -549,8 +549,8 @@ export const IconHover3D: React.FC<Props> = ({
                             right: "0px",
                             top: "-86px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateX: 90
                           }}
                           variants={cubeSliceVariants}
@@ -599,8 +599,8 @@ export const IconHover3D: React.FC<Props> = ({
                             padding: "0px",
                             position: "relative",
                             width: "240px",
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             zIndex: 120
                           }}
                           variants={cubeSliceVariants}
@@ -626,8 +626,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: 180,
                           }}
                           variants={cubeSliceVariants}
@@ -653,8 +653,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: 90
                           }}
                           variants={cubeSliceVariants}
@@ -680,8 +680,8 @@ export const IconHover3D: React.FC<Props> = ({
                             top: "0px",
                             width: "240px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateY: -90
                           }}
                           variants={cubeSliceVariants}
@@ -699,8 +699,8 @@ export const IconHover3D: React.FC<Props> = ({
                             right: "0px",
                             top: "-120px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateX: 90
                           }}
                           variants={cubeSliceVariants}
@@ -718,8 +718,8 @@ export const IconHover3D: React.FC<Props> = ({
                             right: "0px",
                             top: "-86px",
                             zIndex: 1,
-                            border: "4px solid rgb(var(--foreground))",
-                            backgroundColor: "rgb(var(--background))",
+                            border: "4px solid hsl(var(--foreground))",
+                            backgroundColor: "hsl(var(--background))",
                             rotateX: 90
                           }}
                           variants={cubeSliceVariants}
@@ -739,8 +739,8 @@ export const IconHover3D: React.FC<Props> = ({
                     top: isHoverVariant ? "-6px" : "14px",
                     width: "24px",
                     zIndex: 2,
-                    borderLeft: "4px solid rgb(var(--foreground))",
-                    borderTop: "4px solid rgb(var(--foreground))",
+                    borderLeft: "4px solid hsl(var(--foreground))",
+                    borderTop: "4px solid hsl(var(--foreground))",
                     scale: 1
                   }}
                   variants={cornerScaleVariants}
@@ -756,8 +756,8 @@ export const IconHover3D: React.FC<Props> = ({
                     top: isHoverVariant ? "330px" : "310px",
                     width: "24px",
                     zIndex: 2,
-                    borderLeft: "4px solid rgb(var(--foreground))",
-                    borderBottom: "4px solid rgb(var(--foreground))",
+                    borderLeft: "4px solid hsl(var(--foreground))",
+                    borderBottom: "4px solid hsl(var(--foreground))",
                     scale: 1
                   }}
                   variants={cornerScaleVariants}
@@ -773,8 +773,8 @@ export const IconHover3D: React.FC<Props> = ({
                     right: isHoverVariant ? "-6px" : "14px",
                     width: "24px",
                     zIndex: 2,
-                    borderRight: "4px solid rgb(var(--foreground))",
-                    borderBottom: "4px solid rgb(var(--foreground))",
+                    borderRight: "4px solid hsl(var(--foreground))",
+                    borderBottom: "4px solid hsl(var(--foreground))",
                     scale: 1
                   }}
                   variants={cornerScaleVariants}
@@ -790,8 +790,8 @@ export const IconHover3D: React.FC<Props> = ({
                     top: isHoverVariant ? "-6px" : "14px",
                     width: "24px",
                     zIndex: 2,
-                    borderRight: "4px solid rgb(var(--foreground))",
-                    borderTop: "4px solid rgb(var(--foreground))",
+                    borderRight: "4px solid hsl(var(--foreground))",
+                    borderTop: "4px solid hsl(var(--foreground))",
                     scale: 1
                   }}
                   variants={cornerScaleVariants}
@@ -866,7 +866,7 @@ export const IconHover3D: React.FC<Props> = ({
                       width: "auto",
                       fontWeight: "600",
                       fontSize: "16px", // Reduced from 18px
-                      color: "rgb(var(--foreground))",
+                      color: "hsl(var(--foreground))",
                       userSelect: "none",
                       cursor: "pointer",
                       display: "flex",
@@ -884,7 +884,7 @@ export const IconHover3D: React.FC<Props> = ({
                         position: "absolute",
                         top: 0,
                         left: 0,
-                        color: "rgb(var(--background))",
+                        color: "hsl(var(--background))",
                         clipPath: `inset(0 ${isHoverVariant ? '0%' : '100%'} 0 0)`,
                         zIndex: 2
                       }}
@@ -904,7 +904,7 @@ export const IconHover3D: React.FC<Props> = ({
                         left: 0,
                         width: "100%",
                         height: "100%",
-                        backgroundColor: "rgb(var(--foreground))",
+                        backgroundColor: "hsl(var(--foreground))",
                         transformOrigin: "left center",
                         scaleX: 0,
                         zIndex: 1
@@ -930,7 +930,7 @@ export const IconHover3D: React.FC<Props> = ({
                     fontWeight: "400", // Reduced weight for better readability
                     fontSize: "14px", // Reduced from 16px
                     lineHeight: "1.5em", // Improved line height
-                    color: "color-mix(in srgb, rgb(var(--foreground)) 70%, transparent)",
+                    color: "hsl(var(--foreground))",
                     userSelect: "none"
                   }}
                 >

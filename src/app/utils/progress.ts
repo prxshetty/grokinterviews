@@ -7,12 +7,14 @@
  * @param questionId The ID of the viewed question
  * @param topicId The ID of the topic (will be fetched from category if not provided)
  * @param categoryId The ID of the category
+ * @param domain The domain code (e.g., 'ml', 'ai') for optimization
  * @returns Promise resolving to boolean indicating success
  */
 export const markQuestionAsViewed = async (
   questionId: number,
   topicId: number | null | undefined,
-  categoryId: number | null | undefined
+  categoryId: number | null | undefined,
+  domain?: string // Add optional domain parameter
 ): Promise<boolean> => {
   try {
     // Validate that we have the required IDs
@@ -85,7 +87,8 @@ export const markQuestionAsViewed = async (
         questionId,
         status: 'viewed',
         topicId: finalTopicId,     // Now guaranteed to be valid
-        categoryId: categoryId     // Now guaranteed to be valid
+        categoryId: categoryId,    // Now guaranteed to be valid
+        domain: domain             // Pass domain code for optimization
       }),
     });
 
@@ -115,12 +118,14 @@ export const markQuestionAsViewed = async (
  * @param questionId The ID of the question to mark as completed
  * @param topicId The ID of the topic (will be fetched from category if not provided)
  * @param categoryId The ID of the category
+ * @param domain The domain code (e.g., 'ml', 'ai') for optimization
  * @returns Promise resolving to boolean indicating success
  */
 export const markQuestionAsCompleted = async (
   questionId: number, 
   topicId: number | null | undefined, 
-  categoryId: number | null | undefined
+  categoryId: number | null | undefined,
+  domain?: string // Add optional domain parameter
 ): Promise<boolean> => {
   let retries = 3;
   let delay = 1000; // Start with 1 second
@@ -197,7 +202,8 @@ export const markQuestionAsCompleted = async (
           questionId,
           status: 'completed',
           topicId: finalTopicId,     // Now guaranteed to be valid
-          categoryId: categoryId     // Now guaranteed to be valid
+          categoryId: categoryId,    // Now guaranteed to be valid
+          domain: domain             // Pass domain code for optimization
         }),
       });
 

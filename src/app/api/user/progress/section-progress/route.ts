@@ -40,13 +40,13 @@ export async function GET(request: NextRequest) {
     // Get all topics for this section
     let subtopicsQuery = supabase // Use session client
       .from('topics')
-      .select('id, name, section_name, domain')
-      .eq('domain', domain);
+      .select('id, name, sections!inner(name), domains!inner(code)')
+      .eq('domains.code', domain);
 
     if (sectionName === "Core Concepts") {
-      subtopicsQuery = subtopicsQuery.or('section_name.eq."Core Concepts",name.eq."Core Concepts"');
+      subtopicsQuery = subtopicsQuery.or('sections.name.eq."Core Concepts",name.eq."Core Concepts"');
     } else {
-      subtopicsQuery = subtopicsQuery.eq('section_name', sectionName);
+      subtopicsQuery = subtopicsQuery.eq('sections.name', sectionName);
     }
     const { data: subtopics, error: subtopicsError } = await subtopicsQuery;
 
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     // Get all completed questions for this user
     const { data: completedData, error: completedError } = await supabase // Use session client
-      .from('user_activity')
+      .from('user_progress')
       .select('question_id, category_id')
       .eq('user_id', userId)
       .eq('status', 'completed')

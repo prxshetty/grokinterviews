@@ -16,16 +16,16 @@ export async function GET(request: NextRequest) {
 
     console.log(`API - Fetching section headers for domain: ${domain}`);
 
-    // Query for distinct section_name values for the given domain
-    // Include created_at for sorting
+    // Query for distinct sections for the given domain using normalized structure
     const { data: sectionData, error } = await supabase
-      .from('topics')
-      .select('section_name, created_at')
-      .eq('domain', domain)
-      .order('created_at', { ascending: true }); // Sort by created_at in ascending order (oldest first)
+      .from('sections')
+      .select('id, name, created_at, display_order, domains!inner(code)')
+      .eq('domains.code', domain)
+      .order('display_order', { ascending: true }) // Primary sort by display_order for beginner-friendly learning path
+      .order('name', { ascending: true }); // Secondary sort by name for stable ordering
 
     // Log the number of results found
-    console.log(`API - Found ${sectionData?.length || 0} section names for domain: ${domain}`);
+    console.log(`API - Found ${sectionData?.length || 0} sections for domain: ${domain}`);
 
     if (error) {
       console.error('Error fetching section headers:', error);
@@ -35,37 +35,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get distinct section names and create a map to track them with their created_at timestamps
-    const sectionMap = new Map();
-    const sectionNames = new Set();
+    // Format the sections data - sections are already unique by design
+    const formattedSections = sectionData?.map(section => ({
+      id: section.id,
+      name: section.name,
+      created_at: section.created_at,
+      display_order: section.display_order
+    })) || [];
 
-    // Collect all unique section names with their created_at timestamps
-    sectionData?.forEach(item => {
-      if (item.section_name && !sectionNames.has(item.section_name)) {
-        sectionNames.add(item.section_name);
-        sectionMap.set(item.section_name, {
-          name: item.section_name,
-          created_at: item.created_at
-        });
-      }
-    });
-
-    // Convert the map to an array, sort by created_at (oldest first), and add sequential IDs
-    const formattedSections = Array.from(sectionMap.values())
-      .sort((a, b) => {
-        // If created_at is null, treat it as newest
-        if (!a.created_at) return -1;
-        if (!b.created_at) return 1;
-        // Sort by created_at in ascending order (oldest first)
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      })
-      .map((section, index) => ({
-        id: index + 1, // Generate sequential IDs
-        name: section.name,
-        created_at: section.created_at // Include created_at in the response for debugging
-      }));
-
-    console.log(`API - Returning ${formattedSections.length} distinct section names for domain: ${domain}`);
+    console.log(`API - Returning ${formattedSections.length} sections for domain: ${domain}`);
 
     return NextResponse.json(
       formattedSections,

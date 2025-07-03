@@ -32,182 +32,103 @@ export async function GET(request: NextRequest) {
 
     console.log(`Fetching progress for subtopics in domain ${domain}${topicId ? ` for topic ${topicId}` : ''}`);
 
-    // In this database structure:
-    // - The "topics" table contains both topics and subtopics
-    // - Topics have section_name values
-    // - Subtopics are individual rows with a section_name that matches a topic
-    // - Categories have a topic_id that refers to a subtopic
+    // First, get the domain ID from the domains table
+    const { data: domainData, error: domainError } = await supabase
+      .from('domains')
+      .select('id')
+      .eq('code', domain)
+      .single();
 
-    // First, get all topics (section headers) for this domain
-    const { data: sectionHeaders, error: sectionHeadersError } = await supabase // Use session client
-      .from('topics')
-      .select('id, name, section_name')
-      .eq('domain', domain)
-      .order('created_at');
-
-    if (sectionHeadersError) {
-      console.error(`Error fetching section headers for domain ${domain}:`, sectionHeadersError);
-      return NextResponse.json({ error: 'Failed to fetch section headers' }, { status: 500 });
+    if (domainError || !domainData) {
+      console.error(`Domain ${domain} not found:`, domainError);
+      return NextResponse.json({ error: 'Domain not found' }, { status: 404 });
     }
 
-    if (!sectionHeaders || sectionHeaders.length === 0) {
-      console.log(`No section headers found for domain ${domain}`);
+    const domainId = domainData.id;
+    console.log(`Found domain ID ${domainId} for domain ${domain}`);
+
+    // Get all topics for the domain
+    const { data: topics, error: topicsError } = await supabase
+      .from('topics')
+      .select('id, name, domain_id, section_id')
+      .eq('domain_id', domainId);
+
+    if (topicsError) {
+      console.error(`Error fetching topics for domain ${domain}:`, topicsError);
+      return NextResponse.json({ error: 'Failed to fetch topics' }, { status: 500 });
+    }
+
+    if (!topics || topics.length === 0) {
+      console.log(`No topics found for domain ${domain}`);
       return NextResponse.json({ subtopics: [] });
     }
 
-    // Group topics by section_name to identify subtopics
-    const topicsBySection: Record<string, any[]> = {};
-    sectionHeaders.forEach(topic => {
-      if (topic.section_name) {
-        const sectionName = topic.section_name;
-        if (!topicsBySection[sectionName]) {
-          topicsBySection[sectionName] = [];
-        }
-        topicsBySection[sectionName].push(topic);
-      }
-    });
+    // Get section information for these topics
+    const sectionIds = [...new Set(topics.map(t => t.section_id).filter(Boolean))];
+    const { data: sections, error: sectionsError } = await supabase
+      .from('sections')
+      .select('id, name')
+      .in('id', sectionIds);
 
-    // Get all subtopics (individual topics within sections)
-    let subtopics: any[] = [];
-    Object.values(topicsBySection).forEach((topics: any[]) => {
-      if (topics.length > 0) {
-        // Add each topic as a subtopic
-        topics.forEach(topic => {
-          subtopics.push({
-            id: topic.id,
-            name: topic.name,
-            section_name: topic.section_name
-          });
-        });
-      }
-    });
+    if (sectionsError) {
+      console.error(`Error fetching sections:`, sectionsError);
+      return NextResponse.json({ error: 'Failed to fetch sections' }, { status: 500 });
+    }
 
-    // Check if we should filter by section or get main topics only
+    // Create a section map for quick lookup
+    const sectionMap = new Map((sections || []).map(s => [s.id, s.name]));
+
+    console.log(`Found ${topics.length} topics for domain ${domain}`);
+
+    // Filter topics based on query parameters
+    let filteredTopics = topics;
+
     const sectionParam = url.searchParams.get('section');
     const mainTopicsOnly = url.searchParams.get('mainTopicsOnly') === 'true';
 
-    if (mainTopicsOnly) {
-      // Get the main topics for this domain
-      console.log(`Filtering to include only main topics for domain ${domain}`);
-
-      // Get all unique section_names for this domain
-      const uniqueSectionNames = [...new Set(subtopics.map(s => s.section_name).filter(Boolean))];
-      console.log(`Found ${uniqueSectionNames.length} unique section_names for domain ${domain}: ${uniqueSectionNames.join(', ')}`);
-
-      // For each section_name, find the first topic (which is the main topic)
-      const mainTopicIds: any[] = [];
-      for (const sectionName of uniqueSectionNames) {
-        const topicsInSection = subtopics.filter(s => s.section_name === sectionName);
-        if (topicsInSection.length > 0) {
-          // Sort by ID to get the first one (assuming lower IDs are main topics)
-          topicsInSection.sort((a, b) => a.id - b.id);
-          mainTopicIds.push(topicsInSection[0].id);
-        }
+    if (topicId) {
+      // Filter by specific topic ID
+      const topicIdNum = parseInt(topicId);
+      if (!isNaN(topicIdNum)) {
+        filteredTopics = topics.filter(t => t.id === topicIdNum);
+        console.log(`Filtered to topic ${topicId}: found ${filteredTopics.length} topics`);
       }
-
-      console.log(`Found ${mainTopicIds.length} main topics for domain ${domain}: ${mainTopicIds.join(', ')}`);
-      subtopics = subtopics.filter(s => mainTopicIds.includes(s.id));
     } else if (sectionParam) {
-      // Filter by specific section name
-      console.log(`Filtering subtopics by section name: ${sectionParam}`);
-
-      // Get all subtopics with this section name
-      const sectionSubtopics = subtopics.filter(s => s.section_name === sectionParam);
-      console.log(`Found ${sectionSubtopics.length} subtopics with section_name "${sectionParam}"`);
-
-      // Log the subtopics for debugging
-      sectionSubtopics.forEach(s => {
-        console.log(`- Subtopic in section ${sectionParam}: ${s.id} (${s.name})`);
+      // Filter by section name
+      filteredTopics = topics.filter(t => 
+        t.section_id && sectionMap.get(t.section_id) === sectionParam
+      );
+      console.log(`Filtered by section "${sectionParam}": found ${filteredTopics.length} topics`);
+    } else if (mainTopicsOnly) {
+      // Get one representative topic per section (main topics)
+      const sectionGroups = new Map<number, any>();
+      topics.forEach(topic => {
+        if (topic.section_id && !sectionGroups.has(topic.section_id)) {
+          sectionGroups.set(topic.section_id, topic);
+        }
       });
-
-      // Keep all subtopics with this section name
-      subtopics = sectionSubtopics;
-    } else if (topicId) {
-      // First, try to find the topic directly
-      const topic = sectionHeaders.find(t => t.id.toString() === topicId);
-
-      if (topic) {
-        // If we found the topic, check if it has a section_name
-        if (topic.section_name) {
-          // This is a main topic with a section_name, filter subtopics by section_name
-          console.log(`Filtering subtopics for topic ${topicId} with section_name "${topic.section_name}"`);
-          subtopics = subtopics.filter(s => s.section_name === topic.section_name);
-        } else {
-          // This is a subtopic itself, only include this specific subtopic
-          console.log(`Topic ${topicId} is a subtopic itself, only including this subtopic`);
-          subtopics = subtopics.filter(s => s.id.toString() === topicId);
-        }
-      } else if (topicId === domain) {
-        // This is a domain-level request (like 'ml', 'ai', etc.)
-        // For domain-level requests, get the main topics for each section
-        console.log(`Domain-level request for ${domain}, getting main topics for each section`);
-
-        // Get all unique section_names for this domain
-        const uniqueSectionNames = [...new Set(subtopics.map(s => s.section_name).filter(Boolean))];
-        console.log(`Found ${uniqueSectionNames.length} unique section_names for domain ${domain}: ${uniqueSectionNames.join(', ')}`);
-
-        // For each section_name, find the first topic (which is the main topic)
-        const mainTopicIds: any[] = [];
-        for (const sectionName of uniqueSectionNames) {
-          const topicsInSection = subtopics.filter(s => s.section_name === sectionName);
-          if (topicsInSection.length > 0) {
-            // Sort by ID to get the first one (assuming lower IDs are main topics)
-            topicsInSection.sort((a, b) => a.id - b.id);
-            mainTopicIds.push(topicsInSection[0].id);
-          }
-        }
-
-        console.log(`Found ${mainTopicIds.length} main topics for domain ${domain}: ${mainTopicIds.join(', ')}`);
-        subtopics = subtopics.filter(s => mainTopicIds.includes(s.id));
-      } else {
-        // Topic not found, check if it's a section name
-        console.log(`Topic ${topicId} not found directly, checking if it's a section name`);
-
-        // Try to filter by the topicId as a section name
-        const matchingSubtopics = subtopics.filter(s => s.section_name === topicId);
-
-        if (matchingSubtopics.length > 0) {
-          console.log(`Found ${matchingSubtopics.length} subtopics with section_name "${topicId}"`);
-          subtopics = matchingSubtopics;
-        } else {
-          console.log(`No subtopics found with section_name "${topicId}", using all subtopics`);
-        }
-      }
-    } else {
-      // No filtering parameters provided, get the main topics for each section
-      console.log(`No filtering parameters provided, getting main topics for domain ${domain}`);
-
-      // Get all unique section_names for this domain
-      const uniqueSectionNames = [...new Set(subtopics.map(s => s.section_name).filter(Boolean))];
-      console.log(`Found ${uniqueSectionNames.length} unique section_names for domain ${domain}: ${uniqueSectionNames.join(', ')}`);
-
-      // For each section_name, find the first topic (which is the main topic)
-      const mainTopicIds: any[] = [];
-      for (const sectionName of uniqueSectionNames) {
-        const topicsInSection = subtopics.filter(s => s.section_name === sectionName);
-        if (topicsInSection.length > 0) {
-          // Sort by ID to get the first one (assuming lower IDs are main topics)
-          topicsInSection.sort((a, b) => a.id - b.id);
-          mainTopicIds.push(topicsInSection[0].id);
-        }
-      }
-
-      console.log(`Found ${mainTopicIds.length} main topics for domain ${domain}: ${mainTopicIds.join(', ')}`);
-      subtopics = subtopics.filter(s => mainTopicIds.includes(s.id));
+      filteredTopics = Array.from(sectionGroups.values());
+      console.log(`Main topics only: found ${filteredTopics.length} main topics`);
     }
 
-    console.log(`Found ${subtopics.length} subtopics for domain ${domain}${topicId ? ` and topic ${topicId}` : ''}`);
+    // Prepare subtopics with section names
+    const subtopics = filteredTopics.map(topic => ({
+      id: topic.id,
+      name: topic.name,
+      section_name: topic.section_id ? sectionMap.get(topic.section_id) || null : null,
+      section_id: topic.section_id
+    }));
 
-    // Log the count of subtopics
     console.log(`Processing ${subtopics.length} subtopics for domain ${domain}`);
 
     // Get all categories for these subtopics
     const subtopicIds = subtopics.map(subtopic => subtopic.id);
 
-    // Log the subtopics we're querying categories for
-    console.log(`Querying categories for ${subtopicIds.length} subtopics`);
+    if (subtopicIds.length === 0) {
+      return NextResponse.json({ subtopics: [] });
+    }
 
-    const { data: categories, error: categoriesError } = await supabase // Use session client
+    const { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('id, topic_id, name')
       .in('topic_id', subtopicIds);
@@ -222,32 +143,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ subtopics: [] });
     }
 
-    // Log the categories we found
     console.log(`Found ${categories.length} categories for subtopics in domain ${domain}`);
 
-    // Group categories by topic_id for debugging
-    const categoriesByTopicDebug: Record<string, any[]> = {};
-    categories.forEach(c => {
-      if (!categoriesByTopicDebug[c.topic_id]) {
-        categoriesByTopicDebug[c.topic_id] = [];
-      }
-      categoriesByTopicDebug[c.topic_id]?.push(c);
-    });
-
-    // Log a summary instead of individual topics
-    console.log(`Found categories for ${Object.keys(categoriesByTopicDebug).length} topics`);
-
-    // Group categories by topic_id (which is the subtopic id)
-    const categoriesBySubtopic: Record<string, any[]> = {};
+    // Group categories by topic_id
+    const categoriesBySubtopic = new Map<number, any[]>();
     categories.forEach(category => {
-      if (!categoriesBySubtopic[category.topic_id]) {
-        categoriesBySubtopic[category.topic_id] = [];
+      if (!categoriesBySubtopic.has(category.topic_id)) {
+        categoriesBySubtopic.set(category.topic_id, []);
       }
-      categoriesBySubtopic[category.topic_id]?.push(category);
+      categoriesBySubtopic.get(category.topic_id)!.push(category);
     });
 
+    // Get all questions for these categories
     const allCategoryIds = categories.map(category => category.id);
-    const { data: questionsData, error: questionsError } = await supabase // Use session client
+    const { data: questionsData, error: questionsError } = await supabase
       .from('questions')
       .select('id, category_id')
       .in('category_id', allCategoryIds);
@@ -257,46 +166,50 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
     }
 
-    // Define questionsByCategory with explicit types
-    const questionsByCategory: Record<string, { id: any; category_id: any }[]> = {};
-    (questionsData || []).forEach((question: { id: any; category_id: any }) => { // Typed question parameter
-      if (!questionsByCategory[question.category_id]) {
-        questionsByCategory[question.category_id] = [];
+    // Group questions by category
+    const questionsByCategory = new Map<number, any[]>();
+    (questionsData || []).forEach(question => {
+      if (!questionsByCategory.has(question.category_id)) {
+        questionsByCategory.set(question.category_id, []);
       }
-      questionsByCategory[question.category_id]?.push(question);
+      questionsByCategory.get(question.category_id)!.push(question);
     });
 
-    // Define completedQuestionIds
+    // Get completed questions from user_progress (single source of truth)
     const allQuestionIds = (questionsData || []).map(q => q.id);
-    let completedQuestionIds = new Set();
+    let completedQuestionIds = new Set<number>();
+    
     if (allQuestionIds.length > 0) {
-      const { data: activityData, error: activityError } = await supabase // Use session client
-        .from('user_activity')
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_progress')
         .select('question_id')
         .eq('user_id', userId)
         .eq('status', 'completed')
         .in('question_id', allQuestionIds);
-      if (activityError) {
-        console.error(`Error fetching user activity for domain ${domain}:`, activityError);
-        // Continue, completedQuestionIds will be empty or partially filled based on previous successful fetches if any
+        
+      if (progressError) {
+        console.error(`Error fetching user progress for domain ${domain}:`, progressError);
       } else {
-        completedQuestionIds = new Set((activityData || []).map(a => a.question_id));
+        completedQuestionIds = new Set((progressData || []).map(p => p.question_id));
       }
     }
 
+    // Calculate progress for each subtopic
     const subtopicProgress = subtopics.map(subtopic => {
-      const subtopicCategories = categoriesBySubtopic[subtopic.id] || [];
+      const subtopicCategories = categoriesBySubtopic.get(subtopic.id) || [];
       let totalQuestions = 0;
       let completedQuestions = 0;
+      
       subtopicCategories.forEach(category => {
-        const categoryQuestions = questionsByCategory[category.id] || []; // Should find questionsByCategory
+        const categoryQuestions = questionsByCategory.get(category.id) || [];
         totalQuestions += categoryQuestions.length;
-        categoryQuestions.forEach((question: { id: any }) => { // Typed question parameter
-          if (completedQuestionIds.has(question.id)) { // Should find completedQuestionIds (the Set)
+        categoryQuestions.forEach(question => {
+          if (completedQuestionIds.has(question.id)) {
             completedQuestions++;
           }
         });
       });
+      
       return {
         id: subtopic.id,
         name: subtopic.name,
@@ -309,17 +222,15 @@ export async function GET(request: NextRequest) {
 
     console.log(`Calculated progress for ${subtopicProgress.length} subtopics in domain ${domain}`);
 
-    // If this is a section-specific request, calculate section progress
+    // Calculate section progress if this is a section-specific request
     let sectionProgress = null;
     if (sectionParam) {
-      // Calculate section progress based on subtopics
       let completedSubtopics = 0;
       let partiallyCompletedSubtopics = 0;
       let totalQuestionsCompleted = 0;
       let totalQuestionsCount = 0;
 
-      // Count completed and partially completed subtopics
-      subtopicProgress.forEach((subtopic: any) => {
+      subtopicProgress.forEach(subtopic => {
         if (subtopic.completionPercentage === 100) {
           completedSubtopics++;
         } else if (subtopic.completionPercentage > 0) {
@@ -330,31 +241,22 @@ export async function GET(request: NextRequest) {
         totalQuestionsCount += subtopic.totalQuestions || 0;
       });
 
-      // Calculate section completion percentage
-      let sectionCompletionPercentage = 0;
       const totalSubtopics = subtopicProgress.length;
+      let sectionCompletionPercentage = 0;
 
       if (totalSubtopics > 0) {
-        // If at least one subtopic is completed, calculate percentage
         if (completedSubtopics > 0) {
           sectionCompletionPercentage = Math.round((completedSubtopics / totalSubtopics) * 100);
-
-          // Ensure it shows at least 25% if one subtopic is completed
           if (completedSubtopics === 1 && sectionCompletionPercentage < 25) {
             sectionCompletionPercentage = 25;
           }
-        }
-        // If no subtopics are fully completed but some are partially completed
-        else if (partiallyCompletedSubtopics > 0) {
+        } else if (partiallyCompletedSubtopics > 0) {
           sectionCompletionPercentage = Math.round((partiallyCompletedSubtopics * 0.5 / totalSubtopics) * 100);
-
-          // Ensure it shows at least 15% if one subtopic is partially completed
           if (partiallyCompletedSubtopics === 1 && sectionCompletionPercentage < 15) {
             sectionCompletionPercentage = 15;
           }
         }
 
-        // If all subtopics are completed, ensure it shows 100%
         if (completedSubtopics === totalSubtopics) {
           sectionCompletionPercentage = 100;
         }

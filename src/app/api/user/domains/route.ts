@@ -29,9 +29,8 @@ export async function GET(_request: NextRequest) {
       }
 
       const { count: totalDomains, error: countError } = await supabase
-        .from('topics')
-        .select('domain', { count: 'exact', head: true })
-        .not('domain', 'is', null);
+        .from('domains')
+        .select('*', { count: 'exact', head: true });
 
       if (countError) {
         console.error('Error fetching total domains count:', countError);

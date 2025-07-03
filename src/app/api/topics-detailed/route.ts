@@ -28,7 +28,7 @@ export async function GET(_request: NextRequest) {
       const { data: topicsPage, error } = await supabase
         .from('topics')
         .select('*, categories(*)')
-        .order('name', { ascending: true })
+        .order('created_at', { ascending: true })
         .range(from, to); // Use .range() for pagination
 
       if (error) {

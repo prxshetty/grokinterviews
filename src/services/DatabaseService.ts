@@ -93,10 +93,22 @@ class DatabaseService {
 
       // Apply domain filter if provided
       if (domain) {
-        query = query.eq('domain', domain);
+        // First get the domain ID from the domain code
+        const { data: domainData, error: domainError } = await supabase
+          .from('domains')
+          .select('id')
+          .eq('code', domain)
+          .single();
+        
+        if (domainError || !domainData) {
+          console.error(`Domain ${domain} not found:`, domainError);
+          return [];
+        }
+        
+        query = query.eq('domain_id', domainData.id);
       }
 
-      const { data, error } = await query.order('name');
+      const { data, error } = await query.order('created_at', { ascending: true });
 
       if (error) {
         console.error('Error fetching topics:', error);
@@ -204,7 +216,7 @@ class DatabaseService {
 
       const query = supabase.from('categories').select('*').eq('topic_id', topicIdValue);
 
-      const { data, error } = await query.order('name');
+      const { data, error } = await query.order('created_at', { ascending: true });
 
       if (error) {
         console.error(`Error fetching categories for topic ${topicId}:`, error);
@@ -489,7 +501,7 @@ class DatabaseService {
             name: sectionName,
             slug: `section-${headerId}`,
             topic_id: 0,
-            created_at: new Date().toISOString(),
+            created_at: new Date().toISOString(), // Required by type - this is synthetic data for section headers
             questions: [] // Ensure questions is initialized as Question[]
           };
 
@@ -504,7 +516,7 @@ class DatabaseService {
           name: sectionName,
           slug: `section-${headerId}`,
           topic_id: 0,
-          created_at: new Date().toISOString(),
+          created_at: new Date().toISOString(), // Required by type - this is synthetic data for section headers
           questions: [] as Question[], // Explicitly type as Question[] and initialize
           subtopics: {} as Record<string, any> // Explicitly type as Record<string, any> and initialize
         };
@@ -757,7 +769,7 @@ class DatabaseService {
       const { data, error } = await supabase
         .from('topics')
         .select('*')
-        .order('name', { ascending: true }); // Order topics by name
+        .order('created_at', { ascending: true }); // Order topics by creation date
 
       if (error) {
         console.error('Error fetching topics with categories directly:', error);
