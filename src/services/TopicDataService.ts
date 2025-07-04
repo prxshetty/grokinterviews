@@ -29,6 +29,7 @@ type CategoryItem = {
   id: string;
   label: string;
   display_order?: number; // Add display_order for proper section ordering
+  subtopics?: { id: string; label: string }[]; // Add subtopics to CategoryItem
 };
 
 // Helper function (ideally in a utils file, define or import it as needed)
@@ -56,8 +57,7 @@ class TopicDataService {
     categories: null,
     categoryDetails: {}
   };
-  private ongoingGetAllTopicDataFetch: Promise<TopicTree> | null = null;
-
+  
   /**
    * Gets all section headers for a specific domain
    * @param domain The domain to get section headers for (e.g., 'ml', 'ai')
@@ -101,22 +101,22 @@ class TopicDataService {
   /**
    * Gets all topics for a specific section
    * @param domain The domain (e.g., 'ml', 'ai')
-   * @param sectionName The name of the section to get topics for
+   * @param sectionId The ID of the section to get topics for
    */
-  async getTopicsBySection(domain: string, sectionName: string): Promise<CategoryItem[]> {
+  async getTopicsBySection(domain: string, sectionId: string): Promise<CategoryItem[]> {
     try {
-      console.log(`TopicDataService.getTopicsBySection - Called with domain: ${domain}, sectionName: ${sectionName}`);
+      console.log(`TopicDataService.getTopicsBySection - Called with domain: ${domain}, sectionId: ${sectionId}`);
 
       // Check cache first
-      const cacheKey = `topics-${domain}-${sectionName}`;
+      const cacheKey = `topics-${domain}-${sectionId}`;
       if (this.cache.categories && this.cache.categories[cacheKey]) {
         console.log(`TopicDataService.getTopicsBySection - Using cached data for ${cacheKey}`);
         return this.cache.categories[cacheKey];
       }
 
       // Fetch topics from the API
-      console.log(`TopicDataService.getTopicsBySection - Fetching from API: /api/topics/by-section?domain=${domain}&sectionName=${encodeURIComponent(sectionName)}`);
-      const response = await fetch(`/api/topics/by-section?domain=${domain}&sectionName=${encodeURIComponent(sectionName)}`);
+      console.log(`TopicDataService.getTopicsBySection - Fetching from API: /api/topics/by-section?domain=${domain}&sectionId=${sectionId}`);
+      const response = await fetch(`/api/topics/by-section?domain=${domain}&sectionId=${sectionId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch topics: ${response.statusText}`);
       }
@@ -124,10 +124,11 @@ class TopicDataService {
       const topics = await response.json();
       console.log(`TopicDataService.getTopicsBySection - Received ${topics.length} topics:`, topics);
 
-      // Convert to CategoryItem format
+      // Convert to CategoryItem format. These items are the "subtopics".
       const result = topics.map((topic: any) => ({
         id: `topic-${topic.id}`,
-        label: topic.name
+        label: topic.name,
+        // No deeper subtopics for these items
       }));
 
       // Cache the result
@@ -305,165 +306,37 @@ class TopicDataService {
         }
       }
 
-
-      if (result) {
-        this.cache.categoryDetails[cacheKey] = result;
-        console.log(`Successfully fetched and cached details for ${topicId}:${categoryId}`, result);
-      } else {
-        console.warn(`Failed to fetch category details for ${topicId}:${categoryId} after all attempts.`);
-        // Return null or an empty object structure if preferred, instead of throwing
-        // For now, returning null to indicate failure to find details
-        return null;
-      }
+      // Cache the merged result
+      this.cache.categoryDetails[cacheKey] = result;
 
       return result;
     } catch (error) {
-      console.error(`Error in getCategoryDetails for ${topicId}:${categoryId}:`, error);
-      // Consider what to return in a general catch-all: null, empty object, or rethrow
-      return null; // Or throw error;
-    }
-  }
-
-  /**
-   * Gets topic data for a specific topic
-   * @param topicId The ID of the topic to load
-   */
-  async getTopicData(topicId: string): Promise<TopicTree | null> {
-    console.log('TopicDataService.getTopicData - Called with topicId:', topicId);
-    try {
-      // Try to get from cache first
-      if (this.cache.topics && this.cache.topics[topicId]) {
-        console.log('TopicDataService.getTopicData - Using cached data');
-        return { [topicId]: this.cache.topics[topicId] };
-      }
-
-      let topicDataFromDB: any = null;
-
-      // 1. Get topic with categories from the database
-      try {
-        const topicWithCategories = await DatabaseService.getTopicWithCategories(topicId);
-
-        if (topicWithCategories) {
-          // Convert to the format expected by the UI
-          topicDataFromDB = {
-            label: topicWithCategories.name,
-            subtopics: {}
-          };
-
-          // Add categories as subtopics
-          if (topicWithCategories.categories) {
-            for (const category of topicWithCategories.categories) {
-              const categorySlug = slugify(category.name); // Generate slug from name
-              topicDataFromDB.subtopics[categorySlug] = {
-                id: categorySlug,
-                label: category.name,
-                // Initialize subtopics for category, actual content/questions handled by getCategoryDetails
-                subtopics: {}
-              };
-            }
-          }
-        } else {
-          // Topic not found in database
-          console.warn(`Topic ${topicId} not found in database.`);
-          // No need to throw here, will fall through and potentially return null if no data
-        }
-      } catch (dbError) {
-        console.error(`Error fetching topic data from database for ${topicId}:`, dbError);
-        // If database call fails, topicDataFromDB remains null, allowing graceful failure
-      }
-
-      // If no data was fetched from the database, return null
-      if (!topicDataFromDB) {
-        console.warn(`No data successfully fetched for topic ${topicId} from DatabaseService.`);
-        return null;
-      }
-
-      // Update cache with the data fetched from the database
-      if (!this.cache.topics) {
-        this.cache.topics = {};
-      }
-      this.cache.topics[topicId] = topicDataFromDB;
-
-      return { [topicId]: topicDataFromDB };
-    } catch (error) {
-      // General error catch for any unexpected issues during the process
-      console.error(`Error loading topic data for ${topicId}:`, error);
+      console.error(`Error fetching category details for ${topicId}:${categoryId}:`, error);
       return null;
     }
   }
 
   /**
-   * Gets all available topic data
+   * Gets topic data for a specific topic ID, fetching from the network if not in cache.
+   * This function is intended to replace direct use of a large, pre-fetched topic tree.
+   * @param topicId The ID of the topic to get.
    */
-  async getAllTopicData(): Promise<TopicTree> {
-    console.log('TopicDataService.getAllTopicData - Called');
-
-    // Try to get from cache first
-    if (this.cache.topics) {
-      console.log('TopicDataService.getAllTopicData - Using cached data (this.cache.topics)');
-      return this.cache.topics;
-    }
-
-    // Check if a fetch is already in progress
-    if (this.ongoingGetAllTopicDataFetch) {
-      console.log('TopicDataService.getAllTopicData - Fetch already in progress, returning existing promise');
-      return this.ongoingGetAllTopicDataFetch;
-    }
-
-    console.log('TopicDataService.getAllTopicData - Starting new fetch using optimized method');
-    this.ongoingGetAllTopicDataFetch = (async (): Promise<TopicTree> => {
-      try {
-        const topicsWithCategories = await DatabaseService.fetchAllTopicsWithDetailedCategories();
-        console.log('TopicDataService.getAllTopicData - Fetched from DatabaseService:', topicsWithCategories.length, 'topics with categories');
-
-        if (!topicsWithCategories || topicsWithCategories.length === 0) {
-          console.warn('TopicDataService.getAllTopicData - No topics returned from DatabaseService.fetchAllTopicsWithDetailedCategories');
-          this.cache.topics = {}; // Cache empty object
-          return {};
-        }
-
-        const newTopicTree: TopicTree = {};
-
-        for (const topic of topicsWithCategories) {
-          const topicNameForSlug = topic.name;
-          const topicIdForLog = topic.id;
-          let currentTopicSlug = slugify(topicNameForSlug);
-
-          if (newTopicTree[currentTopicSlug]) {
-            const originalSlug = currentTopicSlug;
-            currentTopicSlug = `${currentTopicSlug}-${topicIdForLog}`;
-            console.warn(`TopicDataService.getAllTopicData - (Collision) Slug '${originalSlug}' already exists. Using new unique slug '${currentTopicSlug}' for Topic ID ${topicIdForLog}`);
-          }
-
-          if (!currentTopicSlug) {
-            console.warn(`TopicDataService.getAllTopicData - Topic with ID ${topicIdForLog} has no valid slug (original name: '${topicNameForSlug}'), skipping.`);
-            continue;
-          }
-
-          newTopicTree[currentTopicSlug] = {
-            label: String(topicNameForSlug),
-            subtopics: {}
-          };
-        }
-
-        this.cache.topics = newTopicTree;
-        console.log('TopicDataService.getAllTopicData - Successfully processed and cached data.');
-        return newTopicTree;
-
-      } catch (error) {
-        console.error('Error in TopicDataService.getAllTopicData during new fetch logic:', error);
-        this.cache.topics = {}; // Cache empty on error
-        return {}; // Resolve promise with empty on error
-      } finally {
-        this.ongoingGetAllTopicDataFetch = null; // Clear the ongoing fetch promise
-      }
-    })();
-
-    return this.ongoingGetAllTopicDataFetch;
+  async getTopicData(topicId: string): Promise<TopicTree | null> {
+    // This is a placeholder for a more robust implementation.
+    // In a real scenario, this would likely fetch from an API endpoint
+    // like `/api/topics/${topicId}`.
+    console.log(`getTopicData for ${topicId} is not fully implemented.`);
+    
+    // For now, let's return null to indicate data needs to be fetched.
+    // Components will need to handle this loading state.
+    return null;
   }
 
+  // NOTE: getAllTopicData has been removed to prevent fetching the entire database
+  // and to address stale data issues. Components should now fetch data on-demand.
+
   /**
-   * Clears the cache
+   * Clears all client-side cache.
    */
   clearCache() {
     this.cache = {

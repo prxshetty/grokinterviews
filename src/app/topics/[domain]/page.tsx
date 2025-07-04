@@ -2,7 +2,6 @@ import React, { Suspense } from 'react';
 import TopicPageClient from './TopicPageClient'; // Import the new client component
 import { LoadingSpinner } from '@/components/ui';
 import { TopicDataProvider } from '@/components';
-import { redirect } from 'next/navigation'; // Import redirect
 
 // Define the expected props structure for the Server Component page
 interface PageProps {
@@ -25,10 +24,8 @@ function LoadingFallback() {
 export default async function Page({ params }: PageProps) {
   const { domain } = await params;
 
-  // If the domain is 'ai', redirect to the main topics page
-  if (domain === 'ai') {
-    redirect('/topics');
-  }
+  // AI domain cleanup completed - duplicate topics removed
+  // Users can now access clean AI domain with 538 unique topics
 
   return (
     <TopicDataProvider>

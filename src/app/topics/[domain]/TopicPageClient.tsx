@@ -186,26 +186,27 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
     setIsLoading(prev => ({ ...prev, sections: true }));
     try {
-      const topicId = selectedTopic;
-      if (!topicId) {
-        console.error('No topic selected, cannot load category details');
+      const domain = selectedTopic; // The domain is stored in selectedTopic
+      if (!domain) {
+        console.error('No domain selected, cannot load category details');
         setIsLoading(prev => ({ ...prev, sections: false }));
         return;
       }
+
       if (categoryId.startsWith('header-')) {
-        const headerNumber = parseInt(categoryId.replace('header-', ''), 10);
-        const response = await fetch(`/api/section-headers?domain=${topicId}`);
-        if (!response.ok) throw new Error(`Failed to fetch section headers: ${response.statusText}`);
-        const sectionHeaders = await response.json();
-        const sectionHeader = sectionHeaders.find((header: any) => header.id === headerNumber);
-        if (!sectionHeader) throw new Error(`Could not find section header with ID ${headerNumber}`);
-        const sectionResponse = await fetch(`/api/topics/by-section?domain=${topicId}&sectionName=${encodeURIComponent(sectionHeader.name)}`);
-        if (!sectionResponse.ok) throw new Error(`Failed to fetch section: ${sectionResponse.statusText}`);
-        const topicsInSection = await sectionResponse.json();
+        const sectionId = categoryId.replace('header-', '');
+        
+        // Find the section name from topicCategories for display purposes.
+        const section = topicCategories.find(c => c.id === categoryId);
+        const sectionName = section ? section.label : 'Section';
+
+        // Fetch topics using the robust, ID-based service method.
+        const topicsInSection = await TopicDataService.getTopicsBySection(domain, sectionId);
+        
         const sectionData: TopicItem = {
-          label: sectionHeader.name,
+          label: sectionName,
           subtopics: topicsInSection.reduce((acc: Record<string, any>, topic: any) => {
-            acc[`topic-${topic.id}`] = { id: `topic-${topic.id}`, label: topic.name, content: topic.description || '' };
+            acc[topic.id] = { id: topic.id, label: topic.label };
             return acc;
           }, {})
         };
@@ -213,13 +214,13 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
         setDataCache(prevCache => ({ ...prevCache, [cacheKey]: sectionData }));
         setCategoryProgress(null);
       } else {
-        const topicToFetch = categoryId.includes('topic-') ? parseInt(categoryId.replace('topic-', ''), 10) : topicId;
+        const topicToFetch = categoryId.includes('topic-') ? parseInt(categoryId.replace('topic-', ''), 10) : categoryId;
         if (!topicToFetch) {
           console.error('Could not determine a topic ID to fetch for category:', categoryId);
           setIsLoading(prev => ({ ...prev, sections: false }));
           return;
         }
-        const apiTopicParam = (typeof topicToFetch === 'number' || !isNaN(Number(topicToFetch))) ? topicToFetch : topicId;
+        const apiTopicParam = (typeof topicToFetch === 'number' || !isNaN(Number(topicToFetch))) ? topicToFetch : domain;
         const response = await fetch(`/api/topics/categories?topicId=${apiTopicParam}`);
         if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
         const categories = await response.json();
@@ -242,7 +243,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     } finally {
       setIsLoading(prev => ({ ...prev, sections: false }));
     }
-  }, [selectedTopic, dataCache, setIsLoading, setCategoryDetails, setDataCache, setCategoryProgress]);
+  }, [selectedTopic, dataCache, setIsLoading, setCategoryDetails, setDataCache, setCategoryProgress, topicCategories]);
 
   // Handle category selection from TopicCategoryGrid
   const handleCategorySelect = useCallback(async (categoryId: string) => {
