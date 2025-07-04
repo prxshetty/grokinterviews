@@ -36,8 +36,17 @@ export async function GET(_request: NextRequest) {
         console.error('Error fetching total domains count:', countError);
       }
 
+      // Transform the data to match the expected interface
+      const transformedDomainStats = domainStats?.map((domain: any) => ({
+        domain: domain.domain,
+        domainName: domain.domainname,
+        totalQuestions: domain.totalquestions,
+        completedQuestions: domain.completedquestions,
+        completionPercentage: parseFloat(domain.completionpercentage || '0') // Convert string to number
+      })) || [];
+
       return NextResponse.json({
-        domains: domainStats,
+        domains: transformedDomainStats,
         totalDomains: totalDomains || 0
       });
     } else {

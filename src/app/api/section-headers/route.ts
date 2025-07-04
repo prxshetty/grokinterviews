@@ -16,16 +16,27 @@ export async function GET(request: NextRequest) {
 
     console.log(`API - Fetching section headers for domain: ${domain}`);
 
-    // Query for distinct sections for the given domain using normalized structure
-    const { data: sectionData, error } = await supabase
-      .from('sections')
-      .select('id, name, created_at, display_order, domains!inner(code)')
-      .eq('domains.code', domain)
-      .order('display_order', { ascending: true }) // Primary sort by display_order for beginner-friendly learning path
-      .order('name', { ascending: true }); // Secondary sort by name for stable ordering
+    // First get the domain_id from the domain code
+    const { data: domainData, error: domainError } = await supabase
+      .from('domains')
+      .select('id')
+      .eq('code', domain)
+      .single();
 
-    // Log the number of results found
-    console.log(`API - Found ${sectionData?.length || 0} sections for domain: ${domain}`);
+    if (domainError || !domainData) {
+      console.error('Error fetching domain:', domainError);
+      return NextResponse.json(
+        { error: 'Domain not found' },
+        { status: 404 }
+      );
+    }
+
+    // Fetch all section headers for the given domain, ordered by display_order
+    const { data: sectionHeaders, error } = await supabase
+      .from('sections')
+      .select('*')
+      .eq('domain_id', domainData.id)
+      .order('display_order', { ascending: true });
 
     if (error) {
       console.error('Error fetching section headers:', error);
@@ -35,18 +46,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Format the sections data - sections are already unique by design
-    const formattedSections = sectionData?.map(section => ({
-      id: section.id,
-      name: section.name,
-      created_at: section.created_at,
-      display_order: section.display_order
-    })) || [];
-
-    console.log(`API - Returning ${formattedSections.length} sections for domain: ${domain}`);
+    console.log(`API - Returning ${sectionHeaders?.length || 0} distinct section names for domain: ${domain}`);
 
     return NextResponse.json(
-      formattedSections,
+      sectionHeaders || [],
       {
         headers: {
           'Cache-Control': 'public, max-age=3600, s-maxage=3600', // 1 hour cache

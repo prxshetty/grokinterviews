@@ -6,27 +6,58 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const domain = url.searchParams.get('domain');
-    const sectionId = url.searchParams.get('sectionId');
+    const sectionName = url.searchParams.get('sectionName');
 
-    if (!domain || !sectionId) {
+    if (!domain || !sectionName) {
       return NextResponse.json(
-        { error: 'Domain and sectionId parameters are required' },
+        { error: 'Domain and sectionName parameters are required' },
         { status: 400 }
       );
     }
 
-    console.log(`API - Fetching topics for domain: ${domain}, sectionId: ${sectionId}`);
+    console.log(`API - Fetching topics for domain: ${domain}, section: ${sectionName}`);
 
-    // Query for topics in the given section and domain using the section_id
+    // First get the domain_id from the domain code
+    const { data: domainData, error: domainError } = await supabase
+      .from('domains')
+      .select('id')
+      .eq('code', domain)
+      .single();
+
+    if (domainError || !domainData) {
+      console.error('Error fetching domain:', domainError);
+      return NextResponse.json(
+        { error: 'Domain not found' },
+        { status: 404 }
+      );
+    }
+
+    // Then get the section_id from the section name and domain
+    const { data: sectionData, error: sectionError } = await supabase
+      .from('sections')
+      .select('id')
+      .eq('name', sectionName)
+      .eq('domain_id', domainData.id)
+      .single();
+
+    if (sectionError || !sectionData) {
+      console.error('Error fetching section:', sectionError);
+      return NextResponse.json(
+        { error: 'Section not found' },
+        { status: 404 }
+      );
+    }
+
+    // Query for topics using the foreign keys
     const { data: topics, error } = await supabase
       .from('topics')
-      .select('*, domains!inner(code)')
-      .eq('domains.code', domain)
-      .eq('section_id', sectionId)
+      .select('*')
+      .eq('domain_id', domainData.id)
+      .eq('section_id', sectionData.id)
       .order('created_at', { ascending: true });
 
     // Log the number of results found
-    console.log(`API - Found ${topics?.length || 0} topics for sectionId: ${sectionId}`);
+    console.log(`API - Found ${topics?.length || 0} topics for section: ${sectionName}`);
 
     if (error) {
       console.error('Error fetching topics by section:', error);

@@ -52,22 +52,29 @@ export async function GET(_request: NextRequest) {
       .eq('status', 'viewed');
     // ... (handle viewedError)
 
-    const { data: userProgress, error: _progressError } = await supabase // Use session client
+    const { error: _progressError } = await supabase // Use session client
       .from('user_progress')
       .select('question_id')
       .eq('user_id', userId)
       .eq('status', 'completed');
     // ... (handle progressError)
 
-    const questionIds = userProgress?.map((item: { question_id: number }) => item.question_id) || [];
-    let domainsSolved = 0;
-    let totalDomains = 0;
+    // Get all question IDs where user has any activity (viewed or completed) for domains explored
+    const { data: allUserProgress, error: _allProgressError } = await supabase
+      .from('user_progress')
+      .select('question_id')
+      .eq('user_id', userId)
+      .in('status', ['viewed', 'completed']);
 
-    if (questionIds.length > 0) {
+    const allQuestionIds = allUserProgress?.map((item: { question_id: number }) => item.question_id) || [];
+    let domainsSolved = 0;
+
+    // Calculate domains explored (any activity - viewed or completed)
+    if (allQuestionIds.length > 0) {
       const { data: questionsData, error: _domainsError } = await supabase // Use session client
         .from('questions')
         .select('id, category_id')
-        .in('id', questionIds);
+        .in('id', allQuestionIds);
       // ... (handle domainsError)
 
       const categoryIds = questionsData?.map(q => q.category_id).filter(Boolean) || [];
@@ -85,34 +92,21 @@ export async function GET(_request: NextRequest) {
             .select('id, domain_id')
             .in('id', topicIds);
           // ... (handle topicsError)
-          
-          // Get unique domain IDs from topics
-          const uniqueDomainIds = new Set(topicsData?.map((topic: any) => topic.domain_id).filter(Boolean));
-          
-          // Convert domain IDs back to domain codes for counting
-          if (uniqueDomainIds.size > 0) {
-            const { data: domainsData, error: _domainsDataError } = await supabase
-              .from('domains')
-              .select('code')
-              .in('id', Array.from(uniqueDomainIds));
-            // ... (handle domainsDataError)
-            domainsSolved = domainsData?.length || 0;
-          }
+          const uniqueDomains = new Set(topicsData?.map(topic => topic.domain_id).filter(Boolean));
+          domainsSolved = uniqueDomains.size;
         }
       }
     }
 
-    const { data: allDomains, error: _allDomainsError } = await supabase // Use session client
+    const { count: totalDomains, error: _allDomainsError } = await supabase // Use session client
       .from('domains')
-      .select('code');
+      .select('*', { count: 'exact', head: true });
     // ... (handle allDomainsError)
-    const uniqueAllDomains = new Set(allDomains?.map(item => item.code).filter(Boolean));
-    totalDomains = uniqueAllDomains.size;
 
     const completionPercentage = totalQuestions ? Math.round(((completedQuestions || 0) / totalQuestions) * 100) : 0;
     return NextResponse.json({
       questionsCompleted: completedQuestions || 0, questionsViewed: viewedQuestions || 0,
-      totalQuestions: totalQuestions || 0, completionPercentage, domainsSolved, totalDomains
+      totalQuestions: totalQuestions || 0, completionPercentage, domainsSolved, totalDomains: totalDomains || 0
     });
 
   } catch (error) {
@@ -139,7 +133,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { questionId, status, topicId, categoryId } = await request.json();
+    const { questionId, status, topicId, categoryId, domain, section_name, difficulty_level, tags } = await request.json();
     // ... (validation) ...
     if (!questionId || !status || !topicId || !categoryId) {
         return NextResponse.json({ error: 'Question ID, status, Topic ID, and Category ID are required' }, { status: 400 });
@@ -149,15 +143,21 @@ export async function POST(request: NextRequest) {
       .from('user_progress')
       .upsert({
           user_id: userId, question_id: questionId, topic_id: topicId,
-          category_id: categoryId, status: status
+          category_id: categoryId, status: status, updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id, question_id' }
       );
     // ... (handle userProgressUpsertError) ...
 
-    // ARCHITECTURE CLEANUP: Removed dual write to user_activity table
-    // Now using single source of truth: user_progress table only
-    // This eliminates data inconsistency issues and simplifies the architecture
+    const { error: _activityInsertError } = await supabase // Use session client
+      .from('user_activity')
+      .insert({
+          user_id: userId, activity_type: status === 'completed' ? 'question_completed' : 'question_viewed',
+          question_id: questionId, topic_id: topicId, category_id: categoryId,
+          domain, section_name, difficulty_level, tags
+        }
+      );
+    // ... (handle activityInsertError) ...
 
     return NextResponse.json({ success: true, message: 'Progress updated successfully' });
 
