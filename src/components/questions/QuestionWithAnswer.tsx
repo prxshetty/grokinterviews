@@ -5,6 +5,7 @@ import { isQuestionCompleted, markQuestionAsCompleted, markQuestionAsViewed } fr
 import React from 'react';
 import { toast } from '@/hooks/use-toast';
 import { ChevronUp } from 'lucide-react';
+import { CopyButton } from './CopyButton';
 
 // Import the new accordion components
 import {
@@ -350,10 +351,18 @@ function QuestionWithAnswerComponent({
         </div>
 
         {isExpandedState && onRequestClose && (
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end space-x-3 items-center">
+            {(generatedAnswer) && (
+              <div className="flex items-center">
+                <CopyButton 
+                  textToCopy={generatedAnswer}
+                  className="h-8 w-8 flex items-center justify-center"
+                />
+              </div>
+            )}
             <button
               onClick={onRequestClose}
-              className="flex items-center text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-colors duration-150"
+              className="flex items-center text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-colors duration-150 h-8"
             >
               <ChevronUp className="mr-1 h-3.5 w-3.5" />
               Collapse
