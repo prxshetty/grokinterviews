@@ -44,13 +44,13 @@ export async function GET(request: NextRequest) {
 
   // Get the user using Supabase auth
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError) throw userError;
     if (!user) throw new Error('User not authenticated');
     userId = user.id;
-    console.log('Found user ID from auth for bookmarks GET:', userId); // Updated log
+    console.log('Found user ID from auth for bookmarks GET:', userId);
   } catch (error: any) {
-    console.error('Bookmark GET User/Auth Error:', error.message); // Updated log
+    console.error('Bookmark GET User/Auth Error:', error.message);
     return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
@@ -58,9 +58,10 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get('limit') || '50');
 
+    // Fetch bookmarks with only the columns that exist
     const { data: bookmarks, error: bookmarksError } = await supabase
       .from('user_bookmarks')
-      .select('id, question_id, category_id, topic_id, section_name, created_at, domains!inner(code)')
+      .select('id, question_id, category_id, topic_id, domain_id, section_name, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -78,6 +79,7 @@ export async function GET(request: NextRequest) {
     const questionIds = [...new Set(bookmarks.map(b => b.question_id).filter(Boolean))];
     const topicIds = [...new Set(bookmarks.map(b => b.topic_id).filter(Boolean))];
     const categoryIds = [...new Set(bookmarks.map(b => b.category_id).filter(Boolean))];
+    const domainIds = [...new Set(bookmarks.map(b => b.domain_id).filter(Boolean))];
 
     // Fetch question texts
     let questionTexts: Record<number, string> = {};
@@ -126,7 +128,22 @@ export async function GET(request: NextRequest) {
           return acc;
         }, {}) || {};
     }
-    // --- End Fetch related data --- 
+
+    // Fetch domain codes using foreign keys
+    let domainCodes: Record<number, string> = {};
+    if (domainIds.length > 0) {
+      const { data: dData, error: dError } = await supabase
+        .from('domains')
+        .select('id, code')
+        .in('id', domainIds);
+      if (dError) console.error('Error fetching domain codes:', dError);
+      else domainCodes = dData?.reduce((acc: Record<number, string>, d) => {
+        if (d.id !== null && d.id !== undefined) {
+          acc[Number(d.id)] = d.code;
+        }
+        return acc;
+      }, {}) || {};
+    }
 
     // Enhance bookmarks data
     const enhancedBookmarksData = bookmarks.map(bookmark => ({
@@ -137,7 +154,7 @@ export async function GET(request: NextRequest) {
       topicName: bookmark.topic_id ? topicNames[bookmark.topic_id] || 'Unknown topic' : null,
       categoryId: bookmark.category_id,
       categoryName: bookmark.category_id ? categoryNames[bookmark.category_id] || 'Unknown category' : null,
-      domain: (bookmark as any).domains?.code,
+      domain: bookmark.domain_id ? domainCodes[bookmark.domain_id] || 'Unknown domain' : null,
       sectionName: bookmark.section_name,
       createdAt: bookmark.created_at,
       timeAgo: formatTimeAgo(new Date(bookmark.created_at))
@@ -158,13 +175,13 @@ export async function POST(request: NextRequest) {
 
   // Get user using Supabase auth
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser(); // Changed getSession to getUser
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError) throw userError;
     if (!user) throw new Error('User not authenticated');
     userId = user.id;
-    console.log('Found user ID from auth for bookmarks POST:', userId); // Updated log
+    console.log('Found user ID from auth for bookmarks POST:', userId);
   } catch (error: any) {
-    console.error('Bookmark POST User/Auth Error:', error.message); // Updated log
+    console.error('Bookmark POST User/Auth Error:', error.message);
     return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
   }
 
@@ -190,11 +207,11 @@ export async function POST(request: NextRequest) {
       // --- Add bookmark --- 
       console.log(`Adding bookmark: User ${userId}, Q:${questionId}, Topic:${topicId}, Cat:${categoryId}`);
 
-      // 1. Fetch domain and section info from topics table using new schema
-      let domainCode: string | null = null;
+      // 1. Fetch domain_id and section_name from topics table using normalized schema
+      let domainId: number | null = null;
       let sectionName: string | null = null;
       try {
-          // Get topic with domain_id and section_id
+          // First get the topic with domain_id and section_id
           const { data: topicData, error: topicError } = await supabase
               .from('topics')
               .select('domain_id, section_id')
@@ -203,25 +220,21 @@ export async function POST(request: NextRequest) {
           
           if (topicError) {
               console.warn(`Failed to get topic details for bookmark: ${topicError.message}`);
+              // Proceed without domain/section if lookup fails
           } else if (topicData) {
-              // Get domain code from domain_id
-              if (topicData.domain_id) {
-                  const { data: domainData } = await supabase
-                      .from('domains')
-                      .select('code')
-                      .eq('id', topicData.domain_id)
-                      .maybeSingle();
-                  domainCode = domainData?.code || null;
-              }
+              domainId = topicData.domain_id;
               
-              // Get section name from section_id
+              // Get section name using section_id
               if (topicData.section_id) {
-                  const { data: sectionData } = await supabase
+                  const { data: sectionData, error: sectionError } = await supabase
                       .from('sections')
                       .select('name')
                       .eq('id', topicData.section_id)
                       .maybeSingle();
-                  sectionName = sectionData?.name || null;
+                  
+                  if (!sectionError && sectionData) {
+                      sectionName = sectionData.name;
+                  }
               }
           }
       } catch (fetchError: any) {
@@ -229,21 +242,7 @@ export async function POST(request: NextRequest) {
           // Proceed without domain/section
       }
 
-      // First, get the domain_id from the domain code
-      let domainId: number | null = null;
-      if (domainCode) {
-        const { data: domainData, error: domainError } = await supabase
-          .from('domains')
-          .select('id')
-          .eq('code', domainCode)
-          .maybeSingle();
-        
-        if (!domainError && domainData) {
-          domainId = domainData.id;
-        }
-      }
-
-      // 2. Insert into user_bookmarks
+      // 2. Insert into user_bookmarks using normalized schema
       const { error: insertError } = await supabase
         .from('user_bookmarks')
         .insert({
@@ -251,8 +250,8 @@ export async function POST(request: NextRequest) {
           question_id: questionId,
           category_id: categoryId,
           topic_id: topicId,
-          domain_id: domainId, // Use domain_id instead of domain
-          section_name: sectionName, // Can be null if lookup failed
+          domain_id: domainId, // Use foreign key instead of domain string
+          section_name: sectionName, // Keep section_name as text for now
           // created_at defaults to now()
         });
 

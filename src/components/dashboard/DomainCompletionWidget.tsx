@@ -13,6 +13,14 @@ interface DomainCompletionWidgetProps {
 }
 
 export default function DomainCompletionWidget({ domainStats }: DomainCompletionWidgetProps) {
+  const getProgressBarColor = (percentage: number) => {
+    if (percentage >= 80) return 'bg-green-500 dark:bg-green-600';
+    if (percentage >= 60) return 'bg-blue-500 dark:bg-blue-600';
+    if (percentage >= 40) return 'bg-yellow-500 dark:bg-yellow-600';
+    if (percentage >= 20) return 'bg-orange-500 dark:bg-orange-600';
+    return 'bg-red-500 dark:bg-red-600';
+  };
+
   return (
     <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       <div className="mb-4">
@@ -23,10 +31,10 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
         <div className="flex justify-center py-8">
           <LoadingSpinner />
         </div>
-              ) : domainStats.error ? (
-          <div className="text-center py-4">
-            <p className="text-sm text-purple-600 dark:text-purple-400">{domainStats.error}</p>
-          </div>
+      ) : domainStats.error ? (
+        <div className="text-center py-4">
+          <p className="text-sm text-red-600 dark:text-red-400">{domainStats.error}</p>
+        </div>
       ) : domainStats.domains.length === 0 ? (
         <div className="text-center py-8">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,7 +55,7 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
       ) : (
         <>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            Progress across {domainStats.totalDomains} domains 
+            Progress across {domainStats.totalDomains || domainStats.domains.length} domains
           </p>
           
           <div className="space-y-3">
@@ -64,7 +72,7 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
                 
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
-                    className="h-2 rounded-full transition-all duration-300 bg-gray-800 dark:bg-gray-300"
+                    className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(domain.completionPercentage)}`}
                     style={{
                       width: `${Math.max(0.5, domain.completionPercentage)}%`,
                     }}

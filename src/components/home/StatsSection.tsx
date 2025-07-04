@@ -1,62 +1,54 @@
 'use client';
 
-import { useScrollAnimation } from '@/hooks/ui';
+import { BentoCard } from "@/components/ui/bento-card";
 import { highlightedStats } from './content';
 
 // Note: We're using curated stats for the minimalist design
 // Original data is available but not currently displayed
 
+const cardColors = [
+  ["#3B82F6", "#60A5FA", "#93C5FD"],
+  ["#60A5FA", "#34D399", "#93C5FD"],
+  ["#F59E0B", "#A78BFA", "#FCD34D"],
+  ["#3B82F6", "#A78BFA", "#FBCFE8"],
+  ["#EC4899", "#F472B6", "#3B82F6"],
+  ["#10B981", "#6EE7B7", "#A7F3D0"],
+];
+
+const statsData = highlightedStats.map((stat, index) => ({
+    ...stat,
+    colors: cardColors[index % cardColors.length] || [],
+    delay: (index + 1) * 0.2,
+}));
+
+// Grid layout classes for specific cards (defined inline in component)
+
 export default function StatsSection() {
-  const { ref, isVisible, mounted } = useScrollAnimation();
-
-  // Don't animate if not mounted yet to prevent hydration issues
-  if (!mounted) {
-    return (
-      <div className="max-w-screen-xl mx-auto py-24 px-8 opacity-0">
-        {/* Skeleton content */}
-      </div>
-    );
-  }
-
   return (
-    <div
-      ref={ref}
-      className={`max-w-screen-xl mx-auto pt-12 pb-24 px-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-      {/* About Section Header */}
-      <div
-        className="text-center mb-20 transition-all duration-700"
-        style={{
-          transitionDelay: `${isVisible ? 100 : 0}ms`,
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
-        }}
-      >
-        <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4 sm:mb-6 font-light">Grok Interviews</h2>
-        <p className="text-sm sm:text-base font-serif italic text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+    <div className="w-full bg-background py-24 font-sans">
+       <div className="text-center mb-20">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4 sm:mb-6 font-light text-foreground">
+          Grok Interviews
+        </h2>
+        <p className="text-sm sm:text-base font-serif italic text-muted-foreground max-w-2xl mx-auto">
           Curated by AI<br className="hidden md:block" /> Just for You.
         </p>
       </div>
-
-      {/* Stats Display */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-0 mb-24">
-        {highlightedStats.map((stat, index) => (
-          <div
-            key={index}
-            className="flex flex-col items-center text-center border-b md:border-b-0 md:border-r md:last:border-r-0 border-gray-200 dark:border-gray-700 py-12 md:py-8 px-8 transition-all duration-700"
-            style={{
-              transitionDelay: `${isVisible ? index * 200 : 0}ms`,
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
-            }}
-          >
-            <p className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-normal mb-2 sm:mb-4 md:mb-6 tracking-tight">
-              {stat.value}
-            </p>
-            <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2 md:mt-3 whitespace-nowrap overflow-hidden text-ellipsis">
-              {stat.description}
-            </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 grow h-full gap-4 max-w-screen-xl mx-auto px-8">
+        {statsData.map((stat, index) => {
+            let className = "";
+            if (index === 0) className = "md:col-span-2";
+            if (index === 5) className = "md:col-span-3";
+          return (
+          <div key={index} className={className}>
+            <BentoCard
+              title={stat.description}
+              value={stat.value}
+              colors={stat.colors}
+              delay={stat.delay}
+            />
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );
