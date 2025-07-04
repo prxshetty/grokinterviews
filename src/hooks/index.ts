@@ -1,4 +1,8 @@
-// Export hooks for reuse across the app
+// Re-export all hooks from organized folders
+export * from './questions';
+export * from './auth';
+export * from './data';
+export * from './ui';
 
-export { useTopicData, TopicDataProvider } from './useTopicData'
-export { useImagePreloader, useImagePreload } from './use-image-preloader' 
+// Keep remaining hooks at root level
+export { toast } from './use-toast';

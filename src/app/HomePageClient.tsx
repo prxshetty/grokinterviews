@@ -6,7 +6,7 @@ import StatsSection from '@/components/home/StatsSection';
 import TopicCarousel from '@/components/home/TopicCarousel';
 import { FeatureSection } from '@/components/home/FeatureSection';
 import { StaggerTestimonials } from '@/components/ui/stagger-testimonials';
-import { useScrollAnimation } from '@/hooks/use-scroll-animation';
+import { useScrollAnimation } from '@/hooks/ui';
 
 // ExploreTopicsSection component with scroll animations
 function ExploreTopicsSection() {

@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { useScrollAnimation } from '@/hooks/use-scroll-animation';
+import { useScrollAnimation } from '@/hooks/ui';
 
 function Feature() {
   const { ref, isVisible, mounted } = useScrollAnimation();
