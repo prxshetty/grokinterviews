@@ -283,16 +283,12 @@ export default function ContentDisplay({
     return <LoadingSpinner centered text="Loading content..." />;
   }
 
-  if (selectedCategory) {
-    if (isLoading.sections) {
-      return <LoadingSpinner centered text="Loading category details..." />;
-    }
+  if (selectedCategory && categoryDetails) {
     const categoryDetailViewProps: React.ComponentProps<typeof CategoryDetailView> = {
       categoryId: selectedCategory,
       categoryDetails: categoryDetails,
     };
 
-    // Only add optional props if they have defined values
     if (highlightedQuestionId !== undefined) {
       categoryDetailViewProps.highlightedQuestionId = highlightedQuestionId;
     }

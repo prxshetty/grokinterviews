@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext, ReactNode, useRef, useCallback } from 'react';
-import TopicDataService, { TopicTree } from '@/services/TopicDataService';
+import { useState, createContext, useContext, ReactNode, useCallback } from 'react';
+import { TopicTree } from '@/services/TopicDataService';
 
 // Create a context for the topic data
 const TopicDataContext = createContext<{
@@ -11,7 +11,7 @@ const TopicDataContext = createContext<{
   refetchData: () => Promise<void>;
 }>({
   topicData: {},
-  isLoading: true,
+  isLoading: false, // Default to not loading
   error: null,
   refetchData: async () => {}
 });
@@ -21,108 +21,26 @@ export const useTopicData = () => useContext(TopicDataContext);
 
 interface TopicDataProviderProps {
   children: ReactNode;
-  initialTopicData?: TopicTree;
 }
 
-// Cache key for local storage
-const TOPIC_DATA_CACHE_KEY = 'grokInterviews_topicData';
-const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour cache
-
 export default function TopicDataProvider({
-  children,
-  initialTopicData = {}
+  children
 }: TopicDataProviderProps) {
-  const [topicData, setTopicData] = useState<TopicTree>(initialTopicData);
-  const [isLoading, setIsLoading] = useState<boolean>(() => {
-    // Start loading only if there's no initial data.
-    const hasInitialData = Object.keys(initialTopicData).length > 0;
-    return !hasInitialData;
-  });
-  const [error, setError] = useState<string | null>(null);
-  const isFetchingRef = useRef(false); // Prevents multiple concurrent API fetches
+  const [topicData] = useState<TopicTree>({});
+  const [isLoading] = useState<boolean>(false); // Data is not loaded initially
+  const [error] = useState<string | null>(null);
 
-  const performFetch = useCallback(async (mountedChecker: () => boolean) => {
-    if (isFetchingRef.current) {
-      return;
-    }
-    isFetchingRef.current = true;
-    // isLoading should already be true if this function is called by the effect.
-
-    try {
-      const data = await TopicDataService.getAllTopicData();
-      if (mountedChecker()) {
-        setTopicData(data);
-        localStorage.setItem(TOPIC_DATA_CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
-        setError(null); // Clear any previous error on successful fetch
-      }
-    } catch {
-      if (mountedChecker()) {
-        setError('Failed to load topic data from API.');
-      }
-    } finally {
-      if (mountedChecker()) {
-        setIsLoading(false); // Fetch attempt (success or failure) is complete
-      }
-      isFetchingRef.current = false;
-    }
-  }, [setTopicData, setIsLoading, setError]); // Dependencies for the fetch operation itself
-
+  // The refetchData function will now be a no-op until we decide how to refresh data on-demand.
   const refetchData = useCallback(async () => {
-    TopicDataService.clearCache(); // Clear any in-memory cache in the service
-    localStorage.removeItem(TOPIC_DATA_CACHE_KEY); // Clear local storage cache
-    
-    setTopicData({}); // Clear current data to ensure a fresh load indication
-    setError(null);   // Clear previous error
-    setIsLoading(true); // <<< This is key: Triggers the useEffect to run the load sequence
-  }, [setTopicData, setIsLoading, setError]);
+    // In the new model, refetching might be handled at a more granular level,
+    // e.g., refetching a specific domain's data. For now, this can be a placeholder.
+    console.log("Refetch triggered, but global refetch is deprecated.");
+    // Simulate a delay for now, or implement a new fetching strategy if needed.
+    await new Promise(resolve => setTimeout(resolve, 500)); 
+  }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-    const mountedChecker = () => isMounted; // Closure to check if component is still mounted
-
-    // If not currently loading, it means data is either present from initial props,
-    // or a previous load (cache/fetch) has completed.
-    if (!isLoading) {
-      return;
-    }
-
-    // If we are here, isLoading is true. This means:
-    // 1. Initial mount and initialTopicData was empty.
-    // 2. refetchData() was called, which set isLoading to true.
-    async function loadDataSequentially() {
-      // 1. Try to load from local storage cache first
-      try {
-        const cachedDataString = localStorage.getItem(TOPIC_DATA_CACHE_KEY);
-        if (cachedDataString) {
-          const cachedData = JSON.parse(cachedDataString);
-          if (Date.now() - cachedData.timestamp < CACHE_EXPIRY_MS) {
-            if (isMounted) {
-              setTopicData(cachedData.data);
-              setError(null); // Clear error if cache is used
-              setIsLoading(false); // Cache hit, loading done for this cycle.
-            }
-            return; // Exit: data loaded from cache, further steps in sequence not needed.
-          }
-        }
-      } catch {
-        // Do not set main error here; proceed to fetch if cache read fails, as fetch is the fallback.
-      }
-
-      // 2. If cache miss or stale, and we are in a loading state, perform fetch.
-      // (performFetch already checks isFetchingRef)
-      await performFetch(mountedChecker);
-      // performFetch will set isLoading to false upon completion (success or error).
-    }
-
-    loadDataSequentially();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isLoading, performFetch]);
-    // The effect's logic is primarily gated by 'isLoading'.
-    // initialTopicData is no longer used directly in this effect.
-    // Its influence on the initial 'isLoading' state is handled by the useState initializer for isLoading.
+  // The original useEffect for fetching all data is now removed.
+  // Data will be loaded by child components as needed.
 
   return (
     <TopicDataContext.Provider value={{ topicData, isLoading, error, refetchData }}>

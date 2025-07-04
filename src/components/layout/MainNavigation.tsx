@@ -43,8 +43,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   // Preload the default avatar image for instant loading
   useImagePreload(DEFAULT_AVATAR_URL, true);
 
-  // Filter out the AI domain from the navigation topics
-  const displayedNavTopics = MAIN_NAV_TOPICS.filter(topic => topic.id !== 'ai');
+  // AI domain cleanup completed - now showing all navigation topics
+  const displayedNavTopics = MAIN_NAV_TOPICS;
 
   const isTopicPage = pathname.startsWith('/topics');
   const isTopicDetailPage = isTopicPage && pathname !== '/topics';
