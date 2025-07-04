@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { UserPreferences, DEFAULT_USER_PREFERENCES } from '@/components/questions/ResourceUtils';
 
@@ -22,7 +22,7 @@ export function useUserPreferences({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     if (!isLoggedIn || !userId) {
       setPreferences(DEFAULT_USER_PREFERENCES);
       setLoading(false);
@@ -62,7 +62,7 @@ export function useUserPreferences({
     } finally {
       setLoading(false);
     }
-  };
+  }, [isLoggedIn, userId]);
 
   const updatePreferences = async (newPrefs: Partial<UserPreferences>) => {
     if (!isLoggedIn || !userId) return;
@@ -91,7 +91,7 @@ export function useUserPreferences({
 
   useEffect(() => {
     fetchPreferences();
-  }, [isLoggedIn, userId]);
+  }, [fetchPreferences]);
 
   return {
     preferences,

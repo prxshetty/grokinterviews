@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Resource, UserPreferences, TYPE_DISPLAY_ORDER, TYPE_DISPLAY_INFO } from '@/components/questions/ResourceUtils';
 
 interface UseResourceTabsProps {
@@ -31,9 +31,9 @@ export function useResourceTabs({
   const [featuredResource, setFeaturedResource] = useState<Resource | null>(null);
 
   // Group resources by type
-  const getResourcesByType = (type: string): Resource[] => {
+  const getResourcesByType = useCallback((type: string): Resource[] => {
     return resources.filter(resource => resource.type === type);
-  };
+  }, [resources]);
 
   // Create tabs based on available resources and user preferences
   const tabs = useMemo(() => {
@@ -83,7 +83,7 @@ export function useResourceTabs({
       .filter(tab => tab !== null) as ResourceTab[];
 
     return availableTabs;
-  }, [resources, preferences]);
+  }, [preferences, getResourcesByType]);
 
   // Set initial active tab
   useMemo(() => {
@@ -94,7 +94,7 @@ export function useResourceTabs({
 
   // Initialize featured resource with highest relevance score from first tab if not set
   useMemo(() => {
-    if (!featuredResource && tabs.length > 0 && tabs[0]?.resources?.length > 0) {
+    if (!featuredResource && tabs.length > 0 && tabs[0] && tabs[0].resources?.length > 0) {
       const sortedResources = [...tabs[0].resources].sort((a, b) => {
         const scoreA = a.relevance_score || 0;
         const scoreB = b.relevance_score || 0;

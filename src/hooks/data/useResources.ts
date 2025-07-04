@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { Resource, UseResourcesProps, UseResourcesReturn } from '@/types';
 import { getWebsiteFavicon, getYouTubeVideoId } from '@/types/resources.types';
@@ -15,7 +15,7 @@ export function useResources({
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     if (!questionId) {
       setError('Question ID is required.');
       setLoading(false);
@@ -73,11 +73,11 @@ export function useResources({
     } finally {
       setLoading(false);
     }
-  };
+  }, [questionId, domain, topicId, categoryId, subcategoryId]);
 
   useEffect(() => {
     fetchResources();
-  }, [questionId, domain, topicId, categoryId, subcategoryId]);
+  }, [fetchResources]);
 
   return {
     resources,

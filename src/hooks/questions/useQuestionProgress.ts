@@ -54,29 +54,52 @@ export function useQuestionProgress({
 
   useEffect(() => {
     const answerElement = answerRef.current;
-    if (!answerElement || !isExpanded || !hasAnswer) return;
+    if (!answerElement || !isExpanded || !hasAnswer || isCompleted) return;
     
-    // Type assertion to handle null ref
-    const element = answerElement as HTMLDivElement;
+    // Find the scrollable container within the answer element
+    // Try multiple selectors to find the scrollable container
+    let scrollableContainer: HTMLElement | null = null;
+    
+    // First try to find by class
+    scrollableContainer = answerElement.querySelector('.h-full.overflow-y-auto') as HTMLElement;
+    
+    // If not found, try to find any scrollable element
+    if (!scrollableContainer) {
+      scrollableContainer = answerElement.querySelector('[style*="overflow-y: auto"]') as HTMLElement;
+    }
+    
+    // If still not found, check if the answerElement itself is scrollable
+    if (!scrollableContainer) {
+      const computedStyle = window.getComputedStyle(answerElement);
+      if (computedStyle.overflowY === 'auto' || computedStyle.overflowY === 'scroll') {
+        scrollableContainer = answerElement;
+      }
+    }
+    
+    if (!scrollableContainer) {
+      console.warn('Scrollable container not found in answer element');
+      return;
+    }
 
     const calculateScrollProgress = () => {
-      if (!answerElement) return;
+      if (!scrollableContainer) return;
       
-      const totalHeight = element.scrollHeight - element.clientHeight;
+      const totalHeight = scrollableContainer.scrollHeight - scrollableContainer.clientHeight;
       let percentage: number;
       
       if (totalHeight <= 0) {
-        // Content is shorter than or fits the container
+        // Content is shorter than or fits the container - mark as completed immediately
         percentage = 100;
       } else {
-        const scrollPosition = element.scrollTop;
+        const scrollPosition = scrollableContainer.scrollTop;
         percentage = Math.min(Math.round((scrollPosition / totalHeight) * 100), 100);
       }
       
       setScrollProgress(percentage);
 
-      // Mark as completed when 90% scrolled
+      // Mark as completed when 90% scrolled and not already completed
       if (percentage >= 90 && !isCompleted && questionId) {
+        console.log(`Question ${questionId} reached ${percentage}% scroll, marking as completed`);
         setIsCompleted(true); // Optimistic UI update
         onCompletionChange?.(questionId, true, topicId, categoryId);
         toast.success("Question marked as completed!");
@@ -85,12 +108,16 @@ export function useQuestionProgress({
           .then((success) => {
             if (!success) {
               // Revert if backend update fails
+              console.error(`Failed to save completion status for question ${questionId}`);
               setIsCompleted(false);
               onCompletionChange?.(questionId, false, topicId, categoryId);
               toast.error("Failed to save completion status.");
+            } else {
+              console.log(`Successfully marked question ${questionId} as completed`);
             }
           })
-          .catch(_err => {
+          .catch((err) => {
+            console.error(`Error saving completion status for question ${questionId}:`, err);
             setIsCompleted(false); // Revert on error
             onCompletionChange?.(questionId, false, topicId, categoryId);
             toast.error("Error saving completion status.");
@@ -100,15 +127,18 @@ export function useQuestionProgress({
 
     const handleScroll = () => {
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-      scrollTimeoutRef.current = setTimeout(calculateScrollProgress, 150);
+      scrollTimeoutRef.current = setTimeout(calculateScrollProgress, 100); // Reduced debounce time for better responsiveness
     };
     
-    element.addEventListener('scroll', handleScroll, { passive: true });
-    calculateScrollProgress(); // Initial check
+    scrollableContainer.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initial check after a short delay to ensure content is rendered
+    const initialCheckTimeout = setTimeout(calculateScrollProgress, 200);
 
     return () => {
-      element.removeEventListener('scroll', handleScroll);
+      scrollableContainer?.removeEventListener('scroll', handleScroll);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      clearTimeout(initialCheckTimeout);
     };
   }, [isExpanded, hasAnswer, questionId, isCompleted, onCompletionChange, topicId, categoryId, domain, answerRef]);
 

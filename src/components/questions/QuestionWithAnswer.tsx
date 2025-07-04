@@ -124,7 +124,7 @@ function QuestionWithAnswerComponent({
     predefinedAnswer: question.answer_text || undefined
   });
 
-  const { isCompleted: isCompletedState } = useQuestionProgress({
+  const { isCompleted: isCompletedState, scrollProgress } = useQuestionProgress({
     questionId,
     topicId: actualTopicId || undefined,
     categoryId: actualCategoryId || undefined,
@@ -222,8 +222,8 @@ function QuestionWithAnswerComponent({
                 answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
                 isLoading={isGenerating}
                 error={error}
-
                 isCompleted={isCompletedState}
+                scrollProgress={scrollProgress}
               />
             </div>
           </div>

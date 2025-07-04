@@ -95,8 +95,8 @@ export function ResourceCard({
             }}
           >
             {resource.type && TYPE_DISPLAY_INFO[resource.type]?.Icon && (() => {
-              const IconComponent = TYPE_DISPLAY_INFO[resource.type].Icon;
-              return <IconComponent className="h-3 w-3 mr-1.5" />;
+              const IconComponent = TYPE_DISPLAY_INFO[resource.type]?.Icon;
+              return IconComponent ? <IconComponent className="h-3 w-3 mr-1.5" /> : null;
             })()}
             <span className="text-xs">{resource.type ? TYPE_DISPLAY_INFO[resource.type]?.title || resource.type : 'Other'}</span>
           </div>
