@@ -1,38 +1,100 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { toast } from 'sonner';
-import {CopyButton} from './CopyButton';
+// Remove unused import
+import { Copy, Check, AlertCircle, Loader2, RotateCw, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CopyButton } from './CopyButton';
+// Remove unused import
+// Theme functionality not currently used
+import remarkGfm from 'remark-gfm';
 
-// A new skeleton component for the loading state.
-function AnswerSkeleton() {
+// Default markdown components
+const defaultMarkdownComponents = {
+  // Add any default components here
+};
+
+// Code block component with copy functionality
+const CodeBlock = ({ inline, className, children, ...props }: any) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const codeRef = useRef<HTMLElement>(null);
+
+  const copyToClipboard = useCallback(() => {
+    if (codeRef.current) {
+      navigator.clipboard.writeText(codeRef.current.textContent || '');
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  }, []);
+
+  if (inline) {
+    return <code className={className} {...props} />;
+  }
+
+  // Extract language for syntax highlighting (not currently used)
+  /language-(\w+)/.exec(className || '');
+
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+    <div className="relative group">
+      <div className="absolute right-2 top-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={copyToClipboard}
+        >
+          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </Button>
+      </div>
+      <pre className="p-4 rounded-lg overflow-auto bg-gray-100 dark:bg-gray-800">
+        <code ref={codeRef} className={className} {...props}>
+          {children}
+        </code>
+      </pre>
     </div>
   );
-}
+};
 
-interface AnswerDisplayProps {
+
+
+
+
+type AnswerDisplayProps = {
   answerText: string | null;
   isLoading: boolean;
   error: string | null;
-  _scrollProgress: number;
-  isCompleted: boolean;
-  showCopyButton?: boolean;
-}
+  isCompleted?: boolean;
+  onRetry?: () => void;
+  isRetrying?: boolean;
+  // _scrollProgress is not currently used but kept for future implementation
+  // _scrollProgress?: number;
+};
+
+// Loading spinner component
+const InlineLoadingSpinner = ({ size = 'md', text = 'Loading...' }: { size?: 'sm' | 'md' | 'lg'; text?: string }) => {
+  const sizeClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-6 w-6',
+    lg: 'h-8 w-8',
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center space-y-2">
+      <div className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-500 ${sizeClasses[size]}`} />
+      {text && <span className="text-sm text-gray-500">{text}</span>}
+    </div>
+  );
+};
 
 export function AnswerDisplay({
   answerText,
   isLoading,
   error,
-  isCompleted,
-  showCopyButton = false,
+  isCompleted = false,
+  onRetry = () => {},
+  isRetrying = false,
 }: AnswerDisplayProps) {
-  const toastId = useRef<string | number | undefined>(undefined);
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
   const [contentIsScrollable, setContentIsScrollable] = useState<boolean | null>(null);
 
@@ -51,86 +113,112 @@ export function AnswerDisplay({
 
   useEffect(() => {
     if (isLoading) {
-      if (!toastId.current) {
-        toastId.current = toast.loading('Generating answer...');
-      }
       if (contentIsScrollable !== null) {
-        setContentIsScrollable( null);
+        setContentIsScrollable(null);
       }
     } else {
-      const activeToast = toastId.current;
-      if (activeToast) {
-        toast.dismiss(activeToast);
-        toastId.current = undefined;
-      }
-
       if (error) {
-        toast.error('Error Generating Answer', { description: error });
+        // Toast notifications could be re-implemented here if needed
+        // using a toast library like react-hot-toast or something similar
       } else if (answerText) {
         if (contentIsScrollable !== null) {
           if (contentIsScrollable === true) {
             if (isCompleted) {
-              toast.success('Answer reading completed!', { duration: 3000 });
+              // Toast notifications could be re-implemented here if needed
+              // using a toast library like react-hot-toast or something similar
             }
           } else {
-            toast.success('Answer reading completed!', { duration: 3000 });
+            // Toast notifications could be re-implemented here if needed
+            // using a toast library like react-hot-toast or something similar
           }
         }
       }
     }
   }, [isLoading, error, answerText, isCompleted, contentIsScrollable]);
 
-  const scrollbarStyles = {
-    '--scrollbar-track-color': '#f1f1f1',
-    '--scrollbar-thumb-color': '#c1c1c1',
-  } as React.CSSProperties;
+
 
   return (
-    <div className="relative">
-      <div
-        ref={scrollableContainerRef}
-        className="text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none h-[600px] overflow-y-auto pr-4 text-base leading-relaxed scrollbar-thin"
-        style={scrollbarStyles}
-      >
-        <style>
-          {`
-            .scrollbar-thin {
-              scrollbar-width: thin;
-              scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
-            }
-            .dark .scrollbar-thin {
-              --scrollbar-track-color: #2d3748;
-              --scrollbar-thumb-color: #4a5568;
-            }
-            .scrollbar-thin::-webkit-scrollbar {
-              width: 8px;
-            }
-            .scrollbar-thin::-webkit-scrollbar-track {
-              background: var(--scrollbar-track-color);
-              border-radius: 10px;
-            }
-            .scrollbar-thin::-webkit-scrollbar-thumb {
-              background-color: var(--scrollbar-thumb-color);
-              border-radius: 10px;
-              border: 2px solid var(--scrollbar-track-color);
-            }
-          `}
-        </style>
-        {isLoading ? (
-          <AnswerSkeleton />
-        ) : error ? (
-          <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-600/50">
-            <p className="text-sm font-medium text-red-700 dark:text-red-300">Error Generating Answer</p>
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">{error}</p>
+    <div className="h-full overflow-y-auto">
+      {isLoading ? (
+        <div className="h-full flex items-center justify-center">
+          <InlineLoadingSpinner size="lg" text="Generating answer..." />
+        </div>
+      ) : error ? (
+        <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+          <AlertCircle className="h-10 w-10 text-red-500 mb-4" />
+          <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-2">
+            Failed to generate answer
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {typeof error === 'string' ? error : 'An unknown error occurred while generating the answer.'}
+          </p>
+          <Button
+            variant="outline"
+            onClick={onRetry}
+            disabled={isRetrying || isLoading}
+            className="mt-2"
+          >
+            {isRetrying || isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RotateCw className="mr-2 h-4 w-4" />
+            )}
+            {isRetrying || isLoading ? 'Retrying...' : 'Retry'}
+          </Button>
+        </div>
+      ) : answerText ? (
+        <div className="h-full flex flex-col">
+          <div className="relative">
+            <div className="absolute top-2 right-2 z-10">
+              <CopyButton 
+                textToCopy={answerText}
+                className="h-8 w-8 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 shadow-sm"
+              />
+            </div>
           </div>
-        ) : answerText ? (
-          <div className="markdown-content">
-            <ReactMarkdown>{answerText}</ReactMarkdown>
+          <div className="prose prose-sm dark:prose-invert max-w-none p-4 flex-1">
+            <ReactMarkdown
+              components={{
+                ...defaultMarkdownComponents,
+                code: CodeBlock,
+                pre: ({ children }) => <>{children}</>, // Prevent default pre styling
+                a: (props) => (
+                  <a 
+                    {...props} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                  />
+                ),
+              }}
+              remarkPlugins={[remarkGfm]}
+            >
+              {answerText}
+            </ReactMarkdown>
           </div>
-        ) : (
-          <p className="italic text-gray-500">The answer will appear here once generated.</p>
-        )}
-      </div>
+          
+          {isCompleted && (
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                Answer generated by GrokInterviews AI
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+          <MessageSquare className="h-10 w-10 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            No answer yet
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {isCompleted 
+              ? 'No answer was generated for this question.' 
+              : 'Click the "Generate Answer" button to get started.'}
+          </p>
+        </div>
+      )}
     </div>
   );
 } 

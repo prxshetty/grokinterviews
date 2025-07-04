@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { useImagePreload } from '@/hooks';
+import { useImagePreloader } from '@/hooks';
 import { LogOut, User as UserIcon, Menu, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -41,7 +41,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   const { user, profile, signOut } = useAuth();
 
   // Preload the default avatar image for instant loading
-  useImagePreload(DEFAULT_AVATAR_URL, true);
+  useImagePreloader([DEFAULT_AVATAR_URL], true);
 
   // AI domain cleanup completed - now showing all navigation topics
   const displayedNavTopics = MAIN_NAV_TOPICS;

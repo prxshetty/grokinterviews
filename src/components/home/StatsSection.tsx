@@ -1,6 +1,6 @@
 'use client';
 
-import { useScrollAnimation } from '@/hooks/use-scroll-animation';
+import { useScrollAnimation } from '@/hooks/ui';
 import { highlightedStats } from './content';
 
 // Note: We're using curated stats for the minimalist design

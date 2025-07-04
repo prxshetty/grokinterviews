@@ -10,7 +10,7 @@ import {
 } from '@/components/topics-ui';
 import ProgressSaver from '@/components/utils/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
-import { useFilterLogic } from '@/hooks/use-filter-logic.hook';
+import { useFilterLogic } from '@/hooks/data';
 import { fetchDomainProgress, fetchCategoryProgress } from '@/app/utils/progress';
 import { LoadingSpinner } from '@/components/ui';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';

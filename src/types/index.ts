@@ -1,0 +1,8 @@
+// Central type exports
+export * from './hooks.types';
+export * from './dashboard.types';
+export * from './database.types';
+
+// Explicitly export specific types to avoid conflicts
+export type { CategoryItem, CategoryProgress, ProgressData, SubtopicProgress, TopicItem } from './topic-page.types';
+export type { QuestionType } from './topics';

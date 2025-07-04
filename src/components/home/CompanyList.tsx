@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useScrollAnimation } from '@/hooks/use-scroll-animation';
+import { useScrollAnimation } from '@/hooks/ui';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
