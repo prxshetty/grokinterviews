@@ -2,7 +2,7 @@
 
 import { Input } from '@/components/ui'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { useImagePreload } from '@/hooks'
+import { useImagePreloader } from '@/hooks'
 import { DEFAULT_AVATAR_URL } from '@/config'
 import type { ReactElement } from 'react'; // Import ReactElement
 
@@ -32,7 +32,7 @@ export function PersonalInfoSection({
   renderSaveChangesButton,
 }: PersonalInfoSectionProps) {
   // Preload the default avatar image for instant loading
-  useImagePreload(DEFAULT_AVATAR_URL, true)
+  useImagePreloader([DEFAULT_AVATAR_URL], true)
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">

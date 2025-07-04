@@ -33,8 +33,7 @@ export function ResourceList({
   topicId, 
   categoryId, 
   subcategoryId, 
-  isResourcesVisible = true, 
-  onResourcesVisibilityChange 
+  isResourcesVisible = true 
 }: ResourceListProps) {
   // Modal state
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);

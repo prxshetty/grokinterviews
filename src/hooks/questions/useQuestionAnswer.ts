@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 
 interface UseQuestionAnswerProps {
@@ -51,7 +51,7 @@ export function useQuestionAnswer({
     }
   }, [error, domain, retryCount]);
 
-  const generateAnswer = async () => {
+  const generateAnswer = useCallback(async () => {
     // Prevent duplicate calls
     if (isGenerating || generatedAnswer || generationAttemptedRef.current) return;
     
@@ -96,7 +96,7 @@ export function useQuestionAnswer({
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [questionText, questionId, topicId, categoryId, isGenerating, generatedAnswer]);
 
   const retryGeneration = () => {
     generationAttemptedRef.current = false;

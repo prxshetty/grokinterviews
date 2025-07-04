@@ -194,14 +194,12 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
       }
 
       if (categoryId.startsWith('header-')) {
-        const sectionId = categoryId.replace('header-', '');
-        
         // Find the section name from topicCategories for display purposes.
         const section = topicCategories.find(c => c.id === categoryId);
         const sectionName = section ? section.label : 'Section';
 
-        // Fetch topics using the robust, ID-based service method.
-        const topicsInSection = await TopicDataService.getTopicsBySection(domain, sectionId);
+        // Fetch topics using the section name, not the ID
+        const topicsInSection = await TopicDataService.getTopicsBySection(domain, sectionName);
         
         const sectionData: TopicItem = {
           label: sectionName,

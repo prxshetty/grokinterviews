@@ -14,11 +14,11 @@ interface DomainCompletionWidgetProps {
 
 export default function DomainCompletionWidget({ domainStats }: DomainCompletionWidgetProps) {
   const getProgressBarColor = (percentage: number) => {
-    if (percentage >= 80) return 'bg-green-500 dark:bg-green-600';
-    if (percentage >= 60) return 'bg-blue-500 dark:bg-blue-600';
-    if (percentage >= 40) return 'bg-yellow-500 dark:bg-yellow-600';
-    if (percentage >= 20) return 'bg-orange-500 dark:bg-orange-600';
-    return 'bg-red-500 dark:bg-red-600';
+    if (percentage >= 80) return 'bg-primary dark:bg-primary'; // Black/White - High completion
+    if (percentage >= 60) return 'bg-secondary dark:bg-secondary'; // Blue - Good progress
+    if (percentage >= 40) return 'bg-gray-600 dark:bg-gray-400'; // Gray - Moderate progress
+    if (percentage >= 20) return 'bg-gray-500 dark:bg-gray-500'; // Lighter gray - Some progress
+    return 'bg-gray-400 dark:bg-gray-600'; // Light gray - Minimal progress
   };
 
   return (
@@ -44,7 +44,7 @@ export default function DomainCompletionWidget({ domainStats }: DomainCompletion
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Start learning to see your progress</p>
           <Link 
             href="/topics" 
-            className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-md transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-medium rounded-md transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
