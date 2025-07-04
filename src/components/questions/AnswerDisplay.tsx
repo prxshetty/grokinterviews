@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
+import {CopyButton} from './CopyButton';
 
 // A new skeleton component for the loading state.
 function AnswerSkeleton() {
@@ -21,6 +22,7 @@ interface AnswerDisplayProps {
   error: string | null;
   _scrollProgress: number;
   isCompleted: boolean;
+  showCopyButton?: boolean;
 }
 
 export function AnswerDisplay({
@@ -28,6 +30,7 @@ export function AnswerDisplay({
   isLoading,
   error,
   isCompleted,
+  showCopyButton = false,
 }: AnswerDisplayProps) {
   const toastId = useRef<string | number | undefined>(undefined);
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
@@ -52,7 +55,7 @@ export function AnswerDisplay({
         toastId.current = toast.loading('Generating answer...');
       }
       if (contentIsScrollable !== null) {
-        setContentIsScrollable(null);
+        setContentIsScrollable( null);
       }
     } else {
       const activeToast = toastId.current;
