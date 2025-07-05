@@ -6,10 +6,10 @@ import { InlineLoadingSpinner } from '@/components/ui';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
 
 import { ResourcePreview } from './ResourcePreview';
 import { ResourceCard } from './ResourceCard';
-import { ResourceModal } from './ResourceModal';
 
 // Import custom hooks
 import { useResources, useResourceTabs } from '@/hooks/data';
@@ -35,12 +35,13 @@ export function ResourceList({
   subcategoryId, 
   isResourcesVisible = true 
 }: ResourceListProps) {
-  // Modal state
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  // UI state for scroll navigation
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+  const isTabletOrSmaller = useIsTabletOrSmaller();
 
   // Scroll functions
   const scrollLeft = () => {
@@ -153,8 +154,8 @@ export function ResourceList({
 
   return (
     <div className="w-full">
-      {/* Tab Navigation */}
-      <div className="mb-6">
+      {/* Tab Navigation - More compact on mobile */}
+      <div className={isMobile ? 'mb-4' : 'mb-6'}>
         <TabNav
           items={tabs.map(tab => ({
             id: tab.type,
@@ -169,20 +170,24 @@ export function ResourceList({
       {/* Resources Section - Conditionally Rendered */}
       {isResourcesVisible && (
         <>
-          {/* Featured Resource Preview */}
+          {/* Featured Resource Preview - Optimized for iPad */}
           {featuredResource && (
-            <div className="mb-4 -mt-4">
+            <div className={isMobile ? 'mb-3 -mt-2' : 'mb-4 -mt-4'}>
               <ResourcePreview
                 resource={featuredResource}
-                onResourceClick={() => setSelectedResource(featuredResource)}
+                onResourceClick={() => {
+                  if (featuredResource.url) {
+                    window.open(featuredResource.url, '_blank', 'noopener,noreferrer');
+                  }
+                }}
               />
             </div>
           )}
 
-          {/* Resource Grid - Horizontal Scrolling with Arrows */}
+          {/* Resource Grid - Clean horizontal scrolling with navigation buttons */}
           {activeTab && (
             <div className="relative">
-              {/* Left Arrow */}
+              {/* Left Navigation Button - now always visible if needed */}
               {showLeftArrow && (
                 <Button
                   variant="ghost"
@@ -194,7 +199,7 @@ export function ResourceList({
                 </Button>
               )}
               
-              {/* Right Arrow */}
+              {/* Right Navigation Button - now always visible if needed */}
               {showRightArrow && (
                 <Button
                   variant="ghost"
@@ -214,7 +219,7 @@ export function ResourceList({
               >
                 <LayoutGroup>
                   <motion.div
-                    className="flex gap-4 pb-2"
+                    className={`flex gap-4 ${isMobile ? 'pb-1' : 'pb-2'}`}
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -225,7 +230,7 @@ export function ResourceList({
                         key={`${resource.id}-${index}`}
                         variants={itemVariants}
                         layout
-                        className="flex-shrink-0 w-64"
+                        className={`flex-shrink-0 ${isMobile ? 'w-56' : 'w-64'}`}
                       >
                         <ResourceCard
                           resource={resource}
@@ -240,14 +245,6 @@ export function ResourceList({
             </div>
           )}
         </>
-      )}
-
-      {/* Resource Modal */}
-      {selectedResource && (
-        <ResourceModal
-          resource={selectedResource}
-          onClose={() => setSelectedResource(null)}
-        />
       )}
     </div>
   );

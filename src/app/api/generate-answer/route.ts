@@ -44,13 +44,20 @@ const apiKeys: string[] = [];
 const numApiKeysEnv = process.env.NUM_GROQ_API_KEYS;
 const numApiKeys = numApiKeysEnv ? parseInt(numApiKeysEnv, 10) : 0;
 
+console.log(`🔑 API Key Configuration: NUM_GROQ_API_KEYS=${numApiKeys}`);
+
 if (numApiKeys > 0) {
   for (let i = 0; i < numApiKeys; i++) {
     const key = process.env[`GROQ_API_KEY_${i}`];
-    if (key) apiKeys.push(key);
-    else console.warn(`generate-answer: GROQ_API_KEY_${i} not set.`);
+    if (key) {
+      apiKeys.push(key);
+    } else {
+      console.warn(`generate-answer: GROQ_API_KEY_${i} not set.`);
+    }
   }
 }
+
+console.log(`🔑 Total API keys loaded: ${apiKeys.length}`);
 if (apiKeys.length === 0) console.error('CRITICAL: No Groq API keys configured. Set GROQ_API_KEY_0... and NUM_GROQ_API_KEYS.');
 
 const KV_KEY_GROQ_API_INDEX = 'groq_api_key_index_v1';
@@ -90,8 +97,8 @@ async function getNextGroqApiKey(): Promise<string | null> {
       }
       
       // Update index for next request
-      await kv.set(KV_KEY_GROQ_API_INDEX, (currentIndex + 1) % apiKeys.length);
-      console.log(`Using Groq API key ${currentIndex} (KV-based rotation)`);
+      const nextIndex = (currentIndex + 1) % apiKeys.length;
+      await kv.set(KV_KEY_GROQ_API_INDEX, nextIndex);
       return apiKeyToUse;
     } else {
       // Local development: Use in-memory rotation
@@ -105,8 +112,8 @@ async function getNextGroqApiKey(): Promise<string | null> {
       }
       
       // Update index for next request (in-memory)
-      localApiKeyIndex = (localApiKeyIndex + 1) % apiKeys.length;
-      console.log(`Using Groq API key ${currentIndex} (local rotation)`);
+      const nextIndex = (localApiKeyIndex + 1) % apiKeys.length;
+      localApiKeyIndex = nextIndex;
       return apiKeyToUse;
     }
   } catch (error) {

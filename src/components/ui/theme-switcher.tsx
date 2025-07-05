@@ -73,6 +73,10 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
                   : 'text-muted-foreground/60 hover:text-muted-foreground/90 dark:text-muted-foreground dark:hover:text-foreground/90 hover:scale-105'
               )}
             />
+            {/* BETA badge for dark mode */}
+            {key === 'dark' && (
+              <span className="absolute -top-1.5 -right-5.5 inline-flex items-center rounded-full px-1 py-0.5 text-[8px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/30 to-purple-500/30 text-cyan-700 dark:text-cyan-200 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm select-none pointer-events-none" style={{lineHeight: '1.1'}}>BETA</span>
+            )}
           </button>
         );
       })}

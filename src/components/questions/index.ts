@@ -1,7 +1,10 @@
-export * from './QuestionWithAnswer';
+export * from './AnswerDisplay';
 export * from './BookmarkButton';
-export * from './ResourcePreview';
+export * from './CopyButton';
+export * from './DifficultyTag';
+export * from './QuestionWithAnswer';
 export * from './ResourceCard';
-export * from './ResourceModal';
 export * from './ResourceListRefactored';
+export * from './ResourcePreview';
+export * from './ResourceUtils';
 // ResourceList is now lazy loaded internally in QuestionWithAnswer - not exported directly

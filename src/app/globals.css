@@ -47,7 +47,6 @@
   --destructive-foreground: 210 40% 98%;
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 13 95% 58%;
   --radius: 0.5rem;
   
   /* Chart Colors */
@@ -95,7 +94,6 @@
   --destructive-foreground: 210 40% 98%;
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
-  --ring: 13 95% 58%;
   
   /* Chart Colors - Dark Mode */
   --chart-1: 220 13% 69%;
@@ -167,12 +165,6 @@ p {
 /* Button styling */
 button {
   transition: all 0.2s ease;
-}
-
-button:focus {
-  outline: none;
-  ring: 2px;
-  ring-color: var(--primary-color);
 }
 
 /* Tailwind prose overrides for better markdown rendering */

@@ -2,12 +2,11 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-// Remove unused import
 import { Copy, Check, AlertCircle, Loader2, RotateCw, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from './CopyButton';
-// Remove unused import
-// Theme functionality not currently used
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
 import remarkGfm from 'remark-gfm';
 
 // Default markdown components
@@ -56,10 +55,6 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
   );
 };
 
-
-
-
-
 type AnswerDisplayProps = {
   answerText: string | null;
   isLoading: boolean;
@@ -68,22 +63,6 @@ type AnswerDisplayProps = {
   onRetry?: () => void;
   isRetrying?: boolean;
   scrollProgress?: number;
-};
-
-// Loading spinner component
-const InlineLoadingSpinner = ({ size = 'md', text = 'Loading...' }: { size?: 'sm' | 'md' | 'lg'; text?: string }) => {
-  const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8',
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center space-y-2">
-      <div className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-500 ${sizeClasses[size]}`} />
-      {text && <span className="text-sm text-gray-500">{text}</span>}
-    </div>
-  );
 };
 
 export function AnswerDisplay({
@@ -97,6 +76,8 @@ export function AnswerDisplay({
 }: AnswerDisplayProps) {
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
   const [contentIsScrollable, setContentIsScrollable] = useState<boolean | null>(null);
+  const isMobile = useIsMobile();
+  const isTabletOrSmaller = useIsTabletOrSmaller();
 
   // Debug logging for progress bar
   useEffect(() => {
@@ -148,13 +129,14 @@ export function AnswerDisplay({
     }
   }, [isLoading, error, answerText, isCompleted, contentIsScrollable]);
 
-
+  // Determine if progress bar should be shown
+  const shouldShowProgress = !isCompleted && scrollProgress >= 0 && scrollProgress < 90;
 
   return (
     <div className="h-full overflow-y-auto">
       {isLoading ? (
         <div className="h-full flex items-center justify-center">
-          <InlineLoadingSpinner size="lg" text="Generating answer..." />
+          <LoadingSpinner size="lg" text="Generating answer..." />
         </div>
       ) : error ? (
         <div className="h-full flex flex-col items-center justify-center p-6 text-center">
@@ -181,9 +163,13 @@ export function AnswerDisplay({
         </div>
       ) : answerText ? (
         <div className="h-full flex flex-col relative">
-          {/* Fixed progress bar at bottom of viewport */}
-          {!isCompleted && scrollProgress >= 0 && scrollProgress < 90 && (
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 py-2">
+          {/* Progress bar - positioned differently for mobile vs desktop */}
+          {shouldShowProgress && (
+            <div className={`${
+              isTabletOrSmaller 
+                ? 'sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2'
+                : 'fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 py-2'
+            }`}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   Reading: {Math.round(scrollProgress)}%
@@ -227,8 +213,8 @@ export function AnswerDisplay({
             </ReactMarkdown>
           </div>
           
-          {/* Add bottom padding when progress bar is visible to prevent content overlap */}
-          {!isCompleted && scrollProgress >= 0 && scrollProgress < 90 && (
+          {/* Add bottom padding when progress bar is visible at bottom (desktop only) */}
+          {!isTabletOrSmaller && shouldShowProgress && (
             <div className="h-16" />
           )}
           
