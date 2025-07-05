@@ -34,6 +34,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Critical Resource Hints for Homepage LCP Optimization */}
+        
+        {/* Preload critical fonts for LCP h1 element */}
+        <link 
+          rel="preload" 
+          href="/_next/static/media/GeistVF.woff2" 
+          as="font" 
+          type="font/woff2" 
+          crossOrigin="anonymous"
+        />
+        
+        {/* Preconnect only for homepage company logos */}
+        <link rel="preconnect" href="https://upload.wikimedia.org" />
+        <link rel="preconnect" href="https://html.tailus.io" />
+        
+        {/* DNS prefetch for analytics (minimal impact) */}
+        <link rel="dns-prefetch" href="https://vitals.vercel-analytics.com" />
+      </head>
       <body className={cn(
         'min-h-screen bg-white dark:bg-black font-sans antialiased',
         GeistSans.variable,

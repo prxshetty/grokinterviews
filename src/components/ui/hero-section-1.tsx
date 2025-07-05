@@ -50,13 +50,14 @@ export function HeroSection() {
                                         </div>
                                     </div>
                                 </Link>
+                            </AnimatedGroup>
                     
-                                <h1
-                                    className="mt-6 sm:mt-8 max-w-4xl mx-auto text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[5.25rem] lg:mt-16 font-semibold leading-tight">
-                                    Your Complete Platform for Interviews
-                                </h1>
-                                <p
-                                    className="mx-auto mt-4 sm:mt-6 md:mt-8 max-w-2xl text-balance text-base sm:text-lg text-muted-foreground px-4 sm:px-0">
+                            <h1 className="mt-6 sm:mt-8 max-w-4xl mx-auto text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[5.25rem] lg:mt-16 font-semibold leading-tight">
+                                Your Complete Platform for Interviews
+                            </h1>
+                            
+                            <AnimatedGroup variants={transitionVariants}>
+                                <p className="mx-auto mt-4 sm:mt-6 md:mt-8 max-w-2xl text-balance text-base sm:text-lg text-muted-foreground px-4 sm:px-0">
                                     Master interview questions across AI, Web Development, System Design, and more. Get AI-powered explanations and track your progress in real-time.
                                 </p>
                             </AnimatedGroup>
