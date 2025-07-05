@@ -6,7 +6,7 @@ import { ChevronUp } from 'lucide-react';
 
 // Import custom hooks
 import { useQuestionAnswer, useQuestionProgress, useQuestionBookmark, useQuestionView } from '@/hooks/questions';
-import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
+import { useIsTabletOrSmaller } from '@/hooks/ui';
 
 // Import the new accordion components
 import {
@@ -94,7 +94,6 @@ function QuestionWithAnswerComponent({
   const [isResourcesVisible, setIsResourcesVisible] = useState(true);
   const [activeTab, setActiveTab] = useState('answer'); // 'answer' or 'resources'
   const answerRef = useRef<HTMLDivElement | null>(null);
-  const isMobile = useIsMobile();
   const isTabletOrSmaller = useIsTabletOrSmaller();
 
   // Computed values

@@ -6,7 +6,7 @@ import { Copy, Check, AlertCircle, Loader2, RotateCw, MessageSquare } from 'luci
 import { Button } from '@/components/ui/button';
 import { CopyButton } from './CopyButton';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
+import { useIsTabletOrSmaller } from '@/hooks/ui';
 import remarkGfm from 'remark-gfm';
 
 // Default markdown components
@@ -76,7 +76,6 @@ export function AnswerDisplay({
 }: AnswerDisplayProps) {
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
   const [contentIsScrollable, setContentIsScrollable] = useState<boolean | null>(null);
-  const isMobile = useIsMobile();
   const isTabletOrSmaller = useIsTabletOrSmaller();
 
   // Debug logging for progress bar
