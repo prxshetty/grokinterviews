@@ -57,6 +57,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     return null;
   };
 
+  // Get the current domain and its display name
+  const currentDomain = extractDomainFromPath(pathname, 'topics');
+  const currentDomainLabel = currentDomain ? 
+    displayedNavTopics.find(topic => topic.id === currentDomain)?.label || 'Topics' : 
+    'Topics';
+
   const handleTopicsLinkClick = useCallback(() => {
     setIsMobileMenuOpen(false);
   }, [setIsMobileMenuOpen]);
@@ -198,7 +204,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                             onClick={handleTopicsLinkClick}
                             className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
                           >
-                            Topics
+                            {currentDomainLabel}
                           </Link>
                         </SheetClose>
                         {user && (
@@ -233,7 +239,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                           </Link>
                         </SheetClose>
 
-                        {isTopicPage && (
+                        {isTopicPage && currentDomain && (
                           <div className="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
                             <p className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-4">
                               Switch Subject Area
@@ -376,7 +382,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                       onClick={handleTopicsLinkClick}
                       className="text-muted-foreground hover:text-accent-foreground block duration-150"
                     >
-                      <span>Topics</span>
+                      <span>{currentDomainLabel}</span>
                     </Link>
                   </li>
                   {user && (
