@@ -48,6 +48,8 @@ export default function MainNavigation({ children }: { children: React.ReactNode
 
   const isTopicPage = pathname.startsWith('/topics');
   const isTopicDetailPage = isTopicPage && pathname !== '/topics';
+  const isHomePage = pathname === '/';
+  const isAuroraPage = pathname === '/about' || pathname === '/signin';
 
   const extractDomainFromPath = (path: string, section: 'topics') => {
     const parts = path.split('/');
@@ -157,12 +159,18 @@ export default function MainNavigation({ children }: { children: React.ReactNode
         >
           <div
             className={cn(
-              'mx-auto mt-2 max-w-6xl px-6 transition-all duration-300 lg:px-12',
-              isScrolled &&
-                'bg-background/50 max-w-4xl rounded-2xl border backdrop-blur-lg lg:px-5',
+              'mx-auto mt-2 transition-all duration-300',
+              isScrolled 
+                ? 'max-w-4xl px-6 lg:px-5 bg-background/50 rounded-2xl border backdrop-blur-lg'
+                : 'max-w-full px-6 lg:px-12 bg-transparent'
             )}
           >
-            <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
+            <div className={cn(
+              "relative flex flex-wrap items-center gap-6 py-3 lg:gap-0 lg:py-4",
+              isScrolled 
+                ? "justify-between"
+                : "justify-between lg:w-full"
+            )}>
               <div className="flex w-full justify-between lg:w-auto">
                 <div className="flex items-center space-x-2">
                   {logoElement}
@@ -185,7 +193,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   </SheetTrigger>
                   <SheetContent
                     side="right"
-                    className="w-full bg-white dark:bg-black border-none p-0 flex flex-col h-full"
+                    className="w-full bg-background/80 dark:bg-background/80 border-none p-0 flex flex-col h-full backdrop-blur-xl"
                   >
                     {/* Header with logo */}
                     <div className="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-800">
@@ -216,6 +224,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                 className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
                               >
                                 Dashboard
+                                <span className="ml-2 inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                                  BETA
+                                </span>
                               </Link>
                             </SheetClose>
                             <SheetClose asChild>
@@ -374,7 +385,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 </Sheet>
               </div>
 
-              <div className="absolute inset-0 m-auto hidden size-fit lg:block">
+              <div className={cn(
+                "hidden lg:block",
+                isScrolled 
+                  ? "absolute inset-0 m-auto size-fit"
+                  : "lg:flex-1 lg:justify-center lg:flex"
+              )}>
                 <ul className="flex gap-8 text-sm">
                   <li>
                     <Link
@@ -392,7 +408,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                           href="/dashboard"
                           className="text-muted-foreground hover:text-accent-foreground block duration-150"
                         >
-                          <span>Dashboard</span>
+                          <span className="flex items-center">
+                            Dashboard
+                            <span className="ml-2 inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                              BETA
+                            </span>
+                          </span>
                         </Link>
                       </li>
                       <li>
@@ -416,7 +437,10 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 </ul>
               </div>
 
-              <div className="hidden lg:flex flex-wrap items-center justify-end">
+              <div className={cn(
+                "hidden lg:flex flex-wrap items-center",
+                isScrolled ? "justify-end" : "justify-end lg:ml-auto"
+              )}>
                 {user ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -448,7 +472,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                     <DropdownMenuContent
                       align="end"
                       sideOffset={8}
-                      className="w-56 bg-white/80 dark:bg-black/80 backdrop-blur-md border border-border/50 shadow-lg rounded-lg overflow-hidden p-1.5 mt-1"
+                      className="w-56 bg-background/80 dark:bg-background/80 backdrop-blur-xl border border-border/50 shadow-lg rounded-lg overflow-hidden p-1.5 mt-1"
                     >
                       <DropdownMenuLabel className="p-3 pb-2 border-b border-border/20">
                         <div className="space-y-0.5">
@@ -513,12 +537,14 @@ export default function MainNavigation({ children }: { children: React.ReactNode
         </nav>
       </header>
 
-      <div style={{ paddingTop: '80px' }}>
+      <div style={{ paddingTop: isHomePage || isAuroraPage ? '0px' : '80px' }}>
         <main
           className={
-            isTopicDetailPage
+            isHomePage
+              ? 'w-full'
+              : isTopicDetailPage
               ? 'w-full px-4 sm:px-8 py-8'
-              : 'w-full px-4 sm:px-8'
+              : 'w-full'
           }
         >
           {children}

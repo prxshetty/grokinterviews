@@ -18,7 +18,7 @@ function ConfirmContent() {
     const success = searchParams.get('success');
     const error = searchParams.get('error');
     const code = searchParams.get('code'); // From Supabase's built-in verification flow
-    const next = searchParams.get('next') || '/dashboard';
+    const next = searchParams.get('next') || '/topics';
 
     console.log('Confirmation page params:', {
       success,
@@ -31,7 +31,7 @@ function ConfirmContent() {
     // If user is already signed in (from Supabase's verification), show success
     if (user && (success === 'true' || code)) {
       setStatus('success');
-      setMessage('Email confirmed successfully! Redirecting to your dashboard...');
+      setMessage('Email confirmed successfully! Redirecting to topics...');
       setTimeout(() => {
         console.log('Redirecting to:', next);
         router.push(next);
@@ -47,7 +47,7 @@ function ConfirmContent() {
       setTimeout(() => {
         if (user) {
           setStatus('success');
-          setMessage('Email confirmed successfully! Redirecting to your dashboard...');
+          setMessage('Email confirmed successfully! Redirecting to topics...');
           setTimeout(() => {
             router.push(next);
           }, 1000);
@@ -61,7 +61,7 @@ function ConfirmContent() {
 
     if (success === 'true') {
       setStatus('success');
-      setMessage('Email confirmed successfully! Redirecting to your dashboard...');
+      setMessage('Email confirmed successfully! Redirecting to topics...');
       setTimeout(() => {
         console.log('Redirecting to:', next);
         router.push(next);
@@ -129,7 +129,7 @@ function ConfirmContent() {
             {message}
           </p>
           <Button asChild size="lg">
-            <Link href="/dashboard">Go to Dashboard</Link>
+            <Link href="/topics">Go to Topics</Link>
           </Button>
         </>
       )}

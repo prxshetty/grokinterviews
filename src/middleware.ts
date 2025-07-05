@@ -52,7 +52,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Check if the request is for a protected route
-    const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard');
+    const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard') || req.nextUrl.pathname.startsWith('/topics');
     const isAuthRoute = req.nextUrl.pathname.startsWith('/auth') || req.nextUrl.pathname.startsWith('/signin');
     const isConfirmRoute = req.nextUrl.pathname === '/auth/confirm';
 
@@ -70,7 +70,7 @@ export async function middleware(req: NextRequest) {
 
     // If trying to access other auth routes while logged in
     if (isAuthRoute && user) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+      return NextResponse.redirect(new URL('/topics', req.url));
     }
   } catch (error) {
     // If there's an error with authentication, allow the request to continue
@@ -83,5 +83,5 @@ export async function middleware(req: NextRequest) {
 
 // Specify which routes this middleware should run on
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth/:path*', '/signin'],
+  matcher: ['/dashboard/:path*', '/topics/:path*', '/auth/:path*', '/signin'],
 };

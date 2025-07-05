@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
           console.log('Default preferences created successfully for OAuth user:', user.id)
         }
       }
-      return NextResponse.redirect(`${origin}/dashboard`)
+      return NextResponse.redirect(`${origin}/topics`)
     }
     console.error('Error exchanging code for session:', error)
     return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${error.message}`);

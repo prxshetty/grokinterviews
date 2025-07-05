@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         }
       }
       // Successful authentication and profile check/creation
-      return NextResponse.redirect(`${origin}/dashboard`) // Redirect to dashboard or a user-defined 'next' path
+      return NextResponse.redirect(`${origin}/topics`) // Redirect to topics or a user-defined 'next' path
     }
     console.error('Error exchanging code for session:', error)
     return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${error.message}`);

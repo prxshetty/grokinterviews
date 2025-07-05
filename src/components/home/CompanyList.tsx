@@ -141,7 +141,12 @@ export default function ResourceCarousel() {
       ref={ref}
       className={`mt-20 mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
-      <div className="group relative m-auto max-w-5xl px-6 mb-8">
+      <div className="relative m-auto max-w-5xl px-6 mb-8">
+        <h2 className="text-2xl md:text-3xl font-normal text-center">
+          Curated Resources for Engineers
+        </h2>
+      </div>
+      <div className="group w-full overflow-hidden relative">
         <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
           <Link
             href="/about"
@@ -151,11 +156,6 @@ export default function ResourceCarousel() {
             <ChevronRight className="ml-1 inline-block size-3" />
           </Link>
         </div>
-        <h2 className="text-2xl md:text-3xl font-normal text-center group-hover:blur-sm transition-all duration-500">
-          Curated Resources for Engineers
-        </h2>
-      </div>
-      <div className="w-full overflow-hidden">
         {/* Container with padding to ensure smooth transition */}
         <div className="relative py-2">
 
@@ -164,7 +164,7 @@ export default function ResourceCarousel() {
           <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-black dark:via-black/80 dark:to-transparent z-10"></div>
 
           {/* Main carousel with animation */}
-          <div className="flex whitespace-nowrap animate-scroll-smooth" style={{ transform: 'translateZ(0)' }}>
+          <div className="flex whitespace-nowrap animate-scroll-smooth group-hover:blur-sm transition-all duration-500" style={{ transform: 'translateZ(0)' }}>
             {/* Duplicate resources for infinite scroll effect */}
             {[...resources, ...resources].map((resource, index) => (
               <div

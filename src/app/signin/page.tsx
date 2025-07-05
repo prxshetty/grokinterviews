@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { AuroraBackground } from '@/components/ui/aurora-background';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -40,7 +41,7 @@ function SignInForm() {
       // PRODUCTION FIX: Use window.location.href for more reliable redirect
       // This ensures the middleware runs with the updated session
       const timer = setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/topics';
       }, 100); // Small delay to ensure auth state is fully synchronized
       
       return () => clearTimeout(timer);
@@ -206,7 +207,7 @@ function SignInForm() {
             if (verifyData?.user) {
               // Force a full page navigation instead of client-side routing
               // This ensures the middleware runs with the updated session
-              window.location.href = '/dashboard';
+              window.location.href = '/topics';
             } else {
               // Fallback: refresh auth and let useEffect handle redirect
               await refreshAuth();
@@ -506,14 +507,19 @@ function SignInForm() {
 
 export default function SignIn() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          Loading...
+    <AuroraBackground>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center px-4">
+        <div className="w-full max-w-sm space-y-8">
+          <Suspense fallback={
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+            </div>
+          }>
+            <SignInForm />
+          </Suspense>
         </div>
-      }
-    >
-      <SignInForm />
-    </Suspense>
+      </div>
+    </AuroraBackground>
   );
 }

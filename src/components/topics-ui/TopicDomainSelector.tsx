@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Sparkles, Brain, Network, Code, Globe, Users, BookOpen, FolderOpen } from 'lucide-react';
+import {Users, BookOpen, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DomainStats {
@@ -15,7 +15,6 @@ interface DomainStats {
 interface DomainOption {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
   description: string;
   color: string;
   gradient: string;
@@ -126,7 +125,6 @@ const DOMAIN_OPTIONS: DomainOption[] = [
   {
     id: 'ai',
     label: 'Artificial Intelligence',
-    icon: Brain,
     description: 'AI concepts, algorithms, and applications',
     color: 'text-purple-600 dark:text-purple-400',
     gradient: 'from-purple-500 to-purple-600',
@@ -136,7 +134,6 @@ const DOMAIN_OPTIONS: DomainOption[] = [
   {
     id: 'ml',
     label: 'Machine Learning',
-    icon: Sparkles,
     description: 'ML models, training, and data science',
     color: 'text-blue-600 dark:text-blue-400',
     gradient: 'from-blue-500 to-blue-600',
@@ -146,7 +143,6 @@ const DOMAIN_OPTIONS: DomainOption[] = [
   {
     id: 'sdesign',
     label: 'System Design',
-    icon: Network,
     description: 'Scalable systems, architecture, and design patterns',
     color: 'text-green-600 dark:text-green-400',
     gradient: 'from-green-500 to-green-600',
@@ -156,7 +152,6 @@ const DOMAIN_OPTIONS: DomainOption[] = [
   {
     id: 'dsa',
     label: 'Data Structures & Algorithms',
-    icon: Code,
     description: 'Core CS concepts, coding problems, and optimization',
     color: 'text-orange-600 dark:text-orange-400',
     gradient: 'from-orange-500 to-orange-600',
@@ -166,7 +161,6 @@ const DOMAIN_OPTIONS: DomainOption[] = [
   {
     id: 'webdev',
     label: 'Web Development',
-    icon: Globe,
     description: 'Frontend, backend, and full-stack development',
     color: 'text-indigo-600 dark:text-indigo-400',
     gradient: 'from-indigo-500 to-indigo-600',
@@ -218,8 +212,7 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {DOMAIN_OPTIONS.map((domain) => {
-          const IconComponent = domain.icon;
-          const IllustrationComponent = domain.illustration;
+          const IconComponent = domain.illustration;
           return (
             <div
               key={domain.id}
@@ -234,18 +227,12 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
               
               {/* Illustration */}
               <div className="relative mb-6 h-32 flex items-center justify-center">
-                <IllustrationComponent className="w-full h-full transform group-hover:scale-105 transition-transform duration-500" />
+                <IconComponent className="w-full h-full transform group-hover:scale-105 transition-transform duration-500" />
               </div>
 
               {/* Content */}
               <div className="relative">
                 <div className="flex items-center justify-between mb-3">
-                  <div className={cn(
-                    "p-2 rounded-lg bg-gray-50 dark:bg-gray-800 group-hover:bg-gradient-to-br transition-all duration-300",
-                    domain.gradient
-                  )}>
-                    <IconComponent className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-white transition-colors duration-300" />
-                  </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-400 dark:group-hover:text-gray-300 transition-colors duration-300">
                     {domain.stats.difficulty}
                   </div>

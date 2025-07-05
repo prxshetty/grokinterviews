@@ -2,6 +2,7 @@
 
 // Components that export multiple parts (often Radix-based)
 export * from './accordion';
+export * from './aurora-background';
 export * from './card';
 export * from './chart'; // Exports ChartContainer, ChartTooltip, etc., and type ChartConfig
 export * from './dropdown-menu';
@@ -26,4 +27,4 @@ export { default as ProgressBar } from './ProgressBar';
 export { Toaster } from './sonner';
 export { TabNav } from './tab-nav';
 export { ThemeSwitcher } from './theme-switcher';
-export { WarpBackground } from './warp-background';
+
