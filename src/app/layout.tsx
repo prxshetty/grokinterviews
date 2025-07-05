@@ -2,7 +2,6 @@ import './globals.css';
 import { MainNavigation } from '@/components';
 import { Footer } from '@/components';
 import { Toaster } from "@/components/ui/sonner";
-import { janelotus, playfairDisplay } from './fonts';
 import type { Metadata } from 'next';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -34,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${janelotus.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={cn(
         'min-h-screen bg-white dark:bg-black font-sans antialiased',
         GeistSans.variable,
