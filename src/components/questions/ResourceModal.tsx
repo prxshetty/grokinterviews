@@ -52,7 +52,8 @@ export function ResourceModal({ resource, onClose }: ResourceModalProps) {
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                className="w-full h-full"
+                className="w-full h-full rounded-lg"
+                loading="eager"
               ></iframe>
             ) : resource.previewUrl ? (
               <Image 
