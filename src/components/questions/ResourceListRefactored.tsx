@@ -6,7 +6,7 @@ import { InlineLoadingSpinner } from '@/components/ui';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
+import { useIsMobile } from '@/hooks/ui';
 
 import { ResourcePreview } from './ResourcePreview';
 import { ResourceCard } from './ResourceCard';
@@ -14,8 +14,6 @@ import { ResourceCard } from './ResourceCard';
 // Import custom hooks
 import { useResources, useResourceTabs } from '@/hooks/data';
 import { useAuth, useUserPreferences } from '@/hooks/auth';
-
-import { Resource } from './ResourceUtils';
 
 interface ResourceListProps {
   questionId: number | null;
@@ -41,7 +39,6 @@ export function ResourceList({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
-  const isTabletOrSmaller = useIsTabletOrSmaller();
 
   // Scroll functions
   const scrollLeft = () => {
