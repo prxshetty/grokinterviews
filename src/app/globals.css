@@ -65,12 +65,12 @@
 
 .dark {
   /* Design System - Dark Mode */
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
+  --background: 0 0% 0%; /* Pure black background */
+  --foreground: 0 0% 100%; /* Pure white text */
+  --card: 0 0% 3%; /* Very dark gray for cards */
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 3%;
+  --popover-foreground: 0 0% 100%;
   --primary: 0 0% 100%; /* White primary in dark mode */
   --primary-foreground: 0 0% 0%; /* Black text on white */
   --primary-50: 0 0% 5%;
@@ -86,14 +86,14 @@
   --primary-950: 0 0% 100%; /* Pure white */
   --secondary: 217 91% 60%; /* Blue secondary (same as light mode) */
   --secondary-foreground: 0 0% 100%; /* White text on blue */
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 217.9 10.6% 64.9%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --muted: 0 0% 15%; /* Dark gray for muted elements */
+  --muted-foreground: 0 0% 65%; /* Light gray for muted text */
+  --accent: 0 0% 15%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
   
   /* Chart Colors - Dark Mode */
   --chart-1: 220 13% 69%;
@@ -494,4 +494,13 @@ button {
 /* Darker subtitle for glassy toast in light mode */
 .sonner-glassy-toast [data-description] {
   color: #374151 !important; /* Tailwind gray-700 */
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-flicker {
+  animation: flicker 2s ease-in-out infinite;
 }

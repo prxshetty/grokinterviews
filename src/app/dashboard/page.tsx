@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useEffect, useState, Suspense, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import ProgressSaver from '@/components/progress/ProgressSaver';
 import { ActivityGrid } from '@/components/progress';
 import { Calendar } from '@/components/ui';
 import { DomainStat, ActivityItem } from '@/types/dashboard.types';
-import DashboardNav from './DashboardNav';
 import { LoadingSpinner } from '@/components/ui';
 
 // Component imports
@@ -243,18 +242,10 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <ProgressSaver />
-
-        {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">Dashboard</h2>
-          <Suspense fallback={<div className="text-center p-4">Loading Nav...</div>}>
-            <DashboardNav />
-          </Suspense>
-        </div>
-
+        
         {/* Greeting */}
         <div className="mb-8">
-          <h1 className="text-3xl font-medium text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-medium text-foreground">
             {getGreeting()}, {profile?.full_name || profile?.username || 'User'}
           </h1>
         </div>
@@ -273,14 +264,14 @@ export default function DashboardPage() {
 
           {/* Right: Calendar Activity Tracker */}
           <div className="xl:col-span-1">
-            <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 h-full">
+            <div className="p-6 rounded-lg border border-border bg-card text-card-foreground h-full">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                <h2 className="text-lg font-medium text-foreground">
                   Activity Calendar
                 </h2>
                 <button
                   onClick={() => setShowCalendarView(!showCalendarView)}
-                  className="px-3 py-1 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="px-3 py-1 text-xs font-medium rounded-md bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
                 >
                   {showCalendarView ? 'Week View' : 'Calendar View'}
                 </button>
@@ -293,7 +284,7 @@ export default function DashboardPage() {
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     weekStartsOn={1}
-                    className="rounded-md border border-gray-200 dark:border-gray-700 w-full"
+                    className="rounded-md border border-border w-full"
                     modifiers={{
                       lowActivity: (date: Date) => {
                         const dateStr = date.toISOString().split('T')[0];
@@ -318,23 +309,26 @@ export default function DashboardPage() {
                     }}
                     modifiersStyles={{
                       lowActivity: {
-                        backgroundColor: 'rgb(191 219 254)', // blue-200
-                        color: 'rgb(30 58 138)', // blue-800
+                        backgroundColor: 'hsl(var(--primary))',
+                        opacity: '0.2',
+                        color: 'hsl(var(--primary))',
                         fontWeight: '500'
                       },
                       mediumActivity: {
-                        backgroundColor: 'rgb(96 165 250)', // blue-400
-                        color: 'white',
+                        backgroundColor: 'hsl(var(--primary))',
+                        opacity: '0.4',
+                        color: 'hsl(var(--primary-foreground))',
                         fontWeight: '600'
                       },
                       highActivity: {
-                        backgroundColor: 'rgb(37 99 235)', // blue-600
-                        color: 'white',
+                        backgroundColor: 'hsl(var(--primary))',
+                        opacity: '0.8',
+                        color: 'hsl(var(--primary-foreground))',
                         fontWeight: 'bold'
                       },
                       noActivity: {
                         backgroundColor: 'transparent',
-                        color: 'rgb(156 163 175)', // gray-400
+                        color: 'hsl(var(--muted-foreground))',
                         opacity: '0.6'
                       }
                     }}
@@ -343,28 +337,28 @@ export default function DashboardPage() {
                   {/* Activity Legend */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-gray-200 dark:bg-gray-600"></div>
-                      <span className="text-gray-600 dark:text-gray-400">None</span>
+                      <div className="w-2 h-2 rounded-sm bg-muted"></div>
+                      <span className="text-muted-foreground">None</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-blue-200"></div>
-                      <span className="text-gray-600 dark:text-gray-400">1-2</span>
+                      <div className="w-2 h-2 rounded-sm bg-primary/20"></div>
+                      <span className="text-muted-foreground">1-2</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-blue-400"></div>
-                      <span className="text-gray-600 dark:text-gray-400">3-5</span>
+                      <div className="w-2 h-2 rounded-sm bg-primary/40"></div>
+                      <span className="text-muted-foreground">3-5</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-blue-600"></div>
-                      <span className="text-gray-600 dark:text-gray-400">6+</span>
+                      <div className="w-2 h-2 rounded-sm bg-primary/80"></div>
+                      <span className="text-muted-foreground">6+</span>
                     </div>
                   </div>
 
                   {/* Selected Date Details */}
                   {selectedDate && (
-                    <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="mt-4 p-3 bg-muted rounded-lg border border-border">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        <p className="text-xs font-medium text-foreground">
                           {selectedDate.toLocaleDateString('en-US', { 
                             month: 'short', 
                             day: 'numeric' 
@@ -374,17 +368,17 @@ export default function DashboardPage() {
                           const dateStr = selectedDate.toISOString().split('T')[0];
                           const dayActivity = activityChartData.data.find(item => item.date === dateStr);
                           if (dayActivity && dayActivity.questionsAnswered > 0) {
-                            let badgeColor = 'bg-gray-100 text-gray-800';
+                            let badgeColor = 'bg-muted text-muted-foreground';
                             let badgeText = 'None';
                             
                             if (dayActivity.questionsAnswered >= 6) {
-                              badgeColor = 'bg-blue-600 text-white';
+                              badgeColor = 'bg-primary/80 text-primary-foreground';
                               badgeText = 'High';
                             } else if (dayActivity.questionsAnswered >= 3) {
-                              badgeColor = 'bg-blue-400 text-white';
+                              badgeColor = 'bg-primary/40 text-primary-foreground';
                               badgeText = 'Medium';
                             } else if (dayActivity.questionsAnswered >= 1) {
-                              badgeColor = 'bg-blue-200 text-blue-800';
+                              badgeColor = 'bg-primary/20 text-primary';
                               badgeText = 'Low';
                             }
                             
@@ -395,7 +389,7 @@ export default function DashboardPage() {
                             );
                           }
                           return (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                               None
                             </span>
                           );
@@ -407,16 +401,16 @@ export default function DashboardPage() {
                         const dayActivity = activityChartData.data.find(item => item.date === dateStr);
                         return dayActivity && dayActivity.questionsAnswered > 0 ? (
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            <div className="text-2xl font-bold text-primary">
                               {dayActivity.questionsAnswered}
                             </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                            <div className="text-xs text-muted-foreground">
                               Questions Completed
                             </div>
                           </div>
                         ) : (
                           <div className="text-center py-2">
-                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               No activity recorded
                             </p>
                           </div>

@@ -54,7 +54,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://vitals.vercel-analytics.com" />
       </head>
       <body className={cn(
-        'min-h-screen bg-white dark:bg-black font-sans antialiased',
+        'min-h-screen bg-background font-sans antialiased',
         GeistSans.variable,
         GeistMono.variable
       )}>

@@ -19,7 +19,6 @@ export const DEFAULT_GROQ_MODEL_ID = 'llama-3.1-8b-instant'
 // --- User Profile and Preferences Interfaces ---
 export interface UserProfile {
   id: string
-  username: string
   full_name: string
   avatar_url: string | null
   email: string
@@ -58,7 +57,6 @@ export interface ApiError {
 // --- Form Data Interface for Account Page ---
 export interface AccountFormData {
   full_name: string
-  username: string
   email: string
   specific_model_id: string
   use_youtube_sources: boolean
@@ -71,5 +69,5 @@ export interface AccountFormData {
   preferred_answer_depth: AnswerDepth
   include_code_snippets: boolean
   include_latex_formulas: boolean
-  custom_formatting_instructions: string | null // Can be empty string or null from DB
+  custom_formatting_instructions: string
 } 
