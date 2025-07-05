@@ -11,8 +11,8 @@ const transitionVariants: { item: Variants } = {
     item: {
         hidden: {
             opacity: 0,
-            filter: 'blur(12px)',
-            y: 12,
+            filter: 'blur(2px)',
+            y: 8,
         },
         visible: {
             opacity: 1,
@@ -20,8 +20,8 @@ const transitionVariants: { item: Variants } = {
             y: 0,
             transition: {
                 type: 'spring',
-                bounce: 0.3,
-                duration: 1.5,
+                bounce: 0.2,
+                duration: 1.0,
             },
         },
     },
@@ -67,7 +67,7 @@ export function HeroSection() {
                                         visible: {
                                             transition: {
                                                 staggerChildren: 0.05,
-                                                delayChildren: 0.75,
+                                                delayChildren: 0.5,
                                             },
                                         },
                                     },
