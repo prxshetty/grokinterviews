@@ -6,7 +6,6 @@ import StatsSection from '@/components/home/StatsSection';
 import TopicCarousel from '@/components/home/TopicCarousel';
 import { FeatureSection } from '@/components/home/FeatureSection';
 // import { StaggerTestimonials } from '@/components/ui/stagger-testimonials';
-import { WarpBackground } from '@/components/ui/warp-background';
 import { useScrollAnimation } from '@/hooks/ui';
 
 // ExploreTopicsSection component with scroll animations
@@ -67,20 +66,11 @@ function ExploreTopicsSection() {
 
 export default function HomePageClient() {
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full pt-4 relative font-sans animate-fade-in">
-      {/* Hero Section with WarpBackground */}
-      <WarpBackground 
-        className="mb-16"
-        perspective={120}
-        beamsPerSide={4}
-        beamSize={4}
-        beamDelayMax={2}
-        beamDelayMin={0.3}
-        beamDuration={3.5}
-        gridColor="hsl(var(--border))"
-      >
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full relative font-sans animate-fade-in">
+      {/* Hero Section - Full viewport height */}
+      <div className="mb-16">
         <HeroSection />
-      </WarpBackground>
+      </div>
 
       {/* Company List Section */}
       <div className="mt-16">

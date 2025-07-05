@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import {FiCopy, FiCheck} from 'react-icons/fi';
 
 interface CopyButtonProps {
     textToCopy: string;
@@ -30,9 +29,14 @@ export function CopyButton({textToCopy, className = '', size = 16 }: CopyButtonP
             aria-label="Copy to clipboard"
         >
         {isCopied ? (
-            <FiCheck className="text-green-500" size={size} />
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="text-green-500">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
         ) : (
-            <FiCopy className="text-gray-600 dark:text-gray-300" size={size} />
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="text-gray-600 dark:text-gray-300">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2"/>
+            </svg>
         )}
     </button>
     );

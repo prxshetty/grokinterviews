@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
-
 import { Faq3 } from '@/components/ui/faq3'
-import { BackgroundPathsOnly } from '@/components/home/background'
+import { AuroraBackground } from '@/components/ui/aurora-background'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
 export const metadata: Metadata = {
   title: 'About GrokInterviews',
@@ -50,54 +51,125 @@ const grokInterviewFaqItems = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full pt-4 relative font-sans">
-      {/* Background Paths */}
-      <div className="absolute inset-0 -z-10">
-        <BackgroundPathsOnly />
-      </div>
-      
-      <main className="container mx-auto px-8 md:px-12 py-16 sm:py-24 relative z-10">
-        {/* Header Section - Styled like src/app/page.tsx */}
-        <header className="mb-16 md:mb-24 text-left">
-          <div className="max-w-3xl">
-            <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-light tracking-wide">
-              About Us
+    <AuroraBackground>
+      <div className="w-full">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative z-10">
+          {/* Header Section */}
+          <header className="mb-16 md:mb-24 text-left">
+            <div className="max-w-3xl">
+              <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-light tracking-wide">
+                About Us
+              </h2>
+              <h1 className="text-5xl md:text-7xl mt-2 font-light tracking-tight leading-tight text-black dark:text-white">
+                GrokInterviews
+              </h1>
+            </div>
+          </header>
+
+          {/* Our Mission Section */}
+          <section className="mb-16 md:mb-24 max-w-3xl">
+            <h2 className="text-3xl md:text-4xl font-normal text-black dark:text-white mb-6">
+              Our Mission
             </h2>
-            <h1 className="text-5xl md:text-7xl mt-2 font-light tracking-tight leading-tight text-black dark:text-white">
-              GrokInterviews
-            </h1>
-          </div>
-        </header>
+            <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p>
+                At GrokInterviews, our mission is to empower software engineers and
+                data scientists with the most comprehensive and intelligent tools
+                for interview preparation. We aggregate, organize, and present a
+                vast array of resources, enhanced by AI, to help you master
+                technical concepts and excel in your interviews.
+              </p>
+            </div>
+          </section>
 
-        {/* Our Mission Section - Styled like src/app/page.tsx */}
-        <section className="mb-16 md:mb-24 max-w-3xl">
-          <h2 className="text-3xl md:text-4xl font-normal text-black dark:text-white mb-6">
-            Our Mission
-          </h2>
-          <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-            <p>
-              At GrokInterviews, our mission is to empower software engineers and
-              data scientists with the most comprehensive and intelligent tools
-              for interview preparation. We aggregate, organize, and present a
-              vast array of resources, enhanced by AI, to help you master
-              technical concepts and excel in your interviews.
-            </p>
-          </div>
-        </section>
+          {/* FAQ Section */}
+          <section className="mb-16 md:mb-24">
+            <Faq3
+              heading="Frequently Asked Questions"
+              description="Find answers to common questions about our platform and features."
+              items={grokInterviewFaqItems}
+            />
+          </section>
 
-        {/* FAQ Section */}
-        <section className="my-16 md:my-24">
-          <Faq3
-            heading="Frequently Asked Questions"
-            description="Find answers to common questions about our platform and features."
-            items={grokInterviewFaqItems}
-            supportHeading="Still have questions or feedback?"
-            supportDescription="We're here to help and always looking to improve. Let us know what's on your mind."
-            supportButtonText="Email Us"
-            supportButtonUrl="mailto:hello@grokinterviews.org"
-          />
-        </section>
-      </main>
-    </div>
+          {/* Contact Section */}
+          <section id="contact-form" className="max-w-3xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-light mb-4">Let's Have a Chat</h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Questions about our platform, features, or just want to say hello? We're here to help
+              </p>
+            </div>
+
+            <form className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-600 dark:text-gray-400">First name</label>
+                  <Input 
+                    type="text" 
+                    placeholder="John"
+                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Last name</label>
+                  <Input 
+                    type="text" 
+                    placeholder="Doe"
+                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Email</label>
+                  <Input 
+                    type="email" 
+                    placeholder="john.doe@example.com"
+                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-gray-600 dark:text-gray-400">Phone number</label>
+                  <Input 
+                    type="text" 
+                    placeholder="+1 (555) 123-4567"
+                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-gray-600 dark:text-gray-400">Message</label>
+                <div className="relative">
+                  <Textarea 
+                    placeholder="Hi! I have a question about the AI-powered features and how they can help with my interview preparation..."
+                    className="min-h-[120px] bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none pr-12"
+                  />
+                  <button 
+                    type="submit"
+                    className="absolute bottom-3 right-3 p-2"
+                  >
+                    <svg 
+                      width="20" 
+                      height="20" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ transform: 'rotate(15deg)' }}
+                    >
+                      <path 
+                        d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" 
+                        fill="white"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </section>
+        </main>
+      </div>
+    </AuroraBackground>
   )
 } 

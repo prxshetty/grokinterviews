@@ -18,249 +18,274 @@ interface TopicCardProps {
 // SVG icon components for tech stacks
 const TechIcons = {
   JavaScript: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M21 16V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"></path>
+      <path d="M10 9v6"></path><path d="M14 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"></path>
     </svg>
   ),
   React: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 9.861A2.139 2.139 0 1 0 12 14.139 2.139 2.139 0 1 0 12 9.861zM6.008 16.255l-.472-.12C2.018 15.246 0 13.737 0 11.996s2.018-3.25 5.536-4.139l.472-.119.133.468a23.53 23.53 0 0 0 1.363 3.578l.101.213-.101.213a23.307 23.307 0 0 0-1.363 3.578l-.133.467zM5.317 8.95c-2.674.751-4.315 1.9-4.315 3.046 0 1.145 1.641 2.294 4.315 3.046a24.95 24.95 0 0 1 1.182-3.046A24.752 24.752 0 0 1 5.317 8.95zM17.992 16.255l-.133-.469a23.357 23.357 0 0 0-1.364-3.577l-.101-.213.101-.213a23.42 23.42 0 0 0 1.364-3.578l.133-.468.473.119c3.517.889 5.535 2.398 5.535 4.14s-2.018 3.25-5.535 4.139l-.473.12zm-.491-4.259c.48 1.039.877 2.06 1.182 3.046 2.675-.752 4.315-1.901 4.315-3.046 0-1.146-1.641-2.294-4.315-3.046a24.788 24.788 0 0 1-1.182 3.046z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="-11.5 -10.23174 23 20.46348" fill="none" stroke="currentColor" strokeWidth="1" className="w-6 h-6">
+      <circle cx="0" cy="0" r="2.05" fill="currentColor"/>
+      <g stroke="currentColor">
+        <ellipse rx="11" ry="4.2"/>
+        <ellipse rx="11" ry="4.2" transform="rotate(60)"/>
+        <ellipse rx="11" ry="4.2" transform="rotate(120)"/>
+      </g>
     </svg>
   ),
   TypeScript: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 3h18v18H3V3zm13.666 12.451c.72-.744 1.416-1.5 2.113-2.256.467-.5.935-.998 1.394-1.504.085-.095.126-.203.107-.327-.018-.123-.102-.218-.217-.265a.722.722 0 0 0-.293-.044c-.262.008-.495.144-.66.358-.477.622-.955 1.244-1.432 1.865l-1.22 1.59c-.028.038-.061.073-.107.126l-.016-.02c.005-.105.007-.189.014-.273.026-.304.057-.608.08-.912.076-1.012.15-2.024.223-3.036.023-.319-.113-.563-.37-.723-.262-.164-.533-.164-.797-.002-.26.16-.397.402-.377.717.07.91.135 1.82.203 2.73.045.61.092 1.22.138 1.83.01.135-.018.27-.034.405-.025.21-.053.42-.08.63-.032.244-.107.467-.267.65-.16.182-.352.297-.597.304-.245.007-.446-.09-.566-.305-.15-.27-.15-.54.008-.807.137-.232.288-.455.428-.685.057-.094.068-.2.042-.304-.027-.11-.098-.195-.197-.25-.1-.054-.206-.075-.317-.054-.11.02-.203.08-.276.164-.239.275-.481.548-.715.827-.423.506-.842 1.015-1.265 1.52-.261.311-.597.435-.996.405-.4-.03-.718-.217-.901-.574-.197-.386-.204-.784-.017-1.174.219-.456.497-.872.786-1.28.397-.56.8-1.115 1.198-1.674.238-.335.255-.7.04-1.045-.209-.337-.553-.5-.944-.447-.38.052-.671.253-.9.547-.49.627-.981 1.253-1.472 1.879l-1.197 1.528c-.054.068-.11.134-.191.233-.014-.157-.023-.273-.035-.39-.073-.71-.148-1.42-.22-2.13-.07-.71-.137-1.42-.207-2.129-.025-.25-.119-.46-.315-.614-.196-.155-.42-.198-.652-.127-.23.07-.394.228-.481.447-.031.079-.043.165-.039.25.029.577.062 1.154.095 1.731.047.829.095 1.657.142 2.486.037.659.072 1.318.11 1.977.024.414-.136.75-.45.999z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M21 16V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"></path>
+      <path d="M12 9v6"></path><path d="M10 9h4"></path>
     </svg>
   ),
   Python: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M14.31.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.83l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.23l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.24l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M10.5 18H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2.5"></path>
+      <path d="M13.5 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.5"></path>
+      <circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle>
+      <circle cx="8" cy="10" r="1" fill="currentColor"></circle><circle cx="16" cy="14" r="1" fill="currentColor"></circle>
     </svg>
   ),
   Node: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M11.998,24c-0.321,0-0.641-0.084-0.922-0.247l-2.936-1.737c-0.438-0.245-0.224-0.332-0.08-0.383 c0.585-0.203,0.703-0.25,1.328-0.604c0.065-0.037,0.151-0.023,0.218,0.017l2.256,1.339c0.082,0.045,0.197,0.045,0.272,0l8.795-5.076 c0.082-0.047,0.134-0.141,0.134-0.238V6.921c0-0.099-0.053-0.192-0.137-0.242l-8.791-5.072c-0.081-0.047-0.189-0.047-0.271,0 L3.075,6.68C2.99,6.729,2.936,6.825,2.936,6.921v10.15c0,0.097,0.054,0.189,0.139,0.235l2.409,1.392 c1.307,0.654,2.108-0.116,2.108-0.89V7.787c0-0.142,0.114-0.253,0.256-0.253h1.115c0.139,0,0.255,0.112,0.255,0.253v10.021 c0,1.745-0.95,2.745-2.604,2.745c-0.508,0-0.909,0-2.026-0.551L2.28,18.675c-0.57-0.329-0.922-0.945-0.922-1.604V6.921 c0-0.659,0.353-1.275,0.922-1.603l8.795-5.082c0.557-0.315,1.296-0.315,1.848,0l8.794,5.082c0.57,0.329,0.924,0.944,0.924,1.603 v10.15c0,0.659-0.354,1.273-0.924,1.604l-8.794,5.078C12.643,23.916,12.324,24,11.998,24z M19.099,13.993 c0-1.9-1.284-2.406-3.987-2.763c-2.731-0.361-3.009-0.548-3.009-1.187c0-0.528,0.235-1.233,2.258-1.233 c1.807,0,2.473,0.389,2.747,1.607c0.024,0.115,0.129,0.199,0.247,0.199h1.141c0.071,0,0.138-0.031,0.186-0.081 c0.048-0.054,0.074-0.123,0.067-0.196c-0.177-2.098-1.571-3.076-4.388-3.076c-2.508,0-4.004,1.058-4.004,2.833 c0,1.925,1.488,2.457,3.895,2.695c2.88,0.282,3.103,0.703,3.103,1.269c0,0.983-0.789,1.402-2.642,1.402 c-2.327,0-2.839-0.584-3.011-1.742c-0.02-0.124-0.126-0.215-0.253-0.215h-1.137c-0.141,0-0.254,0.112-0.254,0.253 c0,1.482,0.806,3.248,4.655,3.248C17.501,17.007,19.099,15.91,19.099,13.993z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
     </svg>
   ),
   Docker: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M22 12.5c0-1.2-1.3-2-2.8-2H5.8C4.3 10.5 3 11.3 3 12.5S4.3 14.5 5.8 14.5h15.4c1.5 0 2.8-.8 2.8-2zM4.5 10.5V9m3 1.5V9m3 1.5V9m3 1.5V9m-4.5-3V4.5m3 1.5V4.5m3 1.5V4.5"></path>
+      <path d="M17.5 14.5c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5H12c0 2.2 1.8 4 4 4s4-1.8 4-4h-2.5z"></path>
     </svg>
   ),
   GraphQL: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm0 2.25c5.385 0 9.75 4.365 9.75 9.75s-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12 6.615 2.25 12 2.25zm0 1.5c-4.557 0-8.25 3.693-8.25 8.25s3.693 8.25 8.25 8.25 8.25-3.693 8.25-8.25S16.557 3.75 12 3.75zm0 1.5c3.728 0 6.75 3.022 6.75 6.75s-3.022 6.75-6.75 6.75S5.25 15.728 5.25 12 8.272 5.25 12 5.25zm0 1.5c-2.9 0-5.25 2.35-5.25 5.25s2.35 5.25 5.25 5.25 5.25-2.35 5.25-5.25S14.9 6.75 12 6.75z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 2v20"></path><path d="M2 12h20"></path>
+      <path d="M5.64 5.64l12.72 12.72"></path><path d="M18.36 5.64L5.64 18.36"></path>
+      <circle cx="12" cy="12" r="3.5" fill="currentColor"></circle>
     </svg>
   ),
   MongoDB: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M17.193 9.555c-1.264-5.58-4.252-7.414-4.573-8.115-.28-.394-.53-.954-.735-1.44-.036.495-.055.685-.523 1.184-.723.566-4.438 3.682-4.74 10.02-.282 5.912 4.27 9.435 4.888 9.884l.07.05A73.49 73.49 0 0111.91 24h.481c.114-1.032.284-2.056.51-3.07.417-.296.604-.463.85-.693a11.342 11.342 0 003.639-8.464c.01-.814-.103-1.662-.197-2.218zm-5.336 8.195s0-8.291.275-8.29c.213 0 .49 10.695.49 10.695-.381-.045-.765-1.76-.765-2.405z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.9c-3.96 0-3.96-7.8 0-7.8s3.96 7.8 0 7.8z" fill="currentColor" opacity="0.4"></path>
+      <path d="M11 9.1c0-3.96 3.96-3.96 3.96 0 0 3.96-3.96 3.96-3.96 0z" fill="currentColor"></path>
     </svg>
   ),
   CSS: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.565-2.438L1.5 0zm17.09 4.413L5.41 4.41l.213 2.622 10.125.002-.255 2.716h-6.64l.24 2.573h6.182l-.366 3.523-2.91.804-2.956-.81-.188-2.11h-2.61l.29 3.855L12 19.288l5.373-1.53L18.59 4.414z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M4 3l1.5 16.5L12 21l6.5-1.5L20 3H4z"></path>
+      <path d="M8.5 7H15l-.5 4.5h-5l-.5 5L12 18l3-1.5.5-4.5h-5"></path>
     </svg>
   ),
   HTML: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M4 3l1.5 16.5L12 21l6.5-1.5L20 3H4z"></path>
+      <path d="M8.5 7h7L15 12h-5l-.5 2.5 4 1 4-1 .5-4.5h-7L8.5 7z"></path>
     </svg>
   ),
   Git: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M23.546 10.93L13.067.452c-.604-.603-1.582-.603-2.188 0L8.708 2.627l2.76 2.76c.645-.215 1.379-.07 1.889.441.516.515.658 1.258.438 1.9l2.658 2.66c.645-.223 1.387-.078 1.9.435.721.721.721 1.884 0 2.604-.719.719-1.881.719-2.6 0-.539-.541-.674-1.337-.404-1.996L12.86 8.955v6.525c.176.086.342.203.488.348.713.721.713 1.883 0 2.6-.719.721-1.889.721-2.609 0-.719-.719-.719-1.879 0-2.598.182-.18.387-.316.605-.406V8.835c-.217-.091-.424-.222-.6-.401-.545-.545-.676-1.342-.396-2.009L7.636 3.7.45 10.881c-.6.605-.6 1.584 0 2.189l10.48 10.477c.604.604 1.582.604 2.186 0l10.43-10.43c.605-.603.605-1.582 0-2.187"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 8l-4 4 4 4"></path><path d="M12 12h8"></path>
     </svg>
   ),
   Redux: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M16.634 16.504c.87-.075 1.543-.84 1.5-1.754-.047-.914-.796-1.648-1.709-1.648h-.061a1.71 1.71 0 00-1.648 1.769c.03.479.226.869.494 1.153-1.048 2.038-2.621 3.536-5.005 4.795-1.603.838-3.296 1.154-4.944.93-1.378-.195-2.456-.81-3.116-1.799-.988-1.499-1.078-3.116-.255-4.734.6-1.17 1.499-2.023 2.099-2.443a9.96 9.96 0 01-.42-1.543C-.868 14.408-.416 18.752.932 20.805c1.004 1.498 3.057 2.456 5.304 2.456.6 0 1.23-.044 1.843-.194 3.897-.749 6.848-3.086 8.541-6.532zm5.348-3.746c-2.32-2.728-5.738-4.226-9.634-4.226h-.51c-.253-.554-.837-.899-1.498-.899h-.045c-.943 0-1.678.81-1.647 1.753.03.898.794 1.648 1.708 1.648h.074a1.69 1.69 0 001.499-1.049h.555c2.309 0 4.495.674 6.488 1.992 1.527 1.005 2.622 2.323 3.237 3.897.538 1.288.509 2.547-.045 3.597-.855 1.647-2.294 2.517-4.196 2.517-1.199 0-2.367-.375-2.967-.644-.36.298-.96.793-1.394 1.093 1.318.598 2.652.943 3.94.943 2.922 0 5.094-1.647 5.919-3.236.898-1.798.824-4.824-1.47-7.416zM6.49 17.042c.03.899.793 1.648 1.708 1.648h.06a1.688 1.688 0 001.648-1.768c0-.9-.779-1.647-1.693-1.647h-.06c-.06 0-.15 0-.226.029-1.243-2.098-1.768-4.347-1.572-6.772.12-1.828.72-3.417 1.797-4.735.9-1.124 2.593-1.68 3.747-1.708 3.236-.061 4.585 3.971 4.689 5.574l1.498.45C17.741 3.197 14.686.62 11.764.62 9.02.62 6.49 2.613 5.47 5.535 4.077 9.43 4.991 13.177 6.7 16.174c-.15.195-.24.539-.21.868z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2a10 10 0 100 20 10 10 0 100-20z"></path>
+      <path d="M12 12c-2.333 4.667-7 2.333-7-2.333S9.667 5 12 5s4.667 2.333 4.667 4.667c0 4.666-2.333 7-4.667 7z"></path>
+      <path d="M12 12c2.333-4.667 7-2.333 7 2.333s-2.333 7-7 7-7-2.333-7-7c0-4.666 4.667-7 7-7z"></path>
     </svg>
   ),
   'System Design': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M2.25 6a3 3 0 013-3h13.5a3 3 0 013 3v12a3 3 0 01-3 3H5.25a3 3 0 01-3-3V6zm3.97.97a.75.75 0 011.06 0l2.25 2.25a.75.75 0 010 1.06l-2.25 2.25a.75.75 0 01-1.06-1.06l1.72-1.72-1.72-1.72a.75.75 0 010-1.06zm4.28 0a.75.75 0 000 1.06l1.72 1.72-1.72 1.72a.75.75 0 101.06 1.06l2.25-2.25a.75.75 0 000-1.06l-2.25-2.25a.75.75 0 00-1.06 0z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <rect x="3" y="3" width="7" height="7"></rect>
+      <rect x="14" y="3" width="7" height="7"></rect>
+      <rect x="3" y="14" width="7" height="7"></rect>
+      <rect x="14" y="14" width="7" height="7"></rect>
+      <path d="M10 6.5h4m-4 11h4m-7.5-7.5v4m11-4v4"></path>
     </svg>
   ),
   'Data Structures': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M10.5 4.5a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm0 9.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm0 9.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zM3.75 8.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm0 9.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm16.5-9.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm0 9.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 12l-4-4 4-4 4 4-4 4zm0 0l-4 4 4 4 4-4-4-4z"></path>
+      <path d="M12 2v2m0 16v2m8-10h2M2 12h2"></path>
     </svg>
   ),
   'Algorithms': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 1.5a.75.75 0 01.75.75V4.5a.75.75 0 01-1.5 0V2.25A.75.75 0 0112 1.5zM5.636 4.136a.75.75 0 011.06 0l1.592 1.591a.75.75 0 01-1.061 1.06l-1.591-1.59a.75.75 0 010-1.061zm12.728 0a.75.75 0 010 1.06l-1.591 1.592a.75.75 0 01-1.06-1.061l1.59-1.591a.75.75 0 011.061 0zm-6.816 4.496a.75.75 0 01.82.311l5.228 7.917a.75.75 0 01-.777 1.148l-2.097-.43 1.045 3.9a.75.75 0 01-1.45.388l-1.044-3.899-1.601 1.42a.75.75 0 01-1.247-.606l.569-9.47a.75.75 0 01.554-.68zM3 10.5a.75.75 0 01.75-.75H6a.75.75 0 010 1.5H3.75A.75.75 0 013 10.5zm14.25 0a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H18a.75.75 0 01-.75-.75zm-8.962 3.712a.75.75 0 010 1.061l-1.591 1.591a.75.75 0 11-1.061-1.06l1.591-1.592a.75.75 0 011.06 0z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 20.5V12l-6 4.5V12l6-4.5v11zM18 16.5V12l-6 4.5V21l6-4.5zM12 3.5v4l6 3v-4l-6-3zM6 8.5v4l6 3v-4l-6-3z"></path>
     </svg>
   ),
   'Web Performance': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 2.25A9.75 9.75 0 002.25 12c0 5.385 4.365 9.75 9.75 9.75s9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm0 8.625a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zM12 4.875a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5a.75.75 0 01.75-.75zM7.125 12a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5a.75.75 0 01.75.75zm11.25 0a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5a.75.75 0 01.75.75zm-4.828 4.828a.75.75 0 01-1.06 0l-1.06-1.06a.75.75 0 011.06-1.06l1.06 1.06a.75.75 0 010 1.06zm-4.828-4.828a.75.75 0 01-1.06-1.06l1.06-1.06a.75.75 0 111.06 1.06l-1.06 1.06z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2a10 10 0 100 20 10 10 0 100-20z"></path>
+      <path d="M12 6v6l4 2"></path><path d="M19.07 4.93l-1.41 1.41"></path>
     </svg>
   ),
   'Machine Learning': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 1.5C5.925 1.5 1.5 5.925 1.5 12S5.925 22.5 12 22.5 22.5 18.075 22.5 12 18.075 1.5 12 1.5zM8.25 12a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 8V4m0 16v-4m-7-5H1m22 0h-4M8 12a4 4 0 118 0 4 4 0 01-8 0z"></path>
+      <path d="M12 2v2m0 16v2m-9-9H1m22 0h-2"></path>
+      <path d="M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"></path>
     </svg>
   ),
-  'Security': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 1.5l8.25 4.5v7.5c0 4.148-3.352 7.5-7.5 7.5h-1.5c-4.148 0-7.5-3.352-7.5-7.5V6L12 1.5zm0 4.5a3 3 0 00-3 3v3a3 3 0 106 0V9a3 3 0 00-3-3z"/>
+  Security: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      <path d="M12 12l4-4m-4 4l-4-4m4 4v5"></path>
     </svg>
   ),
-  'Microservices': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M21 6.375c0 2.692-4.03 4.875-9 4.875S3 9.067 3 6.375 7.03 1.5 12 1.5s9 2.183 9 4.875z"/>
-      <path d="M12 12.75c2.685 0 5.19-.586 7.078-1.609a8.283 8.283 0 001.897-1.384c.016.121.025.244.025.368C21 12.817 16.97 15 12 15s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.285 8.285 0 001.897 1.384C6.809 12.164 9.315 12.75 12 12.75z"/>
-      <path d="M12 16.5c2.685 0 5.19-.586 7.078-1.609a8.282 8.282 0 001.897-1.384c.016.121.025.244.025.368 0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.284 8.284 0 001.897 1.384C6.809 15.914 9.315 16.5 12 16.5z"/>
-      <path d="M12 20.25c2.685 0 5.19-.586 7.078-1.609a8.282 8.282 0 001.897-1.384c.016.121.025.244.025.368 0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875c0-.124.009-.247.025-.368a8.284 8.284 0 001.897 1.384C6.809 19.664 9.315 20.25 12 20.25z"/>
+  Microservices: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <circle cx="6" cy="6" r="3"></circle><circle cx="18" cy="6" r="3"></circle>
+      <circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="18" r="3"></circle>
+      <path d="M9 6h6m-6 12h6m-9-6v-6m0 12v-6m12-6v6m0 6v-6"></path>
     </svg>
   ),
   'Cloud Computing': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M18 10h-1.26A8 8 0 104 16.25"></path>
+      <path d="M16 16.5A4.5 4.5 0 1022 12c0-1.54-.78-2.9-2-3.75"></path>
     </svg>
   ),
-  'Databases': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 3C7.58 3 4 4.79 4 7s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4z"/>
-      <path d="M4 9v3c0 2.21 3.58 4 8 4s8-1.79 8-4V9c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/>
-      <path d="M4 14v3c0 2.21 3.58 4 8 4s8-1.79 8-4v-3c0 2.21-3.58 4-8 4s-8-1.79-8-4z"/>
+  Databases: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
     </svg>
   ),
-  'Networking': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM3.75 19.125a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 19.125a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0z"/>
-      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m7.5 14.25l5.25-5.25m6.75 4.5l-3.75-3.75"/>
+  Networking: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <circle cx="12" cy="12" r="2"></circle>
+      <path d="M12 2v2m0 16v2m-7.07-7.07L6.34 8.34m9.32 9.32l-1.41-1.41"></path>
+      <path d="M2 12h2m16 0h2m-7.07-5.66l-1.41-1.41M19.07 4.93l-1.41 1.41"></path>
+      <path d="M4.93 19.07l1.41-1.41m9.32-9.32l1.41-1.41"></path>
     </svg>
   ),
   'Operating Systems': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602L2.37 16.022c-.076.327-.12.66-.12 1.03v.228a4.5 4.5 0 009 0v-.228c0-.37-.044-.703-.12-1.03L9.878 8.65a1.125 1.125 0 011.095-.9h1.054c.497 0 .935.355 1.095.9l-1.252 7.372c-.076.327-.12.66-.12 1.03v.228a4.5 4.5 0 009 0z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <rect x="3" y="14" width="18" height="6" rx="2"></rect>
+      <path d="M12 14v-4m-4 4v-4m8 4v-4"></path>
+      <path d="M12 10V4H8v6m8-6h-4v6"></path>
     </svg>
   ),
   'Object-Oriented Programming': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M6 3a3 3 0 00-3 3v12a3 3 0 003 3h12a3 3 0 003-3V6a3 3 0 00-3-3H6zM5.25 6A.75.75 0 016 5.25h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75H6A.75.75 0 015.25 9V6zM14.25 6a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-3a.75.75 0 01-.75-.75V6zM5.25 15a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75H6a.75.75 0 01-.75-.75v-3zM14.25 15a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-3a.75.75 0 01-.75-.75v-3z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2l-5.5 9h11L12 2z"></path>
+      <circle cx="12" cy="17" r="4"></circle>
+      <path d="M4 22h16"></path>
     </svg>
   ),
   'Functional Programming': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M15.75 17.25L12 21l-3.75-3.75L12 13.5l3.75 3.75zM12 12l-8.25-8.25a1.125 1.125 0 01.21-1.77l5.25-2.25a3.375 3.375 0 013.16 0l5.25 2.25a1.125 1.125 0 01.21 1.77L12 12z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 3v18M18 9l-6 6-6-6"></path>
+      <path d="M3 15h18"></path>
     </svg>
   ),
-  'Concurrency': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/>
-      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM8.25 12l3.75 3.75L15.75 12l-3.75-3.75L8.25 12z"/>
+  Concurrency: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M16 4h2a2 2 0 012 2v12a2 2 0 01-2 2h-2"></path>
+      <path d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h2"></path>
+      <path d="M12 2v20"></path>
     </svg>
   ),
-  'Testing': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M5.636 5.636a9 9 0 1012.728 0M12 3v9m0 0l-3-3m3 3l3-3"/>
-      <path d="M9 12l2 2 4-4"/>
+  Testing: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+      <path d="M9 12l2 2 4-4"></path>
     </svg>
   ),
-  'DevOps': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/>
+  DevOps: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2a10 10 0 100 20 10 10 0 100-20z"></path>
+      <path d="M12 8l4 4-4 4-4-4 4-4z"></path>
+      <path d="M8 12h8"></path>
     </svg>
   ),
   'Frontend Development': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      {/* Browser window frame */}
-      <path d="M3 4a2 2 0 012-2h14a2 2 0 012 2v16a2 2 0 01-2 2H5a2 2 0 01-2-2V4z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      {/* Browser dots */}
-      <circle cx="6" cy="6.5" r="1" fill="currentColor"/>
-      <circle cx="9" cy="6.5" r="1" fill="currentColor"/>
-      <circle cx="12" cy="6.5" r="1" fill="currentColor"/>
-      {/* HTML/CSS brackets */}
-      <path d="M7 11l-1.5 1.5L7 14m3-3l1.5 1.5L10 14m4-6h3v2h-3v-2zm0 3h3v2h-3v-2z" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      {/* Responsive design elements */}
-      <rect x="6" y="16" width="4" height="3" stroke="currentColor" strokeWidth="1" fill="none" rx="0.5"/>
-      <rect x="11" y="15.5" width="6" height="4" stroke="currentColor" strokeWidth="1" fill="none" rx="0.5"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <rect x="2" y="3" width="20" height="18" rx="2"></rect>
+      <path d="M6 8h12M6 12h12M6 16h6"></path>
     </svg>
   ),
   'Backend Development': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      {/* Server rack */}
-      <rect x="4" y="3" width="16" height="18" stroke="currentColor" strokeWidth="1.5" fill="none" rx="2"/>
-      {/* Server units */}
-      <rect x="6" y="5" width="12" height="2.5" fill="currentColor" opacity="0.7" rx="0.5"/>
-      <rect x="6" y="8.5" width="12" height="2.5" fill="currentColor" opacity="0.5" rx="0.5"/>
-      <rect x="6" y="12" width="12" height="2.5" fill="currentColor" opacity="0.7" rx="0.5"/>
-      <rect x="6" y="15.5" width="12" height="2.5" fill="currentColor" opacity="0.5" rx="0.5"/>
-      {/* Server indicators/LEDs */}
-      <circle cx="7.5" cy="6.25" r="0.4" fill="currentColor"/>
-      <circle cx="9" cy="6.25" r="0.4" fill="currentColor"/>
-      <circle cx="7.5" cy="9.75" r="0.4" fill="currentColor"/>
-      <circle cx="9" cy="9.75" r="0.4" fill="currentColor"/>
-      <circle cx="7.5" cy="13.25" r="0.4" fill="currentColor"/>
-      <circle cx="9" cy="13.25" r="0.4" fill="currentColor"/>
-      <circle cx="7.5" cy="16.75" r="0.4" fill="currentColor"/>
-      <circle cx="9" cy="16.75" r="0.4" fill="currentColor"/>
-      {/* Database cylinders */}
-      <ellipse cx="14" cy="6.25" rx="1.8" ry="0.8" fill="currentColor" opacity="0.6"/>
-      <ellipse cx="14" cy="9.75" rx="1.8" ry="0.8" fill="currentColor" opacity="0.6"/>
-      {/* API/Connection lines */}
-      <path d="M2 12h2m18 0h-2m-8-8v2m0 12v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <rect x="2" y="14" width="20" height="8" rx="2"></rect>
+      <path d="M6 18h.01M10 18h.01M14 18h.01"></path>
+      <path d="M2 10V6a2 2 0 012-2h16a2 2 0 012 2v4"></path>
+      <path d="M6 6h.01M10 6h.01"></path>
     </svg>
   ),
   'Mobile Development': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M10.5 1.875a1.125 1.125 0 012.25 0v2.25a1.125 1.125 0 01-2.25 0v-2.25z"/>
-      <path fillRule="evenodd" d="M6.75 6.75C6.75 5.784 7.784 5.25 9 5.25h6c1.216 0 2.25.534 2.25 1.5v11.25c0 .966-1.034 1.5-2.25 1.5H9c-1.216 0-2.25-.534-2.25-1.5V6.75zm1.5 4.5a.75.75 0 01.75-.75h6a.75.75 0 010 1.5H9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H9z" clipRule="evenodd"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <rect x="7" y="2" width="10" height="20" rx="2" ry="2"></rect>
+      <path d="M12 18h.01"></path>
     </svg>
   ),
   'API Development': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M4 14.5h16M4 9.5h16M14.5 4L20 9.5 14.5 15M9.5 9L4 14.5 9.5 20"></path>
     </svg>
   ),
-  'Kubernetes': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"/>
+  Kubernetes: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 12l-8-4 8-4 8 4-8 4z"></path>
+      <path d="M4 12l8 4 8-4m-8 4v8"></path>
     </svg>
   ),
-  'AWS': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M6.09 16.227l-1.214 3.355a.643.643 0 01-.619.418.643.643 0 01-.62-.418L2.423 16.23a.643.643 0 01.619-.868h2.428c.26 0 .5.157.6.397l.03.095zm4.181-3.474v5.604a.643.643 0 01-.643.643h-.643a.643.643 0 01-.643-.643v-5.604a.643.643 0 01.643-.643h.643c.355 0 .643.288.643.643zm4.18 1.929l1.215 3.675a.643.643 0 01-.62.643.643.643 0 01-.619-.643l-1.214-3.675a.643.643 0 01.619-.643h.619z"/>
-      <path d="M19.5 8.25l-7.5 12L4.5 8.25H19.5z"/>
+  AWS: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2a10 10 0 00-7.07 17.07A10 10 0 1019.07 4.93 9.93 9.93 0 0012 2z"></path>
+      <path d="M7.05 14.24A5.5 5.5 0 0112 8a5.5 5.5 0 015.45 7.05"></path>
+      <path d="M12 22a5.5 5.5 0 01-4.95-8.95"></path>
+      <path d="M16.95 14.24A5.5 5.5 0 0112 22"></path>
     </svg>
   ),
-  'Azure': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM7.5 15.75l9-7.5-2.25 9.75L7.5 15.75z"/>
+  Azure: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2l-8.5 8.5L12 19l8.5-8.5L12 2z"></path>
+      <path d="M2 12h20M12 2v20"></path>
     </svg>
   ),
   'Google Cloud': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
-      <path d="M12 8l4 4-4 4-4-4 4-4z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M18 10h-1.26A8 8 0 104 16.25"></path>
+      <path d="M16 16.5A4.5 4.5 0 1022 12c0-1.54-.78-2.9-2-3.75"></path>
     </svg>
   ),
-  'Linux': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+  Linux: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2a10 10 0 100 20 10 10 0 100-20z"></path>
+      <path d="M12 12a4 4 0 100-8 4 4 0 000 8z"></path>
+      <path d="M12 12v6a2 2 0 002 2h0a2 2 0 002-2v-6"></path>
     </svg>
   ),
-  'Windows': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M3 5.45l7.5-1.03V11.1H3V5.45zm0 7.28h7.5v6.67L3 18.37v-5.64zm8.5-8.13L21 3.7V11h-9.5V4.6zm0 7.4H21v7.3l-9.5-1.33v-5.97z"/>
+  Windows: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M2 12h20M12 2v20"></path>
+      <path d="M2 7l10 5 10-5M2 17l10-5 10 5"></path>
     </svg>
   ),
-  'PostgreSQL': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M17.128 0C15.02-.322 13.906.696 13.906 2.316v.316c-.632-.632-1.896-.947-3.16-.947C6.98 1.685 4.396 5.581 4.396 10.32c0 3.16 1.264 5.687 3.16 6.32.632.211 1.264.211 1.896 0v6.006c0 1.264.632 1.58 1.58 1.58.948 0 1.58-.316 1.58-1.58v-1.896h1.264c3.792 0 6.32-2.528 6.32-6.32V2.632c0-1.62-1.264-2.638-2.952-2.316zm-.316 14.218c0 2.422-1.58 4.212-4.212 4.212h-1.264v-2.106c.632.211 1.264.211 1.896 0 1.896-.632 3.16-3.16 3.16-6.32 0-4.739-2.584-8.635-6.32-8.635-1.264 0-2.528.316-3.16.947V2.316c0-.632.316-.948.948-.948 3.792 0 6.32 2.528 6.32 6.32v10.214h2.632z"/>
+  PostgreSQL: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
+      <path d="M12 12v10m0-10H2m10 0h10M5.64 5.64L2 12l3.64 6.36"></path>
     </svg>
   ),
-  'MySQL': () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M16.405 5.501c-.115 0-.193.014-.274.033v.013h.014c.054.104.146.18.214.274.054.107.1.214.154.32l.014-.015c.094-.066.14-.172.14-.333-.04-.047-.046-.094-.08-.14-.04-.067-.126-.1-.18-.153zM5.77 18.695h-.927a50.854 50.854 0 00-.27-4.41h-.008l-1.41 4.41H2.45l-1.4-4.41h-.01a72.892 72.892 0 00-.195 4.41H.178c.195-1.798.74-5.115 1.123-7.734h.9L3.285 15.7h.01l1.2-4.739h.877c.442 2.67.9 5.115 1.398 7.734zM9.678 15.793c.007-.176.013-.357.013-.557 0-1.99-.644-2.618-1.618-2.618-1.888 0-1.92 1.756-1.92 2.618 0 .857.032 2.6 1.92 2.6 1.897 0 1.605-2.4 1.605-2.043zm-.717-.007c0 .68-.036 1.31-.888 1.31-.85 0-.888-.63-.888-1.31 0-.68.037-1.31.888-1.31.851 0 .888.63.888 1.31zM16.878 18.695c-.5-2.034-.76-4.08-1.036-6.126h.877c.18 1.52.404 3.06.608 4.578h.010c.199-1.518.436-3.058.646-4.578h.877c.18 1.52.332 3.058.474 4.578h.010c.204-1.52.424-3.058.644-4.578h.877c-.286 2.046-.536 4.092-1.046 6.126h-.877c-.18-1.52-.332-3.058-.474-4.578h-.010c-.199 1.52-.424 3.058-.634 4.578h-.946zM22.814 18.695h-.878c-.472-2.67-.878-5.115-1.320-7.734h.9l1.202 4.739h.010l1.083-4.739h.877c-.418 2.619-.963 5.936-1.158 7.734z"/>
+  MySQL: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+      <path d="M15 12l-3-3-3 3"></path>
     </svg>
   ),
   default: () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-      <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 6.75a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 0112 6.75z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <path d="M12 2a10 10 0 100 20 10 10 0 100-20z"></path>
+      <path d="M12 12v-4M12 16h.01"></path>
     </svg>
   )
 };

@@ -27,7 +27,7 @@ export default function GoogleSignIn() {
       if (user) {
         console.log('Google sign-in completed successfully');
         localStorage.removeItem('googleSignInAttempt');
-        router.push('/dashboard');
+        router.push('/topics');
       }
     };
 

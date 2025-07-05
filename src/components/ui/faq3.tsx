@@ -21,10 +21,10 @@ interface Faq3Props {
   heading: string;
   description: string;
   items?: FaqItem[];
-  supportHeading: string;
-  supportDescription: string;
-  supportButtonText: string;
-  supportButtonUrl: string;
+  supportHeading?: string;
+  supportDescription?: string;
+  supportButtonText?: string;
+  supportButtonUrl?: string;
 }
 
 const faqItems = [
@@ -75,10 +75,10 @@ const Faq3 = ({
   heading = "Frequently asked questions",
   description = "Find answers to common questions about our products. Can't find what you're looking for? Contact our support team.",
   items = faqItems,
-  supportHeading = "Need more support?",
-  supportDescription = "Our dedicated support team is here to help you with any questions or concerns. Get in touch with us for personalized assistance.",
-  supportButtonText = "Contact Support",
-  supportButtonUrl = "https://www.shadcnblocks.com",
+  supportHeading,
+  supportDescription,
+  supportButtonText,
+  supportButtonUrl,
 }: Faq3Props) => {
   // Preload all avatar images for better performance
   useImagePreloader([
@@ -115,35 +115,37 @@ const Faq3 = ({
             </AccordionItem>
           ))}
         </Accordion>
-        <div className="mx-auto flex max-w-4xl flex-col items-center rounded-lg bg-accent p-4 text-center md:rounded-xl md:p-6 lg:p-8">
-          <div className="relative">
-            <Avatar className="absolute mb-4 size-16 origin-bottom -translate-x-[60%] scale-[80%] border md:mb-5">
-              <AvatarImage src={AVATAR_URLS.AVATAR_2} />
-              <AvatarFallback>SU</AvatarFallback>
-            </Avatar>
-            <Avatar className="absolute mb-4 size-16 origin-bottom translate-x-[60%] scale-[80%] border md:mb-5">
-              <AvatarImage src={AVATAR_URLS.AVATAR_3} />
-              <AvatarFallback>SU</AvatarFallback>
-            </Avatar>
-            <Avatar className="mb-4 size-16 border md:mb-5">
-              <AvatarImage src={AVATAR_URLS.DEFAULT} />
-              <AvatarFallback>SU</AvatarFallback>
-            </Avatar>
+        {supportHeading && supportDescription && supportButtonText && supportButtonUrl && (
+          <div className="mx-auto flex max-w-4xl flex-col items-center rounded-lg bg-accent p-4 text-center md:rounded-xl md:p-6 lg:p-8">
+            <div className="relative">
+              <Avatar className="absolute mb-4 size-16 origin-bottom -translate-x-[60%] scale-[80%] border md:mb-5">
+                <AvatarImage src={AVATAR_URLS.AVATAR_2} />
+                <AvatarFallback>SU</AvatarFallback>
+              </Avatar>
+              <Avatar className="absolute mb-4 size-16 origin-bottom translate-x-[60%] scale-[80%] border md:mb-5">
+                <AvatarImage src={AVATAR_URLS.AVATAR_3} />
+                <AvatarFallback>SU</AvatarFallback>
+              </Avatar>
+              <Avatar className="mb-4 size-16 border md:mb-5">
+                <AvatarImage src={AVATAR_URLS.DEFAULT} />
+                <AvatarFallback>SU</AvatarFallback>
+              </Avatar>
+            </div>
+            <h3 className="mb-2 max-w-3xl font-semibold lg:text-lg">
+              {supportHeading}
+            </h3>
+            <p className="mb-8 max-w-3xl text-muted-foreground lg:text-lg">
+              {supportDescription}
+            </p>
+            <div className="flex w-full flex-col justify-center gap-2 sm:flex-row">
+              <Button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 rounded-full" asChild>
+                <a href={supportButtonUrl} target="_blank">
+                  {supportButtonText}
+                </a>
+              </Button>
+            </div>
           </div>
-          <h3 className="mb-2 max-w-3xl font-semibold lg:text-lg">
-            {supportHeading}
-          </h3>
-          <p className="mb-8 max-w-3xl text-muted-foreground lg:text-lg">
-            {supportDescription}
-          </p>
-          <div className="flex w-full flex-col justify-center gap-2 sm:flex-row">
-            <Button className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 rounded-full" asChild>
-              <a href={supportButtonUrl} target="_blank">
-                {supportButtonText}
-              </a>
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
     </section>
   );
