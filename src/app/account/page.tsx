@@ -24,7 +24,6 @@ function AccountPageContent() {
 
   const [formData, setFormData] = useState<AccountFormData>({
     full_name: '',
-    username: '',
     email: '',
     specific_model_id: DEFAULT_GROQ_MODEL_ID,
     use_youtube_sources: true,
@@ -106,7 +105,6 @@ function AccountPageContent() {
       setFormData(prev => ({
         ...prev,
         full_name: profile.full_name || '',
-        username: profile.username || '',
         email: user.email || '',
       }));
       fetchUserPreferences();
@@ -151,7 +149,6 @@ function AccountPageContent() {
         .upsert({
           id: user.id,
           full_name: formData.full_name,
-          username: formData.username,
         }, { onConflict: 'id' });
 
       if (profileError) {
@@ -228,10 +225,10 @@ function AccountPageContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         <div className="flex flex-col">
-          <div className="w-full flex-shrink-0 mb-8">
-            <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-6">Account</h2>
+          <div className="w-full flex-shrink-0 mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-light text-gray-900 dark:text-white mb-4 sm:mb-6">Account</h2>
             <TabNav
               items={accountTabs}
               activeTab={activeTab}
@@ -245,7 +242,6 @@ function AccountPageContent() {
               <PersonalInfoSection
                 formData={{
                   full_name: formData.full_name,
-                  username: formData.username,
                   email: formData.email,
                 }}
                 profile={profile}

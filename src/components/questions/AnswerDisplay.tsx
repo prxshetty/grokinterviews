@@ -28,30 +28,25 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
   }, []);
 
   if (inline) {
-    return <code className={className} {...props} />;
+    return <code className={className} {...props}>{children}</code>;
   }
 
   // Extract language for syntax highlighting (not currently used)
   /language-(\w+)/.exec(className || '');
 
   return (
-    <div className="relative group">
-      <div className="absolute right-2 top-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={copyToClipboard}
-        >
-          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-        </Button>
-      </div>
-      <pre className="p-4 rounded-lg overflow-auto bg-gray-100 dark:bg-gray-800">
-        <code ref={codeRef} className={className} {...props}>
-          {children}
-        </code>
-      </pre>
-    </div>
+    <pre className="relative group p-4 rounded-lg overflow-auto bg-gray-100 dark:bg-gray-800">
+      <button
+        type="button"
+        className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md flex items-center justify-center"
+        onClick={copyToClipboard}
+      >
+        {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      </button>
+      <code ref={codeRef} className={className} {...props}>
+        {children}
+      </code>
+    </pre>
   );
 };
 

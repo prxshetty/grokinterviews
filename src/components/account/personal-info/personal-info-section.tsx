@@ -8,7 +8,6 @@ import type { ReactElement } from 'react'; // Import ReactElement
 
 interface UserProfile {
   id: string;
-  username: string | null;
   full_name: string | null;
   avatar_url: string | null;
   email: string | null;
@@ -17,7 +16,6 @@ interface UserProfile {
 interface PersonalInfoSectionProps {
   formData: {
     full_name: string
-    username: string
     email: string
   }
   profile: UserProfile | null
@@ -64,9 +62,6 @@ export function PersonalInfoSection({
           <h3 className="text-lg sm:text-xl font-medium text-gray-900 dark:text-white">
             {formData.full_name || 'Your Name'}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            @{formData.username || 'username'}
-          </p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 lg:mt-4">
             Profile picture upload coming soon
           </p>
@@ -82,29 +77,14 @@ export function PersonalInfoSection({
             <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Full Name
             </label>
-                          <Input
-                type="text"
-                name="full_name"
-                id="full_name"
-                value={formData.full_name}
-                onChange={handleInputChange}
-                className="mt-1 text-gray-900 dark:text-gray-100"
-              />
-          </div>
-          {/* Username Input */}
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Username
-            </label>
-                          <Input
-                type="text"
-                name="username"
-                id="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Choose a username"
-                className="mt-1 text-gray-900 dark:text-gray-100"
-              />
+            <Input
+              type="text"
+              name="full_name"
+              id="full_name"
+              value={formData.full_name}
+              onChange={handleInputChange}
+              className="mt-1 text-gray-900 dark:text-gray-100"
+            />
           </div>
           {/* Email Display (Disabled) */}
           <div>

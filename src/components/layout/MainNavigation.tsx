@@ -26,8 +26,10 @@ import {
 } from '@/components/ui/sheet';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 import { Logo } from '@/components/ui/Logo';
-import { MAIN_NAV_TOPICS, type NavTopic, DEFAULT_AVATAR_URL } from '@/config';
+import { MAIN_NAV_TOPICS, DEFAULT_AVATAR_URL } from '@/config';
 import { cn } from '@/lib/utils';
+import { useStreak } from '@/hooks/useStreak';
+import { StreakBadge } from '@/components/ui/streak-badge';
 
 export default function MainNavigation({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -39,6 +41,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   
   // Use the shared auth state from the provider
   const { user, profile, signOut, supabase, refreshAuth } = useAuth();
+  const { current_streak, highest_streak, isLoading, error, refresh } = useStreak();
 
   // Fix missing avatar URL from Google sign-in
   useEffect(() => {
@@ -71,8 +74,29 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     fixMissingAvatar();
   }, [user, profile, supabase, refreshAuth]);
 
-  // Preload the default avatar image for instant loading
-  useImagePreloader([DEFAULT_AVATAR_URL], true);
+  // Preload avatar images for instant loading
+  const avatarUrls = [DEFAULT_AVATAR_URL];
+  if (profile?.avatar_url && profile.avatar_url.trim() !== '') {
+    avatarUrls.push(profile.avatar_url);
+  }
+  if (user?.user_metadata?.avatar_url && user.user_metadata.avatar_url.trim() !== '') {
+    avatarUrls.push(user.user_metadata.avatar_url);
+  }
+  useImagePreloader(avatarUrls, true);
+
+  // Handle streak error and auto-refresh
+  const handleStreakError = useCallback(async () => {
+    if (error) {
+      console.error('Streak error:', error);
+      // Try to refresh after a delay if there's an error
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      await refresh();
+    }
+  }, [error, refresh]);
+
+  useEffect(() => {
+    handleStreakError();
+  }, [handleStreakError]);
 
   // AI domain cleanup completed - now showing all navigation topics
   const displayedNavTopics = MAIN_NAV_TOPICS;
@@ -224,192 +248,147 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                   </SheetTrigger>
                   <SheetContent
                     side="right"
-                    className="w-full bg-background/80 dark:bg-background/80 border-none p-0 flex flex-col h-full backdrop-blur-xl"
+                    className="w-full max-w-sm bg-background border-l border-border/20 p-0 flex flex-col h-full"
                   >
-                    {/* Header with logo */}
-                    <div className="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-800">
-                      <Logo size="sm" showText={true} className="text-black dark:text-white" textClassName="text-lg" />
-                    </div>
-                    
                     <SheetHeader className="sr-only">
-                      <SheetTitle>Mobile Menu</SheetTitle>
+                      <SheetTitle>Navigation Menu</SheetTitle>
                     </SheetHeader>
-                    {/* Main navigation content */}
-                    <div className="flex-1 flex flex-col px-6 py-8">
-                      <nav className="flex flex-col space-y-6">
-                        <SheetClose asChild>
-                          <Link
-                            href="/topics"
-                            onClick={handleTopicsLinkClick}
-                            className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
-                          >
-                            {currentDomainLabel}
-                          </Link>
-                        </SheetClose>
-                        {user && (
-                          <>
-                            <SheetClose asChild>
-                              <Link
-                                href="/dashboard"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800 flex items-center"
-                              >
-                                Dashboard
-                                <span className="absolute -top-2 ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>BETA</span>
-                              </Link>
-                            </SheetClose>
-                            <SheetClose asChild>
-                              <Link
-                                href="/dashboard/activity"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
-                              >
-                                Activity
-                              </Link>
-                            </SheetClose>
-                          </>
-                        )}
-                        <SheetClose asChild>
-                          <Link
-                            href="/about"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
-                          >
-                            About
-                          </Link>
-                        </SheetClose>
-
-                        {isTopicPage && currentDomain && (
-                          <div className="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
-                            <p className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-4">
-                              Switch Subject Area
-                            </p>
-                            <div className="space-y-3">
-                              {displayedNavTopics.map((topic: NavTopic) => (
-                                <SheetClose asChild key={topic.id}>
-                                  <Link
-                                    href={`/topics/${topic.id}`}
-                                    onClick={e => {
-                                      if (
-                                        extractDomainFromPath(pathname, 'topics') ===
-                                        topic.id
-                                      ) {
-                                        e.preventDefault();
-                                        window.dispatchEvent(
-                                          new CustomEvent('resetCategorySelection', {
-                                            detail: { domain: topic.id },
-                                          }),
-                                        );
-                                        router.replace(`/topics/${topic.id}`);
-                                      }
-                                      setIsMobileMenuOpen(false);
-                                    }}
-                                    className={`block py-3 text-xl font-light transition-colors duration-300 border-b border-gray-100 dark:border-gray-800 ${
-                                      extractDomainFromPath(pathname, 'topics') ===
-                                      topic.id
-                                        ? 'text-primary dark:text-primary'
-                                        : 'text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary'
-                                    }`}
-                                  >
-                                    {topic.label}
-                                  </Link>
-                                </SheetClose>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </nav>
-                    </div>
-
-                    {/* Account and Settings Section - Fixed at bottom */}
-                    <div className="mt-auto p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
-                      {user ? (
-                        <div className="space-y-4">
-                          <div className="flex items-center space-x-4 p-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700">
-                            <Avatar className="w-14 h-14">
-                              <AvatarImage
-                                src={
-                                  profile?.avatar_url &&
-                                  profile.avatar_url.trim() !== ''
-                                    ? profile.avatar_url
-                                    : DEFAULT_AVATAR_URL
-                                }
-                                alt="User avatar"
-
-                              />
-                              <AvatarFallback className="bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                                <img
-                                  src={DEFAULT_AVATAR_URL}
-                                  alt="Default Avatar"
-                                  className="w-full h-full object-cover"
-                                />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-lg font-medium text-gray-900 dark:text-gray-100 truncate">
-                                {profile?.full_name ||
-                                  profile?.username ||
-                                  'User'}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {user?.email || 'No email provided'}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {/* Account Button */}
-                          <SheetClose asChild>
-                            <Button
-                              variant="ghost"
-                              onClick={() => {
-                                router.push('/account');
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="w-full justify-start font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 h-14 text-lg rounded-xl"
-                            >
-                              <UserIcon className="mr-4 h-6 w-6" /> Account Settings
-                            </Button>
-                          </SheetClose>
-                          
-                          {/* Theme Switcher and Sign Out */}
-                          <div className="flex items-center justify-between w-full pt-4">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-base text-gray-600 dark:text-gray-400">Theme:</span>
-                              <ThemeSwitcher />
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleSignOut();
-                              }}
-                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors px-4 py-3 rounded-xl text-base"
-                            >
-                              <LogOut className="h-5 w-5 mr-3" />
-                              Sign Out
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-600 dark:text-gray-400">Theme:</span>
-                              <ThemeSwitcher />
-                            </div>
-                          </div>
+                    
+                    {/* Clean, minimal mobile menu */}
+                    <div className="flex flex-col h-full">
+                      {/* Navigation Links */}
+                      <nav className="flex-1 px-6 py-8">
+                        <div className="space-y-1">
                           <SheetClose asChild>
                             <Link
-                              href="/signin"
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className="block w-full text-center px-6 py-4 text-lg font-medium text-white bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 rounded-xl transition-all duration-200"
+                              href="/topics"
+                              onClick={handleTopicsLinkClick}
+                              className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
                             >
-                              Sign In
+                              {currentDomainLabel}
+                            </Link>
+                          </SheetClose>
+                          
+                          {user && (
+                            <>
+                              <SheetClose asChild>
+                                <Link
+                                  href="/dashboard"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
+                                >
+                                  Dashboard
+                                  <span className="ml-2 inline-flex items-center rounded-full px-1 py-0.5 text-[8px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/30 to-purple-500/30 text-cyan-700 dark:text-cyan-200 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>
+                                    BETA
+                                  </span>
+                                </Link>
+                              </SheetClose>
+                            </>
+                          )}
+                          
+                          <SheetClose asChild>
+                            <Link
+                              href="/about"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
+                            >
+                              About
                             </Link>
                           </SheetClose>
                         </div>
-                      )}
+                      </nav>
+
+                      {/* User Section */}
+                      <div className="border-t border-border/20 p-6">
+                        {user ? (
+                          <div className="space-y-4">
+                            {/* User Info */}
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="w-10 h-10 border border-gray-200 dark:border-gray-700">
+                                <AvatarImage
+                                  key={profile?.avatar_url || DEFAULT_AVATAR_URL}
+                                  src={
+                                    profile?.avatar_url &&
+                                    profile.avatar_url.trim() !== ''
+                                      ? profile.avatar_url
+                                      : DEFAULT_AVATAR_URL
+                                  }
+                                  alt="User avatar"
+                                  style={{ objectFit: 'cover' }}
+                                />
+                                <AvatarFallback className="bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                                  <img
+                                    src={DEFAULT_AVATAR_URL}
+                                    alt="Default Avatar"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">
+                                  {profile?.full_name || 'User'}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {user?.email || 'No email provided'}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Actions */}
+                            <div className="space-y-2">
+                              <SheetClose asChild>
+                                <Button
+                                  variant="ghost"
+                                  onClick={() => {
+                                    router.push('/account');
+                                    setIsMobileMenuOpen(false);
+                                  }}
+                                  className="w-full justify-start h-10 px-3 text-sm font-medium"
+                                >
+                                  <UserIcon className="mr-3 h-4 w-4" />
+                                  Account Settings
+                                </Button>
+                              </SheetClose>
+                              
+                              <div className="flex items-center justify-between pt-2">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm text-muted-foreground">Theme</span>
+                                  <ThemeSwitcher />
+                                </div>
+                                
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleSignOut}
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-3"
+                                >
+                                  <LogOut className="h-4 w-4 mr-2" />
+                                  Sign Out
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-muted-foreground">Theme</span>
+                                <ThemeSwitcher />
+                              </div>
+                            </div>
+                            
+                            <SheetClose asChild>
+                              <Button
+                                asChild
+                                className="w-full h-10"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                              >
+                                <Link href="/signin">Sign In</Link>
+                              </Button>
+                            </SheetClose>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -444,14 +423,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                           </span>
                         </Link>
                       </li>
-                      <li>
-                        <Link
-                          href="/dashboard/activity"
-                          className="text-muted-foreground hover:text-accent-foreground block duration-150"
-                        >
-                          <span>Activity</span>
-                        </Link>
-                      </li>
                     </>
                   )}
                   <li>
@@ -470,78 +441,88 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 isScrolled ? "justify-end" : "justify-end lg:ml-auto"
               )}>
                 {user ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="group h-11 rounded-full px-2 gap-2 text-sm text-foreground hover:bg-transparent hover:bg-gray-100/50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-border/40"
-                      >
-                        <Avatar className="w-9 h-9 border border-gray-200 dark:border-gray-700">
-                          <AvatarImage
-                            src={
-                              profile?.avatar_url &&
-                              profile.avatar_url.trim() !== ''
-                                ? profile.avatar_url
-                                : DEFAULT_AVATAR_URL
-                            }
-                            alt="Profile picture"
-
-                          />
-                          <AvatarFallback className="bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                            <img
-                              src={DEFAULT_AVATAR_URL}
-                              alt="Default Avatar"
-                              className="w-full h-full object-cover"
-                            />
-                          </AvatarFallback>
-                        </Avatar>
-                        <ChevronDown className="h-3.5 w-3.5 opacity-70 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      sideOffset={8}
-                      className="w-56 bg-background/80 dark:bg-background/80 backdrop-blur-xl border border-border/50 shadow-lg rounded-lg overflow-hidden p-1.5 mt-1"
-                    >
-                      <DropdownMenuLabel className="p-3 pb-2 border-b border-border/20">
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-normal text-gray-900 dark:text-gray-100">
-                            {profile?.full_name || 'User'}
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                            {user?.email || 'No email provided'}
-                          </p>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuGroup className="mt-1">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            router.push('/account');
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="px-2 py-1.5 text-sm rounded-md cursor-pointer font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100 focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100 transition-colors"
-                        >
-                          <UserIcon className="mr-2 h-4 w-4 opacity-70" />
-                          <span>Account</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                      <div className="p-1.5 pt-2 flex items-center justify-between border-t border-border/20 mt-1">
-                        <ThemeSwitcher className="bg-transparent dark:bg-transparent" />
+                  <>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleSignOut();
-                          }}
-                          className="h-8 w-8 rounded-full text-red-500 border border-red-200 hover:bg-red-500/10 transition-colors dark:border-red-800/50"
+                          className="group h-11 rounded-full px-2 gap-2 text-sm text-foreground hover:bg-transparent hover:bg-gray-100/50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-border/40"
                         >
-                          <LogOut className="h-4 w-4" />
-                          <span className="sr-only">Sign Out</span>
+                          <Avatar className="w-9 h-9 border border-gray-200 dark:border-gray-700">
+                            <AvatarImage
+                              key={profile?.avatar_url || DEFAULT_AVATAR_URL}
+                              src={
+                                profile?.avatar_url &&
+                                profile.avatar_url.trim() !== ''
+                                  ? profile.avatar_url
+                                  : DEFAULT_AVATAR_URL
+                              }
+                              alt="Profile picture"
+                              style={{ objectFit: 'cover' }}
+                            />
+                            <AvatarFallback className="bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                              <img
+                                src={DEFAULT_AVATAR_URL}
+                                alt="Default Avatar"
+                                className="w-full h-full object-cover"
+                              />
+                            </AvatarFallback>
+                          </Avatar>
+                          <ChevronDown className="h-3.5 w-3.5 opacity-70 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </Button>
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        sideOffset={8}
+                        className="w-56 bg-background/80 dark:bg-background/80 backdrop-blur-xl border border-border/50 shadow-lg rounded-lg overflow-hidden p-1.5 mt-1"
+                      >
+                        <DropdownMenuLabel className="p-3 pb-2 border-b border-border/20">
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-normal text-gray-900 dark:text-gray-100">
+                              {profile?.full_name || 'User'}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                              {user?.email || 'No email provided'}
+                            </p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuGroup className="mt-1">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              router.push('/account');
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="px-2 py-1.5 text-sm rounded-md cursor-pointer font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100 focus:bg-gray-100 focus:text-gray-900 dark:focus:bg-gray-800 dark:focus:text-gray-100 transition-colors"
+                          >
+                            <UserIcon className="mr-2 h-4 w-4 opacity-70" />
+                            <span>Account</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <div className="p-1.5 pt-2 flex items-center justify-between border-t border-border/20 mt-1">
+                          <ThemeSwitcher className="bg-transparent dark:bg-transparent" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleSignOut();
+                            }}
+                            className="h-8 w-8 rounded-full text-red-500 border border-red-200 hover:bg-red-500/10 transition-colors dark:border-red-800/50"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            <span className="sr-only">Sign Out</span>
+                          </Button>
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    {!isLoading && !error && (
+                      <StreakBadge
+                        currentStreak={current_streak}
+                        highestStreak={highest_streak}
+                        className="ml-2"
+                      />
+                    )}
+                  </>
                 ) : (
                   <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
                     <Button asChild variant="ghost" size="sm" className={cn(isScrolled && 'lg:hidden')}>

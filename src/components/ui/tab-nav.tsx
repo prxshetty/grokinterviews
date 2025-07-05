@@ -50,28 +50,41 @@ export function TabNav({
     setActiveTabPosition();
   }, [setActiveTabPosition]);
 
+  // Handle window resize to recalculate position
+  useEffect(() => {
+    const handleResize = () => {
+      setActiveTabPosition();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setActiveTabPosition]);
+
   return (
     <div className={`flex items-center w-full ${className}`}>
-      <ul
-        className="relative flex w-fit rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
-        onMouseLeave={() => {
-          setActiveTabPosition();
-        }}
-      >
-        {items.map((item) => (
-          <Tab
-            key={item.id}
-            item={item}
-            setPosition={setPosition}
-            isActive={activeTab === item.id}
-            position={position}
-            onTabChange={onTabChange}
-            variant={variant}
-          />
-        ))}
+      {/* Mobile: Full width with horizontal scroll, Desktop: Centered with fit width */}
+      <div className="w-full overflow-x-auto hide-scrollbar">
+        <ul
+          className="relative flex w-fit min-w-full sm:min-w-0 sm:w-fit sm:mx-auto rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"
+          onMouseLeave={() => {
+            setActiveTabPosition();
+          }}
+        >
+          {items.map((item) => (
+            <Tab
+              key={item.id}
+              item={item}
+              setPosition={setPosition}
+              isActive={activeTab === item.id}
+              position={position}
+              onTabChange={onTabChange}
+              variant={variant}
+            />
+          ))}
 
-        <Cursor position={position} />
-      </ul>
+          <Cursor position={position} />
+        </ul>
+      </div>
     </div>
   );
 }
@@ -125,7 +138,8 @@ const Tab = ({
     item.onClick?.();
   };
 
-  const commonClassName = `relative block px-4 py-2 text-xs font-normal transition-colors ${
+  // Mobile-first responsive classes with better touch targets and text sizing
+  const commonClassName = `relative block px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-xs font-normal transition-colors whitespace-nowrap min-w-0 ${
     isUnderCursor || isActive
       ? 'text-white dark:text-black'
       : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
@@ -145,7 +159,7 @@ const Tab = ({
           left: ref.current.offsetLeft,
         });
       }}
-      className="relative z-10 block cursor-pointer"
+      className="relative z-10 block cursor-pointer flex-shrink-0"
     >
       {variant === 'link' && item.href ? (
         <Link href={item.href} className={commonClassName}>
