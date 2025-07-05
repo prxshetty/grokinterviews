@@ -25,25 +25,21 @@ const statsData = highlightedStats.map((stat, index) => ({
 
 export default function StatsSection() {
   return (
-    <div className="w-full bg-background py-24 font-sans">
-       <div className="text-center mb-20">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl mb-4 sm:mb-6 font-light text-foreground">
-          Grok Interviews
-        </h2>
-        <p className="text-sm sm:text-base font-serif italic text-muted-foreground max-w-2xl mx-auto">
-          Curated by AI<br className="hidden md:block" /> Just for You.
-        </p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 grow h-full gap-4 max-w-screen-xl mx-auto px-8">
+    <div className="w-full bg-white dark:bg-black py-12 sm:py-16 md:py-24 font-sans -mr-4 sm:-mr-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grow h-full gap-0 max-w-screen-xl mx-auto">
         {statsData.map((stat, index) => {
             let className = "";
-            if (index === 0) className = "md:col-span-2";
-            if (index === 5) className = "md:col-span-3";
+            // Mobile: all cards span 1 column
+            // Tablet: first card spans 2 columns, last card spans 2 columns
+            // Desktop: first card spans 2 columns, last card spans 3 columns
+            if (index === 0) className = "sm:col-span-2 lg:col-span-2";
+            if (index === 5) className = "sm:col-span-2 lg:col-span-3";
           return (
           <div key={index} className={className}>
             <BentoCard
               title={stat.description}
               value={stat.value}
+              subtitle={stat.subtitle}
               colors={stat.colors}
               delay={stat.delay}
             />

@@ -5,7 +5,8 @@ import CompanyList from '@/components/home/CompanyList';
 import StatsSection from '@/components/home/StatsSection';
 import TopicCarousel from '@/components/home/TopicCarousel';
 import { FeatureSection } from '@/components/home/FeatureSection';
-import { StaggerTestimonials } from '@/components/ui/stagger-testimonials';
+// import { StaggerTestimonials } from '@/components/ui/stagger-testimonials';
+import { WarpBackground } from '@/components/ui/warp-background';
 import { useScrollAnimation } from '@/hooks/ui';
 
 // ExploreTopicsSection component with scroll animations
@@ -38,48 +39,60 @@ function ExploreTopicsSection() {
 }
 
 // TestimonialsSection component with scroll animations
-function TestimonialsSection() {
-  const { ref, isVisible, mounted } = useScrollAnimation();
+// function TestimonialsSection() {
+//   const { ref, isVisible, mounted } = useScrollAnimation();
 
-  if (!mounted) {
-    return (
-      <div className="mt-0 mb-24 opacity-0">
-        {/* Skeleton content */}
-      </div>
-    );
-  }
+//   if (!mounted) {
+//     return (
+//       <div className="mt-0 mb-24 opacity-0">
+//         {/* Skeleton content */}
+//       </div>
+//     );
+//   }
 
-  return (
-    <div
-      ref={ref}
-      className={`mt-0 mb-24 transition-all duration-1000 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-      }`}
-    >
-      <h2 className="text-2xl md:text-3xl mb-8 text-center font-normal">
-        What Our Users Say
-      </h2>
-      <StaggerTestimonials />
-    </div>
-  );
-}
+//   return (
+//     <div
+//       ref={ref}
+//       className={`mt-0 mb-24 transition-all duration-1000 ${
+//         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+//       }`}
+//     >
+//       <h2 className="text-2xl md:text-3xl mb-8 text-center font-normal">
+//         What Our Users Say
+//       </h2>
+//       <StaggerTestimonials />
+//     </div>
+//   );
+// }
 
 export default function HomePageClient() {
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full pt-4 relative font-sans animate-fade-in">
-      <HeroSection />
+      {/* Hero Section with WarpBackground */}
+      <WarpBackground 
+        className="mb-16"
+        perspective={120}
+        beamsPerSide={4}
+        beamSize={4}
+        beamDelayMax={2}
+        beamDelayMin={0.3}
+        beamDuration={3.5}
+        gridColor="hsl(var(--border))"
+      >
+        <HeroSection />
+      </WarpBackground>
 
       {/* Company List Section */}
       <div className="mt-16">
         <CompanyList />
       </div>
 
-      <div className="px-8 md:px-12">
-        {/* Stats Section */}
-        <div className="mt-16 md:mt-24">
-          <StatsSection />
-        </div>
+      {/* Stats Section - Full width without padding wrapper */}
+      <div className="mt-16 md:mt-24">
+        <StatsSection />
+      </div>
 
+      <div className="px-8 md:px-12">
         {/* Topic Carousel Section */}
         <ExploreTopicsSection />
 
@@ -89,8 +102,8 @@ export default function HomePageClient() {
         </div>
       </div>
 
-      {/* Testimonials Section */}
-      <TestimonialsSection />
+      {/* Testimonials Section - Hidden for now */}
+      {/* <TestimonialsSection /> */}
     </div>
   );
 } 
