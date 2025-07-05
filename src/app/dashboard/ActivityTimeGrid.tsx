@@ -146,11 +146,11 @@ export default function ActivityTimeGrid({ className = "", fullWidth = false }: 
   };
 
   return (
-    <div className={`p-6 rounded-lg ${className} ${fullWidth ? 'w-full' : ''} ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+    <div className={`p-6 rounded-lg ${className} ${fullWidth ? 'w-full' : ''} bg-background text-foreground`}>
       <div className="flex justify-between items-center mb-2">
         <div>
-          <h2 className={`text-lg font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total time</h2>
-          <div className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTimeSpent(totalTimeSpent)}</div>
+          <h2 className="text-lg font-medium text-foreground">Total time</h2>
+          <div className="text-4xl font-bold text-foreground">{formatTimeSpent(totalTimeSpent)}</div>
         </div>
       </div>
 

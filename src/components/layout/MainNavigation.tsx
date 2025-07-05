@@ -38,7 +38,38 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   const [isScrolled, setIsScrolled] = useState(false);
   
   // Use the shared auth state from the provider
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, supabase, refreshAuth } = useAuth();
+
+  // Fix missing avatar URL from Google sign-in
+  useEffect(() => {
+    const fixMissingAvatar = async () => {
+      // Check if user has avatar in metadata but profile doesn't have it
+      if (
+        user?.user_metadata?.avatar_url &&
+        profile &&
+        (!profile.avatar_url || profile.avatar_url.trim() === '')
+      ) {
+        console.log('Fixing missing avatar URL from Google metadata');
+        
+        if (supabase) {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ avatar_url: user.user_metadata.avatar_url })
+            .eq('id', user.id);
+          
+          if (error) {
+            console.error('Failed to update avatar URL:', error);
+          } else {
+            console.log('Successfully updated avatar URL from Google metadata');
+            // Refresh auth to get updated profile
+            await refreshAuth();
+          }
+        }
+      }
+    };
+
+    fixMissingAvatar();
+  }, [user, profile, supabase, refreshAuth]);
 
   // Preload the default avatar image for instant loading
   useImagePreloader([DEFAULT_AVATAR_URL], true);
@@ -102,9 +133,9 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     <Link href="/" className="flex items-center whitespace-nowrap">
       <Logo 
         size="md" 
-        showText={true} 
+        showText={!isScrolled} 
         className="text-black dark:text-white" 
-        textClassName="text-lg md:text-xl"
+        textClassName="text-lg md:text-xl font-semi tracking-widest uppercase text-[9px]"
       />
     </Link>
   );
@@ -221,12 +252,10 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                               <Link
                                 href="/dashboard"
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800"
+                                className="text-2xl font-light text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800 flex items-center"
                               >
                                 Dashboard
-                                <span className="ml-2 inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-                                  BETA
-                                </span>
+                                <span className="absolute -top-2 ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>BETA</span>
                               </Link>
                             </SheetClose>
                             <SheetClose asChild>
@@ -306,6 +335,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                     : DEFAULT_AVATAR_URL
                                 }
                                 alt="User avatar"
+
                               />
                               <AvatarFallback className="bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                 <img
@@ -410,9 +440,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                         >
                           <span className="flex items-center">
                             Dashboard
-                            <span className="ml-2 inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-                              BETA
-                            </span>
+                            <span className="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>BETA</span>
                           </span>
                         </Link>
                       </li>
@@ -446,7 +474,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="group h-11 rounded-full px-2 gap-2 text-sm text-foreground hover:bg-transparent hover:bg-gray-100/50 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors border border-transparent hover:border-border/40"
+                        className="group h-11 rounded-full px-2 gap-2 text-sm text-foreground hover:bg-transparent hover:bg-gray-100/50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-border/40"
                       >
                         <Avatar className="w-9 h-9 border border-gray-200 dark:border-gray-700">
                           <AvatarImage
@@ -457,6 +485,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                 : DEFAULT_AVATAR_URL
                             }
                             alt="Profile picture"
+
                           />
                           <AvatarFallback className="bg-gray-100 dark:bg-gray-800 overflow-hidden">
                             <img

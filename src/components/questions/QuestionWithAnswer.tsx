@@ -4,9 +4,9 @@ import { useState, useRef, memo, useMemo, Suspense } from 'react';
 import React from 'react';
 import { ChevronUp } from 'lucide-react';
 
-
 // Import custom hooks
 import { useQuestionAnswer, useQuestionProgress, useQuestionBookmark, useQuestionView } from '@/hooks/questions';
+import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
 
 // Import the new accordion components
 import {
@@ -15,6 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"; // Assuming this is the correct path
 
+import { TabNav } from '@/components/ui/tab-nav';
 import { BookmarkButton } from './BookmarkButton'; // Keep BookmarkButton
 import { AnswerDisplay } from './AnswerDisplay';
 import { DifficultyTag } from './DifficultyTag';
@@ -91,7 +92,10 @@ function QuestionWithAnswerComponent({
 }: QuestionWithAnswerProps) {
   const [isExpandedState, setIsExpandedState] = useState(isOpen || false);
   const [isResourcesVisible, setIsResourcesVisible] = useState(true);
+  const [activeTab, setActiveTab] = useState('answer'); // 'answer' or 'resources'
   const answerRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = useIsMobile();
+  const isTabletOrSmaller = useIsTabletOrSmaller();
 
   // Computed values
   const hasPredefinedAnswer = useMemo(() => {
@@ -148,8 +152,24 @@ function QuestionWithAnswerComponent({
     setIsExpandedState(isOpen || false);
   }, [isOpen]);
 
-  // No need for separate bookmark handler - using custom hook
+  // Tab navigation items for mobile
+  const tabItems = [
+    {
+      id: 'answer',
+      label: 'Answer',
+      onClick: () => setActiveTab('answer')
+    },
+    {
+      id: 'resources',
+      label: 'Resources',
+      onClick: () => setActiveTab('resources')
+    }
+  ];
 
+  // Handle tab change
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+  };
 
   return (
     <AccordionItem 
@@ -157,7 +177,7 @@ function QuestionWithAnswerComponent({
       className="group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md mb-3"
     >
       <div className="flex items-start justify-between w-full bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors">
-        <AccordionTrigger className="flex items-start justify-between flex-1 px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <AccordionTrigger className="flex items-start justify-between flex-1 px-4 py-3 text-left">
           <div className="flex items-start flex-1 pr-3 min-w-0"> {/* Ensure text wraps */}
             {isCompletedState ? (
               <div className="mr-2 text-green-500 dark:text-green-400 flex-shrink-0 mt-1">
@@ -209,45 +229,95 @@ function QuestionWithAnswerComponent({
       <AccordionContent 
         className="px-4 pt-0 pb-4 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 relative"
       >
-        {/* Two-pane layout */}
-        <div className="flex flex-col lg:flex-row gap-6 pt-3 h-[calc(100vh-200px)] min-h-[700px] w-full">
-          {/* Left Pane - Generated Answer */}
-          <div className={`flex-1 flex flex-col h-full ${isResourcesVisible ? 'lg:w-1/2' : 'lg:w-full'}`}>
-
-            <div 
-              ref={answerRef}
-              className="flex-1 flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50"
-            >
-              <AnswerDisplay
-                answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
-                isLoading={isGenerating}
-                error={error}
-                isCompleted={isCompletedState}
-                scrollProgress={scrollProgress}
-              />
-            </div>
+        {/* Mobile Tab Navigation */}
+        {isTabletOrSmaller && (
+          <div className="pt-3 pb-4">
+            <TabNav
+              items={tabItems}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              variant="button"
+              className="justify-center"
+            />
           </div>
-          
-          {/* Right Pane - Resource Preview */}
-          {isResourcesVisible && (
-            <div className="flex-1 lg:w-1/2 flex flex-col h-full">
+        )}
 
-              <div className="flex-1 flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50">
-                <div className="h-full overflow-y-auto">
+        {/* Content Layout - Mobile: Single pane with tabs, Desktop: Two panes */}
+        <div className={`pt-3 w-full ${
+          isTabletOrSmaller 
+            ? '' 
+            : 'flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)] min-h-[700px]'
+        }`}>
+          
+          {/* Mobile: Single pane based on active tab */}
+          {isTabletOrSmaller ? (
+            <div className={activeTab === 'answer' ? 'h-[calc(100vh-250px)]' : ''}>
+              {activeTab === 'answer' ? (
+                <div 
+                  ref={answerRef}
+                  className="h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50"
+                >
+                  <AnswerDisplay
+                    answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
+                    isLoading={isGenerating}
+                    error={error}
+                    isCompleted={isCompletedState}
+                    scrollProgress={scrollProgress}
+                  />
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-gray-800/50 p-4 rounded-lg">
                   <Suspense fallback={<ResourceListSkeleton />}>
                     <ResourceList 
                       questionId={questionId} 
-                      isResourcesVisible={isResourcesVisible}
-                      onResourcesVisibilityChange={setIsResourcesVisible}
+                      isResourcesVisible={true}
+                      onResourcesVisibilityChange={() => {}}
                     />
                   </Suspense>
                 </div>
-              </div>
+              )}
             </div>
+          ) : (
+            /* Desktop: Two-pane layout */
+            <>
+              {/* Left Pane - Generated Answer */}
+              <div className={`flex-1 flex flex-col h-full ${isResourcesVisible ? 'lg:w-1/2' : 'lg:w-full'}`}>
+                <div 
+                  ref={answerRef}
+                  className="flex-1 flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50"
+                >
+                  <AnswerDisplay
+                    answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
+                    isLoading={isGenerating}
+                    error={error}
+                    isCompleted={isCompletedState}
+                    scrollProgress={scrollProgress}
+                  />
+                </div>
+              </div>
+              
+              {/* Right Pane - Resource Preview */}
+              {isResourcesVisible && (
+                <div className="flex-1 lg:w-1/2 flex flex-col h-full">
+                  <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-800/50 rounded-lg overflow-hidden">
+                    <div className="h-full overflow-y-auto">
+                      <Suspense fallback={<ResourceListSkeleton />}>
+                        <ResourceList 
+                          questionId={questionId} 
+                          isResourcesVisible={isResourcesVisible}
+                          onResourcesVisibilityChange={setIsResourcesVisible}
+                        />
+                      </Suspense>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        {isExpandedState && onRequestClose && (
+        {/* Desktop Controls - Only show on desktop when expanded */}
+        {!isTabletOrSmaller && isExpandedState && onRequestClose && (
           <div className="mt-4 flex justify-between items-center">
             <button
               onClick={() => setIsResourcesVisible(!isResourcesVisible)}
