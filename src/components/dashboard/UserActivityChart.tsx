@@ -87,12 +87,19 @@ export function UserActivityChart({
   if (loading) {
     return (
       <Card className={`@container/card border-border/50 bg-transparent rounded-md ${className}`}>
-        <CardHeader>
-          <CardTitle>Activity Overview</CardTitle>
-          <CardDescription>Your learning activity over time</CardDescription>
+        <CardHeader className="flex-row items-center">
+          <div>
+            <CardTitle>Activity Overview</CardTitle>
+            <CardDescription>Your learning activity over time</CardDescription>
+          </div>
+          <div className="ml-auto">
+            <div className="h-9 w-48 rounded-full bg-muted animate-pulse" />
+          </div>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <LoadingSpinner />
+          <div className="aspect-auto h-[250px] w-full flex items-center justify-center">
+            <LoadingSpinner />
+          </div>
         </CardContent>
       </Card>
     );
