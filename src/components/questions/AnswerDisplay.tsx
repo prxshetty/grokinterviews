@@ -35,18 +35,20 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
   /language-(\w+)/.exec(className || '');
 
   return (
-    <pre className="relative group p-4 rounded-lg overflow-auto bg-gray-100 dark:bg-gray-800">
-      <button
-        type="button"
-        className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md flex items-center justify-center"
-        onClick={copyToClipboard}
-      >
-        {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      </button>
-      <code ref={codeRef} className={className} {...props}>
-        {children}
-      </code>
-    </pre>
+    <div className="relative group my-4 not-prose">
+      <pre className="p-4 rounded-lg overflow-auto bg-gray-100 dark:bg-gray-800">
+        <button
+          type="button"
+          className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md flex items-center justify-center"
+          onClick={copyToClipboard}
+        >
+          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </button>
+        <code ref={codeRef} className={className} {...props}>
+          {children}
+        </code>
+      </pre>
+    </div>
   );
 };
 
@@ -191,7 +193,7 @@ export function AnswerDisplay({
               components={{
                 ...defaultMarkdownComponents,
                 code: CodeBlock,
-                pre: ({ children }) => <>{children}</>, // Prevent default pre styling
+                pre: ({ children }) => <>{children}</>, // Let CodeBlock handle the pre element
                 a: (props) => (
                   <a 
                     {...props} 

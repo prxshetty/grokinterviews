@@ -7,9 +7,10 @@ interface StreakBadgeProps {
   currentStreak: number;
   highestStreak: number;
   className?: string;
+  isLoading?: boolean;
 }
 
-export function StreakBadge({ currentStreak, highestStreak, className }: StreakBadgeProps) {
+export function StreakBadge({ currentStreak, highestStreak, className, isLoading = false }: StreakBadgeProps) {
   return (
     <TooltipProvider>
       <Tooltip>
@@ -21,16 +22,18 @@ export function StreakBadge({ currentStreak, highestStreak, className }: StreakB
               "text-orange-600 dark:text-orange-400",
               "border border-orange-200/50 dark:border-orange-500/20",
               "hover:from-orange-500/20 hover:to-red-500/20 transition-colors",
+              isLoading && "opacity-70",
               className
             )}
           >
             <Flame 
               className={cn(
                 "w-4 h-4",
-                currentStreak > 0 ? "animate-flicker text-orange-500" : "text-gray-400"
+                currentStreak > 0 ? "animate-flicker text-orange-500" : "text-gray-400",
+                isLoading && "animate-pulse"
               )} 
             />
-            <span>{currentStreak}</span>
+            <span className={cn(isLoading && "animate-pulse")}>{currentStreak}</span>
           </div>
         </TooltipTrigger>
         <TooltipContent 

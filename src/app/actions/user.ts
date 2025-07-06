@@ -48,8 +48,9 @@ async function createDefaultUserPreferences(userId: string, supabase: any) {
 
 /**
  * Creates a profile for a new user if one doesn't already exist.
- * This is called after a user signs in, ensuring that every user has a profile record.
- * Also creates default user preferences.
+ * This is called after a user signs in to ensure that every user has a profile record.
+ * Note: User preferences are automatically created by the database trigger handle_new_user.
+ * This function is mainly for edge cases where the trigger might not have fired.
  * @param user The user object from Supabase Auth.
  * @returns An object containing the new or existing profile data, or an error.
  */
@@ -61,75 +62,42 @@ export async function createProfileForUser(user: User) {
   const supabase = await createClient()
 
   // First, check if a profile already exists.
-  const { data: existingProfile } = await supabase
+  const { data: existingProfile, error: profileError } = await supabase
     .from('profiles')
-    .select('id')
+    .select('*')
     .eq('id', user.id)
     .single()
 
-  if (existingProfile) {
-    console.log('Profile already exists for user:', user.id)
-    
-    // Check if user preferences exist, create if they don't
-    const { data: existingPreferences } = await supabase
-      .from('user_preferences')
-      .select('user_id')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!existingPreferences) {
-      console.log('Creating missing user preferences for existing user:', user.id)
-      await createDefaultUserPreferences(user.id, supabase)
-    }
-
-    // Return the full profile
-    const { data: fullProfile, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    return { data: fullProfile, error }
+  if (profileError && profileError.code !== 'PGRST116') {
+    console.error('Error checking existing profile:', profileError)
+    return { error: { message: 'Failed to check existing profile' } }
   }
 
-  console.log('No profile found for user, creating one:', user.id)
+  if (existingProfile) {
+    console.log('Profile already exists for user:', user.id)
+    return { data: existingProfile }
+  }
 
-  // Extract metadata, providing sensible defaults.
-  const fullName =
-    user.user_metadata?.full_name ??
-    (user.user_metadata?.first_name && user.user_metadata?.last_name
-      ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`.trim()
-      : user.email?.split('@')[0]) ??
-    'New User'
-  
-  const username = 
-    user.user_metadata?.username ?? 
-    user.email?.split('@')[0] ?? 
-    `user-${Date.now()}`
-
-  // Create the new profile.
-  const { data: newProfile, error } = await supabase
+  // If no profile exists, create one
+  // Note: This should rarely happen as the database trigger should handle this
+  const { data: newProfile, error: insertError } = await supabase
     .from('profiles')
     .insert({
       id: user.id,
-      email: user.email,
-      full_name: fullName,
-      username: username,
-      avatar_url: user.user_metadata?.avatar_url ?? null,
+      full_name: user.user_metadata?.full_name || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+      email: user.email || null,
     })
     .select()
     .single()
 
-  if (error) {
-    console.error('Error creating profile in server action:', error)
-    return { data: null, error }
+  if (insertError) {
+    console.error('Error creating profile:', insertError)
+    return { error: { message: 'Failed to create profile' } }
   }
 
-  console.log('Profile created successfully:', newProfile)
-
-  // Create default user preferences for the new user
-  const preferencesResult = await createDefaultUserPreferences(user.id, supabase)
-  if (preferencesResult.error) {
-    console.error('Failed to create default preferences for new user:', user.id)
-    // Don't fail the entire operation, just log the error
-  }
-
-  return { data: newProfile, error: null }
+  console.log('Profile created successfully for user:', user.id)
+  return { data: newProfile }
 }
 
 /**

@@ -41,7 +41,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   
   // Use the shared auth state from the provider
   const { user, profile, signOut, supabase, refreshAuth } = useAuth();
-  const { current_streak, highest_streak, isLoading, error, refresh } = useStreak();
+  const { current_streak, highest_streak, isLoading, error, refresh, invalidateCache } = useStreak();
 
   // Fix missing avatar URL from Google sign-in
   useEffect(() => {
@@ -84,15 +84,16 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   }
   useImagePreloader(avatarUrls, true);
 
-  // Handle streak error and auto-refresh
+  // Handle streak error with smarter retry logic
   const handleStreakError = useCallback(async () => {
     if (error) {
       console.error('Streak error:', error);
-      // Try to refresh after a delay if there's an error
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // Invalidate cache and retry once after a short delay
+      invalidateCache();
+      await new Promise(resolve => setTimeout(resolve, 2000));
       await refresh();
     }
-  }, [error, refresh]);
+  }, [error, refresh, invalidateCache]);
 
   useEffect(() => {
     handleStreakError();
@@ -279,7 +280,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                 >
                                   Dashboard
                                   <span className="ml-2 inline-flex items-center rounded-full px-1 py-0.5 text-[8px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/30 to-purple-500/30 text-cyan-700 dark:text-cyan-200 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>
-                                    BETA
+                                    ALPHA
                                   </span>
                                 </Link>
                               </SheetClose>
@@ -419,7 +420,7 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                         >
                           <span className="flex items-center">
                             Dashboard
-                            <span className="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>BETA</span>
+                            <span className="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>ALPHA</span>
                           </span>
                         </Link>
                       </li>
@@ -515,10 +516,11 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                         </div>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    {!isLoading && !error && (
+                    {!error && (
                       <StreakBadge
                         currentStreak={current_streak}
                         highestStreak={highest_streak}
+                        isLoading={isLoading}
                         className="ml-2"
                       />
                     )}

@@ -4,23 +4,19 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import ProgressSaver from '@/components/progress/ProgressSaver';
-import { ActivityGrid } from '@/components/progress';
-import { Calendar } from '@/components/ui';
 import { DomainStat, ActivityItem } from '@/types/dashboard.types';
 import { LoadingSpinner } from '@/components/ui';
 
 // Component imports
 import { 
-  DomainCompletionWidget, 
-  RecentActivityWidget, 
   UserActivityChart,
-  MetricCards
+  MetricCards,
+  RecentActivityWidget,
+  DomainCompletionWidget
 } from '@/components/dashboard';
 
 export default function DashboardPage() {
   const { user, profile, loading: authLoading } = useAuth();
-  const [showCalendarView, setShowCalendarView] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const isMounted = useRef(true);
   const router = useRouter();
 
@@ -246,211 +242,40 @@ export default function DashboardPage() {
         {/* Greeting */}
         <div className="mb-8">
           <h1 className="text-3xl font-medium text-foreground">
-            {getGreeting()}, {profile?.full_name || profile?.username || 'User'}
+            {getGreeting()},{' '}
+            {profile?.full_name || profile?.username || 'User'}
           </h1>
+          <p className="text-muted-foreground">
+            Here's your progress overview. Keep up the great work!
+          </p>
         </div>
 
-        {/* Top Section: Metric Cards (2x2) + Calendar */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-          {/* Left: Metric Cards in 2x2 Grid */}
-          <div className="xl:col-span-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <MetricCards 
-                progressData={progressData}
-                userStats={userStats}
-              />
-            </div>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full">
+          {/* Activity Chart - Left Side */}
+          <div className="lg:col-span-3">
+            <UserActivityChart data={activityChartData.data} loading={activityChartData.loading} />
           </div>
-
-          {/* Right: Calendar Activity Tracker */}
-          <div className="xl:col-span-1">
-            <div className="p-6 rounded-lg border border-border bg-card text-card-foreground h-full">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-foreground">
-                  Activity Calendar
-                </h2>
-                <button
-                  onClick={() => setShowCalendarView(!showCalendarView)}
-                  className="px-3 py-1 text-xs font-medium rounded-md bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
-                >
-                  {showCalendarView ? 'Week View' : 'Calendar View'}
-                </button>
-              </div>
-              
-              {showCalendarView ? (
-                <div className="space-y-4">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    weekStartsOn={1}
-                    className="rounded-md border border-border w-full"
-                    modifiers={{
-                      lowActivity: (date: Date) => {
-                        const dateStr = date.toISOString().split('T')[0];
-                        const dayData = activityChartData.data.find(item => item.date === dateStr);
-                        return Boolean(dayData && dayData.questionsAnswered >= 1 && dayData.questionsAnswered <= 2);
-                      },
-                      mediumActivity: (date: Date) => {
-                        const dateStr = date.toISOString().split('T')[0];
-                        const dayData = activityChartData.data.find(item => item.date === dateStr);
-                        return Boolean(dayData && dayData.questionsAnswered >= 3 && dayData.questionsAnswered <= 5);
-                      },
-                      highActivity: (date: Date) => {
-                        const dateStr = date.toISOString().split('T')[0];
-                        const dayData = activityChartData.data.find(item => item.date === dateStr);
-                        return Boolean(dayData && dayData.questionsAnswered >= 6);
-                      },
-                      noActivity: (date: Date) => {
-                        const dateStr = date.toISOString().split('T')[0];
-                        const dayData = activityChartData.data.find(item => item.date === dateStr);
-                        return Boolean(!dayData || dayData.questionsAnswered === 0);
-                      }
-                    }}
-                    modifiersStyles={{
-                      lowActivity: {
-                        backgroundColor: 'hsl(var(--primary))',
-                        opacity: '0.2',
-                        color: 'hsl(var(--primary))',
-                        fontWeight: '500'
-                      },
-                      mediumActivity: {
-                        backgroundColor: 'hsl(var(--primary))',
-                        opacity: '0.4',
-                        color: 'hsl(var(--primary-foreground))',
-                        fontWeight: '600'
-                      },
-                      highActivity: {
-                        backgroundColor: 'hsl(var(--primary))',
-                        opacity: '0.8',
-                        color: 'hsl(var(--primary-foreground))',
-                        fontWeight: 'bold'
-                      },
-                      noActivity: {
-                        backgroundColor: 'transparent',
-                        color: 'hsl(var(--muted-foreground))',
-                        opacity: '0.6'
-                      }
-                    }}
-                  />
-                  
-                  {/* Activity Legend */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-muted"></div>
-                      <span className="text-muted-foreground">None</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-primary/20"></div>
-                      <span className="text-muted-foreground">1-2</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-primary/40"></div>
-                      <span className="text-muted-foreground">3-5</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm bg-primary/80"></div>
-                      <span className="text-muted-foreground">6+</span>
-                    </div>
-                  </div>
-
-                  {/* Selected Date Details */}
-                  {selectedDate && (
-                    <div className="mt-4 p-3 bg-muted rounded-lg border border-border">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-foreground">
-                          {selectedDate.toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </p>
-                        {(() => {
-                          const dateStr = selectedDate.toISOString().split('T')[0];
-                          const dayActivity = activityChartData.data.find(item => item.date === dateStr);
-                          if (dayActivity && dayActivity.questionsAnswered > 0) {
-                            let badgeColor = 'bg-muted text-muted-foreground';
-                            let badgeText = 'None';
-                            
-                            if (dayActivity.questionsAnswered >= 6) {
-                              badgeColor = 'bg-primary/80 text-primary-foreground';
-                              badgeText = 'High';
-                            } else if (dayActivity.questionsAnswered >= 3) {
-                              badgeColor = 'bg-primary/40 text-primary-foreground';
-                              badgeText = 'Medium';
-                            } else if (dayActivity.questionsAnswered >= 1) {
-                              badgeColor = 'bg-primary/20 text-primary';
-                              badgeText = 'Low';
-                            }
-                            
-                            return (
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}>
-                                {badgeText}
-                              </span>
-                            );
-                          }
-                          return (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                              None
-                            </span>
-                          );
-                        })()}
-                      </div>
-                      
-                      {(() => {
-                        const dateStr = selectedDate.toISOString().split('T')[0];
-                        const dayActivity = activityChartData.data.find(item => item.date === dateStr);
-                        return dayActivity && dayActivity.questionsAnswered > 0 ? (
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-primary">
-                              {dayActivity.questionsAnswered}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Questions Completed
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center py-2">
-                            <p className="text-xs text-muted-foreground">
-                              No activity recorded
-                            </p>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <ActivityGrid />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Chart - Full Width */}
-        <div className="mb-6">
-          <UserActivityChart 
-            data={activityChartData.data}
-            loading={activityChartData.loading}
-          />
-        </div>
-
-        {/* Secondary Grid - Domain and Activity Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* Left Column */}
-          <div className="space-y-6">
-            <DomainCompletionWidget 
-              domainStats={domainStats}
-            />
+          {/* Bento Cards - Right Side (2x2 Grid) */}
+          <div className="lg:col-span-2">
+            <div className="grid grid-cols-2 gap-3 h-full">
+              <MetricCards progressData={progressData} userStats={userStats} />
+            </div>
           </div>
+        </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            <RecentActivityWidget 
-              activityData={activityData}
-            />
+        {/* Second Row - Additional Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Recent Activity Widget */}
+          <div className="lg:col-span-1">
+            <RecentActivityWidget activityData={activityData} />
           </div>
-
+          
+          {/* Domain Completion Widget */}
+          <div className="lg:col-span-1">
+            <DomainCompletionWidget domainStats={domainStats} />
+          </div>
         </div>
       </div>
     </div>
