@@ -13,7 +13,6 @@ export * from './tooltip';
 // Components with specific named exports or default exports
 export { Badge, badgeVariants } from './badge';
 export { Button, buttonVariants } from './button';
-export { Calendar, CalendarDayButton } from './calendar';
 export { DemoButton } from './demo-button';
 export { Feature } from './feature-with-advantages';
 export { Footer as FooterSection } from './footer-section';

@@ -62,7 +62,7 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
 
   if (loading) {
     return (
-      <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
+      <Card className="@container/card border-border/50 bg-transparent rounded-md">
         <CardHeader>
           <CardTitle>Activity Overview</CardTitle>
           <CardDescription>Your learning activity over time</CardDescription>
@@ -75,7 +75,7 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
   }
 
   return (
-    <Card className="@container/card shadow-xs bg-gradient-to-t from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent">
+    <Card className="@container/card border-border/50 bg-transparent rounded-md">
       <CardHeader>
         <CardTitle>Activity Overview</CardTitle>
         <CardDescription>
@@ -114,7 +114,7 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
                 />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.3} />
             <XAxis
               dataKey="date"
               tickLine={false}

@@ -2,6 +2,22 @@
  * Utility functions for tracking user progress
  */
 
+// Global streak cache invalidation function
+declare global {
+  interface Window {
+    invalidateStreakCache?: () => void;
+  }
+}
+
+/**
+ * Invalidates the streak cache globally
+ */
+export const invalidateStreakCache = (): void => {
+  if (typeof window !== 'undefined' && window.invalidateStreakCache) {
+    window.invalidateStreakCache();
+  }
+};
+
 /**
  * Marks a question as viewed
  * @param questionId The ID of the viewed question
@@ -25,49 +41,26 @@ export const markQuestionAsViewed = async (
 
     let finalTopicId = topicId;
 
-    // If topicId is missing, null, or 0, fetch it from the category
+    // If topicId is missing, fetch it from the category
     if (!finalTopicId || finalTopicId === 0) {
-      console.log(`Topic ID missing (${finalTopicId}), fetching from category ${categoryId}`);
-      
+      console.log(`Topic ID missing for question ${questionId}, fetching from category ${categoryId}`);
       try {
-        const response = await fetch('/api/topics/categories', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          // Find the category and get its topic_id
-          if (data.categories && Array.isArray(data.categories)) {
-            const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
-            if (category && category.topic_id) {
-              finalTopicId = category.topic_id;
-              console.log(`Found topic ID ${finalTopicId} for category ${categoryId}`);
-            }
-          }
+        const response = await fetch(`/api/topics/topic-details?categoryId=${categoryId}`);
+        if (!response.ok) {
+          console.error(`Failed to fetch topic details for category ${categoryId}: ${response.status}`);
+          return false;
         }
-      } catch (fetchError) {
-        console.error('Failed to fetch topic ID from category:', fetchError);
-      }
-
-      // If we still don't have a topic ID, try a different approach
-      if (!finalTopicId || finalTopicId === 0) {
-        console.log(`Still missing topic ID, trying direct category lookup for category ${categoryId}`);
-        try {
-          // Use the simple endpoint to get topic_id for this category
-          const categoryResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&getTopicOnly=true`);
-          if (categoryResponse.ok) {
-            const categoryData = await categoryResponse.json();
-            if (categoryData && categoryData.topicId) {
-              finalTopicId = categoryData.topicId;
-              console.log(`Found topic ID ${finalTopicId} via direct category lookup`);
-            }
-          }
-        } catch (directFetchError) {
-          console.error('Failed direct category lookup:', directFetchError);
+        const topicData = await response.json();
+        if (topicData && topicData.id) {
+          finalTopicId = topicData.id;
+          console.log(`Successfully fetched topic ID ${finalTopicId} for category ${categoryId}`);
+        } else {
+          console.error(`No topic ID found for category ${categoryId}`);
+          return false;
         }
+      } catch (error) {
+        console.error(`Error fetching topic details for category ${categoryId}:`, error);
+        return false;
       }
     }
 
@@ -140,49 +133,26 @@ export const markQuestionAsCompleted = async (
 
       let finalTopicId = topicId;
 
-      // If topicId is missing, null, or 0, fetch it from the category
+      // If topicId is missing, fetch it from the category
       if (!finalTopicId || finalTopicId === 0) {
-        console.log(`Topic ID missing (${finalTopicId}), fetching from category ${categoryId}`);
-        
+        console.log(`Topic ID missing for question ${questionId}, fetching from category ${categoryId}`);
         try {
-          const response = await fetch('/api/topics/categories', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            // Find the category and get its topic_id
-            if (data.categories && Array.isArray(data.categories)) {
-              const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
-              if (category && category.topic_id) {
-                finalTopicId = category.topic_id;
-                console.log(`Found topic ID ${finalTopicId} for category ${categoryId}`);
-              }
-            }
+          const response = await fetch(`/api/topics/topic-details?categoryId=${categoryId}`);
+          if (!response.ok) {
+            console.error(`Failed to fetch topic details for category ${categoryId}: ${response.status}`);
+            return false;
           }
-        } catch (fetchError) {
-          console.error('Failed to fetch topic ID from category:', fetchError);
-        }
-
-        // If we still don't have a topic ID, try a different approach
-        if (!finalTopicId || finalTopicId === 0) {
-          console.log(`Still missing topic ID, trying direct category lookup for category ${categoryId}`);
-          try {
-            // Use the simple endpoint to get topic_id for this category
-            const categoryResponse = await fetch(`/api/topics/categories?categoryId=${categoryId}&getTopicOnly=true`);
-            if (categoryResponse.ok) {
-              const categoryData = await categoryResponse.json();
-              if (categoryData && categoryData.topicId) {
-                finalTopicId = categoryData.topicId;
-                console.log(`Found topic ID ${finalTopicId} via direct category lookup`);
-              }
-            }
-          } catch (directFetchError) {
-            console.error('Failed direct category lookup:', directFetchError);
+          const topicData = await response.json();
+          if (topicData && topicData.id) {
+            finalTopicId = topicData.id;
+            console.log(`Successfully fetched topic ID ${finalTopicId} for category ${categoryId}`);
+          } else {
+            console.error(`No topic ID found for category ${categoryId}`);
+            return false;
           }
+        } catch (error) {
+          console.error(`Error fetching topic details for category ${categoryId}:`, error);
+          return false;
         }
       }
 
@@ -223,6 +193,11 @@ export const markQuestionAsCompleted = async (
       if (finalTopicId) {
         clearSubtopicProgressCache(finalTopicId);
       }
+      
+      // IMPORTANT: Invalidate streak cache when question is completed
+      // This ensures the streak is updated immediately in the UI
+      invalidateStreakCache();
+      console.log('Streak cache invalidated after question completion');
       
       return true; // Success, exit loop
     } catch (error) {
