@@ -284,6 +284,15 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                   </span>
                                 </Link>
                               </SheetClose>
+                              <SheetClose asChild>
+                                <Link
+                                  href="/dashboard/bookmarks"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
+                                >
+                                  Bookmarks
+                                </Link>
+                              </SheetClose>
                             </>
                           )}
                           
@@ -422,6 +431,14 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                             Dashboard
                             <span className="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>ALPHA</span>
                           </span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/bookmarks"
+                          className="text-muted-foreground hover:text-accent-foreground block duration-150"
+                        >
+                          <span>Bookmarks</span>
                         </Link>
                       </li>
                     </>

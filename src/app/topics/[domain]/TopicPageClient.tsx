@@ -8,7 +8,7 @@ import {
   ContentDisplay,
   // useTopicData,
 } from '@/components/topics-ui';
-import ProgressSaver from '@/components/utils/ProgressSaver';
+import ProgressSaver from '@/components/progress/ProgressSaver';
 import TopicDataService from '@/services/TopicDataService';
 import { useFilterLogic } from '@/hooks/data';
 import { fetchDomainProgress, fetchCategoryProgress } from '@/app/utils/progress';

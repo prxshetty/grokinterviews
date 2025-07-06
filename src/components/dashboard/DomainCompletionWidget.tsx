@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { DomainStat } from '@/types/dashboard.types';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface DomainCompletionWidgetProps {
   domainStats: {
@@ -12,90 +11,161 @@ interface DomainCompletionWidgetProps {
   };
 }
 
-export default function DomainCompletionWidget({ domainStats }: DomainCompletionWidgetProps) {
-  const getProgressBarColor = (percentage: number) => {
-    if (percentage >= 80) return 'bg-primary dark:bg-primary'; // Black/White - High completion
-    if (percentage >= 60) return 'bg-secondary dark:bg-secondary'; // Blue - Good progress
-    if (percentage >= 40) return 'bg-gray-600 dark:bg-gray-400'; // Gray - Moderate progress
-    if (percentage >= 20) return 'bg-gray-500 dark:bg-gray-500'; // Lighter gray - Some progress
-    return 'bg-gray-400 dark:bg-gray-600'; // Light gray - Minimal progress
+// Function to abbreviate domain names
+function abbreviateDomain(domainName: string): string {
+  const abbreviations: { [key: string]: string } = {
+    'System Design': 'SD',
+    'Data Structures': 'DS',
+    'Artificial Intelligence': 'AI',
+    'Machine Learning': 'ML',
+    'Web Development': 'Web'
   };
+  
+  return abbreviations[domainName] || domainName.substring(0, 4);
+}
+
+function DomainProgressCard({ domain }: { domain: DomainStat }) {
+  const percentage = Math.round(domain.completionPercentage);
+  const circumference = 2 * Math.PI * 45; // radius = 45
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  
+  return (
+    <div className="group relative bg-background border border-border rounded-full w-full aspect-square hover:border-primary/50 transition-colors duration-300 flex items-center justify-center">
+      {/* SVG Progress Circle */}
+      <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+        {/* Background circle */}
+        <circle
+          className="text-muted-foreground/20"
+          strokeWidth="4"
+          stroke="currentColor"
+          fill="none"
+          r="45"
+          cx="50"
+          cy="50"
+        />
+        {/* Progress circle */}
+        <circle
+          className="text-green-400 transition-all duration-300"
+          strokeWidth="4"
+          strokeLinecap="round"
+          stroke="currentColor"
+          fill="none"
+          r="45"
+          cx="50"
+          cy="50"
+          style={{
+            strokeDasharray: circumference,
+            strokeDashoffset: strokeDashoffset
+          }}
+        />
+      </svg>
+
+      {/* Content */}
+      <div className="relative flex flex-col items-center justify-center text-center z-10 w-full p-2">
+        <span className="font-semibold text-2xl text-foreground mb-0.5" title={`${percentage}% complete`}>
+          {percentage}%
+        </span>
+        <span className="text-xs text-muted-foreground truncate w-full max-w-[120px]" title={domain.domainName}>
+          {abbreviateDomain(domain.domainName)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div className="bg-background border border-border rounded-full p-6 aspect-square animate-pulse flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center space-y-2">
+        <div className="h-4 bg-muted-foreground/20 rounded w-24"></div>
+        <div className="h-6 bg-muted-foreground/20 rounded w-12"></div>
+      </div>
+    </div>
+  );
+}
+
+export default function DomainCompletionWidget({
+  domainStats,
+}: DomainCompletionWidgetProps) {
+  if (domainStats.loading)
+    return (
+      <div>
+        <h2 className="text-xl font-medium text-foreground mb-4">
+          Domain Progress
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-8 w-full">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </div>
+    );
+
+  if (domainStats.error)
+    return (
+      <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/10">
+        <h2 className="text-xl font-medium text-destructive mb-2">
+          Error Loading Domains
+        </h2>
+        <p className="text-sm text-destructive/80">{domainStats.error}</p>
+      </div>
+    );
+
+  if (domainStats.domains.length === 0)
+    return (
+      <div>
+        <h2 className="text-xl font-medium text-foreground mb-4">
+          Domain Progress
+        </h2>
+        <Link href="/topics">
+          <div className="border-2 border-dashed border-border rounded-2xl p-4 flex flex-col items-center justify-center h-48 text-center hover:border-primary/50 hover:bg-muted/50 transition-colors duration-300">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-10 w-10 text-muted-foreground mb-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4.5v15m7.5-7.5h-15"
+              />
+            </svg>
+            <p className="text-base font-semibold text-foreground">
+              Explore Domains
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Start a topic to track your progress
+            </p>
+          </div>
+        </Link>
+      </div>
+    );
+
+  const domainsToShow = domainStats.domains.slice(0, 8);
 
   return (
-    <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-      <div className="mb-4">
-        <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">Domain Progress</h2>
+    <div className="w-full">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-medium text-foreground">
+          Domain Progress
+        </h2>
+        {domainStats.totalDomains > domainsToShow.length && (
+          <span className="text-sm text-muted-foreground">
+            Showing {domainsToShow.length} of {domainStats.totalDomains}
+          </span>
+        )}
       </div>
 
-      {domainStats.loading ? (
-        <div className="flex justify-center py-8">
-          <LoadingSpinner />
-        </div>
-      ) : domainStats.error ? (
-        <div className="text-center py-4">
-          <p className="text-sm text-red-600 dark:text-red-400">{domainStats.error}</p>
-        </div>
-      ) : domainStats.domains.length === 0 ? (
-        <div className="text-center py-8">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">No domains explored yet</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Start learning to see your progress</p>
-          <Link 
-            href="/topics" 
-            className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-medium rounded-md transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-            Explore Domains
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-4 w-full">
+        {domainsToShow.map(domain => (
+          <Link href={`/topics/${domain.domain}`} key={domain.domain} className="w-full">
+            <DomainProgressCard domain={domain} />
           </Link>
-        </div>
-      ) : (
-        <>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            Progress across {domainStats.totalDomains || domainStats.domains.length} domains
-          </p>
-          
-          <div className="space-y-3">
-            {domainStats.domains.slice(0, 5).map((domain) => (
-              <div key={domain.domain} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {domain.domainName}
-                  </span>
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {domain.completionPercentage}%
-                  </span>
-                </div>
-                
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(domain.completionPercentage)}`}
-                    style={{
-                      width: `${Math.max(0.5, domain.completionPercentage)}%`,
-                    }}
-                  />
-                </div>
-                
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>{domain.completedQuestions} completed</span>
-                  <span>{domain.totalQuestions} total</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {domainStats.domains.length > 5 && (
-            <div className="text-center mt-4">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                +{domainStats.domains.length - 5} more domains
-              </span>
-            </div>
-          )}
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 } 
