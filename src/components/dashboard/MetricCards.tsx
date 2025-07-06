@@ -1,7 +1,7 @@
 import { BentoCard } from '@/components/ui/bento-card'
 import { Card } from '@/components/ui/card'
 
-interface ProgressData {
+export interface ProgressData {
   questionsCompleted: number
   questionsViewed: number
   totalQuestions: number
@@ -10,7 +10,7 @@ interface ProgressData {
   totalDomains: number
 }
 
-interface UserStats {
+export interface UserStats {
   totalTimeSpent: number
   apiCallsMade: number
   bookmarksCount: number
@@ -41,10 +41,10 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
         {[...Array(4)].map((_, i) => (
           <Card
             key={i}
-            className="animate-pulse border bg-card p-6 min-h-[120px]"
+            className="animate-pulse border bg-card p-4 min-h-[100px]"
           >
             <div className="h-4 w-2/3 rounded bg-muted" />
-            <div className="mt-4 h-8 w-1/3 rounded bg-muted" />
+            <div className="mt-3 h-6 w-1/3 rounded bg-muted" />
             <div className="mt-2 h-3 w-1/2 rounded bg-muted" />
           </Card>
         ))}
@@ -86,7 +86,7 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
   return (
     <>
       {metricsData.map((metric, index) => (
-        <div key={index} className="min-h-[120px] sm:min-h-[140px]">
+        <div key={index} className="min-h-[100px]">
           <BentoCard
             title={metric.title}
             value={metric.value}

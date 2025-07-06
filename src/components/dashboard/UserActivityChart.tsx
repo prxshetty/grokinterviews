@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area, AreaChart, XAxis } from "recharts"
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 import {
@@ -17,6 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { TabNav } from "@/components/ui/tab-nav";
 
 interface UserActivityData {
   date: string;
@@ -27,42 +28,65 @@ interface UserActivityData {
 interface UserActivityChartProps {
   data?: UserActivityData[];
   loading?: boolean;
+  className?: string;
 }
 
 const chartConfig = {
-  activity: {
-    label: "Activity",
-  },
   questionsAnswered: {
     label: "Q. Completed",
-    color: "hsl(var(--chart-1))",
+    color: "#10B981", // emerald-500
   },
   questionsViewed: {
     label: "Q. Viewed",
-    color: "hsl(var(--chart-2))",
+    color: "#818CF8", // indigo-400
   },
 } satisfies ChartConfig
 
 // Default/sample data for when no data is provided
-const defaultData: UserActivityData[] = [
-  { date: "2024-04-01", questionsAnswered: 5, questionsViewed: 12 },
-  { date: "2024-04-02", questionsAnswered: 3, questionsViewed: 8 },
-  { date: "2024-04-03", questionsAnswered: 7, questionsViewed: 15 },
-  { date: "2024-04-04", questionsAnswered: 4, questionsViewed: 10 },
-  { date: "2024-04-05", questionsAnswered: 8, questionsViewed: 18 },
-  { date: "2024-04-06", questionsAnswered: 6, questionsViewed: 14 },
-  { date: "2024-04-07", questionsAnswered: 2, questionsViewed: 6 },
-]
+const defaultData: UserActivityData[] = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return {
+        date: d.toISOString().split('T')[0] as string,
+        questionsAnswered: Math.floor(Math.random() * 8) + 1,
+        questionsViewed: Math.floor(Math.random() * 10) + 5,
+    }
+}).reverse();
 
-export function UserActivityChart({ data = defaultData, loading = false }: UserActivityChartProps) {
+
+export function UserActivityChart({ 
+  data = defaultData, 
+  loading = false, 
+  className = ""
+}: UserActivityChartProps) {
+  const [timeRange, setTimeRange] = React.useState<"week" | "month">("month");
+
   const chartData = React.useMemo(() => {
     const sourceData = (data && data.length > 0) ? data : defaultData;
-    return [...sourceData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [data]);
+    const now = new Date();
+
+    const filteredData = sourceData.filter(d => {
+        const itemDate = new Date(d.date + "T00:00:00");
+        if (timeRange === "week") {
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            return itemDate >= startOfWeek;
+        }
+        if (timeRange === "month") {
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            return itemDate >= startOfMonth;
+        }
+        return true;
+    });
+
+    return [...filteredData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [data, timeRange]);
 
   if (loading) {
     return (
-      <Card className="@container/card border-border/50 bg-transparent rounded-md">
+      <Card className={`@container/card border-border/50 bg-transparent rounded-md ${className}`}>
         <CardHeader>
           <CardTitle>Activity Overview</CardTitle>
           <CardDescription>Your learning activity over time</CardDescription>
@@ -73,14 +97,28 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
       </Card>
     );
   }
+  
+  const navItems = [
+    { id: 'week', label: 'This Week' },
+    { id: 'month', label: 'This Month' },
+  ];
 
   return (
-    <Card className="@container/card border-border/50 bg-transparent rounded-md">
-      <CardHeader>
-        <CardTitle>Activity Overview</CardTitle>
-        <CardDescription>
-          Your learning activity over time
-        </CardDescription>
+    <Card className={`@container/card border-border/50 bg-transparent rounded-md ${className}`}>
+      <CardHeader className="flex-row items-center">
+        <div>
+            <CardTitle>Activity Overview</CardTitle>
+            <CardDescription>
+              Your learning activity over time
+            </CardDescription>
+        </div>
+        <div className="ml-auto">
+            <TabNav
+                items={navItems}
+                activeTab={timeRange}
+                onTabChange={(tabId) => setTimeRange(tabId as "week" | "month")}
+            />
+        </div>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
@@ -90,31 +128,14 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="fillQuestionsAnswered" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-questionsAnswered)"
-                  stopOpacity={1.0}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-questionsAnswered)"
-                  stopOpacity={0.1}
-                />
+                <stop offset="5%" stopColor="var(--color-questionsAnswered)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-questionsAnswered)" stopOpacity={0.1} />
               </linearGradient>
               <linearGradient id="fillQuestionsViewed" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-questionsViewed)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-questionsViewed)"
-                  stopOpacity={0.1}
-                />
+                <stop offset="5%" stopColor="var(--color-questionsViewed)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-questionsViewed)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.3} />
             <XAxis
               dataKey="date"
               tickLine={false}
@@ -146,17 +167,15 @@ export function UserActivityChart({ data = defaultData, loading = false }: UserA
             />
             <Area
               dataKey="questionsViewed"
-              type="natural"
+              type="monotone"
               fill="url(#fillQuestionsViewed)"
               stroke="var(--color-questionsViewed)"
-              stackId="a"
             />
             <Area
               dataKey="questionsAnswered"
-              type="natural"
+              type="monotone"
               fill="url(#fillQuestionsAnswered)"
               stroke="var(--color-questionsAnswered)"
-              stackId="a"
             />
           </AreaChart>
         </ChartContainer>
