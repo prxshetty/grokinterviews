@@ -279,9 +279,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                                   className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
                                 >
                                   Dashboard
-                                  <span className="ml-2 inline-flex items-center rounded-full px-1 py-0.5 text-[8px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/30 to-purple-500/30 text-cyan-700 dark:text-cyan-200 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>
-                                    ALPHA
-                                  </span>
                                 </Link>
                               </SheetClose>
                               <SheetClose asChild>
@@ -429,7 +426,6 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                         >
                           <span className="flex items-center">
                             Dashboard
-                            <span className="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-widest uppercase bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-400/30 dark:border-cyan-300/20 backdrop-blur-sm shadow-sm" style={{lineHeight: '1.1'}}>ALPHA</span>
                           </span>
                         </Link>
                       </li>
