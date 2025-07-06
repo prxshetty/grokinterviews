@@ -41,12 +41,16 @@ export function MetricCards({ progressData, userStats }: MetricCardsProps) {
         {[...Array(4)].map((_, i) => (
           <Card
             key={i}
-            className="min-h-[100px] border bg-card p-4"
+            className="relative overflow-hidden h-full bg-transparent min-h-[120px] sm:min-h-[140px] md:min-h-[160px] border-0"
           >
-            <div className="flex flex-col space-y-3">
-              <div className="h-4 w-24 rounded bg-muted animate-pulse" />
-              <div className="h-8 w-16 rounded bg-muted animate-pulse font-bold" />
-              <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+            {/* Gradient background placeholder */}
+            <div className="absolute inset-0 bg-gradient-to-br from-muted/10 to-muted/5 animate-pulse" />
+            
+            {/* Content placeholder */}
+            <div className="relative z-10 p-4 sm:p-6 md:p-8 h-full flex flex-col justify-center">
+              <div className="h-3 sm:h-4 w-20 sm:w-24 rounded bg-muted animate-pulse mb-2 sm:mb-3" />
+              <div className="h-6 sm:h-8 md:h-10 lg:h-12 w-12 sm:w-16 md:w-20 rounded bg-muted animate-pulse mb-2 sm:mb-4" />
+              <div className="h-3 sm:h-4 w-24 sm:w-32 rounded bg-muted animate-pulse" />
             </div>
           </Card>
         ))}

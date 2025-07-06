@@ -75,10 +75,14 @@ function DomainProgressCard({ domain }: { domain: DomainStat }) {
 
 function SkeletonCard() {
   return (
-    <div className="relative bg-background border border-border rounded-full aspect-square animate-pulse flex items-center justify-center">
+    <div className="group relative bg-background border border-border rounded-full w-full aspect-square hover:border-primary/50 transition-colors duration-300 flex items-center justify-center animate-pulse">
+      {/* Circular progress ring placeholder */}
+      <div className="absolute inset-2 rounded-full border-4 border-muted/20" />
+      <div className="absolute inset-2 rounded-full border-4 border-muted/30 border-t-transparent transform -rotate-90" />
+      
       {/* Content placeholder */}
-      <div className="flex flex-col items-center justify-center text-center">
-        <div className="h-6 w-10 bg-muted rounded mb-1" />
+      <div className="relative flex flex-col items-center justify-center text-center z-10 w-full p-2">
+        <div className="h-6 w-10 bg-muted rounded mb-0.5" />
         <div className="h-3 w-8 bg-muted rounded" />
       </div>
     </div>
