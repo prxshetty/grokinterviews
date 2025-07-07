@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -31,7 +31,63 @@ import { useStreak } from '@/hooks/useStreak';
 import { StreakBadge } from '@/components/ui/streak-badge';
 import { toast } from 'sonner';
 
-export default function MainNavigation({ children }: { children: React.ReactNode }) {
+// Memoized Logo component to prevent unnecessary re-renders
+const MemoizedLogo = memo(({ isScrolled }: { isScrolled: boolean }) => (
+  <Link href="/" className="flex items-center whitespace-nowrap">
+    <Logo 
+      size="md" 
+      showText={!isScrolled} 
+      className="text-black dark:text-white" 
+      textClassName="text-lg md:text-xl font-semi tracking-widest uppercase text-[9px]"
+    />
+  </Link>
+));
+MemoizedLogo.displayName = 'MemoizedLogo';
+
+// Memoized navigation links to prevent re-renders
+const MemoizedNavLinks = memo(({ 
+  currentDomainLabel, 
+  user
+}: { 
+  currentDomainLabel: string;
+  user: any;
+}) => (
+  <div className="flex items-center space-x-8">
+    <Link
+      href="/topics"
+      className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+    >
+      {currentDomainLabel}
+    </Link>
+    
+    {user && (
+      <>
+        <Link
+          href="/dashboard"
+          className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+        >
+          Dashboard
+        </Link>
+        <Link
+          href="/dashboard/bookmarks"
+          className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+        >
+          Bookmarks
+        </Link>
+      </>
+    )}
+    
+    <Link
+      href="/about"
+      className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+    >
+      About
+    </Link>
+  </div>
+));
+MemoizedNavLinks.displayName = 'MemoizedNavLinks';
+
+function MainNavigation({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -41,23 +97,32 @@ export default function MainNavigation({ children }: { children: React.ReactNode
   
   // Use the shared auth state from the provider
   const { user, profile, signOut, supabase, refreshAuth } = useAuth();
-  const { current_streak, highest_streak, isLoading, error, refresh, invalidateCache } = useStreak();
+  const { current_streak, highest_streak, isLoading, error, refresh, invalidateCache } = useStreak(!!user);
 
   // Track previous streak values for toast notifications
   const prevStreakRef = useRef<{ current: number; highest: number } | null>(null);
 
-  // Combine all initialization effects into one to reduce render cycles
+  // Optimized initialization with throttled scroll handler
   useEffect(() => {
     // Set mounted state
     setMounted(true);
 
-    // Setup scroll listener
+    // Throttled scroll handler for better performance
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 50);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+    
+    // Use passive listener for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Check password reset reminder
+    // Check password reset reminder only once
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
     const dismissed = sessionStorage.getItem('globalPasswordResetReminderDismissed');
@@ -72,54 +137,70 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     };
   }, []);
 
-  // Optimize avatar fix to only run when necessary
+  // Optimize avatar fix with debouncing and memoization
+  const shouldFixAvatar = useMemo(() => {
+    return user?.user_metadata?.avatar_url && 
+           (!profile?.avatar_url || profile.avatar_url.trim() === '');
+  }, [user?.user_metadata?.avatar_url, profile?.avatar_url]);
+
   useEffect(() => {
-    if (!user || !profile || !supabase) return;
+    if (!shouldFixAvatar || !supabase || !user) return;
     
+    let timeoutId: NodeJS.Timeout;
     const fixMissingAvatar = async () => {
-      // Check if user has avatar in metadata but profile doesn't have it
-      if (
-        user.user_metadata?.avatar_url &&
-        (!profile.avatar_url || profile.avatar_url.trim() === '')
-      ) {
+      try {
         const { error } = await supabase
           .from('profiles')
           .update({ avatar_url: user.user_metadata.avatar_url })
           .eq('id', user.id);
         
-        if (error) {
-          // Removed console.error for production cleanliness
-        } else {
-          // Removed console.log for production cleanliness
-          // Refresh auth to get updated profile
-          await refreshAuth();
+        if (!error) {
+          // Debounce auth refresh to prevent excessive calls
+          timeoutId = setTimeout(() => refreshAuth(), 100);
         }
+      } catch {
+        // Silent error handling for production
       }
     };
 
     fixMissingAvatar();
-  }, [user, profile, supabase, refreshAuth]);
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [shouldFixAvatar, supabase, user, refreshAuth]);
 
-  // Preload avatar images for instant loading
-  const avatarUrls = [DEFAULT_AVATAR_URL];
-  if (profile?.avatar_url && profile.avatar_url.trim() !== '') {
-    avatarUrls.push(profile.avatar_url);
-  }
-  if (user?.user_metadata?.avatar_url && user.user_metadata.avatar_url.trim() !== '') {
-    avatarUrls.push(user.user_metadata.avatar_url);
-  }
+  // Memoize avatar URLs to prevent unnecessary preloader calls
+  const avatarUrls = useMemo(() => {
+    const urls = [DEFAULT_AVATAR_URL];
+    if (profile?.avatar_url?.trim()) {
+      urls.push(profile.avatar_url);
+    }
+    if (user?.user_metadata?.avatar_url?.trim()) {
+      urls.push(user.user_metadata.avatar_url);
+    }
+    return urls;
+  }, [profile?.avatar_url, user?.user_metadata?.avatar_url]);
+  
   useImagePreloader(avatarUrls, true);
 
-  // Handle streak error with smarter retry logic - only when error changes
+  // Optimize streak error handling with exponential backoff
+  const retryCountRef = useRef(0);
   useEffect(() => {
-    if (!error) return;
+    if (!error || retryCountRef.current >= 3) return;
     
     const handleStreakError = async () => {
-      console.error('Streak error:', error);
-      // Invalidate cache and retry once after a short delay
-      invalidateCache();
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      await refresh();
+      try {
+        retryCountRef.current++;
+        invalidateCache();
+        
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, retryCountRef.current - 1) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        await refresh();
+      } catch {
+        // Silent error handling
+      }
     };
 
     handleStreakError();
@@ -167,21 +248,24 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     prevStreakRef.current = { current: current_streak, highest: highest_streak };
   }, [user, current_streak, highest_streak, isLoading, error]);
 
-  // AI domain cleanup completed - now showing all navigation topics
-  const displayedNavTopics = MAIN_NAV_TOPICS;
-  const extractDomainFromPath = (path: string, section: 'topics') => {
+  // Memoize navigation topics and domain extraction for performance
+  const displayedNavTopics = useMemo(() => MAIN_NAV_TOPICS, []);
+  
+  const extractDomainFromPath = useCallback((path: string, section: 'topics') => {
     const parts = path.split('/');
     if (parts.length >= 3 && parts[1] === section) {
       return parts[2];
     }
     return null;
-  };
+  }, []);
 
-  // Get the current domain and its display name
-  const currentDomain = extractDomainFromPath(pathname, 'topics');
-  const currentDomainLabel = currentDomain ? 
-    displayedNavTopics.find(topic => topic.id === currentDomain)?.label || 'Topics' : 
-    'Topics';
+  // Memoize current domain calculation
+  const currentDomainLabel = useMemo(() => {
+    const domain = extractDomainFromPath(pathname, 'topics');
+    return domain ? 
+      displayedNavTopics.find(topic => topic.id === domain)?.label || 'Topics' : 
+      'Topics';
+  }, [pathname, displayedNavTopics, extractDomainFromPath]);
 
   const handleTopicsLinkClick = useCallback(() => {
     setIsMobileMenuOpen(false);
@@ -193,28 +277,35 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     router.push('/');
   };
 
-  const logoElement = (
-    <Link href="/" className="flex items-center whitespace-nowrap">
-      <Logo 
-        size="md" 
-        showText={!isScrolled} 
-        className="text-black dark:text-white" 
-        textClassName="text-lg md:text-xl font-semi tracking-widest uppercase text-[9px]"
-      />
-    </Link>
-  );
+  // Use memoized logo component
+  const logoElement = useMemo(() => (
+    <MemoizedLogo isScrolled={isScrolled} />
+  ), [isScrolled]);
 
   const dismissPasswordResetReminder = () => {
     setShowPasswordResetReminder(false);
     sessionStorage.setItem('globalPasswordResetReminderDismissed', 'true');
   };
 
+  // Optimize initial render with better placeholder
   if (!mounted) {
     return (
       <>
-        {/* Placeholder for navbar */}
-        <div style={{ height: '60px' }} />
-        {children}
+        {/* Optimized placeholder with minimal layout shift */}
+        <div className="fixed z-20 w-full px-2">
+          <div className="mx-auto mt-2 px-4 sm:px-6 max-w-7xl bg-transparent">
+            <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:w-full lg:gap-0 lg:py-4">
+              <div className="flex w-full justify-between lg:w-auto">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <main className="flex-1 pt-16">
+          {children}
+        </main>
       </>
     );
   }
@@ -410,40 +501,12 @@ export default function MainNavigation({ children }: { children: React.ReactNode
                 </Sheet>
               </div>
 
-              {/* Desktop Navigation */}
+              {/* Desktop Navigation - Memoized */}
               <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex">
-                <div className="flex items-center space-x-8">
-                  <Link
-                    href="/topics"
-                    className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-                  >
-                    {currentDomainLabel}
-                  </Link>
-                  
-                  {user && (
-                    <>
-                      <Link
-                        href="/dashboard"
-                        className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        href="/dashboard/bookmarks"
-                        className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-                      >
-                        Bookmarks
-                      </Link>
-                    </>
-                  )}
-                  
-                  <Link
-                    href="/about"
-                    className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-                  >
-                    About
-                  </Link>
-                </div>
+                <MemoizedNavLinks 
+                  currentDomainLabel={currentDomainLabel}
+                  user={user}
+                />
               </div>
 
               {/* User Section - Right aligned */}
@@ -542,3 +605,5 @@ export default function MainNavigation({ children }: { children: React.ReactNode
     </>
   );
 }
+
+export default MainNavigation;

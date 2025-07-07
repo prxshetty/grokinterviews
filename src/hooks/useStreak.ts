@@ -49,7 +49,7 @@ const saveToLocalStorage = (): void => {
   }
 };
 
-export function useStreak() {
+export function useStreak(isAuthenticated: boolean = true) {
   const [streakData, setStreakData] = useState<StreakData>({
     current_streak: 0,
     highest_streak: 0,
@@ -106,6 +106,13 @@ export function useStreak() {
 
   const fetchStreakData = useCallback(async (forceRefresh = false, isQuestionCompletion = false, isBackgroundFetch = false) => {
     try {
+      // Don't fetch if user is not authenticated
+      if (!isAuthenticated) {
+        console.log('User not authenticated - skipping streak fetch');
+        if (!isBackgroundFetch) setIsLoading(false);
+        return;
+      }
+
       // Check if we can use cached data
       if (!shouldFetchFreshData(forceRefresh, isQuestionCompletion, isBackgroundFetch)) {
         setStreakData(streakCache.data!);
@@ -156,10 +163,16 @@ export function useStreak() {
         setIsLoading(false);
       }
     }
-  }, [shouldFetchFreshData]);
+  }, [isAuthenticated, shouldFetchFreshData]);
 
   // Load from localStorage on mount
   useEffect(() => {
+    // Don't do anything if user is not authenticated
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
     loadFromLocalStorage();
     
     // If we have valid cached data, use it immediately
@@ -188,7 +201,7 @@ export function useStreak() {
     // No cached data - need initial fetch
     console.log('No localStorage cache - performing initial fetch');
     fetchStreakData();
-  }, [fetchStreakData]);
+  }, [isAuthenticated, fetchStreakData]);
 
   // Force refresh function for external use
   const forceRefresh = useCallback(() => {
@@ -198,6 +211,12 @@ export function useStreak() {
 
   // Optimized cache invalidation for question completion
   const invalidateCache = useCallback(() => {
+    // Don't invalidate if user is not authenticated
+    if (!isAuthenticated) {
+      console.log('User not authenticated - skipping cache invalidation');
+      return;
+    }
+
     console.log('Question completed - checking if streak update needed');
     
     const today = new Date().toISOString().split('T')[0] || null;
@@ -217,7 +236,7 @@ export function useStreak() {
     // This is the first completion today - fetch fresh data
     console.log('First completion today - updating streak');
     fetchStreakData(true, true);
-  }, [fetchStreakData]);
+  }, [isAuthenticated, fetchStreakData]);
 
   // Register global cache invalidation function
   useEffect(() => {

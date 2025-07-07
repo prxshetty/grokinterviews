@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui';
 import { useStreak } from '@/hooks/useStreak';
+import { useAuth } from '@/components/AuthProvider';
 import { Flame, Trophy, Calendar, Target } from 'lucide-react';
 
 interface StreakChartProps {
@@ -12,6 +13,7 @@ interface StreakChartProps {
 }
 
 export function StreakChart({ className = '' }: StreakChartProps) {
+  const { user } = useAuth();
   const { 
     current_streak, 
     highest_streak, 
@@ -20,7 +22,7 @@ export function StreakChart({ className = '' }: StreakChartProps) {
     grace_used,
     isLoading, 
     error 
-  } = useStreak();
+  } = useStreak(!!user);
 
   if (isLoading) {
     return (
