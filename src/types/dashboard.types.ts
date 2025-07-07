@@ -4,6 +4,8 @@ export interface DomainStat {
   totalQuestions: number;
   completedQuestions: number;
   completionPercentage: number;
+  totalTopics?: number;
+  completedTopics?: number;
 }
 
 export interface ActivityItem {

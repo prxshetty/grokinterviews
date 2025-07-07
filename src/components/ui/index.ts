@@ -9,6 +9,7 @@ export * from './dropdown-menu';
 export * from './sheet';
 export * from './tabs';
 export * from './tooltip';
+export * from './circular-progress';
 
 // Components with specific named exports or default exports
 export { Badge, badgeVariants } from './badge';

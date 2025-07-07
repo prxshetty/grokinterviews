@@ -202,7 +202,7 @@ function AccountPageContent() {
 
   if (authLoading || !profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen pt-32 sm:pt-36 md:pt-40">
         <LoadingSpinner size="xl" text="Loading Account..." fullScreen={false} />
       </div>
     );
@@ -225,7 +225,7 @@ function AccountPageContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 pt-32 sm:pt-36 md:pt-40">
         <div className="flex flex-col">
           <div className="w-full flex-shrink-0 mb-6 sm:mb-8">
             <h2 className="text-xl sm:text-2xl font-light text-gray-900 dark:text-white mb-4 sm:mb-6">Account</h2>
@@ -298,7 +298,7 @@ function AccountPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen pt-32 sm:pt-36 md:pt-40">
           <LoadingSpinner size="xl" text="Loading Account..." fullScreen={false} />
         </div>
       }

@@ -3,10 +3,9 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { TopicCategoryGrid } from './index';
 import { Pagination, Accordion } from '@/components/ui';
 import { QuestionWithAnswer } from '@/components/questions';
-import { CategoryDetailView } from './';
+import { CategoryDetailView, TopicCategoryGrid } from '@/components/topics-ui';
 import { LoadingSpinner } from '@/components/ui';
 import { supabase } from "@/utils/supabase/client";
 

@@ -1,6 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { DomainStat } from '@/types/dashboard.types';
+import { CircularProgress } from '@/components/ui/circular-progress';
+import { DOMAIN_COLORS, getDomainId } from '@/config/domain.constants';
+import {
+  AIIllustration,
+  MLIllustration,
+  SystemDesignIllustration,
+  DSAIllustration,
+  WebDevIllustration,
+  SummaryIllustration
+} from '@/components/topics-ui';
 
 interface DomainCompletionWidgetProps {
   domainStats: {
@@ -11,64 +21,38 @@ interface DomainCompletionWidgetProps {
   };
 }
 
-// Function to abbreviate domain names
-function abbreviateDomain(domainName: string): string {
-  const abbreviations: { [key: string]: string } = {
-    'System Design': 'SD',
-    'Data Structures': 'DS',
-    'Artificial Intelligence': 'AI',
-    'Machine Learning': 'ML',
-    'Web Development': 'Web'
-  };
-  
-  return abbreviations[domainName] || domainName.substring(0, 4);
-}
+const DOMAIN_ILLUSTRATIONS = {
+  summary: SummaryIllustration,
+  ai: AIIllustration,
+  ml: MLIllustration,
+  sdesign: SystemDesignIllustration,
+  dsa: DSAIllustration,
+  webdev: WebDevIllustration
+} as const;
 
-function DomainProgressCard({ domain }: { domain: DomainStat }) {
+function DomainProgressCard({ domain, isOverall = false }: { domain: DomainStat, isOverall?: boolean }) {
   const percentage = Math.round(domain.completionPercentage);
-  const circumference = 2 * Math.PI * 45; // radius = 45
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const domainId = isOverall ? 'summary' : getDomainId(domain.domainName);
+  const colors = DOMAIN_COLORS[domainId];
+  const Illustration = DOMAIN_ILLUSTRATIONS[domainId];
+  const labelText = isOverall ? 'Overall Progress' : domain.domainName;
   
   return (
-    <div className="group relative bg-background border border-border rounded-full w-full aspect-square hover:border-primary/50 transition-colors duration-300 flex items-center justify-center">
-      {/* SVG Progress Circle */}
-      <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-        {/* Background circle */}
-        <circle
-          className="text-muted-foreground/20"
-          strokeWidth="4"
-          stroke="currentColor"
-          fill="none"
-          r="45"
-          cx="50"
-          cy="50"
+    <div className="flex flex-col items-center w-full">
+      <div className="group relative bg-background border border-border rounded-full w-full aspect-square hover:border-primary/50 transition-colors duration-300 p-2">
+        <CircularProgress
+          percentage={percentage}
+          size={isOverall ? 100 : 100}
+          strokeWidth={isOverall ? 3 : 3}
+          progressColor={colors.progressColor}
+          gradientClass={colors.gradient}
+          illustration={<Illustration className="w-full h-full opacity-20" />}
+          label={<span className="text-3xl sm:text-4xl font-normal text-foreground">{percentage}%</span>}
         />
-        {/* Progress circle */}
-        <circle
-          className="text-green-400 transition-all duration-300"
-          strokeWidth="4"
-          strokeLinecap="round"
-          stroke="currentColor"
-          fill="none"
-          r="45"
-          cx="50"
-          cy="50"
-          style={{
-            strokeDasharray: circumference,
-            strokeDashoffset: strokeDashoffset
-          }}
-        />
-      </svg>
-
-      {/* Content */}
-      <div className="relative flex flex-col items-center justify-center text-center z-10 w-full p-2">
-        <span className="font-semibold text-2xl text-foreground mb-0.5" title={`${percentage}% complete`}>
-          {percentage}%
-        </span>
-        <span className="text-xs text-muted-foreground truncate w-full max-w-[120px]" title={domain.domainName}>
-          {abbreviateDomain(domain.domainName)}
-        </span>
       </div>
+      <span className="mt-2 text-sm text-muted-foreground truncate w-full max-w-[140px] text-center" title={domain.domainName}>
+        {labelText}
+      </span>
     </div>
   );
 }
@@ -98,7 +82,7 @@ export default function DomainCompletionWidget({
         <h2 className="text-xl font-medium text-foreground mb-4">
           Domain Progress
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-8 w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-6 w-full">
           {[...Array(6)].map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -153,7 +137,7 @@ export default function DomainCompletionWidget({
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-medium text-foreground">
           Domain Progress
         </h2>
@@ -164,12 +148,27 @@ export default function DomainCompletionWidget({
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8 gap-4 w-full">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-6 w-full">
+        {/* Individual domain cards */}
         {domainsToShow.map(domain => (
           <Link href={`/topics/${domain.domain}`} key={domain.domain} className="w-full">
             <DomainProgressCard domain={domain} />
           </Link>
         ))}
+        
+        {/* Overall progress card */}
+        <DomainProgressCard 
+          domain={{
+            domain: 'overall',
+            domainName: 'Overall Progress',
+            completionPercentage: domainsToShow.reduce((acc, domain) => acc + domain.completionPercentage, 0) / domainsToShow.length,
+            totalTopics: domainsToShow.reduce((acc, domain) => acc + (domain.totalTopics || 0), 0),
+            completedTopics: domainsToShow.reduce((acc, domain) => acc + (domain.completedTopics || 0), 0),
+            totalQuestions: domainsToShow.reduce((acc, domain) => acc + (domain.totalQuestions || 0), 0),
+            completedQuestions: domainsToShow.reduce((acc, domain) => acc + (domain.completedQuestions || 0), 0)
+          }} 
+          isOverall={true}
+        />
       </div>
     </div>
   );

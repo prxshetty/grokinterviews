@@ -318,7 +318,7 @@ function TopicCategoryGridComponent({
   // Handle case where no items are available
   if (!displayableItems || displayableItems.length === 0) {
     return (
-      <div className="text-center py-10 px-4">
+      <div className="text-center py-10 px-4 pt-24 sm:pt-28 md:pt-32">
         {showDomainTitle && domain && (
           <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6 text-left text-gray-800 dark:text-gray-200">
             {getDisplayDomainName(domain)}
@@ -332,7 +332,7 @@ function TopicCategoryGridComponent({
   }
 
   return (
-    <div className="w-full px-2 sm:px-4">
+    <div className="w-full px-2 sm:px-4 pt-12 sm:pt-16 md:pt-20">
       {showDomainTitle && domain && (
         <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6 text-left text-gray-800 dark:text-gray-200">
           {getDisplayDomainName(domain)}
