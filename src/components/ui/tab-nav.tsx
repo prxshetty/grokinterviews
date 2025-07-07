@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 
 interface TabNavItem {
@@ -176,13 +175,13 @@ const Tab = ({
 
 const Cursor = ({ position }: { position: { left: number; width: number; opacity: number } }) => {
   return (
-    <motion.li
-      animate={position}
-      className="absolute z-0 h-full top-0 rounded-full bg-black dark:bg-white"
-      transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 30
+    <div
+      className="absolute z-0 h-full top-0 rounded-full bg-black dark:bg-white transition-all duration-300 ease-out"
+      style={{
+        left: `${position.left}px`,
+        width: `${position.width}px`,
+        opacity: position.opacity,
+        transform: 'translateZ(0)', // Force hardware acceleration
       }}
     />
   );

@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useScrollAnimation } from '@/hooks/ui';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 
 // Resource data with logos and information
 const resources = [
@@ -173,10 +174,14 @@ export default function ResourceCarousel() {
               >
                 {/* Logo container */}
                 <div className="w-16 h-16 transform transition-transform duration-300 ease-in-out mb-3 flex items-center justify-center group-hover/item:scale-110">
-                  <img
+                  <Image
                     src={resource.logo}
                     alt={`${resource.name} Logo`}
                     className={resource.className}
+                    width={64}
+                    height={64}
+                    unoptimized
+                    priority={index < resources.length} // Prioritize first set for LCP
                   />
                 </div>
                 {/* Resource Name - Commented out for now */}

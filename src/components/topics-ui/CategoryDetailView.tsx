@@ -486,7 +486,7 @@ export default function CategoryDetailView({
   if (selectedSubtopic && subtopicDetails) {
     return (
       <motion.div 
-        className="p-4"
+        className="p-4 pt-12 sm:pt-16 md:pt-20"
         initial="hidden"
         animate="visible"
         variants={fadeInVariants}
@@ -599,7 +599,7 @@ export default function CategoryDetailView({
   // Render category details
   return (
     <motion.div 
-      className="p-4"
+      className="p-4 pt-12 sm:pt-16 md:pt-20"
       initial="hidden"
       animate="visible"
       variants={fadeInVariants}
