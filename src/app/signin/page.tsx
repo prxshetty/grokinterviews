@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
-import { AuroraBackground } from '@/components/ui/aurora-background';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -507,8 +506,7 @@ function SignInForm() {
 
 export default function SignIn() {
   return (
-    <AuroraBackground>
-      <div className="flex min-h-screen w-full flex-col items-center justify-center px-4">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-8">
           <Suspense fallback={
             <div className="text-center">
@@ -520,6 +518,5 @@ export default function SignIn() {
           </Suspense>
         </div>
       </div>
-    </AuroraBackground>
   );
 }

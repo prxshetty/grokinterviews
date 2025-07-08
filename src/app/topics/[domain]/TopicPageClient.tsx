@@ -442,7 +442,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   return (
     <TopicDataProvider>
       <div className="flex flex-col min-h-screen">
-          <div className="flex-grow bg-white dark:bg-black transition-colors duration-300 ease-in-out">
+          <div className="flex-grow transition-colors duration-300 ease-in-out">
             <ErrorBoundary>
               {isLoading.sections && (
                 <LoadingSpinner 

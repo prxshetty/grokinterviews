@@ -139,8 +139,9 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
 
   // Optimize avatar fix with debouncing and memoization
   const shouldFixAvatar = useMemo(() => {
+    // Always sync Google avatar URL to profile if it exists and is different
     return user?.user_metadata?.avatar_url && 
-           (!profile?.avatar_url || profile.avatar_url.trim() === '');
+           (profile?.avatar_url !== user.user_metadata.avatar_url);
   }, [user?.user_metadata?.avatar_url, profile?.avatar_url]);
 
   useEffect(() => {
@@ -173,11 +174,12 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
   // Memoize avatar URLs to prevent unnecessary preloader calls
   const avatarUrls = useMemo(() => {
     const urls = [DEFAULT_AVATAR_URL];
-    if (profile?.avatar_url?.trim()) {
-      urls.push(profile.avatar_url);
-    }
+    // Prioritize Google avatar URL
     if (user?.user_metadata?.avatar_url?.trim()) {
       urls.push(user.user_metadata.avatar_url);
+    }
+    if (profile?.avatar_url?.trim() && profile.avatar_url !== user?.user_metadata?.avatar_url) {
+      urls.push(profile.avatar_url);
     }
     return urls;
   }, [profile?.avatar_url, user?.user_metadata?.avatar_url]);
@@ -464,7 +466,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                             <div className="flex items-center space-x-3">
                               <Avatar className="h-10 w-10">
                                 <AvatarImage 
-                                  src={profile?.avatar_url || user.user_metadata?.avatar_url || DEFAULT_AVATAR_URL} 
+                                  src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL} 
                                   alt={profile?.full_name || user.email || 'User'} 
                                 />
                                 <AvatarFallback>
@@ -541,7 +543,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                         <button className="flex items-center space-x-1.5 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors group">
                           <Avatar className="h-8 w-8">
                             <AvatarImage 
-                              src={profile?.avatar_url || user.user_metadata?.avatar_url || DEFAULT_AVATAR_URL} 
+                              src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL} 
                               alt={profile?.full_name || user.email || 'User'} 
                             />
                             <AvatarFallback>
@@ -556,7 +558,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-10 w-10">
                               <AvatarImage 
-                                src={profile?.avatar_url || user.user_metadata?.avatar_url || DEFAULT_AVATAR_URL} 
+                                src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL} 
                                 alt={profile?.full_name || user.email || 'User'} 
                               />
                               <AvatarFallback>
