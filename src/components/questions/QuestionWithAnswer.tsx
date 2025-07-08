@@ -67,7 +67,6 @@ type QuestionType = {
 
 interface QuestionWithAnswerProps {
   question: QuestionType;
-  questionIndex: number;
   topicId?: number;
   domain?: string | undefined; // Add domain prop for optimization (can be undefined)
   onCompletionChange?: (questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void;
@@ -81,7 +80,6 @@ interface QuestionWithAnswerProps {
 
 function QuestionWithAnswerComponent({
   question,
-  questionIndex,
   topicId,
   domain,
   onCompletionChange,
@@ -173,64 +171,86 @@ function QuestionWithAnswerComponent({
   return (
     <AccordionItem 
       value={questionId.toString()}
-      className="group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md mb-3"
+      className={`group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md ${
+        isTabletOrSmaller ? 'mb-2' : 'mb-3'
+      }`}
     >
-      <div className="flex items-start justify-between w-full bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors">
-        <AccordionTrigger className="flex items-start justify-between flex-1 px-4 py-3 text-left">
-          <div className="flex items-start flex-1 pr-3 min-w-0"> {/* Ensure text wraps */}
-            {isCompletedState ? (
-              <div className="mr-2 text-green-500 dark:text-green-400 flex-shrink-0 mt-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-            ) : (
-              <div className="mr-2 w-5 h-5 flex-shrink-0 mt-1"> {/* Placeholder for alignment */}
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <circle cx="12" cy="12" r="10" />
-                </svg>
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="text-base font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words">
-                {question.question_text || 'Question text not available'}
-              </div>
-              {question.difficulty && (
-                <div className="mt-1">
-                  <DifficultyTag difficulty={question.difficulty} />
+      <div className="flex items-start w-full bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors">
+        <div className="flex-1 min-w-0">
+          <AccordionTrigger className={`flex items-start w-full text-left ${
+            isTabletOrSmaller ? 'px-3 py-2.5' : 'px-4 py-3'
+          } [&>svg]:hidden`}>
+            <div className="flex items-start flex-1 min-w-0"> {/* Ensure text wraps */}
+              {isCompletedState ? (
+                <div className="mr-2 text-green-500 dark:text-green-400 flex-shrink-0 mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="mr-2 w-5 h-5 flex-shrink-0 mt-1"> {/* Placeholder for alignment */}
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
                 </div>
               )}
+              <div className="flex-1 min-w-0">
+                <div className={`font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words ${
+                  isTabletOrSmaller ? 'text-sm leading-5' : 'text-base'
+                }`}>
+                  {question.question_text || 'Question text not available'}
+                </div>
+                {question.difficulty && (
+                  <div className="mt-1">
+                    <DifficultyTag difficulty={question.difficulty} />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-center flex-shrink-0 space-x-2 pl-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400 group-data-[state=open]:text-gray-700 dark:group-data-[state=open]:text-gray-200">
-              Q{questionIndex + 1}
-            </span>
-            {/* Default Radix ChevronDownIcon will be rendered by AccordionTrigger from ui/accordion.tsx */}
-          </div>
-        </AccordionTrigger>
+          </AccordionTrigger>
+        </div>
         
-        {/* Bookmark button outside the trigger to avoid nested buttons */}
-        {(actualCategoryId !== null && actualCategoryId !== undefined) && (
-          <div className="flex items-center px-2 py-3">
-            <BookmarkButton
-              questionId={questionId}
-              topicId={actualTopicId ?? null} 
-              categoryId={actualCategoryId}
-              initialIsBookmarked={isBookmarkedState}
-              onBookmarkChange={handleBookmarkChange} 
-            />
+        {/* Bookmark button and chevron on the right */}
+        <div className="flex items-center flex-shrink-0">
+          {/* Bookmark button */}
+          {(actualCategoryId !== null && actualCategoryId !== undefined) && (
+            <div className={`flex items-center ${
+              isTabletOrSmaller ? 'px-1.5 py-2.5' : 'px-2 py-3'
+            }`}>
+              <BookmarkButton
+                questionId={questionId}
+                topicId={actualTopicId ?? null} 
+                categoryId={actualCategoryId}
+                initialIsBookmarked={isBookmarkedState}
+                onBookmarkChange={handleBookmarkChange} 
+              />
+            </div>
+          )}
+          
+          {/* Chevron - we'll add a custom one since AccordionTrigger's chevron is now in the wrong place */}
+          <div className={`flex items-center ${
+            isTabletOrSmaller ? 'px-1.5 py-2.5' : 'px-2 py-3'
+          }`}>
+            <svg 
+              className="h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
-        )}
+        </div>
       </div>
 
       <AccordionContent 
-        className="px-4 pt-0 pb-4 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 relative"
+        className={`pt-0 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 relative ${
+          isTabletOrSmaller ? 'px-3 pb-3' : 'px-4 pb-4'
+        }`}
       >
         {/* Mobile Tab Navigation */}
         {isTabletOrSmaller && (
-          <div className="pt-3 pb-4">
+          <div className="pt-2 pb-3">
             <TabNav
               items={tabItems}
               activeTab={activeTab}
@@ -242,19 +262,19 @@ function QuestionWithAnswerComponent({
         )}
 
         {/* Content Layout - Mobile: Single pane with tabs, Desktop: Two panes */}
-        <div className={`pt-3 w-full ${
+        <div className={`w-full ${
           isTabletOrSmaller 
-            ? '' 
-            : 'flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)] min-h-[700px]'
+            ? 'pt-2 space-y-3' 
+            : 'pt-3 flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)] min-h-[700px]'
         }`}>
           
           {/* Mobile: Single pane based on active tab */}
           {isTabletOrSmaller ? (
-            <div className={activeTab === 'answer' ? 'h-[calc(100vh-250px)]' : ''}>
+            <div className="w-full">
               {activeTab === 'answer' ? (
                 <div 
                   ref={answerRef}
-                  className="h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50"
+                  className="max-h-[60vh] min-h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50 shadow-sm"
                 >
                   <AnswerDisplay
                     answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
@@ -265,7 +285,7 @@ function QuestionWithAnswerComponent({
                   />
                 </div>
               ) : (
-                <div className="bg-white dark:bg-gray-800/50 p-4 rounded-lg">
+                <div className="bg-white dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm max-h-[60vh] overflow-y-auto">
                   <Suspense fallback={<ResourceListSkeleton />}>
                     <ResourceList 
                       questionId={questionId} 
