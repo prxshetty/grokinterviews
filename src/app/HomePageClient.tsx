@@ -81,7 +81,7 @@ function ExploreTopicsSection() {
       <h2 className="text-2xl md:text-3xl mb-8 text-center font-normal">
         Explore Topics
       </h2>
-      <div className="-mx-8 md:-mx-12 lg:-mx-16 -mt-4">
+      <div className="mx-[-1rem] sm:mx-[-1.5rem] md:mx-[-2rem] lg:mx-[-3rem] -mt-4 overflow-x-hidden">
         <Suspense fallback={<TopicCarouselSkeleton />}>
           <TopicCarousel />
         </Suspense>
@@ -119,25 +119,25 @@ function ExploreTopicsSection() {
 
 export default function HomePageClient() {
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white w-full relative font-sans animate-fade-in">
+    <div className="min-h-[100dvh] w-full relative font-sans animate-fade-in">
       {/* Hero Section with integrated CompanyList */}
-      <div className="mb-32">
+      <div className="mb-16 sm:mb-24 md:mb-32">
         <HeroSection />
       </div>
 
       {/* Stats Section - Lazy loaded */}
-      <div className="mt-16 md:mt-24">
+      <div className="mt-12 sm:mt-16 md:mt-24">
         <Suspense fallback={<StatsSkeleton />}>
           <StatsSection />
         </Suspense>
       </div>
 
-      <div className="px-8 md:px-12">
+      <div className="px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Topic Carousel Section - Lazy loaded */}
         <ExploreTopicsSection />
 
         {/* Feature Section - Lazy loaded */}
-        <div className="mt-0 mb-24">
+        <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
           <Suspense fallback={<FeatureSkeleton />}>
             <FeatureSection />
           </Suspense>

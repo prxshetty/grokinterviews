@@ -1,21 +1,33 @@
 'use client';
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { AuroraBackground } from '@/components/ui/aurora-background'
 import CompanyList from '@/components/home/CompanyList'
 
 export function HeroSection() {
+    const [isReady, setIsReady] = useState(false);
+    
+    useEffect(() => {
+        // Delay to ensure all components are mounted and styled
+        const timer = setTimeout(() => {
+            setIsReady(true);
+        }, 100);
+        
+        return () => clearTimeout(timer);
+    }, []);
+    
     return (
         <>
-            <AuroraBackground className="relative pt-0">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-24 md:pt-36">
-                    <div className="text-center sm:mx-auto lg:mr-auto lg:mt-0">
-                        <div className="animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards', opacity: 0 }}>
+            <div className="relative w-full overflow-hidden min-h-[100dvh]">
+                {/* Consistent padding that matches navigation exactly */}
+                <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 pt-24 sm:pt-28 md:pt-32 lg:pt-40 xl:pt-48 w-full">
+                    <div className="text-center mx-auto max-w-4xl w-full">
+                        {/* Badge Section */}
+                        <div className={`w-full flex justify-center transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                             <Link
                                 href="/topics"
-                                className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-2 sm:gap-4 rounded-full border p-1 pl-3 sm:pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950 max-w-[90vw] sm:max-w-none">
+                                className="hover:bg-background dark:hover:border-t-border bg-muted group flex w-fit items-center gap-2 sm:gap-3 rounded-full border p-1 pl-3 sm:pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950 max-w-[calc(100vw-3rem)] sm:max-w-none">
                                 <span className="text-foreground text-xs sm:text-sm truncate">AI-Powered with 3.6M+ Resources</span>
                                 <span className="dark:border-background block h-3 sm:h-4 w-0.5 border-l bg-white dark:bg-zinc-700 flex-shrink-0"></span>
                                 <div className="bg-background group-hover:bg-muted size-5 sm:size-6 overflow-hidden rounded-full duration-500 flex-shrink-0">
@@ -31,22 +43,25 @@ export function HeroSection() {
                             </Link>
                         </div>
                 
-                        <h1 className="mt-6 sm:mt-8 max-w-4xl mx-auto text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[5.25rem] lg:mt-16 font-semibold leading-tight">
+                        {/* Main Heading */}
+                        <h1 className={`mt-6 sm:mt-8 text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
                             Your Complete Platform for Interviews
                         </h1>
                         
-                        <div className="animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'forwards', opacity: 0 }}>
-                            <p className="mx-auto mt-4 sm:mt-6 md:mt-8 max-w-2xl text-balance text-base sm:text-lg text-muted-foreground px-4 sm:px-0">
+                        {/* Description */}
+                        <div className={`w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '200ms' }}>
+                            <p className="mx-auto mt-4 sm:mt-6 max-w-2xl text-balance text-sm sm:text-base md:text-lg text-muted-foreground w-full">
                                 Master interview questions across AI, Web Development, System Design, and more. Get AI-powered explanations and track your progress in real-time.
                             </p>
                         </div>
 
-                        <div className="mt-12 flex flex-col items-center justify-center gap-2 md:flex-row animate-fade-in" style={{ animationDelay: '0.6s', animationFillMode: 'forwards', opacity: 0 }}>
-                            <div className="bg-foreground/10 rounded-[14px] border p-0.5">
+                        {/* Action Buttons */}
+                        <div className={`mt-8 sm:mt-10 flex flex-col items-center justify-center gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
+                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 w-full max-w-xs">
                                 <Button
                                     asChild
                                     size="lg"
-                                    className="rounded-xl px-5 text-base">
+                                    className="w-full rounded-xl px-4 sm:px-5 text-sm sm:text-base">
                                     <Link href="/topics">
                                         <span className="text-nowrap">Start Learning</span>
                                     </Link>
@@ -56,7 +71,7 @@ export function HeroSection() {
                                 asChild
                                 size="lg"
                                 variant="ghost"
-                                className="h-10.5 rounded-xl px-5">
+                                className="w-full max-w-xs rounded-xl px-4 sm:px-5 text-sm sm:text-base">
                                 <Link href="/dashboard">
                                     <span className="text-nowrap">View Dashboard</span>
                                 </Link>
@@ -64,14 +79,14 @@ export function HeroSection() {
                         </div>
 
                         {/* Company List Integration */}
-                        <div className="animate-fade-in mt-16 md:mt-24" style={{ animationDelay: '0.8s', animationFillMode: 'forwards', opacity: 0 }}>
-                            <div className="-mb-16 mt-8">
+                        <div className={`mt-12 sm:mt-16 md:mt-20 lg:mt-24 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
+                            <div className="mt-4 sm:mt-8 w-full overflow-hidden">
                                 <CompanyList />
                             </div>
                         </div>
                     </div>
                 </div>
-            </AuroraBackground>
+            </div>
         </>
     )
 } 

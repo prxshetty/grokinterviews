@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "analyze": "ANALYZE=true next build",
+    "build:analyze": "npm run analyze",
+    "type-check": "tsc --noEmit",
+    "perf:lighthouse": "lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json",
+    "perf:bundle-size": "npx bundlesize"
   },
   "dependencies": {
     "@21st-extension/react": "^0.5.7",

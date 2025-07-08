@@ -92,12 +92,12 @@ export default function TopicCarousel() {
   return (
     <div
       ref={sectionRef}
-      className="relative w-full h-[600px] md:h-[700px] bg-white dark:bg-black text-gray-900 dark:text-white overflow-hidden
+      className="relative w-full h-[600px] md:h-[700px] text-gray-900 dark:text-white overflow-hidden
         transition-all duration-1000"
       >
       {/* Background pattern - only visible in dark mode */}
       <div className="absolute inset-0 opacity-0 dark:opacity-10">
-        <div className="absolute inset-0 dark:bg-[#111] bg-opacity-80"></div>
+        <div className="absolute inset-0 bg-white/20 dark:bg-black/20 backdrop-blur-sm"></div>
       </div>
 
       {/* Subtle star pattern - lighter in light mode */}
@@ -110,7 +110,7 @@ export default function TopicCarousel() {
       ></div>
 
       {/* Subtle gradient background - almost invisible in light mode */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 dark:to-black opacity-20 dark:opacity-40"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/30 dark:to-black/30 opacity-20 dark:opacity-40"></div>
 
       {/* Horizontal card container */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pt-0 md:pt-0">
