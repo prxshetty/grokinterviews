@@ -56,12 +56,12 @@ export function HeroSection() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className={`mt-8 sm:mt-10 flex flex-col items-center justify-center gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
-                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 w-full max-w-xs">
+                        <div className={`mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
+                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 w-full sm:w-auto">
                                 <Button
                                     asChild
                                     size="lg"
-                                    className="w-full rounded-xl px-4 sm:px-5 text-sm sm:text-base">
+                                    className="w-full sm:w-auto rounded-xl px-4 sm:px-5 text-sm sm:text-base">
                                     <Link href="/topics">
                                         <span className="text-nowrap">Start Learning</span>
                                     </Link>
@@ -71,7 +71,7 @@ export function HeroSection() {
                                 asChild
                                 size="lg"
                                 variant="ghost"
-                                className="w-full max-w-xs rounded-xl px-4 sm:px-5 text-sm sm:text-base">
+                                className="w-full sm:w-auto rounded-xl px-4 sm:px-5 text-sm sm:text-base">
                                 <Link href="/dashboard">
                                     <span className="text-nowrap">View Dashboard</span>
                                 </Link>
