@@ -56,12 +56,12 @@ export function HeroSection() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className={`mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
-                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 w-full sm:w-auto">
+                        <div className={`mt-8 sm:mt-10 flex flex-row items-center justify-center gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
+                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 flex-1 sm:w-auto">
                                 <Button
                                     asChild
-                                    size="lg"
-                                    className="w-full sm:w-auto rounded-xl px-4 sm:px-5 text-sm sm:text-base">
+                                    size="sm"
+                                    className="w-full sm:w-auto rounded-xl h-8 sm:h-11 px-1 sm:px-6 text-xs sm:text-base">
                                     <Link href="/topics">
                                         <span className="text-nowrap">Start Learning</span>
                                     </Link>
@@ -69,9 +69,9 @@ export function HeroSection() {
                             </div>
                             <Button
                                 asChild
-                                size="lg"
+                                size="sm"
                                 variant="ghost"
-                                className="w-full sm:w-auto rounded-xl px-4 sm:px-5 text-sm sm:text-base">
+                                className="flex-1 sm:w-auto rounded-xl h-8 sm:h-11 px-1 sm:px-6 text-xs sm:text-base">
                                 <Link href="/dashboard">
                                     <span className="text-nowrap">View Dashboard</span>
                                 </Link>
@@ -82,7 +82,7 @@ export function HeroSection() {
                 </div>
                 
                 {/* Company List Integration - Outside constrained containers */}
-                <div className={`mt-12 sm:mt-16 md:mt-20 lg:mt-24 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
+                <div className={`mt-6 sm:mt-8 md:mt-10 lg:mt-12 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
                     <CompanyList />
                 </div>
             </div>
