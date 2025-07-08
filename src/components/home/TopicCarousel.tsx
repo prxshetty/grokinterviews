@@ -95,22 +95,7 @@ export default function TopicCarousel() {
       className="relative w-full h-[600px] md:h-[700px] text-gray-900 dark:text-white overflow-hidden
         transition-all duration-1000"
       >
-      {/* Background pattern - only visible in dark mode */}
-      <div className="absolute inset-0 opacity-0 dark:opacity-10">
-        <div className="absolute inset-0 bg-white/20 dark:bg-black/20 backdrop-blur-sm"></div>
-      </div>
 
-      {/* Subtle star pattern - lighter in light mode */}
-      <div
-        className="absolute inset-0 opacity-5 dark:opacity-20"
-        style={{
-          backgroundImage: `radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px)`,
-          backgroundSize: '20px 20px'
-        }}
-      ></div>
-
-      {/* Subtle gradient background - almost invisible in light mode */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/30 dark:to-black/30 opacity-20 dark:opacity-40"></div>
 
       {/* Horizontal card container */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pt-0 md:pt-0">

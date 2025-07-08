@@ -25,7 +25,7 @@ export default function SignUp() {
   // Return a loading state while redirecting
   return (
     <Suspense fallback={
-      <div className="min-h-screen w-full flex items-center justify-center bg-white dark:bg-black">
+      <div className="min-h-screen w-full flex items-center justify-center bg-transparent">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Redirecting to sign up page...</p>

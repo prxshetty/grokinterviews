@@ -505,7 +505,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                         ) : (
                           <div className="space-y-3">
                             <SheetClose asChild>
-                              <Link href="/signin" className="w-full">
+                              <Link href="/signin?mode=signin" className="w-full">
                                 <Button variant="default" className="w-full">
                                   Sign In
                                 </Button>
@@ -606,7 +606,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                   </>
                 ) : (
                   <div className="flex items-center space-x-2">
-                    <Link href="/signin">
+                    <Link href="/signin?mode=signin">
                       <Button variant="ghost" size="sm">
                         Sign In
                       </Button>

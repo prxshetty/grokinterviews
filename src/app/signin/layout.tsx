@@ -11,7 +11,7 @@ export default function SignInLayout({
   children,
 }: PropsWithChildren) {
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-neutral-950 dark:to-neutral-900">
+    <main className="relative flex min-h-screen flex-col items-center justify-center bg-transparent">
       {children}
     </main>
   )

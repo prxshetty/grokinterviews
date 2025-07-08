@@ -543,7 +543,7 @@ export default function CategoryDetailView({
                   />
                 </div>
                 {/* Accordion items for questions within this category group */}
-                {category.questions.map((question, index) => (
+                {category.questions.map((question, _) => (
                   <QuestionWithAnswer 
                     key={question.id}
                     question={question}
@@ -570,11 +570,10 @@ export default function CategoryDetailView({
               value={openQuestionId || ""}
               onValueChange={handleOpenQuestionChange}
             >
-              {memoizedFilteredQuestions.map((question, index) => (
+              {memoizedFilteredQuestions.map((question, _) => (
                 <QuestionWithAnswer 
                   key={question.id}
                   question={question}
-                  questionIndex={index}
                   topicId={subtopicDetails?.subtopicId ?? 0}
                   domain={domain} // Pass domain for optimization
                   onCompletionChange={handleCompletionChange}
@@ -674,11 +673,10 @@ export default function CategoryDetailView({
               value={openQuestionId || ""}
               onValueChange={handleOpenQuestionChange}
             >
-              {memoizedFilteredQuestions.map((question, index) => (
+              {memoizedFilteredQuestions.map((question, _) => (
                 <QuestionWithAnswer 
                   key={question.id}
                   question={question}
-                  questionIndex={index}
                   topicId={question.topic_id ?? 0}
                   domain={domain} // Pass domain for optimization
                   onCompletionChange={handleCompletionChange}
