@@ -12,6 +12,10 @@ PERFORMANCE-OPTIMIZATION-PLAN.md
 SECURITY-PLAN.md
 backend_api.md
 sql-commands.md.backup
+scripts/
+PROJECT_WIDE_OPTIMIZATION_PLAN
+OPTIMIZATION_SUMMARY.md
+PERFORMANCE_OPTIMIZATIONS.md
 # dependencies
 /node_modules
 /.pnp

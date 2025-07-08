@@ -287,23 +287,45 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
     sessionStorage.setItem('globalPasswordResetReminderDismissed', 'true');
   };
 
-  // Optimize initial render with better placeholder
+  // Show invisible placeholder during SSR to prevent layout shift, then show content immediately
   if (!mounted) {
     return (
       <>
-        {/* Optimized placeholder with minimal layout shift */}
-        <div className="fixed z-20 w-full px-2">
-          <div className="mx-auto mt-2 px-4 sm:px-6 max-w-7xl bg-transparent">
-            <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:w-full lg:gap-0 lg:py-4">
-              <div className="flex w-full justify-between lg:w-auto">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        {/* Invisible placeholder that matches exact final layout */}
+        <header>
+          <nav className="fixed z-20 w-full px-2 group top-0 left-0 right-0">
+            <div className={cn(
+              'mx-auto mt-2 px-3 sm:px-4 md:px-6 transition-all duration-300',
+              'max-w-7xl'
+            )}>
+              <div className={cn(
+                'relative flex flex-wrap items-center justify-between gap-4 py-3 lg:w-full lg:gap-0 lg:py-4',
+                'max-w-[100vw]'
+              )}>
+                <div className="flex w-full justify-between lg:w-auto">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 opacity-0" /> {/* Invisible logo placeholder */}
+                  </div>
+                  <div className="lg:hidden">
+                    <div className="w-6 h-6 opacity-0" /> {/* Invisible menu button placeholder */}
+                  </div>
+                </div>
+                <div className="hidden lg:flex lg:items-center lg:space-x-4">
+                  <div className="flex items-center space-x-8">
+                    <div className="h-4 w-16 opacity-0" />
+                    <div className="h-4 w-20 opacity-0" />
+                    <div className="h-4 w-16 opacity-0" />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-8 w-16 opacity-0" />
+                    <div className="h-8 w-20 opacity-0" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-        <main className="flex-1 pt-16">
+          </nav>
+        </header>
+        <main className="flex-1 w-full overflow-x-hidden pt-16">
           {children}
         </main>
       </>
@@ -341,19 +363,20 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
       <header>
         <nav
           data-state={isMobileMenuOpen ? 'active' : 'inactive'}
-          className="fixed z-20 w-full px-2 group"
+          className="fixed z-20 w-full px-2 group top-0 left-0 right-0"
         >
           <div
             className={cn(
-              'mx-auto mt-2 px-4 sm:px-6 transition-all duration-300',
+              'mx-auto mt-2 px-3 sm:px-4 md:px-6 transition-all duration-300',
               isScrolled
-                ? 'max-w-5xl rounded-2xl border bg-background/50 backdrop-blur-lg'
-                : 'max-w-7xl bg-transparent'
+                ? 'max-w-5xl rounded-2xl border bg-background/80 dark:bg-background/70 backdrop-blur-lg'
+                : 'max-w-7xl'
             )}
           >
             <div
               className={cn(
-                'relative flex flex-wrap items-center justify-between gap-6 py-3 lg:w-full lg:gap-0 lg:py-4'
+                'relative flex flex-wrap items-center justify-between gap-4 py-3 lg:w-full lg:gap-0 lg:py-4',
+                'max-w-[100vw]'
               )}
             >
               <div className="flex w-full justify-between lg:w-auto">
@@ -599,7 +622,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
       
-      <main className="flex-1">
+      <main className="flex-1 w-full overflow-x-hidden pt-16">
         {children}
       </main>
     </>

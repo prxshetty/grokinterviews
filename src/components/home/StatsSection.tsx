@@ -25,7 +25,7 @@ const statsData = highlightedStats.map((stat, index) => ({
 
 export default function StatsSection() {
   return (
-    <div className="w-full bg-white dark:bg-black py-12 sm:py-16 md:py-24 font-sans -mr-4 sm:-mr-8">
+    <div className="w-full py-12 sm:py-16 md:py-24 font-sans -mr-4 sm:-mr-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grow h-full gap-0 max-w-screen-xl mx-auto">
         {statsData.map((stat, index) => {
             let className = "";
