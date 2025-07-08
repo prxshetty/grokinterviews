@@ -78,13 +78,12 @@ export function HeroSection() {
                             </Button>
                         </div>
 
-                        {/* Company List Integration */}
-                        <div className={`mt-12 sm:mt-16 md:mt-20 lg:mt-24 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
-                            <div className="mt-4 sm:mt-8 w-full overflow-hidden">
-                                <CompanyList />
-                            </div>
-                        </div>
                     </div>
+                </div>
+                
+                {/* Company List Integration - Outside constrained containers */}
+                <div className={`mt-12 sm:mt-16 md:mt-20 lg:mt-24 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
+                    <CompanyList />
                 </div>
             </div>
         </>
