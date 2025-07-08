@@ -13,7 +13,7 @@ export default async function TopicsPage() {
   }
 
   return (
-    <div className="bg-white dark:bg-black min-h-screen">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 md:px-6 py-20 pt-32 sm:pt-36 md:pt-40">
         <TopicDomainSelector />
       </div>
