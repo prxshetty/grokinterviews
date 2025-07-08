@@ -58,7 +58,7 @@ export default function BookmarksPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-transparent text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col">
           <div className="w-full flex-shrink-0 mb-8">
@@ -77,11 +77,11 @@ export default function BookmarksPage() {
               />
             </div>
           ) : error ? (
-            <div className="bg-card text-card-foreground p-6 rounded-lg border border-border text-center">
+            <div className="bg-white/80 dark:bg-black/80 backdrop-blur-lg text-card-foreground p-6 rounded-lg border border-border text-center shadow-lg">
               <p className="text-destructive">{error}</p>
             </div>
           ) : bookmarks.length === 0 ? (
-            <div className="bg-card text-card-foreground p-6 rounded-lg border border-border text-center">
+            <div className="bg-white/80 dark:bg-black/80 backdrop-blur-lg text-card-foreground p-6 rounded-lg border border-border text-center shadow-lg">
               <p className="text-muted-foreground">
                 You don't have any bookmarked questions yet. Click the bookmark icon on questions to save them for later.
               </p>
@@ -89,8 +89,8 @@ export default function BookmarksPage() {
           ) : (
             <div className="space-y-8">
               {Object.entries(groupedBookmarks).map(([domainName, domainBookmarks]) => (
-                <div key={domainName} className="bg-card text-card-foreground rounded-lg border border-border overflow-hidden">
-                  <div className="bg-muted px-6 py-3 border-b border-border">
+                <div key={domainName} className="bg-white/80 dark:bg-black/80 backdrop-blur-lg text-card-foreground rounded-lg border border-border overflow-hidden shadow-lg">
+                  <div className="bg-white/60 dark:bg-black/60 backdrop-blur-sm px-6 py-3 border-b border-border">
                     <h2 className="text-sm font-medium text-foreground">{domainName}</h2>
                   </div>
                   <div className="divide-y divide-border">
