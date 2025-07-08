@@ -146,21 +146,9 @@ export default function AboutPage() {
                   />
                   <button 
                     type="submit"
-                    className="absolute bottom-3 right-3 p-2"
+                    className="absolute bottom-3 right-3 px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
                   >
-                    <svg 
-                      width="20" 
-                      height="20" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      xmlns="http://www.w3.org/2000/svg"
-                      style={{ transform: 'rotate(15deg)' }}
-                    >
-                      <path 
-                        d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" 
-                        fill="white"
-                      />
-                    </svg>
+                    Send
                   </button>
                 </div>
               </div>
