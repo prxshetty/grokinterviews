@@ -121,7 +121,7 @@ export default function HomePageClient() {
   return (
     <div className="min-h-[100dvh] w-full relative font-sans animate-fade-in">
       {/* Hero Section with integrated CompanyList */}
-      <div className="mb-16 sm:mb-24 md:mb-32">
+      <div className="mb-8 sm:mb-12 md:mb-16">
         <HeroSection />
       </div>
 
