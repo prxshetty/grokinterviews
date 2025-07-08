@@ -547,7 +547,6 @@ export default function CategoryDetailView({
                   <QuestionWithAnswer 
                     key={question.id}
                     question={question}
-                    questionIndex={index}
                     topicId={question.categories?.topic_id ?? 0}
                     domain={domain} // Pass domain for optimization
                     onCompletionChange={handleCompletionChange}

@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       await handleAuthStateChange('REFRESH', session);
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred during refresh.');
     }
   }, [handleAuthStateChange]);
@@ -150,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         setError('Failed to sign out.');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred during sign out.');
     }
   }, []);
