@@ -247,11 +247,10 @@ export default function ContentDisplay({
                 value={openQuestionId || ""}
                 onValueChange={handleOpenQuestionChange}
               >
-                {difficultyQuestions.map((question, index) => (
+                {difficultyQuestions.map((question, _) => (
                   <QuestionWithAnswer
                     key={question.id}
                     question={question}
-                    questionIndex={index}
                     isBookmarked={bookmarkedQuestions.has(question.id)}
                     onBookmarkStatusChange={handleBookmarkChange}
                     isOpen={openQuestionId === question.id.toString()}

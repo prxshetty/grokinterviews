@@ -506,7 +506,7 @@ function SignInForm() {
 
 export default function SignIn() {
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center px-4">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center px-4 bg-transparent">
         <div className="w-full max-w-sm space-y-8">
           <Suspense fallback={
             <div className="text-center">
