@@ -38,8 +38,8 @@ export default function StatsSection() {
   }, []);
 
   return (
-    <div className={`w-full py-12 sm:py-16 md:py-24 font-sans -mr-4 sm:-mr-8 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grow h-full gap-0 max-w-screen-xl mx-auto">
+    <div className={`w-full py-12 sm:py-16 md:py-24 font-sans transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grow h-full gap-0 w-full px-4 sm:px-6 lg:px-8">
         {statsData.map((stat, index) => {
             let className = "";
             // Mobile: all cards span 1 column
