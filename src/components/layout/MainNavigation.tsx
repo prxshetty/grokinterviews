@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 import { Logo } from '@/components/ui/Logo';
-import { MAIN_NAV_TOPICS, DEFAULT_AVATAR_URL } from '@/config';
+import { MAIN_NAV_TOPICS, DEFAULT_AVATAR_URL, MAV_NAV_ITEMS } from '@/config';
 import { cn } from '@/lib/utils';
 import { useStreak } from '@/hooks/useStreak';
 import { StreakBadge } from '@/components/ui/streak-badge';
@@ -51,40 +51,41 @@ const MemoizedNavLinks = memo(({
 }: { 
   currentDomainLabel: string;
   user: any;
-}) => (
-  <div className="flex items-center space-x-8">
-    <Link
-      href="/topics"
-      className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-    >
-      {currentDomainLabel}
-    </Link>
-    
-    {user && (
-      <>
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/dashboard/bookmarks"
-          className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-        >
-          Bookmarks
-        </Link>
-      </>
-    )}
-    
-    <Link
-      href="/about"
-      className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-    >
-      About
-    </Link>
-  </div>
-));
+}) => {
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href;
+
+  return (
+    <div className="flex items-center space-x-8">
+      <Link
+        href="/topics"
+        className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+      >
+        {currentDomainLabel}
+      </Link>
+      
+      {MAV_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
+        // Skip auth-required items if user is not logged in
+        if (item.authRequired && !user) return null;
+        
+        return (
+          <Link
+            key={item.id}
+            href={item.href}
+            className={cn(
+              "text-sm font-medium transition-colors",
+              isActive(item.href)
+                ? "text-foreground"
+                : "text-foreground/80 hover:text-foreground"
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+});
 MemoizedNavLinks.displayName = 'MemoizedNavLinks';
 
 function MainNavigation({ children }: { children: React.ReactNode }) {
@@ -424,38 +425,22 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                             </Link>
                           </SheetClose>
                           
-                          {user && (
-                            <>
-                              <SheetClose asChild>
+                          {MAV_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
+                            // Skip auth-required items if user is not logged in
+                            if (item.authRequired && !user) return null;
+                            
+                            return (
+                              <SheetClose key={item.id} asChild>
                                 <Link
-                                  href="/dashboard"
+                                  href={item.href}
                                   onClick={() => setIsMobileMenuOpen(false)}
                                   className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
                                 >
-                                  Dashboard
+                                  {item.label}
                                 </Link>
                               </SheetClose>
-                              <SheetClose asChild>
-                                <Link
-                                  href="/dashboard/bookmarks"
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                  className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
-                                >
-                                  Bookmarks
-                                </Link>
-                              </SheetClose>
-                            </>
-                          )}
-                          
-                          <SheetClose asChild>
-                            <Link
-                              href="/about"
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
-                            >
-                              About
-                            </Link>
-                          </SheetClose>
+                            );
+                          })}
                         </div>
                       </nav>
 
