@@ -57,11 +57,11 @@ export function HeroSection() {
 
                         {/* Action Buttons */}
                         <div className={`mt-8 sm:mt-10 flex flex-row items-center justify-center gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
-                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 flex-1 sm:w-auto">
+                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 flex-1 sm:flex-none">
                                 <Button
                                     asChild
-                                    size="sm"
-                                    className="w-full sm:w-auto rounded-xl h-8 sm:h-11 px-1 sm:px-6 text-xs sm:text-base">
+                                    size="lg"
+                                    className="w-full rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
                                     <Link href="/topics">
                                         <span className="text-nowrap">Start Learning</span>
                                     </Link>
@@ -69,9 +69,9 @@ export function HeroSection() {
                             </div>
                             <Button
                                 asChild
-                                size="sm"
+                                size="lg"
                                 variant="ghost"
-                                className="flex-1 sm:w-auto rounded-xl h-8 sm:h-11 px-1 sm:px-6 text-xs sm:text-base">
+                                className="flex-1 sm:flex-none rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
                                 <Link href="/dashboard">
                                     <span className="text-nowrap">View Dashboard</span>
                                 </Link>
@@ -82,7 +82,7 @@ export function HeroSection() {
                 </div>
                 
                 {/* Company List Integration - Outside constrained containers */}
-                <div className={`mt-6 sm:mt-8 md:mt-10 lg:mt-12 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
+                <div className={`mt-48 sm:mt-20 md:mt-24 lg:mt-32 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
                     <CompanyList />
                 </div>
             </div>
