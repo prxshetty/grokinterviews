@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { submitFeedback, FeedbackFormData } from '@/app/actions/feedback'
+import { submitFeedback } from '@/app/actions/feedback'
+import { FeedbackFormData } from '@/types'
 
 export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
