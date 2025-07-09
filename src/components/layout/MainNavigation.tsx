@@ -493,12 +493,17 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                   Account
                                 </Link>
                               </SheetClose>
+                            </div>
+                            
+                            {/* Bottom action bar */}
+                            <div className="flex items-center justify-between w-full px-3 py-2 mt-4">
+                              <ThemeSwitcher />
                               <button
                                 onClick={handleSignOut}
-                                className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                                className="flex items-center justify-center p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
+                                aria-label="Sign Out"
                               >
-                                <LogOut className="mr-2 h-4 w-4" />
-                                Sign Out
+                                <LogOut className="h-4 w-4" />
                               </button>
                             </div>
                           </div>
@@ -518,6 +523,11 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                 </Button>
                               </Link>
                             </SheetClose>
+                            
+                            {/* Bottom action bar */}
+                            <div className="flex items-center justify-start w-full px-3 py-2 mt-4">
+                              <ThemeSwitcher />
+                            </div>
                           </div>
                         )}
                       </div>
