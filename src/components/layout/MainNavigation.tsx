@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 import { Logo } from '@/components/ui/Logo';
-import { MAIN_NAV_TOPICS, DEFAULT_AVATAR_URL, MAV_NAV_ITEMS } from '@/config';
+import { MAIN_NAV_TOPICS, DEFAULT_AVATAR_URL, MAIN_NAV_ITEMS } from '@/config';
 import { cn } from '@/lib/utils';
 import { useStreak } from '@/hooks/useStreak';
 import { StreakBadge } from '@/components/ui/streak-badge';
@@ -64,7 +64,7 @@ const MemoizedNavLinks = memo(({
         {currentDomainLabel}
       </Link>
       
-      {MAV_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
+      {MAIN_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
         // Skip auth-required items if user is not logged in
         if (item.authRequired && !user) return null;
         
@@ -425,7 +425,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                             </Link>
                           </SheetClose>
                           
-                          {MAV_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
+                          {MAIN_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
                             // Skip auth-required items if user is not logged in
                             if (item.authRequired && !user) return null;
                             

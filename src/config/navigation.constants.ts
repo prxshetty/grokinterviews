@@ -19,7 +19,7 @@ export interface NavItem {
   authRequired?: boolean;
 }
 
-export const MAV_NAV_ITEMS: NavItem[] = [
+export const MAIN_NAV_ITEMS: NavItem[] = [
   {
     id: 'topics',
     label: 'Topics',
@@ -42,7 +42,7 @@ export const MAV_NAV_ITEMS: NavItem[] = [
     id: 'voice',
     label: 'Voice',
     href: '/voice',
-    authRequired : true
+    authRequired: false
   },
   {
     id: 'about',
