@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { Faq3 } from '@/components/ui/faq3'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import ContactForm from './components/ContactForm'
 
 export const metadata: Metadata = {
   title: 'About GrokInterviews',
@@ -97,64 +96,9 @@ export default function AboutPage() {
                 Questions about our platform, features, or just want to say hello? We're here to help
               </p>
             </div>
-
-            <form className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">First name</label>
-                  <Input 
-                    type="text" 
-                    placeholder="John"
-                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Last name</label>
-                  <Input 
-                    type="text" 
-                    placeholder="Doe"
-                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Email</label>
-                  <Input 
-                    type="email" 
-                    placeholder="john.doe@example.com"
-                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Phone number</label>
-                  <Input 
-                    type="text" 
-                    placeholder="+1 (555) 123-4567"
-                    className="bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-gray-600 dark:text-gray-400">Message</label>
-                <div className="relative">
-                  <Textarea 
-                    placeholder="Hi! I have a question about the AI-powered features and how they can help with my interview preparation..."
-                    className="min-h-[120px] bg-gray-950/5 dark:bg-white/5 border-0 focus:ring-0 focus:outline-none pr-12"
-                  />
-                  <button 
-                    type="submit"
-                    className="absolute bottom-3 right-3 px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
-                  >
-                    Send
-                  </button>
-                </div>
-              </div>
-            </form>
+            <ContactForm />
           </section>
         </main>
       </div>
   )
-} 
+}
