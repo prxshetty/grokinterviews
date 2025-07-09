@@ -33,8 +33,8 @@ export function VoicePlayer({
     try {
       setIsLoading(true);
       setError(null);
-
-      console.log('🔊 Generating speech for text:', text.substring(0, 100) + '...');
+      
+      console.log('🎤 Generating speech for:', text.substring(0, 50) + '...');
 
       const response = await fetch('/api/voice/tts', {
         method: 'POST',
@@ -46,15 +46,16 @@ export function VoicePlayer({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Speech generation failed');
+        throw new Error(errorData.error || 'TTS request failed');
       }
 
-      // Create audio URL from response
-      const audioBlob = await response.blob();
-      const url = URL.createObjectURL(audioBlob);
+      const audioBuffer = await response.arrayBuffer();
+      const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      
       setAudioUrl(url);
-
-      // Create and configure audio element
+      
+      // Create new audio element
       const audio = new Audio(url);
       audioRef.current = audio;
 
@@ -74,6 +75,7 @@ export function VoicePlayer({
         URL.revokeObjectURL(url);
         setAudioUrl(null);
       };
+      
       audio.onerror = () => {
         setError('Failed to play audio');
         setIsPlaying(false);
@@ -82,18 +84,17 @@ export function VoicePlayer({
 
       // Auto-play if requested
       if (autoPlay) {
+        console.log('🔊 Auto-playing generated speech...');
         await audio.play();
       }
-
-      console.log('✅ Speech generated successfully');
-
+      
     } catch (error: any) {
-      console.error('❌ Speech generation error:', error);
-      setError(`Speech generation failed: ${error.message}`);
+      console.error('❌ TTS error:', error);
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
-  }, [text, voice, autoPlay]);
+  }, [text, voice, autoPlay, onPlayStateChange]);
 
   const togglePlayback = useCallback(async () => {
     if (!audioRef.current) {
@@ -113,14 +114,6 @@ export function VoicePlayer({
       setError('Failed to play audio');
     }
   }, [isPlaying, generateSpeech]);
-
-  const stopPlayback = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    }
-  }, []);
 
   // Auto-generate and play speech when text changes and autoPlay is enabled
   React.useEffect(() => {

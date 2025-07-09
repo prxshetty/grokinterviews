@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Square } from 'lucide-react';
+import { Mic, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VoiceRecorderProps {
@@ -22,6 +22,43 @@ export function VoiceRecorder({
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  const transcribeAudio = useCallback(async (audioBlob: Blob) => {
+    try {
+      setIsProcessing(true);
+      
+      // Convert webm to wav for better compatibility
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+
+      console.log('📝 Sending audio for transcription...');
+
+      const response = await fetch('/api/voice/stt', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Transcription failed');
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.text) {
+        console.log('✅ Transcription received:', result.text);
+        onTranscriptionReceived(result.text);
+      } else {
+        throw new Error('No transcription text received');
+      }
+
+    } catch (error: any) {
+      console.error('❌ Transcription error:', error);
+      setError(`Transcription failed: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [onTranscriptionReceived]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -77,7 +114,7 @@ export function VoiceRecorder({
       console.error('❌ Failed to start recording:', error);
       setError('Failed to access microphone. Please check permissions.');
     }
-  }, [onRecordingComplete]);
+  }, [onRecordingComplete, transcribeAudio]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
@@ -87,42 +124,6 @@ export function VoiceRecorder({
     }
   }, [isRecording]);
 
-  const transcribeAudio = async (audioBlob: Blob) => {
-    try {
-      setIsProcessing(true);
-      
-      // Convert webm to wav for better compatibility
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-
-      console.log('📝 Sending audio for transcription...');
-
-      const response = await fetch('/api/voice/stt', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Transcription failed');
-      }
-
-      const result = await response.json();
-      
-      if (result.success && result.text) {
-        console.log('✅ Transcription received:', result.text);
-        onTranscriptionReceived(result.text);
-      } else {
-        throw new Error('No transcription text received');
-      }
-
-    } catch (error: any) {
-      console.error('❌ Transcription error:', error);
-      setError(`Transcription failed: ${error.message}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   return (
     <div className="flex flex-col items-center space-y-4">
