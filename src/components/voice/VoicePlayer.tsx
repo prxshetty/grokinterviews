@@ -11,14 +11,16 @@ interface VoicePlayerProps {
   voice?: string;
   className?: string;
   onPlayStateChange?: (isPlaying: boolean) => void;
+  onError?: (error: string) => void;
 }
 
 export function VoicePlayer({ 
   text, 
   autoPlay = false, 
-  voice = 'Fritz-PlayAI',
+  voice = 'Kore',
   className,
-  onPlayStateChange 
+  onPlayStateChange,
+  onError 
 }: VoicePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +28,7 @@ export function VoicePlayer({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playPromiseRef = useRef<Promise<void> | null>(null);
 
   const generateSpeech = useCallback(async () => {
     if (!text.trim()) return;
@@ -85,12 +88,16 @@ export function VoicePlayer({
       // Auto-play if requested
       if (autoPlay) {
         console.log('🔊 Auto-playing generated speech...');
-        await audio.play();
+        const playPromise = audio.play();
+        playPromiseRef.current = playPromise;
+        await playPromise;
       }
       
     } catch (error: any) {
       console.error('❌ TTS error:', error);
-      setError(error.message);
+      const errorMessage = error.message || 'Failed to generate speech';
+      setError(errorMessage);
+      onError?.(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -105,13 +112,27 @@ export function VoicePlayer({
 
     try {
       if (isPlaying) {
+        // Wait for any pending play promise before pausing
+        if (playPromiseRef.current) {
+          try {
+            await playPromiseRef.current;
+          } catch (e) {
+            // Play was already interrupted, safe to continue
+          }
+          playPromiseRef.current = null;
+        }
         audioRef.current.pause();
       } else {
-        await audioRef.current.play();
+        const playPromise = audioRef.current.play();
+        playPromiseRef.current = playPromise;
+        await playPromise;
       }
     } catch (error: any) {
       console.error('❌ Playback error:', error);
-      setError('Failed to play audio');
+      const errorMessage = 'Failed to play audio';
+      setError(errorMessage);
+      onError?.(errorMessage);
+      playPromiseRef.current = null;
     }
   }, [isPlaying, generateSpeech]);
 
@@ -137,7 +158,21 @@ export function VoicePlayer({
         URL.revokeObjectURL(audioUrl);
       }
       if (audioRef.current) {
-        audioRef.current.pause();
+        // Wait for any pending play promise before pausing
+        if (playPromiseRef.current) {
+          playPromiseRef.current.then(() => {
+            if (audioRef.current) {
+              audioRef.current.pause();
+            }
+          }).catch(() => {
+            // Play was already interrupted, safe to continue
+            if (audioRef.current) {
+              audioRef.current.pause();
+            }
+          });
+        } else {
+          audioRef.current.pause();
+        }
       }
     };
   }, [audioUrl]);
@@ -196,7 +231,7 @@ export function VoicePlayer({
 
       {/* Status Text */}
       <span className="text-xs text-gray-500 dark:text-gray-400">
-        {isLoading ? 'Generating...' : isPlaying ? 'Playing' : 'Ready to play'}
+        {isLoading ? 'Generating with Gemini...' : isPlaying ? 'Playing' : 'Ready to play'}
       </span>
 
       {/* Error Display */}

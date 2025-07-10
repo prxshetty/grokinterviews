@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
+import { GoogleGenAI } from '@google/genai';
+import { convertPCMToWAV, mapVoiceToGemini, GEMINI_AUDIO_CONFIG } from '@/utils/audioUtils';
 
-// Initialize Groq client
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY_0 || process.env.GROQ_API_KEY,
+// Initialize Google GenAI client
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY!
 });
 
 export async function POST(request: NextRequest) {
@@ -24,24 +25,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Map voice to Gemini voice name
+    const geminiVoice = mapVoiceToGemini(voice);
+    
     console.log('🔊 Processing text-to-speech request:', {
       textLength: text.length,
-      voice: voice,
+      originalVoice: voice,
+      geminiVoice: geminiVoice,
       preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
     });
 
-    // Call Groq TTS API
-    const audioResponse = await groq.audio.speech.create({
-      model: 'playai-tts',
-      input: text,
-      voice: voice, // Use Groq PlayAI voice names
-      response_format: 'wav', // Groq TTS uses wav format
+    // Call Gemini TTS API
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text }] }],
+      config: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: geminiVoice
+            }
+          }
+        }
+      }
     });
 
-    console.log('✅ Text-to-speech successful');
+    console.log('✅ Gemini TTS response received');
 
-    // Convert the response to a buffer
-    const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
+    // Extract audio data from response
+    const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    
+    if (!audioData) {
+      throw new Error('No audio data received from Gemini TTS');
+    }
+
+    // Convert base64 PCM to buffer
+    const pcmBuffer = Buffer.from(audioData, 'base64');
+    
+    // Convert PCM to WAV format
+    const audioBuffer = convertPCMToWAV(pcmBuffer, {
+      sampleRate: GEMINI_AUDIO_CONFIG.SAMPLE_RATE,
+      channels: GEMINI_AUDIO_CONFIG.CHANNELS,
+      bitDepth: GEMINI_AUDIO_CONFIG.BIT_DEPTH
+    });
+    
+    console.log('✅ Audio conversion successful, size:', audioBuffer.length);
 
     // Return the audio as a response
     return new NextResponse(audioBuffer, {
@@ -54,17 +83,39 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ Text-to-speech error:', error);
+    console.error('❌ Gemini TTS error:', error);
 
-    // Handle specific Groq API errors
-    if (error instanceof Groq.APIError) {
+    // Handle specific Gemini API errors
+    if (error.message?.includes('API key')) {
       return NextResponse.json(
         { 
-          error: 'Speech synthesis failed', 
-          details: error.message,
-          type: 'groq_api_error'
+          error: 'Authentication failed', 
+          details: 'Invalid or missing Gemini API key',
+          type: 'auth_error'
         },
-        { status: 500 }
+        { status: 401 }
+      );
+    }
+    
+    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded', 
+          details: 'Please try again later',
+          type: 'rate_limit_error'
+        },
+        { status: 429 }
+      );
+    }
+    
+    if (error.message?.includes('model not found') || error.message?.includes('gemini-2.5-flash-preview-tts')) {
+      return NextResponse.json(
+        { 
+          error: 'TTS model unavailable', 
+          details: 'Gemini TTS model is not available',
+          type: 'model_error'
+        },
+        { status: 503 }
       );
     }
 
@@ -72,7 +123,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Internal server error during speech synthesis',
-        details: error.message 
+        details: error.message,
+        type: 'internal_error'
       },
       { status: 500 }
     );
