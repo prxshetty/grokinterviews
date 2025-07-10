@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
-import { convertPCMToWAV, mapVoiceToGemini, GEMINI_AUDIO_CONFIG } from '@/utils/audioUtils';
+import { TextToSpeechClient } from '@google-cloud/text-to-speech';
+import { mapVoiceToCloudTTS, getVoiceGender, CLOUD_TTS_AUDIO_CONFIG } from '@/utils/audioUtils';
 
-// Initialize Google GenAI client
-const genAI = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!
+// Initialize Google Cloud Text-to-Speech client
+const ttsClient = new TextToSpeechClient({
+  // Authentication will be handled by environment variables:
+  // GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CLOUD_PROJECT + service account key
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  // Alternative: use API key if available
+  ...(process.env.GOOGLE_CLOUD_API_KEY && {
+    apiKey: process.env.GOOGLE_CLOUD_API_KEY
+  })
 });
 
 export async function POST(request: NextRequest) {
@@ -18,59 +25,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (text.length > 4000) {
+    if (text.length > 5000) {
       return NextResponse.json(
-        { error: 'Text too long. Maximum 4000 characters allowed.' },
+        { error: 'Text too long. Maximum 5000 characters allowed.' },
         { status: 400 }
       );
     }
 
-    // Map voice to Gemini voice name
-    const geminiVoice = mapVoiceToGemini(voice);
+    // Map voice to Google Cloud TTS voice name
+    const cloudTTSVoice = mapVoiceToCloudTTS(voice);
+    const voiceGender = getVoiceGender(cloudTTSVoice);
     
     console.log('🔊 Processing text-to-speech request:', {
       textLength: text.length,
       originalVoice: voice,
-      geminiVoice: geminiVoice,
+      cloudTTSVoice: cloudTTSVoice,
+      voiceGender: voiceGender,
       preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
     });
 
-    // Call Gemini TTS API
-    const response = await genAI.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text }] }],
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: geminiVoice
-            }
-          }
-        }
-      }
-    });
+    // Prepare the request for Google Cloud TTS
+    const request_payload = {
+      input: { text: text },
+      voice: {
+        languageCode: cloudTTSVoice.startsWith('en-GB') ? 'en-GB' : 'en-US',
+        name: cloudTTSVoice,
+        ssmlGender: voiceGender,
+      },
+      audioConfig: {
+        audioEncoding: CLOUD_TTS_AUDIO_CONFIG.FORMAT as any,
+        sampleRateHertz: CLOUD_TTS_AUDIO_CONFIG.SAMPLE_RATE,
+      },
+    };
 
-    console.log('✅ Gemini TTS response received');
+    // Call Google Cloud TTS API
+    const [response] = await ttsClient.synthesizeSpeech(request_payload);
+
+    console.log('✅ Google Cloud TTS response received');
 
     // Extract audio data from response
-    const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    const audioContent = response.audioContent;
     
-    if (!audioData) {
-      throw new Error('No audio data received from Gemini TTS');
+    if (!audioContent) {
+      throw new Error('No audio data received from Google Cloud TTS');
     }
 
-    // Convert base64 PCM to buffer
-    const pcmBuffer = Buffer.from(audioData, 'base64');
+    // Convert to Buffer if it's not already
+    const audioBuffer = Buffer.isBuffer(audioContent) 
+      ? audioContent 
+      : Buffer.from(audioContent as Uint8Array);
     
-    // Convert PCM to WAV format
-    const audioBuffer = convertPCMToWAV(pcmBuffer, {
-      sampleRate: GEMINI_AUDIO_CONFIG.SAMPLE_RATE,
-      channels: GEMINI_AUDIO_CONFIG.CHANNELS,
-      bitDepth: GEMINI_AUDIO_CONFIG.BIT_DEPTH
-    });
-    
-    console.log('✅ Audio conversion successful, size:', audioBuffer.length);
+    console.log('✅ Audio processing successful, size:', audioBuffer.length);
 
     // Return the audio as a response
     return new NextResponse(audioBuffer, {
@@ -83,21 +88,21 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ Gemini TTS error:', error);
+    console.error('❌ Google Cloud TTS error:', error);
 
-    // Handle specific Gemini API errors
-    if (error.message?.includes('API key')) {
+    // Handle specific Google Cloud API errors
+    if (error.code === 'UNAUTHENTICATED' || error.message?.includes('authentication')) {
       return NextResponse.json(
         { 
           error: 'Authentication failed', 
-          details: 'Invalid or missing Gemini API key',
+          details: 'Invalid or missing Google Cloud credentials',
           type: 'auth_error'
         },
         { status: 401 }
       );
     }
     
-    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+    if (error.code === 'RESOURCE_EXHAUSTED' || error.message?.includes('quota')) {
       return NextResponse.json(
         { 
           error: 'Rate limit exceeded', 
@@ -108,12 +113,23 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    if (error.message?.includes('model not found') || error.message?.includes('gemini-2.5-flash-preview-tts')) {
+    if (error.code === 'INVALID_ARGUMENT') {
       return NextResponse.json(
         { 
-          error: 'TTS model unavailable', 
-          details: 'Gemini TTS model is not available',
-          type: 'model_error'
+          error: 'Invalid request parameters', 
+          details: error.message,
+          type: 'validation_error'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (error.code === 'UNAVAILABLE') {
+      return NextResponse.json(
+        { 
+          error: 'TTS service unavailable', 
+          details: 'Google Cloud TTS service is temporarily unavailable',
+          type: 'service_error'
         },
         { status: 503 }
       );

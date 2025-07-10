@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { GEMINI_VOICES, type GeminiVoice } from '@/utils/audioUtils';
+import { CLOUD_TTS_VOICES } from '@/utils/audioUtils';
 
 interface VoiceSelectorProps {
   selectedVoice: string;
@@ -13,28 +13,47 @@ interface VoiceSelectorProps {
   className?: string;
 }
 
-const VOICE_DESCRIPTIONS: Record<GeminiVoice, { name: string; description: string; gender: string }> = {
-  [GEMINI_VOICES.KORE]: {
+// User-friendly voice names that map to Cloud TTS voices
+const VOICE_OPTIONS = {
+  'Kore': {
     name: 'Kore',
-    description: 'Warm and professional',
-    gender: 'Neutral'
+    description: 'Warm and professional (Neural2)',
+    gender: 'Male',
+    cloudVoice: CLOUD_TTS_VOICES.MALE_NEURAL
   },
-  [GEMINI_VOICES.CHARON]: {
+  'Charon': {
     name: 'Charon',
-    description: 'Deep and authoritative',
-    gender: 'Male'
+    description: 'Deep and authoritative (WaveNet)',
+    gender: 'Male',
+    cloudVoice: CLOUD_TTS_VOICES.MALE_WAVENET
   },
-  [GEMINI_VOICES.FENRIR]: {
-    name: 'Fenrir',
-    description: 'Clear and balanced',
-    gender: 'Neutral'
+  'Marcus': {
+    name: 'Marcus',
+    description: 'Classic and reliable (Standard)',
+    gender: 'Male',
+    cloudVoice: CLOUD_TTS_VOICES.MALE_STANDARD
   },
-  [GEMINI_VOICES.AOEDE]: {
+  'Aoede': {
     name: 'Aoede',
-    description: 'Gentle and articulate',
-    gender: 'Female'
+    description: 'Gentle and articulate (WaveNet)',
+    gender: 'Female',
+    cloudVoice: CLOUD_TTS_VOICES.FEMALE_WAVENET
+  },
+  'Fenrir': {
+    name: 'Fenrir',
+    description: 'Clear and balanced (Neural2)',
+    gender: 'Female',
+    cloudVoice: CLOUD_TTS_VOICES.FEMALE_NEURAL
+  },
+  'Sophia': {
+    name: 'Sophia',
+    description: 'Natural and clear (Standard)',
+    gender: 'Female',
+    cloudVoice: CLOUD_TTS_VOICES.FEMALE_STANDARD
   }
 };
+
+type VoiceOption = keyof typeof VOICE_OPTIONS;
 
 export function VoiceSelector({ 
   selectedVoice, 
@@ -44,9 +63,9 @@ export function VoiceSelector({
 }: VoiceSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   
-  const currentVoice = VOICE_DESCRIPTIONS[selectedVoice as GeminiVoice] || VOICE_DESCRIPTIONS[GEMINI_VOICES.KORE];
+  const currentVoice = VOICE_OPTIONS[selectedVoice as VoiceOption] || VOICE_OPTIONS['Kore'];
   
-  const handleVoiceSelect = (voice: GeminiVoice) => {
+  const handleVoiceSelect = (voice: VoiceOption) => {
     onVoiceChange(voice);
     setIsOpen(false);
   };
@@ -80,14 +99,14 @@ export function VoiceSelector({
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
           <div className="p-1">
-            {Object.values(GEMINI_VOICES).map((voice) => {
-              const voiceInfo = VOICE_DESCRIPTIONS[voice];
+            {Object.keys(VOICE_OPTIONS).map((voice) => {
+              const voiceInfo = VOICE_OPTIONS[voice as VoiceOption];
               const isSelected = voice === selectedVoice;
               
               return (
                 <button
                   key={voice}
-                  onClick={() => handleVoiceSelect(voice)}
+                  onClick={() => handleVoiceSelect(voice as VoiceOption)}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-md transition-colors",
                     "hover:bg-gray-100 dark:hover:bg-gray-700",
@@ -113,7 +132,7 @@ export function VoiceSelector({
           {/* Footer */}
           <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-2">
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Powered by Google Gemini TTS
+              Powered by Google Cloud Text-to-Speech
             </div>
           </div>
         </div>
@@ -134,8 +153,8 @@ export function VoiceSelector({
  * Simple voice preview component
  */
 interface VoicePreviewProps {
-  voice: GeminiVoice;
-  onPreview: (voice: GeminiVoice) => void;
+  voice: VoiceOption;
+  onPreview: (voice: VoiceOption) => void;
   isPlaying?: boolean;
   disabled?: boolean;
 }
@@ -146,7 +165,7 @@ export function VoicePreview({
   isPlaying = false, 
   disabled = false 
 }: VoicePreviewProps) {
-  const voiceInfo = VOICE_DESCRIPTIONS[voice];
+  const voiceInfo = VOICE_OPTIONS[voice];
   
   return (
     <Button
