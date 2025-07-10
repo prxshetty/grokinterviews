@@ -6,6 +6,7 @@ import { useState } from 'react';
 // import { useEffect } from 'react';
 import { VoiceRecorder } from '@/components/voice/VoiceRecorder';
 import { VoicePlayer } from '@/components/voice/VoicePlayer';
+import { VoiceSelector } from '@/components/voice/VoiceSelector';
 
 export default function VoicePage() {
   const [currentQuestion, setCurrentQuestion] = useState(
@@ -17,6 +18,8 @@ export default function VoicePage() {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [aiResponseKey, setAiResponseKey] = useState(0); // Force re-render of VoicePlayer
   const [isAISpeaking, setIsAISpeaking] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('Kore');
+  const [ttsError, setTtsError] = useState<string | null>(null);
   
   // const { user, loading } = useAuth();
   // const router = useRouter();
@@ -103,7 +106,7 @@ export default function VoicePage() {
             Voice Interview Practice
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Practice behavioral interviews with AI-powered voice conversations. 
+            Practice behavioral interviews with AI-powered voice conversations using Google Gemini TTS. 
             Get real-time feedback and improve your interview skills.
           </p>
         </div>
@@ -111,11 +114,36 @@ export default function VoicePage() {
         {/* Main Interface */}
         <div className="max-w-4xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            {/* Voice Selection */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                Choose AI Interviewer Voice
+              </h3>
+              <VoiceSelector
+                selectedVoice={selectedVoice}
+                onVoiceChange={setSelectedVoice}
+                className="max-w-2xl mx-auto"
+              />
+            </div>
+
+            {/* TTS Error Display */}
+            {ttsError && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <div className="text-red-500">⚠️</div>
+                  <div>
+                    <h4 className="text-red-800 dark:text-red-400 font-medium">TTS Error</h4>
+                    <p className="text-red-700 dark:text-red-300 text-sm">{ttsError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Interview Status */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center px-4 py-2 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 rounded-full text-sm font-medium">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                Ready to Start
+                Ready to Start • Voice: {selectedVoice}
               </div>
             </div>
 
@@ -156,9 +184,11 @@ export default function VoicePage() {
                   <VoicePlayer 
                     key={`${aiResponseKey}-${currentQuestion.length}`} // Force re-render when question changes
                     text={currentQuestion} 
+                    voice={selectedVoice}
                     autoPlay={isInterviewActive && !isProcessingAI}
                     className="ml-4"
                     onPlayStateChange={setIsAISpeaking}
+                    onError={(error) => setTtsError(error)}
                   />
                 </div>
                 <p className="text-gray-700 dark:text-gray-300">
