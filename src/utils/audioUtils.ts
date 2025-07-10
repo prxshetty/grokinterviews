@@ -87,38 +87,64 @@ export function getAudioDuration(
 }
 
 /**
- * Audio format constants for Gemini TTS
+ * Audio format constants for Google Cloud TTS
  */
-export const GEMINI_AUDIO_CONFIG = {
+export const CLOUD_TTS_AUDIO_CONFIG = {
   SAMPLE_RATE: 24000,
   CHANNELS: 1,
   BIT_DEPTH: 16,
-  FORMAT: 'wav'
+  FORMAT: 'LINEAR16'
 } as const;
 
 /**
- * Available Gemini TTS voices
+ * Available Google Cloud TTS voices
  */
-export const GEMINI_VOICES = {
-  KORE: 'Kore',
-  CHARON: 'Charon', 
-  FENRIR: 'Fenrir',
-  AOEDE: 'Aoede'
+export const CLOUD_TTS_VOICES = {
+  // English US voices
+  MALE_STANDARD: 'en-US-Standard-B',
+  FEMALE_STANDARD: 'en-US-Standard-C',
+  MALE_WAVENET: 'en-US-Wavenet-B',
+  FEMALE_WAVENET: 'en-US-Wavenet-C',
+  MALE_NEURAL: 'en-US-Neural2-A',
+  FEMALE_NEURAL: 'en-US-Neural2-C',
+  // English GB voices
+  MALE_GB: 'en-GB-Standard-B',
+  FEMALE_GB: 'en-GB-Standard-A'
 } as const;
 
-export type GeminiVoice = typeof GEMINI_VOICES[keyof typeof GEMINI_VOICES];
+export type CloudTTSVoice = typeof CLOUD_TTS_VOICES[keyof typeof CLOUD_TTS_VOICES];
 
 /**
- * Map legacy voice names to Gemini voices
+ * Map legacy voice names to Google Cloud TTS voices
  */
-export function mapVoiceToGemini(voice: string): GeminiVoice {
-  const voiceMap: Record<string, GeminiVoice> = {
-    'Fritz-PlayAI': GEMINI_VOICES.KORE,
-    'fritz': GEMINI_VOICES.KORE,
-    'male': GEMINI_VOICES.CHARON,
-    'female': GEMINI_VOICES.AOEDE,
-    'neutral': GEMINI_VOICES.FENRIR
+export function mapVoiceToCloudTTS(voice: string): CloudTTSVoice {
+  const voiceMap: Record<string, CloudTTSVoice> = {
+    'Fritz-PlayAI': CLOUD_TTS_VOICES.MALE_NEURAL,
+    'fritz': CLOUD_TTS_VOICES.MALE_NEURAL,
+    'Kore': CLOUD_TTS_VOICES.MALE_NEURAL,
+    'Charon': CLOUD_TTS_VOICES.MALE_WAVENET,
+    'Marcus': CLOUD_TTS_VOICES.MALE_STANDARD,
+    'male': CLOUD_TTS_VOICES.MALE_WAVENET,
+    'Aoede': CLOUD_TTS_VOICES.FEMALE_WAVENET,
+    'Fenrir': CLOUD_TTS_VOICES.FEMALE_NEURAL,
+    'Sophia': CLOUD_TTS_VOICES.FEMALE_STANDARD,
+    'female': CLOUD_TTS_VOICES.FEMALE_WAVENET,
+    'neutral': CLOUD_TTS_VOICES.FEMALE_NEURAL
   };
   
-  return voiceMap[voice.toLowerCase()] || GEMINI_VOICES.KORE;
+  return voiceMap[voice] || voiceMap[voice.toLowerCase()] || CLOUD_TTS_VOICES.MALE_NEURAL;
+}
+
+/**
+ * Get gender from Cloud TTS voice name
+ */
+export function getVoiceGender(voiceName: CloudTTSVoice): 'MALE' | 'FEMALE' {
+  const femaleVoices = [
+    CLOUD_TTS_VOICES.FEMALE_STANDARD,
+    CLOUD_TTS_VOICES.FEMALE_WAVENET,
+    CLOUD_TTS_VOICES.FEMALE_NEURAL,
+    CLOUD_TTS_VOICES.FEMALE_GB
+  ];
+  
+  return femaleVoices.includes(voiceName) ? 'FEMALE' : 'MALE';
 }

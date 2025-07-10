@@ -60,6 +60,11 @@ export default function VoicePage() {
         setAiResponseKey(prev => prev + 1);
         
         console.log('✅ AI response generated:', result.aiResponse.substring(0, 100) + '...');
+        
+        // Set processing to false after a small delay to ensure autoPlay triggers
+        setTimeout(() => {
+          setIsProcessingAI(false);
+        }, 100);
       } else {
         throw new Error('No AI response received');
       }
@@ -71,8 +76,11 @@ export default function VoicePage() {
       setConversationHistory(prev => [...prev, { type: 'ai' as const, text: fallbackQuestion }]);
       setCurrentQuestion(fallbackQuestion);
       setAiResponseKey(prev => prev + 1);
-    } finally {
-      setIsProcessingAI(false);
+      
+      // Set processing to false after a small delay to ensure autoPlay triggers
+      setTimeout(() => {
+        setIsProcessingAI(false);
+      }, 100);
     }
   };
 
@@ -106,7 +114,7 @@ export default function VoicePage() {
             Voice Interview Practice
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Practice behavioral interviews with AI-powered voice conversations using Google Gemini TTS. 
+            Practice behavioral interviews with AI-powered voice conversations using Google Cloud Text-to-Speech. 
             Get real-time feedback and improve your interview skills.
           </p>
         </div>
@@ -143,7 +151,7 @@ export default function VoicePage() {
             <div className="text-center mb-8">
               <div className="inline-flex items-center px-4 py-2 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 rounded-full text-sm font-medium">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                Ready to Start • Voice: {selectedVoice}
+                {isInterviewActive ? `Interview Active • Voice: ${selectedVoice}` : `Ready to Start • Voice: ${selectedVoice}`}
               </div>
             </div>
 
@@ -158,10 +166,16 @@ export default function VoicePage() {
                   const newHistory = [...conversationHistory, { type: 'user' as const, text }];
                   setConversationHistory(newHistory);
                   
+                  // Automatically start interview when user first responds
+                  if (!isInterviewActive) {
+                    setIsInterviewActive(true);
+                  }
+                  
                   // Generate AI response
                   await generateAIResponse(text, newHistory);
                 }}
-                disabled={!isInterviewActive || isProcessingAI}
+                disabled={isProcessingAI} // Only disable when processing AI response
+                enableVAD={true} // Enable Voice Activity Detection for auto-stop
               />
             </div>
 
@@ -185,7 +199,7 @@ export default function VoicePage() {
                     key={`${aiResponseKey}-${currentQuestion.length}`} // Force re-render when question changes
                     text={currentQuestion} 
                     voice={selectedVoice}
-                    autoPlay={isInterviewActive && !isProcessingAI}
+                    autoPlay={!isProcessingAI} // Auto-play whenever not processing AI response
                     className="ml-4"
                     onPlayStateChange={setIsAISpeaking}
                     onError={(error) => setTtsError(error)}
@@ -284,10 +298,11 @@ export default function VoicePage() {
                 How it works:
               </h4>
               <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-                <li>• Click "Start Interview" to begin</li>
                 <li>• Listen to the AI question (it will play automatically)</li>
-                <li>• Click the microphone to record your response</li>
+                <li>• Click the microphone to start recording your response</li>
+                <li>• ⚡ Smart recording will automatically stop when you finish speaking</li>
                 <li>• Your speech will be converted to text automatically</li>
+                <li>• The AI will ask follow-up questions based on your responses</li>
                 <li>• Practice common behavioral interview scenarios</li>
               </ul>
             </div>

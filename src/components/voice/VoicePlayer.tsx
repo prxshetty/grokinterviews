@@ -30,7 +30,7 @@ export function VoicePlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
 
-  const generateSpeech = useCallback(async () => {
+  const generateSpeech = useCallback(async (shouldAutoPlay = false) => {
     if (!text.trim()) return;
 
     try {
@@ -86,11 +86,29 @@ export function VoicePlayer({
       };
 
       // Auto-play if requested
-      if (autoPlay) {
+      if (shouldAutoPlay) {
         console.log('🔊 Auto-playing generated speech...');
-        const playPromise = audio.play();
-        playPromiseRef.current = playPromise;
-        await playPromise;
+        try {
+          // Ensure audio is ready to play
+          audio.load();
+          
+          // Wait for audio to be ready
+          await new Promise((resolve, reject) => {
+            audio.oncanplaythrough = resolve;
+            audio.onerror = reject;
+            // Fallback timeout
+            setTimeout(resolve, 1000);
+          });
+          
+          console.log('🔊 Audio ready, starting playback...');
+          const playPromise = audio.play();
+          playPromiseRef.current = playPromise;
+          await playPromise;
+          console.log('🔊 Auto-play successful!');
+        } catch (playError: any) {
+          console.error('❌ Auto-play failed:', playError);
+          // Don't throw error for auto-play failures, just log them
+        }
       }
       
     } catch (error: any) {
@@ -101,12 +119,12 @@ export function VoicePlayer({
     } finally {
       setIsLoading(false);
     }
-  }, [text, voice, autoPlay, onPlayStateChange]);
+  }, [text, voice, onPlayStateChange]);
 
   const togglePlayback = useCallback(async () => {
     if (!audioRef.current) {
-      // Generate speech if not already done
-      await generateSpeech();
+      // Generate speech if not already done (manual trigger, no auto-play)
+      await generateSpeech(false);
       return;
     }
 
@@ -141,7 +159,7 @@ export function VoicePlayer({
     if (autoPlay && text.trim()) {
       // Small delay to ensure UI updates are complete
       const timer = setTimeout(() => {
-        generateSpeech();
+        generateSpeech(true); // Pass true for auto-play
       }, 500);
       
       return () => clearTimeout(timer);
@@ -231,7 +249,7 @@ export function VoicePlayer({
 
       {/* Status Text */}
       <span className="text-xs text-gray-500 dark:text-gray-400">
-        {isLoading ? 'Generating with Gemini...' : isPlaying ? 'Playing' : 'Ready to play'}
+        {isLoading ? 'Generating with Google Cloud TTS...' : isPlaying ? 'Playing' : 'Ready to play'}
       </span>
 
       {/* Error Display */}
