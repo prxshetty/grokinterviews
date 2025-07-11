@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,16 +12,22 @@ interface VoicePlayerProps {
   className?: string;
   onPlayStateChange?: (isPlaying: boolean) => void;
   onError?: (error: string) => void;
+  onPlaybackComplete?: () => void;
 }
 
-export function VoicePlayer({ 
+export interface VoicePlayerRef {
+  stopPlayback: () => void;
+}
+
+export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({ 
   text, 
   autoPlay = false, 
   voice = 'Kore',
   className,
   onPlayStateChange,
-  onError 
-}: VoicePlayerProps) {
+  onError,
+  onPlaybackComplete 
+}, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,11 +35,51 @@ export function VoicePlayer({
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
+  const isGeneratingRef = useRef<boolean>(false);
+  const generateSpeechRef = useRef<((shouldAutoPlay?: boolean) => Promise<void>) | null>(null);
+
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    stopPlayback: () => {
+      console.log('🛑 VoicePlayer: Force stopping playback');
+      
+      // Stop any ongoing audio
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        } catch (error) {
+          console.warn('Warning: Could not stop audio:', error);
+        }
+      }
+      
+      // Clean up audio URL
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+        setAudioUrl(null);
+      }
+      
+      // Reset states
+      setIsPlaying(false);
+      setIsLoading(false);
+      setError(null);
+      isGeneratingRef.current = false;
+      
+      // Clear any pending play promises
+      playPromiseRef.current = null;
+      
+      // Notify parent
+      onPlayStateChange?.(false);
+      
+      console.log('✅ VoicePlayer: Playback stopped successfully');
+    }
+  }), [audioUrl, onPlayStateChange]);
 
   const generateSpeech = useCallback(async (shouldAutoPlay = false) => {
-    if (!text.trim()) return;
+    if (!text.trim() || isGeneratingRef.current) return;
 
     try {
+      isGeneratingRef.current = true;
       setIsLoading(true);
       setError(null);
       
@@ -74,6 +120,7 @@ export function VoicePlayer({
       audio.onended = () => {
         setIsPlaying(false);
         onPlayStateChange?.(false);
+        onPlaybackComplete?.();
         // Clean up URL to prevent memory leaks
         URL.revokeObjectURL(url);
         setAudioUrl(null);
@@ -93,9 +140,9 @@ export function VoicePlayer({
           audio.load();
           
           // Wait for audio to be ready
-          await new Promise((resolve, reject) => {
-            audio.oncanplaythrough = resolve;
-            audio.onerror = reject;
+          await new Promise<void>((resolve, reject) => {
+            audio.oncanplaythrough = () => resolve();
+            audio.onerror = () => reject(new Error('Audio load failed'));
             // Fallback timeout
             setTimeout(resolve, 1000);
           });
@@ -105,21 +152,25 @@ export function VoicePlayer({
           playPromiseRef.current = playPromise;
           await playPromise;
           console.log('🔊 Auto-play successful!');
-        } catch (playError: any) {
+        } catch (playError) {
           console.error('❌ Auto-play failed:', playError);
           // Don't throw error for auto-play failures, just log them
         }
       }
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ TTS error:', error);
-      const errorMessage = error.message || 'Failed to generate speech';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate speech';
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {
       setIsLoading(false);
+      isGeneratingRef.current = false;
     }
-  }, [text, voice, onPlayStateChange]);
+  }, [text, voice, onPlayStateChange, onPlaybackComplete, onError]);
+
+  // Update the ref whenever generateSpeech changes
+  generateSpeechRef.current = generateSpeech;
 
   const togglePlayback = useCallback(async () => {
     if (!audioRef.current) {
@@ -134,7 +185,7 @@ export function VoicePlayer({
         if (playPromiseRef.current) {
           try {
             await playPromiseRef.current;
-          } catch (e) {
+          } catch {
             // Play was already interrupted, safe to continue
           }
           playPromiseRef.current = null;
@@ -145,21 +196,20 @@ export function VoicePlayer({
         playPromiseRef.current = playPromise;
         await playPromise;
       }
-    } catch (error: any) {
-      console.error('❌ Playback error:', error);
+    } catch {
       const errorMessage = 'Failed to play audio';
       setError(errorMessage);
       onError?.(errorMessage);
       playPromiseRef.current = null;
     }
-  }, [isPlaying, generateSpeech]);
+  }, [isPlaying, generateSpeech, onError]); // Keep generateSpeech dependency for togglePlayback as it's needed
 
   // Auto-generate and play speech when text changes and autoPlay is enabled
   React.useEffect(() => {
-    if (autoPlay && text.trim()) {
+    if (autoPlay && text.trim() && generateSpeechRef.current) {
       // Small delay to ensure UI updates are complete
       const timer = setTimeout(() => {
-        generateSpeech(true); // Pass true for auto-play
+        generateSpeechRef.current!(true); // Pass true for auto-play
       }, 500);
       
       return () => clearTimeout(timer);
@@ -167,7 +217,7 @@ export function VoicePlayer({
     
     // Return undefined for cases where autoPlay is false or text is empty
     return undefined;
-  }, [text, autoPlay, generateSpeech]);
+  }, [text, autoPlay]);
 
   // Cleanup on unmount
   React.useEffect(() => {
@@ -260,7 +310,10 @@ export function VoicePlayer({
       )}
     </div>
   );
-}
+});
 
 // Fix React import
 import React from 'react';
+
+// Set display name for debugging
+VoicePlayer.displayName = 'VoicePlayer';

@@ -139,7 +139,7 @@ export function mapVoiceToCloudTTS(voice: string): CloudTTSVoice {
  * Get gender from Cloud TTS voice name
  */
 export function getVoiceGender(voiceName: CloudTTSVoice): 'MALE' | 'FEMALE' {
-  const femaleVoices = [
+  const femaleVoices: CloudTTSVoice[] = [
     CLOUD_TTS_VOICES.FEMALE_STANDARD,
     CLOUD_TTS_VOICES.FEMALE_WAVENET,
     CLOUD_TTS_VOICES.FEMALE_NEURAL,
