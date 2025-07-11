@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 // import { useAuth } from '@/components/AuthProvider';
 // import { useRouter } from 'next/navigation';
 // import { useEffect } from 'react';
-import { VoiceRecorder } from '@/components/voice/VoiceRecorder';
-import { VoicePlayer } from '@/components/voice/VoicePlayer';
+import { VoiceRecorder, VoiceRecorderRef } from '@/components/voice/VoiceRecorder';
+import { VoicePlayer, VoicePlayerRef } from '@/components/voice/VoicePlayer';
 import { VoiceSelector } from '@/components/voice/VoiceSelector';
 
 export default function VoicePage() {
@@ -20,6 +20,11 @@ export default function VoicePage() {
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('Kore');
   const [ttsError, setTtsError] = useState<string | null>(null);
+  const [shouldAutoStartRecording, setShouldAutoStartRecording] = useState(false);
+  
+  // Refs for cleanup
+  const voicePlayerRef = useRef<VoicePlayerRef | null>(null);
+  const voiceRecorderRef = useRef<VoiceRecorderRef | null>(null);
   
   // const { user, loading } = useAuth();
   // const router = useRouter();
@@ -158,8 +163,10 @@ export default function VoicePage() {
             {/* Voice Recorder */}
             <div className="mb-8">
               <VoiceRecorder
+                ref={voiceRecorderRef}
                 onRecordingComplete={(audioBlob) => {
                   console.log('Recording completed:', audioBlob);
+                  setShouldAutoStartRecording(false); // Reset auto-start after recording
                 }}
                 onTranscriptionReceived={async (text) => {
                   setUserResponse(text);
@@ -176,6 +183,7 @@ export default function VoicePage() {
                 }}
                 disabled={isProcessingAI} // Only disable when processing AI response
                 enableVAD={true} // Enable Voice Activity Detection for auto-stop
+                autoStart={shouldAutoStartRecording} // Auto-start recording after TTS
               />
             </div>
 
@@ -196,13 +204,20 @@ export default function VoicePage() {
                     )}
                   </div>
                   <VoicePlayer 
-                    key={`${aiResponseKey}-${currentQuestion.length}`} // Force re-render when question changes
+                    ref={voicePlayerRef}
+                    key={aiResponseKey} // Force re-render when question changes
                     text={currentQuestion} 
                     voice={selectedVoice}
-                    autoPlay={!isProcessingAI} // Auto-play whenever not processing AI response
+                    autoPlay={isInterviewActive && !isProcessingAI} // Only auto-play when interview is active and not processing AI response
                     className="ml-4"
                     onPlayStateChange={setIsAISpeaking}
                     onError={(error) => setTtsError(error)}
+                    onPlaybackComplete={() => {
+                      if (isInterviewActive) {
+                        console.log('🎤 TTS completed, triggering auto-start recording');
+                        setShouldAutoStartRecording(true);
+                      }
+                    }}
                   />
                 </div>
                 <p className="text-gray-700 dark:text-gray-300">
@@ -268,7 +283,11 @@ export default function VoicePage() {
             <div className="mt-8 flex justify-center space-x-4">
               {!isInterviewActive ? (
                 <button
-                  onClick={() => setIsInterviewActive(true)}
+                  onClick={() => {
+                    setIsInterviewActive(true);
+                    // Force VoicePlayer to re-render and auto-play the initial question
+                    setAiResponseKey(prev => prev + 1);
+                  }}
                   className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
                 >
                   Start Interview
@@ -276,14 +295,33 @@ export default function VoicePage() {
               ) : (
                 <button
                   onClick={() => {
+                    // Stop all voice operations immediately
+                    console.log('🛑 Kill switch activated - stopping all voice operations');
+                    
+                    // Stop VoicePlayer if playing
+                    if (voicePlayerRef.current) {
+                      voicePlayerRef.current.stopPlayback();
+                    }
+                    
+                    // Stop VoiceRecorder if recording
+                    if (voiceRecorderRef.current) {
+                      voiceRecorderRef.current.forceStop();
+                    }
+                    
+                    // Reset all states
                     setIsInterviewActive(false);
                     setUserResponse('');
                     setConversationHistory([]);
                     setIsProcessingAI(false);
+                    setShouldAutoStartRecording(false);
+                    setIsAISpeaking(false);
+                    setTtsError(null);
                     setCurrentQuestion(
                       "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background."
                     );
                     setAiResponseKey(prev => prev + 1);
+                    
+                    console.log('✅ Kill switch completed - all voice operations stopped');
                   }}
                   className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
                 >

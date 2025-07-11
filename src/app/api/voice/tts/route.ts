@@ -6,8 +6,8 @@ import { mapVoiceToCloudTTS, getVoiceGender, CLOUD_TTS_AUDIO_CONFIG } from '@/ut
 const ttsClient = new TextToSpeechClient({
   // Authentication will be handled by environment variables:
   // GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CLOUD_PROJECT + service account key
-  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  ...(process.env.GOOGLE_CLOUD_PROJECT_ID && { projectId: process.env.GOOGLE_CLOUD_PROJECT_ID }),
+  ...(process.env.GOOGLE_APPLICATION_CREDENTIALS && { keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS }),
   // Alternative: use API key if available
   ...(process.env.GOOGLE_CLOUD_API_KEY && {
     apiKey: process.env.GOOGLE_CLOUD_API_KEY

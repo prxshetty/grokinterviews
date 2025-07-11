@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, Square, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,14 +11,20 @@ interface VoiceRecorderProps {
   onTranscriptionReceived: (text: string) => void;
   disabled?: boolean;
   enableVAD?: boolean; // Enable Voice Activity Detection
+  autoStart?: boolean; // Automatically start recording
 }
 
-export function VoiceRecorder({ 
+export interface VoiceRecorderRef {
+  forceStop: () => void;
+}
+
+export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({ 
   onRecordingComplete, 
   onTranscriptionReceived, 
   disabled = false,
-  enableVAD = true 
-}: VoiceRecorderProps) {
+  enableVAD = true,
+  autoStart = false 
+}, ref) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +35,61 @@ export function VoiceRecorder({
   const audioChunksRef = useRef<Blob[]>([]);
   const vadRef = useRef<VoiceActivityDetector | null>(null);
   const autoStopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    forceStop: () => {
+      console.log('🛑 VoiceRecorder: Force stopping recording');
+      
+      // Stop recording if active
+      if (mediaRecorderRef.current && isRecording) {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (error) {
+          console.warn('Warning: Could not stop MediaRecorder:', error);
+        }
+      }
+      
+      // Stop all media tracks
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          try {
+            track.stop();
+          } catch (error) {
+            console.warn('Warning: Could not stop media track:', error);
+          }
+        });
+        streamRef.current = null;
+      }
+      
+      // Stop VAD
+      if (vadRef.current) {
+        try {
+          vadRef.current.stop();
+        } catch (error) {
+          console.warn('Warning: Could not stop VAD:', error);
+        }
+      }
+      
+      // Clear timeouts
+      if (autoStopTimeoutRef.current) {
+        clearTimeout(autoStopTimeoutRef.current);
+        autoStopTimeoutRef.current = null;
+      }
+      
+      // Reset states
+      setIsRecording(false);
+      setIsProcessing(false);
+      setIsSpeaking(false);
+      setError(null);
+      
+      // Clear audio chunks
+      audioChunksRef.current = [];
+      
+      console.log('✅ VoiceRecorder: Recording stopped successfully');
+    }
+  }), [isRecording]);
 
   const transcribeAudio = useCallback(async (audioBlob: Blob) => {
     try {
@@ -185,6 +246,9 @@ export function VoiceRecorder({
         }
       };
 
+      // Store stream reference for cleanup
+      streamRef.current = stream;
+      
       // Handle recording stop
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
@@ -193,6 +257,7 @@ export function VoiceRecorder({
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
         
         // Stop VAD if it's running
         if (vadRef.current) {
@@ -245,11 +310,24 @@ export function VoiceRecorder({
         await vadRef.current.stop();
       }
       
+      // Stop media tracks
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      
       // eslint-disable-next-line no-console
       console.log('🛑 Recording stopped');
     }
   }, [isRecording]);
 
+  // Auto-start recording when autoStart prop becomes true
+  useEffect(() => {
+    if (autoStart && !isRecording && !disabled && !isProcessing) {
+      console.log('🎤 Auto-starting recording after TTS completion');
+      startRecording();
+    }
+  }, [autoStart, isRecording, disabled, isProcessing, startRecording]);
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -351,4 +429,7 @@ export function VoiceRecorder({
       )}
     </div>
   );
-}
+});
+
+// Set display name for debugging
+VoiceRecorder.displayName = 'VoiceRecorder';
