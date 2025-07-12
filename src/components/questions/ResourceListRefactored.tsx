@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, LayoutGroup, useReducedMotion, type Variants } from 'framer-motion';
 import { InlineLoadingSpinner } from '@/components/ui';
 import { TabNav } from '@/components/ui/tab-nav';
-import { Button } from '@/components/ui/button';
+
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/ui';
 
@@ -152,7 +152,7 @@ export function ResourceList({
   return (
     <div className="w-full">
       {/* Tab Navigation - More compact on mobile */}
-      <div className={isMobile ? 'mb-4' : 'mb-6'}>
+      <div className={isMobile ? 'mb-4 px-4 flex justify-center' : 'mb-6 flex justify-center'}>
         <TabNav
           items={tabs.map(tab => ({
             id: tab.type,
@@ -181,31 +181,29 @@ export function ResourceList({
             </div>
           )}
 
-          {/* Resource Grid - Clean horizontal scrolling with navigation buttons */}
+          {/* Resource Grid with Hover Navigation */}
           {activeTab && (
             <div className="relative">
-              {/* Left Navigation Button - now always visible if needed */}
+              {/* Left Navigation Button */}
               {showLeftArrow && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 shadow-md h-10 w-10"
+                <button
                   onClick={scrollLeft}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 flex items-center justify-center rounded-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-200 text-white dark:text-black shadow-md"
+                  aria-label="Previous resource"
                 >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
               )}
               
-              {/* Right Navigation Button - now always visible if needed */}
+              {/* Right Navigation Button */}
               {showRightArrow && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 shadow-md h-10 w-10"
+                <button
                   onClick={scrollRight}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 flex items-center justify-center rounded-full bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-200 text-white dark:text-black shadow-md"
+                  aria-label="Next resource"
                 >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               )}
               
               <div 
