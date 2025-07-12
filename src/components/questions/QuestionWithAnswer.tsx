@@ -272,17 +272,35 @@ function QuestionWithAnswerComponent({
           {isTabletOrSmaller ? (
             <div className="w-full">
               {activeTab === 'answer' ? (
-                <div 
-                  ref={answerRef}
-                  className="max-h-[60vh] min-h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50 shadow-sm"
-                >
-                  <AnswerDisplay
-                    answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
-                    isLoading={isGenerating}
-                    error={error}
-                    isCompleted={isCompletedState}
-                    scrollProgress={scrollProgress}
-                  />
+                <div className="relative">
+                  <div 
+                    ref={answerRef}
+                    className="max-h-[60vh] min-h-[300px] border border-gray-200 dark:border-gray-700 rounded-lg overflow-y-auto bg-white dark:bg-gray-800/50 shadow-sm"
+                  >
+                    <AnswerDisplay
+                      answerText={(hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? null}
+                      isLoading={isGenerating}
+                      error={error}
+                      isCompleted={isCompletedState}
+                      scrollProgress={scrollProgress}
+                    />
+                  </div>
+                  {/* Mobile progress bar */}
+                  {!isCompletedState && scrollProgress >= 0 && scrollProgress < 90 && (
+                    <div className="absolute bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 py-2 rounded-b-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                          Reading: {Math.round(scrollProgress)}%
+                        </span>
+                      </div>
+                      <div className="bg-gray-100 dark:bg-gray-800 rounded-full h-1">
+                        <div 
+                          className="bg-blue-400 dark:bg-blue-500 h-1 rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${Math.min(scrollProgress, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="bg-white dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm max-h-[60vh] overflow-y-auto">
