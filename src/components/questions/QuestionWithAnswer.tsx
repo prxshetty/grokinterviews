@@ -250,7 +250,7 @@ function QuestionWithAnswerComponent({
       >
         {/* Mobile Tab Navigation */}
         {isTabletOrSmaller && (
-          <div className="pt-2 pb-3">
+          <div className="pt-4 pb-4">
             <TabNav
               items={tabItems}
               activeTab={activeTab}
@@ -264,7 +264,7 @@ function QuestionWithAnswerComponent({
         {/* Content Layout - Mobile: Single pane with tabs, Desktop: Two panes */}
         <div className={`w-full ${
           isTabletOrSmaller 
-            ? 'pt-2 space-y-3' 
+            ? 'space-y-3' 
             : 'pt-3 flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)] min-h-[700px]'
         }`}>
           
@@ -303,7 +303,7 @@ function QuestionWithAnswerComponent({
                   )}
                 </div>
               ) : (
-                <div className="bg-white dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm max-h-[60vh] overflow-y-auto">
+                <div className="bg-white dark:bg-gray-800/50 py-4 rounded-lg shadow-sm">
                   <Suspense fallback={<ResourceListSkeleton />}>
                     <ResourceList 
                       questionId={questionId} 
@@ -337,7 +337,7 @@ function QuestionWithAnswerComponent({
               {isResourcesVisible && (
                 <div className="flex-1 lg:w-1/2 flex flex-col h-full">
                   <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-800/50 rounded-lg overflow-hidden">
-                    <div className="h-full overflow-y-auto">
+                    <div className="h-full">
                       <Suspense fallback={<ResourceListSkeleton />}>
                         <ResourceList 
                           questionId={questionId} 
