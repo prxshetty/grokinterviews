@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/accordion"; // Assuming this is the correct path
 
 import { TabNav } from '@/components/ui/tab-nav';
-import { BookmarkButton } from './BookmarkButton'; // Keep BookmarkButton
 import { AnswerDisplay } from './AnswerDisplay';
 import { DifficultyTag } from './DifficultyTag';
 
@@ -86,7 +85,7 @@ function QuestionWithAnswerComponent({
   isBookmarked: initialIsBookmarked,
   onBookmarkStatusChange,
   isOpen,
-  onRequestClose
+  onRequestClose,
 }: QuestionWithAnswerProps) {
   const [isExpandedState, setIsExpandedState] = useState(isOpen || false);
   const [isResourcesVisible, setIsResourcesVisible] = useState(true);
@@ -175,73 +174,84 @@ function QuestionWithAnswerComponent({
         isTabletOrSmaller ? 'mb-2' : 'mb-3'
       }`}
     >
-      <div className="flex items-start w-full bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors">
-        <div className="flex-1 min-w-0">
-          <AccordionTrigger className={`flex items-start w-full text-left ${
-            isTabletOrSmaller ? 'px-3 py-2.5' : 'px-4 py-3'
-          } [&>svg]:hidden`}>
-            <div className="flex items-start flex-1 min-w-0"> {/* Ensure text wraps */}
-              {isCompletedState ? (
-                <div className="mr-2 text-green-500 dark:text-green-400 flex-shrink-0 mt-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              ) : (
-                <div className="mr-2 w-5 h-5 flex-shrink-0 mt-1"> {/* Placeholder for alignment */}
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="12" r="10" />
-                  </svg>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className={`font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words ${
-                  isTabletOrSmaller ? 'text-sm leading-5' : 'text-base'
-                }`}>
-                  {question.question_text || 'Question text not available'}
-                </div>
-                {question.difficulty && (
-                  <div className="mt-1">
-                    <DifficultyTag difficulty={question.difficulty} />
-                  </div>
-                )}
-              </div>
+      {/* Use AccordionTrigger with proper layout structure */}
+      <AccordionTrigger className={`bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors text-left justify-start items-start ${
+        isTabletOrSmaller ? 'px-3 py-2.5' : 'px-4 py-3'
+      } [&>svg]:hidden hover:bg-gray-50 dark:hover:bg-gray-700/50`}>
+        {/* Left side: Status icon and question content */}
+        <div className="flex items-start flex-1 min-w-0">
+          {isCompletedState ? (
+            <div className="mr-2 text-green-500 dark:text-green-400 flex-shrink-0 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
             </div>
-          </AccordionTrigger>
-        </div>
-        
-        {/* Bookmark button and chevron on the right */}
-        <div className="flex items-center flex-shrink-0">
-          {/* Bookmark button */}
-          {(actualCategoryId !== null && actualCategoryId !== undefined) && (
-            <div className={`flex items-center ${
-              isTabletOrSmaller ? 'px-1.5 py-2.5' : 'px-2 py-3'
-            }`}>
-              <BookmarkButton
-                questionId={questionId}
-                topicId={actualTopicId ?? null} 
-                categoryId={actualCategoryId}
-                initialIsBookmarked={isBookmarkedState}
-                onBookmarkChange={handleBookmarkChange} 
-              />
+          ) : (
+            <div className="mr-2 w-5 h-5 flex-shrink-0 mt-1">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="10" />
+              </svg>
             </div>
           )}
-          
-          {/* Chevron - we'll add a custom one since AccordionTrigger's chevron is now in the wrong place */}
-          <div className={`flex items-center ${
-            isTabletOrSmaller ? 'px-1.5 py-2.5' : 'px-2 py-3'
-          }`}>
-            <svg 
-              className="h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+          <div className="flex-1 min-w-0 text-left">
+            <div className={`font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words text-left ${
+              isTabletOrSmaller ? 'text-sm leading-5' : 'text-base'
+            }`}>
+              {question.question_text || 'Question text not available'}
+            </div>
+            {question.difficulty && (
+              <div className="mt-1 text-left">
+                <DifficultyTag difficulty={question.difficulty} />
+              </div>
+            )}
           </div>
         </div>
-      </div>
+        
+        {/* Right side: Bookmark and chevron */}
+        <div className="flex items-center flex-shrink-0 ml-2">
+          {/* Bookmark button - using span to avoid nested buttons */}
+          {(actualCategoryId !== null && actualCategoryId !== undefined) && (
+            <span 
+              className={`flex items-center ${
+                isTabletOrSmaller ? 'px-1.5 py-1' : 'px-2 py-1'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                // Trigger bookmark toggle using the hook's handler
+                handleBookmarkChange(!isBookmarkedState);
+              }}
+            >
+              <div 
+                className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                title={isBookmarkedState ? 'Remove bookmark' : 'Add bookmark'}
+              >
+                <svg 
+                  className={`h-4 w-4 transition-colors ${
+                    isBookmarkedState 
+                      ? 'text-blue-500 fill-blue-500' 
+                      : 'text-gray-400 dark:text-gray-500'
+                  }`}
+                  fill={isBookmarkedState ? 'currentColor' : 'none'}
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </div>
+            </span>
+          )}
+          
+          {/* Custom chevron */}
+          <svg 
+            className="h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180 ml-1" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </AccordionTrigger>
 
       <AccordionContent 
         className={`pt-0 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 relative ${
