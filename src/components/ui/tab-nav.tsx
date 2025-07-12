@@ -60,11 +60,10 @@ export function TabNav({
   }, [setActiveTabPosition]);
 
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      {/* Mobile: Full width with horizontal scroll, Desktop: Centered with fit width */}
-      <div className="overflow-x-auto hide-scrollbar">
+    <div className={`flex items-start ${className}`}>
+      <div className="w-full overflow-x-auto hide-scrollbar">
         <ul
-          className="relative flex w-fit rounded-full bg-gray-100 dark:bg-gray-800 mx-auto"
+          className="relative flex w-fit rounded-full bg-gray-100 dark:bg-gray-800"
           onMouseLeave={() => {
             setActiveTabPosition();
           }}
