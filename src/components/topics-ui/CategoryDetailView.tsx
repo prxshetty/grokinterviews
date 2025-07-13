@@ -486,16 +486,29 @@ export default function CategoryDetailView({
   if (selectedSubtopic && subtopicDetails) {
     return (
       <motion.div 
-        className="p-4 pt-12 sm:pt-16 md:pt-20"
+        className="p-4 pt-4 sm:pt-6 md:pt-8"
         initial="hidden"
         animate="visible"
         variants={fadeInVariants}
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl dark:text-white">
-            {subtopicDetails.label}
-          </h1>
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+          {/* Mobile: Back button + Title in same row */}
+          <div className="flex items-center gap-3 sm:gap-0 w-full sm:w-auto">
+            <button
+              onClick={handleBackToCategory}
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors sm:hidden"
+              title={`Back to ${categoryDetails?.label || 'Category'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl dark:text-white">
+              {subtopicDetails.label}
+            </h1>
+          </div>
+          {/* Desktop: FloatingSettings + Back button */}
+          <div className="hidden sm:flex items-center gap-2">
             {subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
               <FloatingSettings
                 selectedDifficulty={propSelectedDifficulty || null}
@@ -505,7 +518,7 @@ export default function CategoryDetailView({
             )}
             <button
               onClick={handleBackToCategory}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
               title={`Back to ${categoryDetails?.label || 'Category'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -520,19 +533,30 @@ export default function CategoryDetailView({
           <Accordion 
             type="single" 
             collapsible 
-            className="w-full space-y-2" // Added space-y-2 for spacing between items
+            className="w-full space-y-1"
             value={openQuestionId || ""}
             onValueChange={handleOpenQuestionChange}
           >
-            {Object.entries(questionsByCategory).map(([catId, category]) => (
-              <div key={catId} className="mb-12"> {/* Keep existing margin for category groups */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
+            {Object.entries(questionsByCategory).map(([catId, category], index) => (
+              <div key={catId} className="mb-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
                   <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl dark:text-white">{category.name}</h2>
-                  <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300">
-                    {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
-                  </span>
+                  <div className="flex items-center justify-end gap-3 w-full">
+                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300">
+                      {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
+                    </span>
+                    {/* Mobile FloatingSettings - only show on first category */}
+                    {index === 0 && subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
+                      <div className="sm:hidden ml-auto">
+                        <FloatingSettings
+                          selectedDifficulty={propSelectedDifficulty || null}
+                          onSelectDifficulty={handleDifficultySelect}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="mb-6">
+                <div className="mb-4">
                   <ProgressBar
                     progress={(category.questions.filter(q => completedQuestions[q.id]).length / category.questions.length) * 100}
                     completed={category.questions.filter(q => completedQuestions[q.id]).length}
@@ -561,7 +585,7 @@ export default function CategoryDetailView({
           </Accordion>
         ) : memoizedFilteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
-          <div>
+          <div className="pt-12 sm:pt-16 md:pt-20">
             <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6">Questions</h2>
             <Accordion 
               type="single" 
@@ -604,10 +628,23 @@ export default function CategoryDetailView({
     >
       {/* Title and back button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-        <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl text-gray-900 dark:text-white">
-          {categoryDetails?.label}
-        </h1>
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        {/* Mobile: Back button + Title in same row */}
+        <div className="flex items-center gap-3 sm:gap-0 w-full sm:w-auto">
+          <button
+            onClick={handleBackToMainCategories}
+            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors sm:hidden"
+            title="Back"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl text-gray-900 dark:text-white">
+            {categoryDetails?.label}
+          </h1>
+        </div>
+        {/* Desktop: FloatingSettings + Back button */}
+        <div className="hidden sm:flex items-center gap-2">
           {hasQuestions && onDifficultyChange && (
             <FloatingSettings
               selectedDifficulty={propSelectedDifficulty || null}
@@ -617,7 +654,7 @@ export default function CategoryDetailView({
           )}
           <button
             onClick={handleBackToMainCategories}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
             title="Back"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -629,8 +666,7 @@ export default function CategoryDetailView({
       
       {/* If the category has subtopics, show them */}
       {hasRealSubtopics && categoryDetails?.subtopics && (
-        <div className="mb-8">
-          <h2 className="text-2xl sm:text-3xl font-light tracking-wide mb-4 text-gray-900 dark:text-white">Topics</h2>
+        <div className="mb-6">
           {isSubtopicProgressLoading ? (
             // Loading indicator
             <LoadingSpinner 
@@ -648,6 +684,7 @@ export default function CategoryDetailView({
               domain={domain || ""}
               isLoading={isSubtopicProgressLoading}
               showDomainTitle={false}
+              compact={true}
             />
           )}
         </div>
@@ -655,14 +692,25 @@ export default function CategoryDetailView({
       
       {/* Show questions if available */}
       {hasQuestions && (
-        <div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2 sm:gap-0 text-gray-900 dark:text-white">
+        <div className="mt-6 pt-12 sm:pt-16 md:pt-20">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2 text-gray-900 dark:text-white">
             <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">Questions</h2>
-            {categoryProgress && (
-              <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed     
-              </span>
-            )}
+            <div className="flex items-center justify-end gap-3 w-full">
+              {categoryProgress && (
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed     
+                </span>
+              )}
+              {/* Mobile FloatingSettings */}
+              {hasQuestions && onDifficultyChange && (
+                <div className="sm:hidden ml-auto">
+                  <FloatingSettings
+                    selectedDifficulty={propSelectedDifficulty || null}
+                    onSelectDifficulty={handleDifficultySelect}
+                  />
+                </div>
+              )}
+            </div>
           </div>
           
           {memoizedFilteredQuestions.length > 0 ? (
@@ -688,7 +736,7 @@ export default function CategoryDetailView({
               ))}
             </Accordion>
           ) : (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-300">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-300">
               <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
             </div>
           )}
@@ -697,7 +745,7 @@ export default function CategoryDetailView({
       
       {/* Show a message if no content is available */}
       {!hasRealSubtopics && !hasQuestions && (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <p>No content available for this category.</p>
         </div>
       )}
