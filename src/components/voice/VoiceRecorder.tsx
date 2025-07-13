@@ -148,7 +148,7 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
     // eslint-disable-next-line no-console
     console.log('⏸️ VAD: Speech paused - checking recording state');
     // eslint-disable-next-line no-console
-    console.log('📊 Current state - mediaRecorderRef:', !!mediaRecorderRef.current, 'isRecording:', isRecording);
+    console.log('📊 Current state - mediaRecorderRef:', !!mediaRecorderRef.current);
     setIsSpeaking(false);
     // Auto-stop recording immediately when speech detection ends
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -161,13 +161,13 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
       // eslint-disable-next-line no-console
       console.log('⚠️ Cannot stop recording - mediaRecorder not in recording state');
     }
-  }, [isRecording]);
+  }, []);
 
   const handleSpeechEnd = useCallback(() => {
     // eslint-disable-next-line no-console
     console.log('🤫 VAD: Speech ended after silence timeout (backup)');
     // eslint-disable-next-line no-console
-    console.log('📊 Backup state - mediaRecorderRef:', !!mediaRecorderRef.current, 'isRecording:', isRecording);
+    console.log('📊 Backup state - mediaRecorderRef:', !!mediaRecorderRef.current);
     // This is now a backup in case onSpeechPause didn't trigger
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       // eslint-disable-next-line no-console
@@ -176,7 +176,7 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
       setIsRecording(false);
       setIsSpeaking(false);
     }
-  }, [isRecording]);
+  }, []);
 
   const handleVADMisfire = useCallback(() => {
     // eslint-disable-next-line no-console
