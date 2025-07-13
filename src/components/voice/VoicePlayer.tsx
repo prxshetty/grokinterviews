@@ -4,11 +4,13 @@ import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from '
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VoiceOption } from './VoiceSelector';
 
 interface VoicePlayerProps {
   text: string;
   autoPlay?: boolean;
-  voice?: string;
+  voice?: VoiceOption;
+  ttsProvider?: 'google' | 'groq';
   className?: string;
   onPlayStateChange?: (isPlaying: boolean) => void;
   onError?: (error: string) => void;
@@ -23,6 +25,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
   text, 
   autoPlay = false, 
   voice = 'Kore',
+  ttsProvider = 'google',
   className,
   onPlayStateChange,
   onError,
@@ -83,9 +86,12 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       setIsLoading(true);
       setError(null);
       
-      console.log('🎤 Generating speech for:', text.substring(0, 50) + '...');
+      console.log(`🎤 Generating speech with ${ttsProvider.toUpperCase()} for:`, text.substring(0, 50) + '...');
 
-      const response = await fetch('/api/voice/tts', {
+      // Choose the appropriate TTS endpoint based on provider
+      const ttsEndpoint = ttsProvider === 'groq' ? '/api/voice/tts-groq' : '/api/voice/tts';
+      
+      const response = await fetch(ttsEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +173,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       setIsLoading(false);
       isGeneratingRef.current = false;
     }
-  }, [text, voice, onPlayStateChange, onPlaybackComplete, onError]);
+  }, [text, voice, ttsProvider, onPlayStateChange, onPlaybackComplete, onError]);
 
   // Update the ref whenever generateSpeech changes
   generateSpeechRef.current = generateSpeech;

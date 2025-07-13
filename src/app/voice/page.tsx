@@ -1,23 +1,24 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { VoiceRecorder, VoiceRecorderRef } from '@/components/voice/VoiceRecorder';
 import { VoicePlayer, VoicePlayerRef } from '@/components/voice/VoicePlayer';
-import { VoiceSelector } from '@/components/voice/VoiceSelector';
+import { VoiceSelector, VoiceOption } from '@/components/voice/VoiceSelector';
 
 export default function VoicePage() {
   const [currentQuestion, setCurrentQuestion] = useState(
     "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background."
   );
-  const [userResponse, setUserResponse] = useState('');
+
   const [conversationHistory, setConversationHistory] = useState<Array<{type: 'ai' | 'user', text: string}>>([]);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [aiResponseKey, setAiResponseKey] = useState(0); // Force re-render of VoicePlayer
-  const [isAISpeaking, setIsAISpeaking] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('Kore');
+
+  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>('Sophia');
+  const [ttsProvider, setTtsProvider] = useState<'google' | 'groq'>('groq'); // Default to Groq (free)
   const [ttsError, setTtsError] = useState<string | null>(null);
   const [shouldAutoStartRecording, setShouldAutoStartRecording] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -26,6 +27,9 @@ export default function VoicePage() {
   const [isCheckingRateLimit, setIsCheckingRateLimit] = useState(false);
   const [interviewReport, setInterviewReport] = useState<any>(null);
   const [isInterviewCompleted, setIsInterviewCompleted] = useState(false);
+  const [showTranscriptsPane, setShowTranscriptsPane] = useState(false);
+  const [allTranscripts, setAllTranscripts] = useState<Array<{id: string, session_id: string, transcript_text: string, interaction_type: 'user' | 'ai', created_at: string, conversation_order: number}>>([]);
+  const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
   
   // Refs for cleanup
   const voicePlayerRef = useRef<VoicePlayerRef | null>(null);
@@ -38,6 +42,70 @@ export default function VoicePage() {
   useEffect(() => {
     checkRateLimit();
   }, []);
+
+  // Function to fetch transcripts for current session only
+  const fetchSessionTranscripts = useCallback(async () => {
+    if (!sessionId) {
+      setAllTranscripts([]);
+      return;
+    }
+    
+    try {
+      setIsLoadingTranscripts(true);
+      const response = await fetch(`/api/voice/sessions?sessionId=${sessionId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch session transcripts');
+      }
+      
+      const data = await response.json();
+      
+      // Get transcripts for the current session only
+      const sessionTranscripts = data.transcripts || [];
+      
+      // Sort by conversation_order or created_at ascending (chronological order)
+      sessionTranscripts.sort((a: any, b: any) => {
+        if (a.conversation_order && b.conversation_order) {
+          return a.conversation_order - b.conversation_order;
+        }
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+      
+      setAllTranscripts(sessionTranscripts);
+    } catch (error) {
+      console.error('Error fetching session transcripts:', error);
+      setAllTranscripts([]);
+    } finally {
+      setIsLoadingTranscripts(false);
+    }
+  }, [sessionId]);
+
+  // Function to toggle transcripts pane
+  const toggleTranscriptsPane = () => {
+    if (!showTranscriptsPane) {
+      fetchSessionTranscripts();
+    }
+    setShowTranscriptsPane(!showTranscriptsPane);
+  };
+
+  // Update transcripts when sessionId changes
+  useEffect(() => {
+    if (sessionId && showTranscriptsPane) {
+      fetchSessionTranscripts();
+    }
+  }, [sessionId, showTranscriptsPane, fetchSessionTranscripts]);
+
+  // Auto-refresh chat when conversation history changes
+  useEffect(() => {
+    if (sessionId && showTranscriptsPane && conversationHistory.length > 0) {
+      // Delay to allow backend to save the transcript
+      const timer = setTimeout(() => {
+        fetchSessionTranscripts();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [conversationHistory, sessionId, showTranscriptsPane, fetchSessionTranscripts]);
 
   // Check if user has already completed an interview within rate limits
   const checkRateLimit = async (): Promise<boolean> => {
@@ -193,7 +261,7 @@ export default function VoicePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-transparent">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -201,24 +269,68 @@ export default function VoicePage() {
             Voice Interview Practice
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Practice behavioral interviews with AI-powered voice conversations using Google Cloud Text-to-Speech. 
+            Practice behavioral interviews with AI-powered voice conversations using Groq TTS (free) or Google Cloud TTS (premium). 
             Get real-time feedback and improve your interview skills.
           </p>
         </div>
 
         {/* Main Interface */}
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-            {/* Voice Selection */}
-            <div className="mb-8">
+        <div className="flex gap-6">
+          {/* Main Content */}
+          <div className={`transition-all duration-300 ${showTranscriptsPane ? 'w-3/5' : 'w-full max-w-4xl mx-auto'}`}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+              {/* Voice Selection */}
+              <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
                 Choose AI Interviewer Voice
               </h3>
               <VoiceSelector
                 selectedVoice={selectedVoice}
                 onVoiceChange={setSelectedVoice}
+                ttsProvider={ttsProvider}
                 className="max-w-2xl mx-auto"
               />
+            </div>
+
+            {/* TTS Provider Selection */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                Choose TTS Provider
+              </h3>
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={() => setTtsProvider('groq')}
+                  className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                    ttsProvider === 'groq'
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <span>🚀</span>
+                    <div className="text-left">
+                      <div className="font-semibold">Groq TTS</div>
+                      <div className="text-xs opacity-75">Free • Fast • 23 Voices</div>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setTtsProvider('google')}
+                  className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                    ttsProvider === 'google'
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <span>🎯</span>
+                    <div className="text-left">
+                      <div className="font-semibold">Google Cloud TTS</div>
+                      <div className="text-xs opacity-75">Premium • High Quality</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* TTS Error Display */}
@@ -267,7 +379,6 @@ export default function VoicePage() {
                   setShouldAutoStartRecording(false); // Reset auto-start after recording
                 }}
                 onTranscriptionReceived={async (text) => {
-                  setUserResponse(text);
                   const newHistory = [...conversationHistory, { type: 'user' as const, text }];
                   setConversationHistory(newHistory);
                   
@@ -287,63 +398,24 @@ export default function VoicePage() {
 
             {/* Interview Content */}
             <div className="space-y-6">
-              {/* AI Question */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      AI Interviewer
-                    </h3>
-                    {isAISpeaking && (
-                      <div className="flex items-center space-x-1">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-blue-600 dark:text-blue-400">Speaking...</span>
-                      </div>
-                    )}
-                  </div>
-                  <VoicePlayer 
-                    ref={voicePlayerRef}
-                    key={aiResponseKey} // Force re-render when question changes
-                    text={currentQuestion} 
-                    voice={selectedVoice}
-                    autoPlay={isInterviewActive && !isProcessingAI && !rateLimited} // Only auto-play when interview is active, not processing AI response, and not rate limited
-                    className="ml-4"
-                    onPlayStateChange={setIsAISpeaking}
-                    onError={(error) => setTtsError(error)}
-                    onPlaybackComplete={() => {
-                      if (isInterviewActive && !rateLimited) {
-                        console.log('🎤 TTS completed, triggering auto-start recording');
-                        setShouldAutoStartRecording(true);
-                      }
-                    }}
-                  />
-                </div>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {currentQuestion}
-                </p>
-              </div>
-
-              {/* User Response Area */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Your Response
-                </h3>
-                {isProcessingAI ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <p className="text-blue-600 dark:text-blue-400 italic">
-                      AI is thinking of a follow-up question...
-                    </p>
-                  </div>
-                ) : userResponse ? (
-                  <p className="text-gray-700 dark:text-gray-300">
-                    {userResponse}
-                  </p>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-400 italic">
-                    Your response will appear here after recording...
-                  </p>
-                )}
+              {/* Hidden VoicePlayer for audio functionality */}
+              <div className="hidden">
+                <VoicePlayer 
+                  ref={voicePlayerRef}
+                  key={aiResponseKey}
+                  text={currentQuestion} 
+                  voice={selectedVoice}
+                  ttsProvider={ttsProvider}
+                  autoPlay={isInterviewActive && !isProcessingAI && !rateLimited}
+                  onPlayStateChange={() => {}}
+                  onError={(error) => setTtsError(error)}
+                  onPlaybackComplete={() => {
+                    if (isInterviewActive && !rateLimited) {
+                      console.log('🎤 TTS completed, triggering auto-start recording');
+                      setShouldAutoStartRecording(true);
+                    }
+                  }}
+                />
               </div>
             </div>
 
@@ -363,23 +435,13 @@ export default function VoicePage() {
                       <div className="text-sm text-gray-600 dark:text-gray-400">Overall Score</div>
                     </div>
                     
-                    {/* Individual Scores */}
+                    {/* Summary */}
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Communication</span>
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{interviewReport.communication_score}/10</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Problem Solving</span>
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{interviewReport.problem_solving_score}/10</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Leadership</span>
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{interviewReport.leadership_score}/10</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Technical Skills</span>
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{interviewReport.technical_score}/10</span>
+                      <div className="text-center">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Interview Summary</h4>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {interviewReport.detailed_feedback || 'No detailed feedback available.'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -388,66 +450,61 @@ export default function VoicePage() {
                   <div className="mt-6">
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Detailed Feedback</h4>
                     <div className="space-y-4">
-                      <div>
-                        <h5 className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">✅ Strengths</h5>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{interviewReport.strengths}</p>
-                      </div>
-                      <div>
-                        <h5 className="text-sm font-medium text-orange-700 dark:text-orange-400 mb-1">🎯 Areas for Improvement</h5>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{interviewReport.areas_for_improvement}</p>
-                      </div>
-                      <div>
-                        <h5 className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-1">💡 Recommendations</h5>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{interviewReport.recommendations}</p>
-                      </div>
+                      {/* Strengths */}
+                      {interviewReport.strengths && interviewReport.strengths.length > 0 && (
+                        <div>
+                          <h5 className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">✅ Strengths</h5>
+                          <ul className="text-sm text-gray-700 dark:text-gray-300 list-disc list-inside space-y-1">
+                            {interviewReport.strengths.map((strength: any, index: number) => (
+                              <li key={index}>{strength}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Weaknesses */}
+                      {interviewReport.weaknesses && interviewReport.weaknesses.length > 0 && (
+                        <div>
+                          <h5 className="text-sm font-medium text-orange-700 dark:text-orange-400 mb-1">🎯 Areas for Improvement</h5>
+                          <ul className="text-sm text-gray-700 dark:text-gray-300 list-disc list-inside space-y-1">
+                            {interviewReport.weaknesses.map((weakness: any, index: number) => (
+                              <li key={index}>{weakness}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Improvements/Recommendations */}
+                      {interviewReport.improvements && interviewReport.improvements.length > 0 && (
+                        <div>
+                          <h5 className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-1">💡 Recommendations</h5>
+                          <ul className="text-sm text-gray-700 dark:text-gray-300 list-disc list-inside space-y-1">
+                            {interviewReport.improvements.map((improvement: any, index: number) => (
+                              <li key={index}>{improvement}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Conversation History */}
-            {conversationHistory.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Interview Conversation
-                </h3>
-                <div className="space-y-3 max-h-60 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  {conversationHistory.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg ${
-                        message.type === 'ai'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 border-l-4 border-blue-500'
-                          : 'bg-green-100 dark:bg-green-900/30 border-l-4 border-green-500'
-                      }`}
-                    >
-                      <div className="flex items-start space-x-2">
-                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">
-                          {message.type === 'ai' ? '🤖 Interviewer' : '👤 You'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                        {message.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Interview Controls */}
-            <div className="mt-8 flex justify-center space-x-4">
+          </div>
+        </div>
+
+        {/* Interview Controls - Fixed at bottom center */}
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex justify-center space-x-4 z-50">
               {isInterviewCompleted ? (
                 <button
                   onClick={async () => {
                     // Reset all states for new interview
                     setIsInterviewActive(false);
-                    setUserResponse('');
                     setConversationHistory([]);
                     setIsProcessingAI(false);
                     setShouldAutoStartRecording(false);
-                    setIsAISpeaking(false);
                     setTtsError(null);
                     setInterviewReport(null);
                     setIsInterviewCompleted(false);
@@ -476,83 +533,200 @@ export default function VoicePage() {
                   {isCheckingRateLimit ? 'Checking...' : rateLimited ? 'Interview Unavailable' : 'Start New Interview'}
                 </button>
               ) : !isInterviewActive ? (
-                <button
-                  onClick={async () => {
-                    // Check rate limit before starting interview
-                    const canStart = await checkRateLimit();
-                    
-                    if (canStart) {
-                      setIsInterviewActive(true);
-                      // Force VoicePlayer to re-render and auto-play the initial question
-                      setAiResponseKey(prev => prev + 1);
-                    }
-                    // If rate limited, the checkRateLimit function will set the appropriate state
-                  }}
-                  disabled={isCheckingRateLimit || rateLimited}
-                  className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    isCheckingRateLimit || rateLimited
-                      ? 'bg-gray-400 cursor-not-allowed text-gray-200'
-                      : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
-                >
-                  {isCheckingRateLimit ? 'Checking...' : rateLimited ? 'Interview Unavailable' : 'Start Interview'}
-                </button>
+                <>
+                  {/* Microphone Permission Button */}
+                  <button
+                    onClick={async () => {
+                      if (voiceRecorderRef.current) {
+                        const hasPermission = await voiceRecorderRef.current.requestMicrophonePermission();
+                        if (hasPermission) {
+                          alert('✅ Microphone access granted! You can now start the interview.');
+                        } else {
+                          alert('❌ Microphone access denied. Please allow microphone access in your browser settings to use voice features.');
+                        }
+                      }
+                    }}
+                    className="px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
+                  >
+                    <span>🎤</span>
+                    <span>Test Microphone</span>
+                  </button>
+                  
+                  <button
+                    onClick={async () => {
+                      // Check rate limit before starting interview
+                      const canStart = await checkRateLimit();
+                      
+                      if (canStart) {
+                        setIsInterviewActive(true);
+                        // Force VoicePlayer to re-render and auto-play the initial question
+                        setAiResponseKey(prev => prev + 1);
+                      }
+                      // If rate limited, the checkRateLimit function will set the appropriate state
+                    }}
+                    disabled={isCheckingRateLimit || rateLimited}
+                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                      isCheckingRateLimit || rateLimited
+                        ? 'bg-gray-400 cursor-not-allowed text-gray-200'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    {isCheckingRateLimit ? 'Checking...' : rateLimited ? 'Interview Unavailable' : 'Start Interview'}
+                  </button>
+                </>
               ) : (
-                <button
-                  onClick={() => {
-                    // Stop all voice operations immediately
-                    console.log('🛑 Kill switch activated - stopping all voice operations');
-                    
-                    // Stop VoicePlayer if playing
-                    if (voicePlayerRef.current) {
-                      voicePlayerRef.current.stopPlayback();
+                <>
+                  <button
+                    onClick={() => {
+                      // Stop all voice operations immediately
+                      console.log('🛑 Kill switch activated - stopping all voice operations');
+                      
+                      // Stop VoicePlayer if playing
+                      if (voicePlayerRef.current) {
+                        voicePlayerRef.current.stopPlayback();
+                      }
+                      
+                      // Stop VoiceRecorder if recording
+                      if (voiceRecorderRef.current) {
+                        voiceRecorderRef.current.forceStop();
+                      }
+                      
+                      // Reset all states
+                      setIsInterviewActive(false);
+                      setConversationHistory([]);
+                      setIsProcessingAI(false);
+                      setShouldAutoStartRecording(false);
+                      setTtsError(null);
+                      setInterviewReport(null);
+                      setIsInterviewCompleted(false);
+                      setSessionId(null);
+                      setCurrentQuestion(
+                        "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background."
+                      );
+                      setAiResponseKey(prev => prev + 1);
+                      
+                      console.log('✅ Kill switch completed - all voice operations stopped');
+                    }}
+                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    End Interview
+                  </button>
+                </>
+              )}
+              
+              {/* Chat Button */}
+              <button
+                onClick={toggleTranscriptsPane}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  showTranscriptsPane
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <span>💬</span>
+                  <span>{showTranscriptsPane ? 'Hide Chat' : 'View Chat'}</span>
+                </div>
+              </button>
+            </div>
+        
+        {/* Chat Interface Right Pane */}
+        {showTranscriptsPane && (
+          <div className="w-2/5 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col h-[calc(100vh-100px)]">
+            {/* Chat Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-lg">🤖</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Interview Chat
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {sessionId ? `Session: ${sessionId.slice(-8)}` : 'No active session'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTranscriptsPane(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {isLoadingTranscripts ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  <span className="ml-3 text-gray-600 dark:text-gray-400">Loading conversation...</span>
+                </div>
+              ) : allTranscripts.length > 0 ? (
+                allTranscripts.map((transcript: any, index: number) => (
+                  <div
+                    key={transcript.id || index}
+                    className={`flex ${
+                      transcript.interaction_type === 'ai' ? 'justify-start' : 'justify-end'
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        transcript.interaction_type === 'ai'
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm'
+                          : 'bg-blue-600 text-white rounded-br-sm'
+                      }`}
+                    >
+                      {/* Message Header */}
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-xs font-medium opacity-75">
+                          {transcript.interaction_type === 'ai' ? '🤖 Interviewer' : '👤 You'}
+                        </span>
+                        <span className="text-xs opacity-50">
+                          {new Date(transcript.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      
+                      {/* Message Content */}
+                      <p className="text-sm leading-relaxed">
+                        {transcript.transcript_text}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-2xl">💬</span>
+                  </div>
+                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No conversation yet
+                  </h4>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    {sessionId 
+                      ? 'Your conversation will appear here as you chat with the interviewer.'
+                      : 'Start an interview to see your conversation history.'
                     }
-                    
-                    // Stop VoiceRecorder if recording
-                    if (voiceRecorderRef.current) {
-                      voiceRecorderRef.current.forceStop();
-                    }
-                    
-                    // Reset all states
-                    setIsInterviewActive(false);
-                    setUserResponse('');
-                    setConversationHistory([]);
-                    setIsProcessingAI(false);
-                    setShouldAutoStartRecording(false);
-                    setIsAISpeaking(false);
-                    setTtsError(null);
-                    setInterviewReport(null);
-                    setIsInterviewCompleted(false);
-                    setSessionId(null);
-                    setCurrentQuestion(
-                      "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background."
-                    );
-                    setAiResponseKey(prev => prev + 1);
-                    
-                    console.log('✅ Kill switch completed - all voice operations stopped');
-                  }}
-                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  End Interview
-                </button>
+                  </p>
+                </div>
               )}
             </div>
-
-            {/* Instructions */}
-            <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-              <h4 className="font-semibold text-yellow-800 dark:text-yellow-400 mb-2">
-                How it works:
-              </h4>
-              <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-                <li>• Listen to the AI question (it will play automatically)</li>
-                <li>• Click the microphone to start recording your response</li>
-                <li>• ⚡ Smart recording will automatically stop when you finish speaking</li>
-                <li>• Your speech will be converted to text automatically</li>
-                <li>• The AI will ask follow-up questions based on your responses</li>
-                <li>• Practice common behavioral interview scenarios</li>
-              </ul>
+            
+            {/* Chat Footer */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>
+                  {isInterviewActive 
+                    ? (isProcessingAI ? 'AI is thinking...' : 'Interview in progress')
+                    : 'Interview not active'
+                  }
+                </span>
+              </div>
             </div>
           </div>
+        )}
         </div>
       </div>
     </div>
