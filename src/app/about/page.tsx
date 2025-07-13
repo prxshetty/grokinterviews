@@ -14,7 +14,7 @@ const grokInterviewFaqItems: FaqItem[] = [
     id: 'faq-grok-1',
     question: 'What is GrokInterviews?',
     answer:
-      'GrokInterviews is a comprehensive, AI-enhanced interview preparation platform with over 3.6 million curated resources and 81,000+ technical questions. Our mission is to provide the best tools and content to help software engineers and data scientists ace their interviews.',
+      'GrokInterviews is a comprehensive, AI-enhanced interview preparation platform with over 3.6 million curated resources and 50,000+ technical questions. Our mission is to provide the best tools and content to help software engineers and data scientists ace their interviews.',
   },
   {
     id: 'faq-grok-2',

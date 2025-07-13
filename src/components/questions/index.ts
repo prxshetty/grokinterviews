@@ -6,5 +6,5 @@ export * from './QuestionWithAnswer';
 export * from './ResourceCard';
 export * from './ResourceListRefactored';
 export * from './ResourcePreview';
-export * from './ResourceUtils';
+
 // ResourceList is now lazy loaded internally in QuestionWithAnswer - not exported directly

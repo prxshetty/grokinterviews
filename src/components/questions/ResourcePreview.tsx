@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
-import { Resource, TYPE_DISPLAY_INFO, getGradientForType } from '@/components/questions/ResourceUtils';
+import { Resource, TYPE_DISPLAY_INFO, getGradientForType } from '@/types/resources.types';
 
 interface ResourcePreviewProps {
   resource: Resource;
