@@ -55,12 +55,12 @@ export async function GET(request: NextRequest) {
         transcripts: transcripts || []
       });
     } else {
-      // Get all sessions for user
+      // Get all sessions for user with their transcripts
       const { data: sessions, error: sessionsError } = await supabase
         .from('interview_sessions')
         .select(`
           *,
-          voice_transcripts(count)
+          voice_transcripts(*)
         `)
         .eq('user_id', user.id)
         .order('session_start', { ascending: false })
@@ -74,9 +74,15 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      // Transform the data to match frontend expectations
+      const transformedSessions = (sessions || []).map(session => ({
+        ...session,
+        transcripts: session.voice_transcripts || []
+      }));
+
       return NextResponse.json({
         success: true,
-        sessions: sessions || []
+        sessions: transformedSessions
       });
     }
 

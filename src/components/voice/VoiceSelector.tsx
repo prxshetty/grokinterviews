@@ -7,14 +7,15 @@ import { cn } from '@/lib/utils';
 import { CLOUD_TTS_VOICES } from '@/utils/audioUtils';
 
 interface VoiceSelectorProps {
-  selectedVoice: string;
-  onVoiceChange: (voice: string) => void;
+  selectedVoice: VoiceOption;
+  onVoiceChange: (voice: VoiceOption) => void;
+  ttsProvider?: 'google' | 'groq';
   disabled?: boolean;
   className?: string;
 }
 
-// User-friendly voice names that map to Cloud TTS voices
-const VOICE_OPTIONS = {
+// Google Cloud TTS voice options
+const GOOGLE_VOICE_OPTIONS = {
   'Kore': {
     name: 'Kore',
     description: 'Warm and professional (Neural2)',
@@ -53,17 +54,166 @@ const VOICE_OPTIONS = {
   }
 };
 
-type VoiceOption = keyof typeof VOICE_OPTIONS;
+// Groq TTS voice options
+const GROQ_VOICE_OPTIONS = {
+  'Sophia': {
+    name: 'Sophia',
+    description: 'Natural and expressive',
+    gender: 'Female',
+    groqVoice: 'sophia'
+  },
+  'Kore': {
+    name: 'Kore',
+    description: 'Warm and professional',
+    gender: 'Male',
+    groqVoice: 'kore'
+  },
+  'Aria': {
+    name: 'Aria',
+    description: 'Clear and articulate',
+    gender: 'Female',
+    groqVoice: 'aria'
+  },
+  'Marcus': {
+    name: 'Marcus',
+    description: 'Deep and authoritative',
+    gender: 'Male',
+    groqVoice: 'marcus'
+  },
+  'Luna': {
+    name: 'Luna',
+    description: 'Gentle and soothing',
+    gender: 'Female',
+    groqVoice: 'luna'
+  },
+  'Zara': {
+    name: 'Zara',
+    description: 'Confident and modern',
+    gender: 'Female',
+    groqVoice: 'zara'
+  },
+  'Oliver': {
+    name: 'Oliver',
+    description: 'Friendly and approachable',
+    gender: 'Male',
+    groqVoice: 'oliver'
+  },
+  'Emma': {
+    name: 'Emma',
+    description: 'Bright and engaging',
+    gender: 'Female',
+    groqVoice: 'emma'
+  },
+  'Liam': {
+    name: 'Liam',
+    description: 'Strong and reliable',
+    gender: 'Male',
+    groqVoice: 'liam'
+  },
+  'Ava': {
+    name: 'Ava',
+    description: 'Elegant and refined',
+    gender: 'Female',
+    groqVoice: 'ava'
+  },
+  'Noah': {
+    name: 'Noah',
+    description: 'Calm and steady',
+    gender: 'Male',
+    groqVoice: 'noah'
+  },
+  'Isabella': {
+    name: 'Isabella',
+    description: 'Sophisticated and polished',
+    gender: 'Female',
+    groqVoice: 'isabella'
+  },
+  'Ethan': {
+    name: 'Ethan',
+    description: 'Dynamic and energetic',
+    gender: 'Male',
+    groqVoice: 'ethan'
+  },
+  'Mia': {
+    name: 'Mia',
+    description: 'Youthful and vibrant',
+    gender: 'Female',
+    groqVoice: 'mia'
+  },
+  'James': {
+    name: 'James',
+    description: 'Classic and distinguished',
+    gender: 'Male',
+    groqVoice: 'james'
+  },
+  'Charlotte': {
+    name: 'Charlotte',
+    description: 'Graceful and articulate',
+    gender: 'Female',
+    groqVoice: 'charlotte'
+  },
+  'Benjamin': {
+    name: 'Benjamin',
+    description: 'Thoughtful and measured',
+    gender: 'Male',
+    groqVoice: 'benjamin'
+  },
+  'Amelia': {
+    name: 'Amelia',
+    description: 'Sweet and melodic',
+    gender: 'Female',
+    groqVoice: 'amelia'
+  },
+  'William': {
+    name: 'William',
+    description: 'Authoritative and clear',
+    gender: 'Male',
+    groqVoice: 'william'
+  },
+  'Harper': {
+    name: 'Harper',
+    description: 'Modern and confident',
+    gender: 'Female',
+    groqVoice: 'harper'
+  },
+  'Evelyn': {
+    name: 'Evelyn',
+    description: 'Timeless and elegant',
+    gender: 'Female',
+    groqVoice: 'evelyn'
+  },
+  'Alexander': {
+    name: 'Alexander',
+    description: 'Commanding and powerful',
+    gender: 'Male',
+    groqVoice: 'alexander'
+  },
+  'Abigail': {
+    name: 'Abigail',
+    description: 'Cheerful and bright',
+    gender: 'Female',
+    groqVoice: 'abigail'
+  }
+};
+
+export type GoogleVoiceOption = keyof typeof GOOGLE_VOICE_OPTIONS;
+export type GroqVoiceOption = keyof typeof GROQ_VOICE_OPTIONS;
+export type VoiceOption = GoogleVoiceOption | GroqVoiceOption;
 
 export function VoiceSelector({ 
   selectedVoice, 
   onVoiceChange, 
+  ttsProvider = 'google',
   disabled = false,
   className 
 }: VoiceSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   
-  const currentVoice = VOICE_OPTIONS[selectedVoice as VoiceOption] || VOICE_OPTIONS['Kore'];
+  // Get the appropriate voice options based on TTS provider
+  const voiceOptions = ttsProvider === 'groq' ? GROQ_VOICE_OPTIONS : GOOGLE_VOICE_OPTIONS;
+  const defaultVoice = 'Sophia';
+  
+  const currentVoice = voiceOptions[selectedVoice as keyof typeof voiceOptions] || voiceOptions[defaultVoice as keyof typeof voiceOptions];
   
   const handleVoiceSelect = (voice: VoiceOption) => {
     onVoiceChange(voice);
@@ -99,8 +249,8 @@ export function VoiceSelector({
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
           <div className="p-1">
-            {Object.keys(VOICE_OPTIONS).map((voice) => {
-              const voiceInfo = VOICE_OPTIONS[voice as VoiceOption];
+            {Object.keys(voiceOptions).map((voice) => {
+              const voiceInfo = voiceOptions[voice as keyof typeof voiceOptions];
               const isSelected = voice === selectedVoice;
               
               return (
@@ -132,7 +282,10 @@ export function VoiceSelector({
           {/* Footer */}
           <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-2">
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Powered by Google Cloud Text-to-Speech
+              {ttsProvider === 'groq' 
+                ? `Powered by Groq TTS • ${Object.keys(voiceOptions).length} voices available`
+                : 'Powered by Google Cloud Text-to-Speech'
+              }
             </div>
           </div>
         </div>
@@ -155,6 +308,7 @@ export function VoiceSelector({
 interface VoicePreviewProps {
   voice: VoiceOption;
   onPreview: (voice: VoiceOption) => void;
+  ttsProvider?: 'google' | 'groq';
   isPlaying?: boolean;
   disabled?: boolean;
 }
@@ -162,10 +316,14 @@ interface VoicePreviewProps {
 export function VoicePreview({ 
   voice, 
   onPreview, 
+  ttsProvider = 'google',
   isPlaying = false, 
   disabled = false 
 }: VoicePreviewProps) {
-  const voiceInfo = VOICE_OPTIONS[voice];
+  const voiceOptions = ttsProvider === 'groq' ? GROQ_VOICE_OPTIONS : GOOGLE_VOICE_OPTIONS;
+  const voiceInfo = voiceOptions[voice as keyof typeof voiceOptions];
+  
+  if (!voiceInfo) return null;
   
   return (
     <Button

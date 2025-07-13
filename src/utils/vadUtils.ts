@@ -1,4 +1,5 @@
-import { MicVAD } from '@ricky0123/vad-web';
+// Dynamic import to prevent SSR issues
+let MicVAD: any = null;
 
 export interface VADConfig {
   onSpeechStart?: () => void;
@@ -15,7 +16,7 @@ export interface VADConfig {
 }
 
 export class VoiceActivityDetector {
-  private vad: MicVAD | null = null;
+  private vad: any = null;
   private isInitialized = false;
   private isListening = false;
   private config: VADConfig;
@@ -40,6 +41,16 @@ export class VoiceActivityDetector {
 
     try {
       console.log('🎯 Initializing Voice Activity Detector...');
+      
+      // Dynamic import to prevent SSR issues
+      if (!MicVAD && typeof window !== 'undefined') {
+        const vadModule = await import('@ricky0123/vad-web');
+        MicVAD = vadModule.MicVAD;
+      }
+      
+      if (!MicVAD) {
+        throw new Error('VAD not available in this environment');
+      }
       
       this.vad = await MicVAD.new({
         positiveSpeechThreshold: this.config.positiveSpeechThreshold!,

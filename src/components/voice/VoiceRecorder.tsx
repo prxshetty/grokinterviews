@@ -16,6 +16,8 @@ interface VoiceRecorderProps {
 
 export interface VoiceRecorderRef {
   forceStop: () => void;
+  checkMicrophonePermission: () => Promise<PermissionState | 'prompt'>;
+  requestMicrophonePermission: () => Promise<boolean>;
 }
 
 export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({ 
@@ -36,6 +38,33 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
   const vadRef = useRef<VoiceActivityDetector | null>(null);
   const autoStopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Define permission functions before useImperativeHandle
+  const checkMicrophonePermission = useCallback(async () => {
+    try {
+      // Check if permissions API is available
+      if ('permissions' in navigator) {
+        const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        return permission.state;
+      }
+      return 'prompt'; // Fallback if permissions API not available
+    } catch (error) {
+      console.warn('Could not check microphone permission:', error);
+      return 'prompt';
+    }
+  }, []);
+
+  const requestMicrophonePermission = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately as we just wanted to request permission
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (error) {
+      console.error('Permission request failed:', error);
+      return false;
+    }
+  }, []);
 
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
@@ -88,8 +117,10 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
       audioChunksRef.current = [];
       
       console.log('✅ VoiceRecorder: Recording stopped successfully');
-    }
-  }), [isRecording]);
+    },
+    checkMicrophonePermission,
+    requestMicrophonePermission
+  }), [isRecording, checkMicrophonePermission, requestMicrophonePermission]);
 
   const transcribeAudio = useCallback(async (audioBlob: Blob) => {
     try {
@@ -295,7 +326,21 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
     } catch (error: unknown) {
       // eslint-disable-next-line no-console
       console.error('❌ Failed to start recording:', error);
-      setError('Failed to access microphone. Please check permissions.');
+      
+      // Provide more specific error messages based on the error type
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          setError('Microphone access denied. Please click the microphone icon in your browser\'s address bar and allow microphone access, then refresh the page.');
+        } else if (error.name === 'NotFoundError') {
+          setError('No microphone found. Please connect a microphone and try again.');
+        } else if (error.name === 'NotReadableError') {
+          setError('Microphone is being used by another application. Please close other apps using the microphone and try again.');
+        } else {
+          setError(`Microphone error: ${error.message}. Please check your microphone settings and try again.`);
+        }
+      } else {
+        setError('Failed to access microphone. Please check permissions and try again.');
+      }
     }
   }, [onRecordingComplete, transcribeAudio, enableVAD, vadSupported, setError]);
 
