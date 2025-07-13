@@ -4,6 +4,9 @@
   /* gap: 1.5rem; */ /* Handled by Tailwind */
   /* padding: 1rem; */ /* Handled by Tailwind */
   justify-content: center;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .gridItem {
@@ -12,29 +15,100 @@
   align-items: center;
   cursor: pointer;
   width: 100%;
+  max-width: 100%;
+  overflow: visible; /* Allow content to be visible on desktop */
+}
+
+/* Mobile-specific styles */
+@media (max-width: 639px) {
+  .gridItem {
+    padding: 0.5rem 0.25rem;
+    gap: 0.5rem;
+    overflow: hidden !important; /* Keep overflow hidden on mobile */
+  }
+  
+  .gridContainer {
+    padding: 0.5rem;
+    gap: 0.75rem;
+  }
+  
+  .serialNumber {
+    font-size: 1.25rem !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.5rem !important;
+  }
 }
 
 .serialNumber {
   /* font-size: 2rem; */ /* Replaced with responsive Tailwind classes if applied directly, or adjusted here */
-  font-size: 1.5rem; /* Base size for mobile */
+  font-size: 1.5rem; /* Base size for desktop */
   font-weight: 600;
   color: hsl(var(--muted-foreground));
   opacity: 0.7;
-  padding-left: 0.5rem;  /* 8px */
-  padding-right: 0.75rem; /* Increased from 0.5rem to 0.75rem (12px) */
+  padding-left: 0.125rem;  /* Further reduced for desktop */
+  padding-right: 0.25rem; /* Further reduced for desktop */
+  flex-shrink: 0; /* Prevent shrinking */
+  min-width: fit-content;
 }
 
-/* Example of how to make it responsive within CSS module if preferred */
-@media (min-width: 640px) { /* sm breakpoint */
+/* Responsive breakpoints */
+@media (min-width: 640px) { /* sm breakpoint - tablet portrait */
   .serialNumber {
     font-size: 1.75rem;
-    /* Padding can be adjusted here if needed for larger screens, e.g., padding-right: 1rem; */
+    padding-left: 0.125rem; /* Reduced to give more space */
+    padding-right: 0.25rem; /* Reduced to give more space */
+  }
+  
+  .gridItem {
+    padding: 0.75rem 0.25rem; /* Reduced horizontal padding */
+    gap: 0.5rem; /* Reduced gap */
+    overflow: visible; /* Allow content overflow on larger screens */
+  }
+  
+  .gridContainer {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+}
+
+/* Tablet landscape and small desktop */
+@media (min-width: 768px) and (max-width: 1023px) { /* md breakpoint - tablet landscape */
+  .serialNumber {
+    font-size: 1.75rem;
+    padding-left: 0.125rem; /* Minimized for tablet */
+    padding-right: 0.25rem; /* Minimized for tablet */
+  }
+  
+  .gridItem {
+    padding: 0.75rem 0.125rem; /* Further reduced for tablet */
+    gap: 0.25rem; /* Further reduced gap for tablet */
+    overflow: visible; /* Allow content overflow */
   }
 }
 
 @media (min-width: 1024px) { /* lg breakpoint */
   .serialNumber {
     font-size: 2rem;
-    /* Padding can be adjusted here if needed for larger screens, e.g., padding-right: 1.25rem; */
+    padding-left: 0.125rem; /* Further reduced to give maximum space */
+    padding-right: 0.25rem; /* Further reduced to give maximum space */
+  }
+  
+  .gridItem {
+    padding: 1rem 0.25rem; /* Minimized horizontal padding */
+    gap: 0.25rem; /* Minimized gap */
+    overflow: visible; /* Allow content overflow on larger screens */
+  }
+}
+
+/* Extra large screens - even more space */
+@media (min-width: 1280px) { /* xl breakpoint */
+  .gridItem {
+    padding: 1rem 0.125rem; /* Absolute minimum horizontal padding */
+    gap: 0.125rem; /* Absolute minimum gap */
+  }
+  
+  .serialNumber {
+    padding-left: 0.0625rem; /* Absolute minimum left padding */
+    padding-right: 0.125rem; /* Absolute minimum right padding */
   }
 }

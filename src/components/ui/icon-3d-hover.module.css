@@ -1,0 +1,94 @@
+/* Icon 3D Hover Component Responsive Styles */
+
+.iconHover3DWrapper {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.iconHover3D {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.iconContainer {
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.textContainer {
+  overflow: hidden;
+}
+
+.descriptionText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Mobile-specific responsive styles */
+@media (max-width: 639px) {
+  .iconHover3DWrapper {
+    width: 280px !important;
+    height: 90px !important;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .iconHover3D {
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+  
+  .iconContainer {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  
+  .content {
+    max-width: 200px !important;
+    gap: 4px !important;
+  }
+  
+  .textContainer {
+    height: 16px !important;
+  }
+  
+  .descriptionText {
+    width: 200px !important;
+    font-size: 10px !important;
+    line-height: 1.2em !important;
+    -webkit-line-clamp: 1;
+  }
+  
+  .headingText {
+    font-size: 12px !important;
+    height: 16px !important;
+  }
+}
+
+/* Small tablet styles */
+@media (min-width: 640px) and (max-width: 767px) {
+  .iconHover3DWrapper {
+    width: 300px !important;
+    height: 100px !important;
+  }
+  
+  .content {
+    max-width: 240px !important;
+  }
+  
+  .descriptionText {
+    width: 240px !important;
+    font-size: 11px !important;
+  }
+  
+  .headingText {
+    font-size: 13px !important;
+  }
+}
