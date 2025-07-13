@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: process.env.GROQ_API_KEY_0 || process.env.GROQ_API_KEY,
 });
 
 // Groq voice options mapping
@@ -51,7 +51,7 @@ const mapVoiceToGroq = (voiceName: string): string => {
 export async function POST(request: NextRequest) {
   try {
     // Check if Groq API key is configured
-    if (!process.env.GROQ_API_KEY) {
+    if (!process.env.GROQ_API_KEY_0 && !process.env.GROQ_API_KEY) {
       return NextResponse.json(
         { error: 'Groq API key not configured' },
         { status: 500 }
