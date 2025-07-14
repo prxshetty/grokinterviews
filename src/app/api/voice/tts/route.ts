@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { mapVoiceToCloudTTS, getVoiceGender, CLOUD_TTS_AUDIO_CONFIG } from '@/utils/audioUtils';
 
+// Validate required environment variables
+if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_PROJECT_ID) {
+  throw new Error('Missing required Google Cloud credentials. Please set GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_PROJECT_ID environment variables.');
+}
+
 // Initialize Google Cloud Text-to-Speech client
 const ttsClient = new TextToSpeechClient({
-  // Authentication will be handled by environment variables:
-  // GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CLOUD_PROJECT + service account key
-  ...(process.env.GOOGLE_CLOUD_PROJECT_ID && { projectId: process.env.GOOGLE_CLOUD_PROJECT_ID }),
-  ...(process.env.GOOGLE_APPLICATION_CREDENTIALS && { keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS }),
-  // Alternative: use API key if available
-  ...(process.env.GOOGLE_CLOUD_API_KEY && {
-    apiKey: process.env.GOOGLE_CLOUD_API_KEY
-  })
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  },
+  projectId: process.env.GOOGLE_PROJECT_ID,
 });
 
 export async function POST(request: NextRequest) {
