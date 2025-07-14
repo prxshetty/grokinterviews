@@ -209,12 +209,25 @@ export default function VoicePage() {
         }
         
         // Check if interview is completed (has report)
+        // In the generateAIResponse function, around line 212-214
         if (result.interviewReport) {
-          console.log('🎯 Interview completed! Report received:', result.interviewReport);
-          setInterviewReport(result.interviewReport);
-          setIsInterviewCompleted(true);
-          setIsInterviewActive(false);
-          
+        console.log('🎯 Interview completed! Report received:', result.interviewReport);
+        
+        // Parse the interview report if it's a string
+        let parsedReport = result.interviewReport;
+        if (typeof result.interviewReport === 'string') {
+        try {
+        parsedReport = JSON.parse(result.interviewReport);
+        } catch (error) {
+        console.error('Failed to parse interview report:', error);
+        parsedReport = result.interviewReport; // Use as-is if parsing fails
+        }
+        }
+        
+        setInterviewReport(parsedReport);
+        setIsInterviewCompleted(true);
+        setIsInterviewActive(false);
+        
           // Add final AI response to conversation history
           setConversationHistory(prev => [...prev, { type: 'ai' as const, text: result.aiResponse }]);
           
@@ -445,7 +458,49 @@ export default function VoicePage() {
                       }
                     }
                   }}
-                  onError={(error) => setTtsError(error)}
+                  onError={(error) => {
+                    console.error('🚨 TTS Error:', error);
+                    setTtsError(error);
+                    
+                    // Check if this is a rate limit error and terminate interview immediately
+                    const errorMessage = error?.toString() || '';
+                    const isRateLimitError = errorMessage.includes('rate limit') || 
+                                           errorMessage.includes('429') || 
+                                           errorMessage.includes('Rate limit exceeded');
+                    
+                    if (isRateLimitError && isInterviewActive) {
+                      console.log('🛑 Rate limit detected - terminating interview immediately');
+                      
+                      // Immediately terminate the interview
+                      setIsInterviewActive(false);
+                      setIsInterviewCompleted(true);
+                      setRateLimited(true);
+                      setRateLimitMessage('Interview terminated due to TTS rate limit. Please try again later.');
+                      
+                      // Force stop all audio operations
+                      if (voiceRecorderRef.current) {
+                        voiceRecorderRef.current.forceStop();
+                      }
+                      if (voicePlayerRef.current) {
+                        voicePlayerRef.current.stopPlayback();
+                      }
+                      
+                      // Complete the session in database with rate limit reason
+                      if (sessionId) {
+                        fetch('/api/voice/sessions', {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            sessionId,
+                            action: 'complete',
+                            reason: 'tts_rate_limit'
+                          }),
+                        }).catch(err => console.error('Error completing session:', err));
+                      }
+                    }
+                  }}
                   onPlaybackComplete={() => {
                     if (isInterviewActive && !isInterviewCompleted && !rateLimited) {
                       console.log('🎤 TTS completed, triggering auto-start recording');
