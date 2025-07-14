@@ -88,6 +88,32 @@ export default function VoicePage() {
     setShowTranscriptsPane(!showTranscriptsPane);
   };
 
+  // Function to add initial welcome message to transcripts
+  const addInitialWelcomeMessage = async (newSessionId: string) => {
+    try {
+      const response = await fetch('/api/voice/transcripts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: newSessionId,
+          transcriptText: currentQuestion,
+          interactionType: 'ai_response',
+          conversationOrder: 0
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to add initial welcome message to transcripts');
+      } else {
+        console.log('✅ Initial welcome message added to transcripts');
+      }
+    } catch (error) {
+      console.error('Error adding initial welcome message:', error);
+    }
+  };
+
   // Update transcripts when sessionId changes
   useEffect(() => {
     if (sessionId && showTranscriptsPane) {
@@ -406,13 +432,26 @@ export default function VoicePage() {
                   text={currentQuestion} 
                   voice={selectedVoice}
                   ttsProvider={ttsProvider}
-                  autoPlay={isInterviewActive && !isProcessingAI && !rateLimited}
-                  onPlayStateChange={() => {}}
+                  autoPlay={(isInterviewActive || isInterviewCompleted) && !isProcessingAI && !rateLimited}
+                  onPlayStateChange={(isPlaying) => {
+                    // Pause VAD when TTS is playing to prevent false speech detection
+                    if (voiceRecorderRef.current) {
+                      if (isPlaying) {
+                        console.log('🔇 TTS started - pausing VAD to prevent false detection');
+                        voiceRecorderRef.current.pauseVAD();
+                      } else {
+                        console.log('🎤 TTS stopped - resuming VAD');
+                        voiceRecorderRef.current.resumeVAD();
+                      }
+                    }
+                  }}
                   onError={(error) => setTtsError(error)}
                   onPlaybackComplete={() => {
-                    if (isInterviewActive && !rateLimited) {
+                    if (isInterviewActive && !isInterviewCompleted && !rateLimited) {
                       console.log('🎤 TTS completed, triggering auto-start recording');
                       setShouldAutoStartRecording(true);
+                    } else if (isInterviewCompleted) {
+                      console.log('🎉 Final closing message TTS completed - interview finished');
                     }
                   }}
                 />
@@ -519,8 +558,34 @@ export default function VoicePage() {
                     
                     if (canStart) {
                       setIsInterviewActive(true);
+                      
                       // Force VoicePlayer to re-render and auto-play the initial question
                       setAiResponseKey(prev => prev + 2);
+                      
+                      // Create a new session and add initial welcome message (without triggering additional TTS)
+                      try {
+                        const response = await fetch('/api/voice/sessions', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            sessionType: 'behavioral'
+                          }),
+                        });
+                        
+                        if (response.ok) {
+                          const result = await response.json();
+                          const newSessionId = result.session.id;
+                          setSessionId(newSessionId);
+                          console.log('✅ New session created:', newSessionId);
+                          
+                          // Add initial welcome message to transcripts (silently, without triggering TTS)
+                          await addInitialWelcomeMessage(newSessionId);
+                        }
+                      } catch (error) {
+                        console.error('Error creating session:', error);
+                      }
                     }
                   }}
                   disabled={isCheckingRateLimit || rateLimited}
@@ -554,13 +619,57 @@ export default function VoicePage() {
                   
                   <button
                     onClick={async () => {
+                      // Stop all ongoing audio operations first
+                      console.log('🔄 Starting new interview - stopping all ongoing operations');
+                      
+                      // Stop VoicePlayer if playing
+                      if (voicePlayerRef.current) {
+                        voicePlayerRef.current.stopPlayback();
+                      }
+                      
+                      // Stop VoiceRecorder if recording
+                      if (voiceRecorderRef.current) {
+                        voiceRecorderRef.current.forceStop();
+                      }
+                      
+                      // Reset states
+                      setIsProcessingAI(false);
+                      setShouldAutoStartRecording(false);
+                      setTtsError(null);
+                      
                       // Check rate limit before starting interview
                       const canStart = await checkRateLimit();
                       
                       if (canStart) {
                         setIsInterviewActive(true);
+                        
                         // Force VoicePlayer to re-render and auto-play the initial question
                         setAiResponseKey(prev => prev + 1);
+                        
+                        // Create a new session and add initial welcome message (without triggering additional TTS)
+                        try {
+                          const response = await fetch('/api/voice/sessions', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              sessionType: 'behavioral'
+                            }),
+                          });
+                          
+                          if (response.ok) {
+                            const result = await response.json();
+                            const newSessionId = result.session.id;
+                            setSessionId(newSessionId);
+                            console.log('✅ New session created:', newSessionId);
+                            
+                            // Add initial welcome message to transcripts (silently, without triggering TTS)
+                            await addInitialWelcomeMessage(newSessionId);
+                          }
+                        } catch (error) {
+                          console.error('Error creating session:', error);
+                        }
                       }
                       // If rate limited, the checkRateLimit function will set the appropriate state
                     }}
@@ -668,12 +777,12 @@ export default function VoicePage() {
                   <div
                     key={transcript.id || index}
                     className={`flex ${
-                      transcript.interaction_type === 'ai' ? 'justify-start' : 'justify-end'
+                      transcript.interaction_type === 'ai_response' ? 'justify-start' : 'justify-end'
                     }`}
                   >
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        transcript.interaction_type === 'ai'
+                        transcript.interaction_type === 'ai_response'
                           ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm'
                           : 'bg-blue-600 text-white rounded-br-sm'
                       }`}
@@ -681,7 +790,7 @@ export default function VoicePage() {
                       {/* Message Header */}
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="text-xs font-medium opacity-75">
-                          {transcript.interaction_type === 'ai' ? '🤖 Interviewer' : '👤 You'}
+                          {transcript.interaction_type === 'ai_response' ? '🤖 Interviewer' : '👤 You'}
                         </span>
                         <span className="text-xs opacity-50">
                           {new Date(transcript.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

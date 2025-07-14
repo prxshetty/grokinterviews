@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY_0 || process.env.GROQ_API_KEY,
+  apiKey: process.env.GROQ_API_KEY_1 || process.env.GROQ_API_KEY,
 });
 
 // Groq voice options mapping

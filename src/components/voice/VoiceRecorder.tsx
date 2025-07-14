@@ -16,6 +16,8 @@ interface VoiceRecorderProps {
 
 export interface VoiceRecorderRef {
   forceStop: () => void;
+  pauseVAD: () => Promise<void>;
+  resumeVAD: () => Promise<void>;
   checkMicrophonePermission: () => Promise<PermissionState | 'prompt'>;
   requestMicrophonePermission: () => Promise<boolean>;
 }
@@ -32,12 +34,20 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
   const [error, setError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [vadSupported, setVadSupported] = useState(false);
+  const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const vadRef = useRef<VoiceActivityDetector | null>(null);
   const autoStopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const autoStartRef = useRef(autoStart);
+
+  // Keep autoStartRef updated
+  useEffect(() => {
+    autoStartRef.current = autoStart;
+  }, [autoStart]);
 
   // Define permission functions before useImperativeHandle
   const checkMicrophonePermission = useCallback(async () => {
@@ -118,6 +128,26 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
       
       console.log('✅ VoiceRecorder: Recording stopped successfully');
     },
+    pauseVAD: async () => {
+      console.log('⏸️ VoiceRecorder: Pausing VAD');
+      if (vadRef.current) {
+        try {
+          await vadRef.current.pause();
+        } catch (error) {
+          console.warn('Warning: Could not pause VAD:', error);
+        }
+      }
+    },
+    resumeVAD: async () => {
+      console.log('▶️ VoiceRecorder: Resuming VAD');
+      if (vadRef.current) {
+        try {
+          await vadRef.current.resume();
+        } catch (error) {
+          console.warn('Warning: Could not resume VAD:', error);
+        }
+      }
+    },
     checkMicrophonePermission,
     requestMicrophonePermission
   }), [isRecording, checkMicrophonePermission, requestMicrophonePermission]);
@@ -176,37 +206,48 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
   }, []);
 
   const handleSpeechPause = useCallback(() => {
-    // eslint-disable-next-line no-console
-    console.log('⏸️ VAD: Speech paused - checking recording state');
-    // eslint-disable-next-line no-console
-    console.log('📊 Current state - mediaRecorderRef:', !!mediaRecorderRef.current);
+    console.log('⏸️ VAD: Speech paused - checking MediaRecorder state');
+    console.log('📊 MediaRecorder state:', mediaRecorderRef.current?.state);
     setIsSpeaking(false);
-    // Auto-stop recording immediately when speech detection ends
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      // eslint-disable-next-line no-console
-      console.log('🛑 Stopping recording via VAD speech pause');
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsSpeaking(false);
-    } else {
-      // eslint-disable-next-line no-console
-      console.log('⚠️ Cannot stop recording - mediaRecorder not in recording state');
+    
+    // Only check MediaRecorder state, not React state (which can be out of sync)
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
+      console.log('⚠️ MediaRecorder not recording, ignoring speech pause');
+      return;
     }
-  }, []);
+    
+    // Check if we have a minimum recording duration (at least 1 second)
+    const now = Date.now();
+    const minRecordingDuration = 1000; // 1 second minimum
+    
+    if (recordingStartTime && (now - recordingStartTime) < minRecordingDuration) {
+      console.log('⚠️ Recording too short, waiting for minimum duration...');
+      return;
+    }
+    
+    // Auto-stop recording when speech detection ends (VAD is the primary controller)
+    console.log('🛑 VAD stopping recording after speech pause');
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    setIsSpeaking(false);
+  }, [recordingStartTime]);
 
   const handleSpeechEnd = useCallback(() => {
-    // eslint-disable-next-line no-console
     console.log('🤫 VAD: Speech ended after silence timeout (backup)');
-    // eslint-disable-next-line no-console
-    console.log('📊 Backup state - mediaRecorderRef:', !!mediaRecorderRef.current);
-    // This is now a backup in case onSpeechPause didn't trigger
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      // eslint-disable-next-line no-console
-      console.log('🛑 Stopping recording via VAD backup timeout');
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsSpeaking(false);
+    console.log('📊 MediaRecorder state:', mediaRecorderRef.current?.state);
+    setIsSpeaking(false);
+    
+    // Only check MediaRecorder state, not React state
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
+      console.log('⚠️ MediaRecorder not recording, ignoring speech end');
+      return;
     }
+    
+    // Backup stop - VAD timeout reached
+    console.log('🛑 VAD backup: Stopping recording after silence timeout');
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    setIsSpeaking(false);
   }, []);
 
   const handleVADMisfire = useCallback(() => {
@@ -227,7 +268,13 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
         onSpeechStart: handleSpeechStart,
         onSpeechPause: handleSpeechPause,
         onSpeechEnd: handleSpeechEnd,
-        onVADMisfire: handleVADMisfire
+        onVADMisfire: handleVADMisfire,
+        // Optimized settings for interview responses
+        positiveSpeechThreshold: 0.7,  // Higher threshold to avoid false positives
+        negativeSpeechThreshold: 0.2,  // Lower threshold to avoid cutting off speech
+        redemptionFrames: 8,            // Fewer frames for faster response
+        minSpeechFrames: 4,             // Fewer frames to start faster
+        preSpeechPadFrames: 1           // Less padding for faster detection
       });
       // eslint-disable-next-line no-console
       console.log('✅ VAD instance created successfully');
@@ -262,10 +309,33 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
         }
       });
 
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      // Create MediaRecorder with Groq-compatible format
+      const mediaRecorderOptions: MediaRecorderOptions = {};
+      
+      // Try different formats in order of preference for Groq compatibility
+      // WAV is recommended by Groq for lower latency
+      const supportedFormats = [
+        'audio/wav',           // Recommended by Groq for lower latency
+        'audio/mp4',           // Good compatibility
+        'audio/mpeg',          // MP3 format
+        'audio/webm',          // WebM is supported but may have issues
+        'audio/ogg'            // OGG format
+      ];
+      
+      for (const format of supportedFormats) {
+        if (MediaRecorder.isTypeSupported(format)) {
+          mediaRecorderOptions.mimeType = format;
+          console.log(`🎤 Using recording format: ${format}`);
+          break;
+        }
+      }
+      
+      // Fallback to default if no supported format found
+      if (!mediaRecorderOptions.mimeType) {
+        console.warn('⚠️ No preferred format supported, using default');
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -283,8 +353,11 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
       // Handle recording stop
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/webm;codecs=opus' 
+          type: mediaRecorderOptions.mimeType || 'audio/webm' 
         });
+        
+        // Reset recording state
+        setRecordingStartTime(null);
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
@@ -293,6 +366,13 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
         // Stop VAD if it's running
         if (vadRef.current) {
           await vadRef.current.stop();
+        }
+        
+        // Check if recording is too small (likely invalid)
+        if (audioBlob.size < 1000) { // Less than 1KB
+          console.log('⚠️ Recording too small, skipping transcription:', audioBlob.size, 'bytes');
+          setError('Recording too short. Please speak for at least 1 second.');
+          return;
         }
         
         // Notify parent component
@@ -304,22 +384,28 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
 
       // Start recording
       mediaRecorder.start(1000); // Collect data every second
+      
+      // Set recording state immediately after starting MediaRecorder
       setIsRecording(true);
+      setRecordingStartTime(Date.now());
+      
+      // Mark that we've auto-started if this was triggered by autoStart
+      if (autoStartRef.current) {
+        setHasAutoStarted(true);
+      }
+      
+      console.log('🎤 MediaRecorder started, state:', mediaRecorder.state);
       
       // Start VAD if enabled and supported
       if (enableVAD && vadRef.current && vadSupported) {
         try {
           await vadRef.current.start();
-          // eslint-disable-next-line no-console
           console.log('🎤 Recording started with VAD enabled');
         } catch (vadError) {
-          // eslint-disable-next-line no-console
           console.warn('⚠️ VAD failed to start, continuing without it:', vadError);
-          // eslint-disable-next-line no-console
           console.log('🎤 Recording started (VAD disabled)');
         }
       } else {
-        // eslint-disable-next-line no-console
         console.log('🎤 Recording started (VAD disabled)');
       }
 
@@ -366,40 +452,56 @@ export const VoiceRecorder = forwardRef<VoiceRecorderRef, VoiceRecorderProps>(({
     }
   }, [isRecording]);
 
-  // Auto-start recording when autoStart prop becomes true
+  // Auto-start recording when autoStart prop becomes true (but only once per autoStart cycle)
   useEffect(() => {
-    if (autoStart && !isRecording && !disabled && !isProcessing) {
+    if (autoStart && !isRecording && !disabled && !isProcessing && !hasAutoStarted) {
       console.log('🎤 Auto-starting recording after TTS completion');
       startRecording();
+    } else if (!autoStart && hasAutoStarted) {
+      // Reset the auto-start flag when autoStart becomes false
+      setHasAutoStarted(false);
     }
-  }, [autoStart, isRecording, disabled, isProcessing, startRecording]);
+  }, [autoStart, isRecording, disabled, isProcessing, hasAutoStarted, startRecording]);
 
   return (
     <div className="flex flex-col items-center space-y-4">
       {/* Recording Button */}
       <div className="relative">
-        <Button
-          size="lg"
-          onClick={isRecording ? stopRecording : startRecording}
-          disabled={disabled || isProcessing}
-          className={cn(
-            "h-16 w-16 rounded-full transition-all duration-200",
-            isRecording 
-              ? isSpeaking
-                ? "bg-green-600 hover:bg-green-700 animate-pulse" 
-                : "bg-yellow-600 hover:bg-yellow-700"
-              : "bg-blue-600 hover:bg-blue-700",
-            isProcessing && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          {isProcessing ? (
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
-          ) : isRecording ? (
-            <Square className="h-6 w-6 fill-current" />
-          ) : (
-            <Mic className="h-6 w-6" />
-          )}
-        </Button>
+        <div className="relative h-16 w-16">
+          {/* Background behavior icon */}
+          <div 
+            className={cn(
+              "absolute inset-0 rounded-full transition-all duration-200 cursor-pointer",
+              "bg-cover bg-center bg-no-repeat",
+              isRecording 
+                ? isSpeaking
+                  ? "opacity-90 scale-110 animate-pulse" 
+                  : "opacity-80 scale-105"
+                : "opacity-70 hover:opacity-90 hover:scale-105",
+              isProcessing && "opacity-50 cursor-not-allowed"
+            )}
+            style={{
+              backgroundImage: `url('/behavior.svg')`,
+              filter: isRecording 
+                ? isSpeaking 
+                  ? 'hue-rotate(120deg) brightness(1.2)' // Green tint when speaking
+                  : 'hue-rotate(60deg) brightness(1.1)'   // Yellow tint when recording
+                : 'brightness(1.0)' // Normal when idle
+            }}
+            onClick={disabled || isProcessing ? undefined : (isRecording ? stopRecording : startRecording)}
+          />
+          
+          {/* Foreground icon */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {isProcessing ? (
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+            ) : isRecording ? (
+              <Square className="h-6 w-6 fill-current text-white drop-shadow-lg" />
+            ) : (
+              <Mic className="h-6 w-6 text-white drop-shadow-lg" />
+            )}
+          </div>
+        </div>
 
         {/* Recording indicator */}
         {isRecording && (

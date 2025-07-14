@@ -21,7 +21,7 @@ export class VoiceActivityDetector {
   private isListening = false;
   private config: VADConfig;
   private silenceTimer: NodeJS.Timeout | null = null;
-  private readonly SILENCE_TIMEOUT = 2000; // 2 seconds of silence before stopping
+  private readonly SILENCE_TIMEOUT = 1500; // 1.5 seconds of silence before stopping
 
   constructor(config: VADConfig = {}) {
     this.config = {
@@ -101,6 +101,31 @@ export class VoiceActivityDetector {
     } catch (error) {
       console.error('❌ Failed to start VAD:', error);
       throw new Error('Failed to start Voice Activity Detector');
+    }
+  }
+
+  async pause(): Promise<void> {
+    if (!this.vad || !this.isListening) return;
+
+    try {
+      console.log('⏸️ Pausing VAD listening...');
+      this.vad.pause();
+      this.isListening = false;
+      this.clearSilenceTimer();
+    } catch (error) {
+      console.error('❌ Failed to pause VAD:', error);
+    }
+  }
+
+  async resume(): Promise<void> {
+    if (!this.vad || this.isListening) return;
+
+    try {
+      console.log('▶️ Resuming VAD listening...');
+      this.vad.start();
+      this.isListening = true;
+    } catch (error) {
+      console.error('❌ Failed to resume VAD:', error);
     }
   }
 
