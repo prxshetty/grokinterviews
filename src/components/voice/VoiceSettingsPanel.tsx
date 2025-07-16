@@ -50,10 +50,9 @@ export function VoiceSettingsPanel({
             }`}
           >
             <div className="flex items-center space-x-2">
-              <span>🚀</span>
               <div className="text-left">
                 <div className="font-semibold">Groq</div>
-                <div className="text-xs opacity-75">Free • Fast</div>
+                <div className="text-xs opacity-75">Free</div>
               </div>
             </div>
           </button>
@@ -66,7 +65,6 @@ export function VoiceSettingsPanel({
             }`}
           >
             <div className="flex items-center space-x-2">
-              <span>🎯</span>
               <div className="text-left">
                 <div className="font-semibold">Google</div>
                 <div className="text-xs opacity-75">Premium</div>

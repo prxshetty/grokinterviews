@@ -13,8 +13,15 @@ import VoicePageWithVisualizer, { VoicePageWithVisualizerRef } from '@/component
 import VoiceRecorderHeadless, { VoiceRecorderHeadlessRef } from '@/components/voice/VoiceRecorderHeadless';
 import { VoicePlayerRef } from '@/components/voice/VoicePlayer';
 import { VoiceOption } from '@/components/voice/VoiceSelector';
+import InterviewModeSelector, { InterviewMode } from '@/components/voice/InterviewModeSelector';
+import PhoneCallInterface from '@/components/voice/PhoneCallInterface';
+import CallHistory from '@/components/voice/CallHistory';
 
 export default function VoicePage() {
+  // Interview mode state
+  const [interviewMode, setInterviewMode] = useState<InterviewMode>('web');
+  const [showModeSelector, setShowModeSelector] = useState(true);
+
   const [currentQuestion, setCurrentQuestion] = useState(
     "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background."
   );
@@ -24,7 +31,7 @@ export default function VoicePage() {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [aiResponseKey, setAiResponseKey] = useState(0); // Force re-render of VoicePlayer
 
-  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>('Sophia');
+  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>('Arista'); // Default to Arista for Groq
   const [ttsProvider, setTtsProvider] = useState<'google' | 'groq'>('groq'); // Default to Groq (free)
   const [ttsError, setTtsError] = useState<string | null>(null);
   const [shouldAutoStartRecording, setShouldAutoStartRecording] = useState(false);
@@ -49,6 +56,7 @@ export default function VoicePage() {
   // isRecordingProcessing is now accessed via voiceRecorderRef.current?.isProcessing
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [vadSupported, setVadSupported] = useState(false);
+  const [callHistoryRefreshTrigger, setCallHistoryRefreshTrigger] = useState(0);
 
   // Initialize VAD support check
   useEffect(() => {
@@ -157,7 +165,35 @@ export default function VoicePage() {
     }
   }, [sessionId, fetchSessionTranscripts]);
 
+  // Auto-switch voice when TTS provider changes
+  useEffect(() => {
+    if (ttsProvider === 'groq') {
+      setSelectedVoice('Arista'); // Default female voice for Groq
+    } else if (ttsProvider === 'google') {
+      setSelectedVoice('Sophia'); // Default female voice for Google
+    }
+  }, [ttsProvider]);
+
   // Handler functions for control buttons
+  const handleModeSelection = (mode: InterviewMode) => {
+    setInterviewMode(mode);
+    setShowModeSelector(false);
+  };
+
+  const handleBackToModeSelector = () => {
+    setShowModeSelector(true);
+    setIsInterviewActive(false);
+    setIsInterviewCompleted(false);
+    setInterviewReport(null);
+  };
+
+  // Handle phone call completion
+  const handleCallEnded = useCallback((callId: string) => {
+    console.log('Call ended:', callId);
+    // Trigger call history refresh
+    setCallHistoryRefreshTrigger(prev => prev + 1);
+  }, []);
+
   const handleStartInterview = async () => {
     // Stop all ongoing audio operations first
     // Starting new interview - stopping all ongoing operations
@@ -442,16 +478,52 @@ export default function VoicePage() {
     >
       <div className="min-h-screen">
         <div className="container mx-auto px-4 py-8">
-        {/* Personalized Header - Hidden when interview is active */}
-        <div className={`text-center mb-12 transition-all duration-700 ease-in-out transform ${
-          isInterviewActive 
-            ? 'opacity-0 -translate-y-4 pointer-events-none h-0 mb-0 overflow-hidden' 
-            : 'opacity-100 translate-y-0 pointer-events-auto'
-        }`}>
-          <h1 className="text-3xl font-light text-gray-900 dark:text-white mb-2">
-            Hey {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'}, ready for quick assessment?
-          </h1>
-        </div>
+          {/* Interview Mode Selector */}
+          {showModeSelector && (
+            <div className="max-w-4xl mx-auto">
+              <InterviewModeSelector
+                selectedMode={interviewMode}
+                onModeChange={handleModeSelection}
+                disabled={rateLimited}
+                className="mb-8"
+              />
+            </div>
+          )}
+
+          {/* Phone Call Interface */}
+          {!showModeSelector && interviewMode === 'phone' && (
+            <div className="max-w-4xl mx-auto space-y-8">
+              <PhoneCallInterface 
+                onBackToModeSelector={handleBackToModeSelector}
+                onCallEnded={handleCallEnded}
+              />
+              
+              {/* Call History */}
+              <div className="mt-8">
+                <CallHistory refreshTrigger={callHistoryRefreshTrigger} />
+              </div>
+            </div>
+          )}
+
+          {/* Web Interview Interface */}
+          {!showModeSelector && interviewMode === 'web' && (
+            <>
+              {/* Personalized Header - Hidden when interview is active */}
+              <div className={`text-center mb-12 transition-all duration-700 ease-in-out transform ${
+                isInterviewActive 
+                  ? 'opacity-0 -translate-y-4 pointer-events-none h-0 mb-0 overflow-hidden' 
+                  : 'opacity-100 translate-y-0 pointer-events-auto'
+              }`}>
+                <h1 className="text-3xl font-light text-gray-900 dark:text-white mb-2">
+                  Hey {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'}, ready for quick assessment?
+                </h1>
+                <button
+                  onClick={handleBackToModeSelector}
+                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                >
+                  ← Switch to Phone Interview
+                </button>
+              </div>
 
         {/* AI Processing Indicator - Larger when interview is active */}
         <div className={`flex justify-center transition-all duration-700 ease-out ${
@@ -674,6 +746,8 @@ export default function VoicePage() {
             onDismissRecordingError={handleDismissRecordingError}
           />
         </div>
+              </>
+            )}
 
         </div>
       </div>

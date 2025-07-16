@@ -37,6 +37,10 @@ const GROQ_VOICE_OPTIONS: { [key: string]: string } = {
 // Voice mapping for compatibility with existing app voices
 const mapVoiceToGroq = (voiceName: string): string => {
   const voiceMapping: { [key: string]: string } = {
+    // New voice mappings
+    'Arista': 'Arista-PlayAI',
+    'Atlas': 'Atlas-PlayAI',
+    // Legacy compatibility mappings
     'Sophia': 'Celeste-PlayAI',
     'Kore': 'Fritz-PlayAI',
     'Emma': 'Cheyenne-PlayAI',
@@ -45,7 +49,7 @@ const mapVoiceToGroq = (voiceName: string): string => {
     'Ava': 'Gail-PlayAI',
   };
 
-  return voiceMapping[voiceName] || GROQ_VOICE_OPTIONS[voiceName] || 'Fritz-PlayAI';
+  return voiceMapping[voiceName] || GROQ_VOICE_OPTIONS[voiceName] || 'Arista-PlayAI';
 };
 
 export async function POST(request: NextRequest) {
@@ -151,6 +155,10 @@ export async function GET() {
     voices: Object.keys(GROQ_VOICE_OPTIONS),
     voiceMapping: GROQ_VOICE_OPTIONS,
     compatibilityMapping: {
+      // New voice mappings
+      'Arista': 'Arista-PlayAI',
+      'Atlas': 'Atlas-PlayAI',
+      // Legacy compatibility mappings
       'Sophia': 'Celeste-PlayAI',
       'Kore': 'Fritz-PlayAI',
       'Emma': 'Cheyenne-PlayAI',
@@ -158,7 +166,7 @@ export async function GET() {
       'Oliver': 'Calum-PlayAI',
       'Ava': 'Gail-PlayAI',
     },
-    defaultVoice: 'Fritz-PlayAI',
+    defaultVoice: 'Arista-PlayAI',
     maxTextLength: 10000
   });
 }
