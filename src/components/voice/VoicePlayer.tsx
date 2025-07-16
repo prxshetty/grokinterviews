@@ -15,10 +15,12 @@ interface VoicePlayerProps {
   onPlayStateChange?: (isPlaying: boolean) => void;
   onError?: (error: string) => void;
   onPlaybackComplete?: () => void;
+  onAudioData?: (audioData: Float32Array) => void;
 }
 
 export interface VoicePlayerRef {
   stopPlayback: () => void;
+  getAudioElement: () => HTMLAudioElement | null;
 }
 
 export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({ 
@@ -29,7 +31,8 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
   className,
   onPlayStateChange,
   onError,
-  onPlaybackComplete 
+  onPlaybackComplete,
+  onAudioData
 }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,11 +43,21 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const isGeneratingRef = useRef<boolean>(false);
   const generateSpeechRef = useRef<((shouldAutoPlay?: boolean) => Promise<void>) | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
     stopPlayback: () => {
       console.log('🛑 VoicePlayer: Force stopping playback');
+      
+      // Stop audio analysis
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
       
       // Stop any ongoing audio
       if (audioRef.current) {
@@ -55,6 +68,14 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
           console.warn('Warning: Could not stop audio:', error);
         }
       }
+      
+      // Clean up Web Audio API
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+      audioContextRef.current = null;
+      analyserRef.current = null;
+      sourceRef.current = null;
       
       // Clean up audio URL
       if (audioUrl) {
@@ -75,8 +96,86 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       onPlayStateChange?.(false);
       
       console.log('✅ VoicePlayer: Playback stopped successfully');
-    }
+    },
+    getAudioElement: () => audioRef.current
   }), [audioUrl, onPlayStateChange]);
+
+  // Setup audio analysis
+  const setupAudioAnalysis = useCallback((audio: HTMLAudioElement) => {
+    try {
+      // Create audio context if it doesn't exist
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      const audioContext = audioContextRef.current;
+      
+      // Resume audio context if suspended (required for some browsers)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      // Create analyser node if it doesn't exist
+      if (!analyserRef.current) {
+        analyserRef.current = audioContext.createAnalyser();
+        analyserRef.current.fftSize = 128; // 64 frequency bins
+        analyserRef.current.smoothingTimeConstant = 0.8;
+      }
+      
+      // Create source node if it doesn't exist
+      if (!sourceRef.current) {
+        sourceRef.current = audioContext.createMediaElementSource(audio);
+        sourceRef.current.connect(analyserRef.current);
+        analyserRef.current.connect(audioContext.destination);
+      }
+      
+      // Start audio analysis loop
+      const analyseAudio = () => {
+        if (!analyserRef.current) {
+          return;
+        }
+        
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        const dataArray = new Float32Array(bufferLength);
+        analyserRef.current.getFloatFrequencyData(dataArray);
+        
+        // Convert decibel values to 0-1 range for visualization
+        const normalizedData = new Float32Array(bufferLength);
+        for (let i = 0; i < bufferLength; i++) {
+          // Convert from dB (-100 to 0) to 0-1 range
+          normalizedData[i] = Math.max(0, (dataArray[i] + 100) / 100);
+        }
+        
+        onAudioData?.(normalizedData);
+        
+        if (audioRef.current && !audioRef.current.paused) {
+          animationFrameRef.current = requestAnimationFrame(analyseAudio);
+        }
+      };
+      
+      // Start analysis when audio plays
+      audio.addEventListener('play', () => {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+        analyseAudio();
+      });
+      
+      // Stop analysis when audio pauses or ends
+      const stopAnalysis = () => {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+      };
+      
+      audio.addEventListener('pause', stopAnalysis);
+      audio.addEventListener('ended', stopAnalysis);
+      
+    } catch {
+      // Failed to setup audio analysis
+    }
+  }, [onAudioData]);
 
   const generateSpeech = useCallback(async (shouldAutoPlay = false) => {
     if (!text.trim() || isGeneratingRef.current) return;
@@ -110,9 +209,18 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       
       setAudioUrl(url);
       
-      // Create new audio element
-      const audio = new Audio(url);
-      audioRef.current = audio;
+      // Wait for the audio element to be created in the DOM
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const audio = audioRef.current;
+      if (!audio) {
+        throw new Error('Audio element not available');
+      }
+
+      // Setup audio analysis for real-time visualization
+      if (onAudioData) {
+        setupAudioAnalysis(audio);
+      }
 
       // Handle audio events
       audio.onplay = () => {
@@ -140,7 +248,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
 
       // Auto-play if requested
       if (shouldAutoPlay) {
-        console.log('🔊 Auto-playing generated speech...');
+        // Auto-playing generated speech
         try {
           // Ensure audio is ready to play
           audio.load();
@@ -153,19 +261,18 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
             setTimeout(resolve, 1000);
           });
           
-          console.log('🔊 Audio ready, starting playback...');
+          // Audio ready, starting playback
           const playPromise = audio.play();
           playPromiseRef.current = playPromise;
           await playPromise;
-          console.log('🔊 Auto-play successful!');
-        } catch (playError) {
-          console.error('❌ Auto-play failed:', playError);
-          // Don't throw error for auto-play failures, just log them
+          // Auto-play successful
+        } catch {
+          // Auto-play failed - don't throw error for auto-play failures
         }
       }
       
     } catch (error) {
-      console.error('❌ TTS error:', error);
+      // TTS error occurred
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate speech';
       setError(errorMessage);
       onError?.(errorMessage);
@@ -173,8 +280,8 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       setIsLoading(false);
       isGeneratingRef.current = false;
     }
-  }, [text, voice, ttsProvider, onPlayStateChange, onPlaybackComplete, onError]);
-
+  }, [text, voice, ttsProvider, onPlayStateChange, onPlaybackComplete, onError, onAudioData, setupAudioAnalysis]);
+  
   // Update the ref whenever generateSpeech changes
   generateSpeechRef.current = generateSpeech;
 
@@ -227,25 +334,38 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
 
   // Cleanup on unmount
   React.useEffect(() => {
+    const currentAudio = audioRef.current;
+    const currentUrl = audioUrl;
+    
     return () => {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
+      // Stop audio analysis
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
-      if (audioRef.current) {
+      
+      // Clean up Web Audio API
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+      
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+      if (currentAudio) {
         // Wait for any pending play promise before pausing
         if (playPromiseRef.current) {
           playPromiseRef.current.then(() => {
-            if (audioRef.current) {
-              audioRef.current.pause();
+            if (currentAudio) {
+              currentAudio.pause();
             }
           }).catch(() => {
             // Play was already interrupted, safe to continue
-            if (audioRef.current) {
-              audioRef.current.pause();
+            if (currentAudio) {
+              currentAudio.pause();
             }
           });
         } else {
-          audioRef.current.pause();
+          currentAudio.pause();
         }
       }
     };
@@ -257,6 +377,16 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
 
   return (
     <div className={cn("flex items-center space-x-3", className)}>
+      {/* Hidden audio element for proper audio output */}
+      {audioUrl && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          preload="auto"
+          style={{ display: 'none' }}
+        />
+      )}
+      
       {/* Play/Pause Button */}
       <Button
         size="sm"

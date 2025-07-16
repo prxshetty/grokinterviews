@@ -1,5 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 topics/*
+.trae/
 .cursor
 PROJECT_WIDE_OPTIMIZATION_PLAN.md
 TODOIST.md
@@ -12,6 +13,7 @@ PERFORMANCE-OPTIMIZATION-PLAN.md
 SECURITY-PLAN.md
 backend_api.md
 sql-commands.md.backup
+sql-commands.md
 scripts/
 PROJECT_WIDE_OPTIMIZATION_PLAN.md
 OPTIMIZATION_SUMMARY.md
