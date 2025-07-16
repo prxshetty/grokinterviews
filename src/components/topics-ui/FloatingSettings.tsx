@@ -31,7 +31,7 @@ export default function FloatingSettings({
       <DropdownMenuTrigger asChild>
         <button
           aria-label="Difficulty settings"
-          className={`p-2 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-md transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 flex items-center justify-center ${className}`}
+          className={`p-2 rounded-full bg-transparent backdrop-blur-md transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 flex items-center justify-center ${className}`}
         >
           <motion.span
             animate={isOpen ? { rotate: 360 } : { rotate: 0 }}

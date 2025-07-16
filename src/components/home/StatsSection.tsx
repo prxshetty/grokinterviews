@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BentoCard } from "@/components/ui/bento-card";
 import { highlightedStats } from './content';
 
@@ -22,23 +22,40 @@ const statsData = highlightedStats.map((stat, index) => ({
     delay: (index + 1) * 0.2,
 }));
 
-// Grid layout classes for specific cards (defined inline in component)
-
 export default function StatsSection() {
-  const [isMounted, setIsMounted] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    // Set mounted to true after component is loaded
-    setIsMounted(true);
-    
-    // Cleanup function
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting) {
+          setIsInView(true);
+          // Once animation is triggered, we can disconnect the observer
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.1, // Trigger when 10% of the component is visible
+        rootMargin: '0px 0px -50px 0px' // Start animation slightly before fully visible
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
     return () => {
-      setIsMounted(false);
+      observer.disconnect();
     };
   }, []);
 
   return (
-    <div className={`w-full py-12 sm:py-16 md:py-24 font-sans transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+    <div 
+      ref={sectionRef}
+      className={`w-full py-12 sm:py-16 md:py-24 font-sans transition-all duration-700 ease-out ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+    >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grow h-full gap-0 w-full px-4 sm:px-6 lg:px-8">
         {statsData.map((stat, index) => {
             let className = "";

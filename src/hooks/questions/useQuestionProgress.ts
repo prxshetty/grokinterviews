@@ -60,20 +60,20 @@ export function useQuestionProgress({
     // Try multiple selectors to find the scrollable container
     let scrollableContainer: HTMLElement | null = null;
     
-    // First try to find by class
-    scrollableContainer = answerElement.querySelector('.h-full.overflow-y-auto') as HTMLElement;
-    
-    // If not found, try to find any scrollable element
-    if (!scrollableContainer) {
-      scrollableContainer = answerElement.querySelector('[style*="overflow-y: auto"]') as HTMLElement;
+    // First check if the answerElement itself is scrollable (mobile case)
+    const computedStyle = window.getComputedStyle(answerElement);
+    if (computedStyle.overflowY === 'auto' || computedStyle.overflowY === 'scroll') {
+      scrollableContainer = answerElement;
     }
     
-    // If still not found, check if the answerElement itself is scrollable
+    // If not found, try to find by class (desktop case)
     if (!scrollableContainer) {
-      const computedStyle = window.getComputedStyle(answerElement);
-      if (computedStyle.overflowY === 'auto' || computedStyle.overflowY === 'scroll') {
-        scrollableContainer = answerElement;
-      }
+      scrollableContainer = answerElement.querySelector('.h-full.overflow-y-auto') as HTMLElement;
+    }
+    
+    // If still not found, try to find any scrollable element
+    if (!scrollableContainer) {
+      scrollableContainer = answerElement.querySelector('[style*="overflow-y: auto"]') as HTMLElement;
     }
     
     if (!scrollableContainer) {

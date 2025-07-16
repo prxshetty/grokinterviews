@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { YouTubeThumbnailWithFallback } from '@/components/ui/YouTubeThumbnail';
 
-import { Resource, TYPE_DISPLAY_INFO, getGradientForType } from '@/components/questions/ResourceUtils';
+import { Resource, TYPE_DISPLAY_INFO, getGradientForType } from '@/types/resources.types';
 
 interface ResourceCardProps {
   resource: Resource;

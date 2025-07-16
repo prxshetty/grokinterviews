@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/utils/supabase/client';
-import { UserPreferences, DEFAULT_USER_PREFERENCES } from '@/components/questions/ResourceUtils';
+import { UserPreferences, DEFAULT_USER_PREFERENCES } from '@/types/resources.types';
 
 interface UseUserPreferencesProps {
   isLoggedIn: boolean;
