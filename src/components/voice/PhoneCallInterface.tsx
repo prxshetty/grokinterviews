@@ -35,13 +35,40 @@ export default function PhoneCallInterface({
   const [currentCall, setCurrentCall] = useState<VapiCall | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [callDuration, setCallDuration] = useState(0);
+  const [configStatus, setConfigStatus] = useState<{
+    hasApiKey: boolean;
+    hasAssistantId: boolean;
+    hasPhoneNumberId: boolean;
+    isFullyConfigured: boolean;
+  } | null>(null);
   
   // Use ref for configStatus to avoid unnecessary re-renders
-  const configStatusRef = useRef(vapiService.getConfigStatus());
+  const configStatusRef = useRef(configStatus);
+  configStatusRef.current = configStatus;
 
   // Use refs to store callback functions to prevent infinite loops
   const onCallEndedRef = useRef(onCallEnded);
   onCallEndedRef.current = onCallEnded;
+
+  // Fetch VAPI configuration on component mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const config = await vapiService.getConfigStatus();
+        setConfigStatus(config);
+      } catch (error) {
+        console.error('Error fetching VAPI configuration:', error);
+        setConfigStatus({
+          hasApiKey: false,
+          hasAssistantId: false,
+          hasPhoneNumberId: false,
+          isFullyConfigured: false
+        });
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   // Effect for call duration timer and status polling
   useEffect(() => {
@@ -194,7 +221,7 @@ export default function PhoneCallInterface({
       return;
     }
 
-    if (!configStatusRef.current.isFullyConfigured) {
+    if (!configStatusRef.current?.isFullyConfigured) {
       setError('Phone calling is not properly configured. Please contact support.');
       return;
     }
@@ -341,7 +368,7 @@ export default function PhoneCallInterface({
   };
 
   // Check if configuration warning should be shown
-  const showConfigWarning = !configStatusRef.current.isFullyConfigured;
+  const showConfigWarning = !configStatusRef.current?.isFullyConfigured;
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -371,9 +398,9 @@ export default function PhoneCallInterface({
                 Phone calling requires VAPI configuration. Missing:
               </p>
               <ul className="text-orange-600 dark:text-orange-400 text-xs mt-2 space-y-1">
-                {!configStatusRef.current.hasApiKey && <li>• VAPI API Key</li>}
-                {!configStatusRef.current.hasAssistantId && <li>• VAPI Assistant ID</li>}
-                {!configStatusRef.current.hasPhoneNumberId && <li>• VAPI Phone Number ID</li>}
+                {!configStatusRef.current?.hasApiKey && <li>• VAPI API Key</li>}
+                {!configStatusRef.current?.hasAssistantId && <li>• VAPI Assistant ID</li>}
+                {!configStatusRef.current?.hasPhoneNumberId && <li>• VAPI Phone Number ID</li>}
               </ul>
             </div>
           </div>
