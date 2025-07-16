@@ -14,6 +14,10 @@ export interface VapiCall {
   messages?: VapiMessage[];
   analysis?: VapiAnalysis;
   artifact?: VapiArtifact;
+  monitor?: {
+    listenUrl?: string;
+    controlUrl?: string;
+  };
 }
 
 export interface VapiMessage {
@@ -84,12 +88,19 @@ export class VapiService {
   } | null = null;
 
   constructor() {
-    this.apiKey = process.env.VAPI_API_KEY || '';
     this.baseUrl = VAPI_CONFIG.baseUrl;
+    
+    // On client side, we'll get the API key from server-side API calls
+    // On server side, we can access environment variables directly
+    if (typeof window === 'undefined') {
+      this.apiKey = process.env.VAPI_API_KEY || '';
+    } else {
+      this.apiKey = ''; // Will be handled by server-side API calls
+    }
     
     // Only warn during runtime (when window is available), not during build
     if (!this.apiKey && typeof window !== 'undefined') {
-      console.warn('VAPI API key not found. Phone call functionality will be limited.');
+      console.warn('VAPI API key will be handled server-side for security.');
     }
   }
 
@@ -102,57 +113,29 @@ export class VapiService {
     userName?: string;
   }): Promise<CreateCallResponse> {
     try {
-      if (!this.apiKey) {
-        throw new Error('VAPI API key not configured');
-      }
-
-      if (!VAPI_CONFIG.defaultAssistant.assistantId) {
-        throw new Error('VAPI Assistant ID not configured');
-      }
-
-      if (!VAPI_CONFIG.phoneNumber.phoneNumberId) {
-        throw new Error('VAPI Phone Number ID not configured');
-      }
-
-      // Validate phone number format
-      const cleanPhoneNumber = this.validateAndFormatPhoneNumber(phoneNumber);
-
-      const requestBody: CreateCallRequest = {
-        assistantId: VAPI_CONFIG.defaultAssistant.assistantId,
-        phoneNumberId: VAPI_CONFIG.phoneNumber.phoneNumberId,
-        customer: {
-          number: cleanPhoneNumber,
-          name: userContext?.userName || 'Interview Candidate'
-        },
-        assistantOverrides: {
-          variableValues: {
-            userId: userContext?.userId,
-            sessionId: userContext?.sessionId,
-            userName: userContext?.userName
-          },
-          firstMessage: `Hello ${userContext?.userName || 'there'}! This is your behavioral interview assistant. I'm here to help you practice for your upcoming interviews. Are you ready to begin?`
-        }
-      };
-
-      const response = await fetch(`${this.baseUrl}${VAPI_ENDPOINTS.calls}`, {
+      // Use server-side API endpoint for security
+      const response = await fetch('/api/voice/calls', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          phoneNumber,
+          userContext
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const call: VapiCall = await response.json();
+      const result = await response.json();
 
       return {
-        success: true,
-        call
+        success: result.success,
+        call: result.call,
+        error: result.error
       };
 
     } catch (error) {
@@ -169,28 +152,25 @@ export class VapiService {
    */
   async getCallStatus(callId: string): Promise<CallStatusResponse> {
     try {
-      if (!this.apiKey) {
-        throw new Error('VAPI API key not configured');
-      }
-
-      const response = await fetch(`${this.baseUrl}${VAPI_ENDPOINTS.calls}/${callId}`, {
+      // Use server-side API endpoint for security
+      const response = await fetch(`/api/voice/calls?callId=${encodeURIComponent(callId)}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const call: VapiCall = await response.json();
+      const result = await response.json();
 
       return {
-        success: true,
-        call
+        success: result.success,
+        call: result.call,
+        error: result.error
       };
 
     } catch (error) {
@@ -207,21 +187,17 @@ export class VapiService {
    */
   async endCall(callId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      if (!this.apiKey) {
-        throw new Error('VAPI API key not configured');
-      }
-
-      const response = await fetch(`${this.baseUrl}${VAPI_ENDPOINTS.calls}/${callId}`, {
+      // Use server-side API endpoint for security
+      const response = await fetch(`/api/voice/calls?callId=${encodeURIComponent(callId)}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       return { success: true };
@@ -232,28 +208,6 @@ export class VapiService {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred'
       };
-    }
-  }
-
-  /**
-   * Validate and format phone number to E.164 format
-   */
-  private validateAndFormatPhoneNumber(phoneNumber: string): string {
-    // Remove all non-digit characters
-    const digitsOnly = phoneNumber.replace(/\D/g, '');
-    
-    // Check if it's a valid US number (10 digits) or international (starts with country code)
-    if (digitsOnly.length === 10) {
-      // US number, add +1 country code
-      return `+1${digitsOnly}`;
-    } else if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
-      // US number with country code
-      return `+${digitsOnly}`;
-    } else if (digitsOnly.length > 7) {
-      // International number
-      return `+${digitsOnly}`;
-    } else {
-      throw new Error('Invalid phone number format. Please enter a valid phone number.');
     }
   }
 
