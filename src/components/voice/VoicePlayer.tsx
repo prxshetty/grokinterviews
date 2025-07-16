@@ -143,7 +143,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
         const normalizedData = new Float32Array(bufferLength);
         for (let i = 0; i < bufferLength; i++) {
           // Convert from dB (-100 to 0) to 0-1 range
-          normalizedData[i] = Math.max(0, (dataArray[i] + 100) / 100);
+          normalizedData[i] = Math.max(0, ((dataArray[i] || -100) + 100) / 100);
         }
         
         onAudioData?.(normalizedData);

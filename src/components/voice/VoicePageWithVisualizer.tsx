@@ -104,7 +104,7 @@ const VoicePageWithVisualizer = React.forwardRef<VoicePageWithVisualizerRef, Voi
         setAudioValues(prev => {
           const newValues = new Float32Array(64);
           for (let i = 0; i < 64; i++) {
-            newValues[i] = Math.max(0, prev[i] * 0.95); // Gradual fade
+            newValues[i] = Math.max(0, (prev[i] || 0) * 0.95); // Gradual fade
           }
           return newValues;
         });

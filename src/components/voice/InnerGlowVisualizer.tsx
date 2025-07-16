@@ -95,7 +95,7 @@ const InnerGlowVisualizer: React.FC<InnerGlowVisualizerProps> = ({
     ctx.lineTo(-outerSize, 0);
     ctx.lineTo(0, 0);
     for (let i = 0; i < values.length; i++) {
-      const amplitude = values[i];
+      const amplitude = values[i] || 0;
       ctx.lineTo(amplitude * deformation + sideVisible, (i / values.length) * canvas.height);
     }
     ctx.fill();
@@ -114,7 +114,7 @@ const InnerGlowVisualizer: React.FC<InnerGlowVisualizerProps> = ({
     ctx.lineTo(0, canvas.height + outerSize);
     ctx.lineTo(0, canvas.height);
     for (let i = 0; i < values.length; i++) {
-      const amplitude = values[i];
+      const amplitude = values[i] || 0;
       ctx.lineTo(
         canvas.width * (i / values.length),
         canvas.height - (amplitude * deformation + sideVisible)
@@ -136,7 +136,7 @@ const InnerGlowVisualizer: React.FC<InnerGlowVisualizerProps> = ({
     ctx.lineTo(canvas.width + outerSize, canvas.height);
     ctx.lineTo(canvas.width, canvas.height);
     for (let i = 0; i < values.length; i++) {
-      const amplitude = values[i];
+      const amplitude = values[i] || 0;
       ctx.lineTo(
         canvas.width - (amplitude * deformation + sideVisible),
         (1 - i / values.length) * canvas.height
@@ -158,7 +158,7 @@ const InnerGlowVisualizer: React.FC<InnerGlowVisualizerProps> = ({
     ctx.lineTo(canvas.width, -outerSize);
     ctx.lineTo(canvas.width, 0);
     for (let i = 0; i < values.length; i++) {
-      const amplitude = values[i];
+      const amplitude = values[i] || 0;
       ctx.lineTo(canvas.width * (1 - i / values.length), amplitude * deformation + sideVisible);
     }
     ctx.fill();
