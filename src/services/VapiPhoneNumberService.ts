@@ -33,7 +33,8 @@ export class VapiPhoneNumberService {
     this.apiKey = process.env.VAPI_API_KEY || '';
     this.baseUrl = VAPI_CONFIG.baseUrl;
     
-    if (!this.apiKey) {
+    // Only warn during runtime (when window is available), not during build
+    if (!this.apiKey && typeof window !== 'undefined') {
       console.warn('VAPI API key not found. Phone number management functionality will be limited.');
     }
   }

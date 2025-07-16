@@ -76,12 +76,19 @@ export interface CallStatusResponse {
 export class VapiService {
   private apiKey: string;
   private baseUrl: string;
+  private configStatus: {
+    hasApiKey: boolean;
+    hasAssistantId: boolean;
+    hasPhoneNumberId: boolean;
+    isFullyConfigured: boolean;
+  } | null = null;
 
   constructor() {
     this.apiKey = process.env.VAPI_API_KEY || '';
     this.baseUrl = VAPI_CONFIG.baseUrl;
     
-    if (!this.apiKey) {
+    // Only warn during runtime (when window is available), not during build
+    if (!this.apiKey && typeof window !== 'undefined') {
       console.warn('VAPI API key not found. Phone call functionality will be limited.');
     }
   }
@@ -251,30 +258,83 @@ export class VapiService {
   }
 
   /**
+   * Fetch configuration status from API
+   */
+  private async fetchConfigStatus(): Promise<void> {
+    if (typeof window === 'undefined') {
+      // Server-side: use environment variables directly
+      this.configStatus = {
+        hasApiKey: !!process.env.VAPI_API_KEY,
+        hasAssistantId: !!VAPI_CONFIG.defaultAssistant.assistantId,
+        hasPhoneNumberId: !!VAPI_CONFIG.phoneNumber.phoneNumberId,
+        isFullyConfigured: !!(
+          process.env.VAPI_API_KEY &&
+          VAPI_CONFIG.defaultAssistant.assistantId &&
+          VAPI_CONFIG.phoneNumber.phoneNumberId
+        )
+      };
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/voice/config');
+      if (response.ok) {
+        const config = await response.json();
+        this.configStatus = {
+          hasApiKey: config.hasApiKey,
+          hasAssistantId: config.hasAssistantId,
+          hasPhoneNumberId: config.hasPhoneNumberId,
+          isFullyConfigured: config.isConfigured
+        };
+      } else {
+        // Fallback to false values if API fails
+        this.configStatus = {
+          hasApiKey: false,
+          hasAssistantId: false,
+          hasPhoneNumberId: false,
+          isFullyConfigured: false
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching VAPI configuration:', error);
+      // Fallback to false values if API fails
+      this.configStatus = {
+        hasApiKey: false,
+        hasAssistantId: false,
+        hasPhoneNumberId: false,
+        isFullyConfigured: false
+      };
+    }
+  }
+
+  /**
    * Check if VAPI is properly configured
    */
-  isConfigured(): boolean {
-    return !!(
-      this.apiKey &&
-      VAPI_CONFIG.defaultAssistant.assistantId &&
-      VAPI_CONFIG.phoneNumber.phoneNumberId
-    );
+  async isConfigured(): Promise<boolean> {
+    if (!this.configStatus) {
+      await this.fetchConfigStatus();
+    }
+    return this.configStatus?.isFullyConfigured || false;
   }
 
   /**
    * Get configuration status for debugging
    */
-  getConfigStatus(): {
+  async getConfigStatus(): Promise<{
     hasApiKey: boolean;
     hasAssistantId: boolean;
     hasPhoneNumberId: boolean;
     isFullyConfigured: boolean;
-  } {
-    return {
-      hasApiKey: !!this.apiKey,
-      hasAssistantId: !!VAPI_CONFIG.defaultAssistant.assistantId,
-      hasPhoneNumberId: !!VAPI_CONFIG.phoneNumber.phoneNumberId,
-      isFullyConfigured: this.isConfigured()
+  }> {
+    if (!this.configStatus) {
+      await this.fetchConfigStatus();
+    }
+    
+    return this.configStatus || {
+      hasApiKey: false,
+      hasAssistantId: false,
+      hasPhoneNumberId: false,
+      isFullyConfigured: false
     };
   }
 }

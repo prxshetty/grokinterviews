@@ -154,7 +154,7 @@ export default function CallHistory({
 
       setPlayingAudio(callId);
       await audio.play();
-    } catch (err) {
+    } catch {
       // Handle audio playback error
       setError('Failed to play audio recording');
       setPlayingAudio(null);
