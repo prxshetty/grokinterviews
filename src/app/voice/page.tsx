@@ -46,9 +46,18 @@ export default function VoicePage() {
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
   
   // Recording-related states
-  const [isRecordingProcessing, setIsRecordingProcessing] = useState(false);
+  // isRecordingProcessing is now accessed via voiceRecorderRef.current?.isProcessing
   const [recordingError, setRecordingError] = useState<string | null>(null);
-  const [vadSupported, setVadSupported] = useState(true);
+  const [vadSupported, setVadSupported] = useState(false);
+
+  // Initialize VAD support check
+  useEffect(() => {
+    const checkVADSupport = async () => {
+      const { isVADSupported } = await import('@/utils/vadUtils');
+      setVadSupported(isVADSupported());
+    };
+    checkVADSupport();
+  }, []);
 
   const [allTranscripts, setAllTranscripts] = useState<Array<{id: string, session_id: string, transcript_text: string, interaction_type: 'user_response' | 'ai_response', created_at: string, conversation_order: number}>>([]);
   const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
@@ -238,13 +247,13 @@ export default function VoicePage() {
 
 
   // Recording handler functions
-  const handleStartRecording = () => {
+  const handleStartRecording = async () => {
     if (voiceRecorderRef.current) {
       voiceRecorderRef.current.startRecording();
     }
   };
 
-  const handleStopRecording = () => {
+  const handleStopRecording = async () => {
     if (voiceRecorderRef.current) {
       voiceRecorderRef.current.stopRecording();
     }
@@ -286,7 +295,7 @@ export default function VoicePage() {
       // Only refresh transcripts after user responses, not AI responses
       // This prevents redundant loading after we already have the AI response
       const lastMessage = conversationHistory[conversationHistory.length - 1];
-      if (lastMessage.type === 'user') {
+      if (lastMessage && lastMessage.type === 'user') {
         // Delay to allow backend to save the transcript
         const timer = setTimeout(() => {
           fetchSessionTranscripts();
@@ -531,16 +540,12 @@ export default function VoicePage() {
                 // Generate AI response
                 await generateAIResponse(text, newHistory);
               }}
-              onRecordingStateChange={(isRecording, isSpeaking, isProcessing) => {
+              onRecordingStateChange={(isRecording, isSpeaking) => {
                 setIsRecordingActive(isRecording);
                 setIsSpeakingDetected(isSpeaking);
-                setIsRecordingProcessing(isProcessing);
               }}
               onError={(error) => {
                 setRecordingError(error);
-              }}
-              onVADSupportChange={(supported) => {
-                setVadSupported(supported);
               }}
               disabled={isProcessingAI || rateLimited} // Disable when processing AI response or rate limited
               enableVAD={true} // Enable Voice Activity Detection for auto-stop
@@ -660,7 +665,7 @@ export default function VoicePage() {
             // Recording-related props
             isRecording={isRecordingActive}
             isSpeaking={isSpeakingDetected}
-            isRecordingProcessing={isRecordingProcessing}
+            isRecordingProcessing={voiceRecorderRef.current?.isProcessing || false}
             enableVAD={true}
             vadSupported={vadSupported}
             recordingError={recordingError}
