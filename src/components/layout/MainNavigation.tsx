@@ -619,7 +619,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
       
-      <main className="flex-1 w-full overflow-x-hidden pt-16">
+      <main className="flex-1 w-full pt-16">
         {children}
       </main>
     </>
