@@ -1,4 +1,4 @@
-import { VAPI_CONFIG, VAPI_ENDPOINTS } from '@/config/vapi.config';
+import { VAPI_CONFIG } from '@/config/vapi.config';
 
 // Types for VAPI API
 export interface VapiCall {
@@ -79,7 +79,6 @@ export interface CallStatusResponse {
  */
 export class VapiService {
   private apiKey: string;
-  private baseUrl: string;
   private configStatus: {
     hasApiKey: boolean;
     hasAssistantId: boolean;
@@ -88,7 +87,6 @@ export class VapiService {
   } | null = null;
 
   constructor() {
-    this.baseUrl = VAPI_CONFIG.baseUrl;
     
     // On client side, we'll get the API key from server-side API calls
     // On server side, we can access environment variables directly

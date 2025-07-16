@@ -40,7 +40,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'voice',
-    label: 'Voice',
+    label: 'Interviews',
     href: '/voice',
     authRequired: false
   },
