@@ -221,12 +221,16 @@ export default function PhoneCallInterface({
       return;
     }
 
-    if (!configStatusRef.current?.isFullyConfigured) {
-      setError('Phone calling is not properly configured. Please contact support.');
-      return;
-    }
-
     try {
+      // Ensure we have the latest configuration status
+      const currentConfig = await vapiService.getConfigStatus();
+      setConfigStatus(currentConfig);
+      
+      if (!currentConfig.isFullyConfigured) {
+        setError('Phone calling is not properly configured. Please contact support.');
+        return;
+      }
+
       setCallState('initiating');
       setError(null);
       
