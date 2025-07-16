@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DEFAULT_AVATAR_URL } from '@/config';
@@ -24,6 +24,14 @@ export default function RecentTranscriptDisplay({
   isLoadingTranscripts
 }: RecentTranscriptDisplayProps) {
   const { user, profile } = useAuth();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll to bottom when new transcripts are added
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  }, [allTranscripts, isLoadingTranscripts]);
   
   if (!isInterviewActive) {
     return null;
@@ -31,7 +39,10 @@ export default function RecentTranscriptDisplay({
 
   return (
     <div className="max-w-2xl mx-auto mb-8">
-      <div className="space-y-4 max-h-96 overflow-y-auto">
+      <div 
+        ref={scrollContainerRef}
+        className="space-y-4 max-h-96 overflow-y-auto scroll-smooth"
+      >
         {allTranscripts.map((transcript) => (
           <div
             key={transcript.id}
@@ -85,7 +96,7 @@ export default function RecentTranscriptDisplay({
             <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Typing...</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Thinking...</span>
               </div>
             </div>
           </div>
