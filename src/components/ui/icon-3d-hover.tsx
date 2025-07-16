@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, MotionConfigContext, LayoutGroup, MotionStyle } from 'framer-motion';
+import styles from './icon-3d-hover.module.css';
 
 // Types
 interface Props {
@@ -55,8 +56,8 @@ export const IconHover3D: React.FC<Props> = ({
   variant = 'Default',
   className = "",
   style = {},
-  width = 380, // Increased from 500
-  height = 130, // Reduced from 150
+  width = 450, // Further increased for maximum desktop display
+  height = 150, // Further increased for maximum desktop display
   ...restProps
 }) => {  const [currentVariant, setCurrentVariant] = useState<'Default' | 'Hover'>(variant);
   const refBinding = useRef<HTMLDivElement>(null);
@@ -122,11 +123,11 @@ export const IconHover3D: React.FC<Props> = ({
     display: "flex",
     flexDirection: "row",
     flexWrap: "nowrap",
-    gap: "16px", // Reduced from 40px
+    gap: "16px", // Back to original desktop size
     height: "min-content",
     justifyContent: "center",
     overflow: "visible",
-    padding: "16px", // Reduced from 20px
+    padding: "16px", // Back to original desktop size
     position: "relative",
     width: "min-content",
     border: "1px solid hsl(var(--foreground))",
@@ -139,13 +140,16 @@ export const IconHover3D: React.FC<Props> = ({
 
 
   return (
-    <div style={{ width, height }}>
+    <div 
+      style={{ width, height }}
+      className={`${styles.iconHover3DWrapper} icon-hover-3d-wrapper`}
+    >
       <LayoutGroup id={defaultLayoutId}>
         <Variants animate={variants} initial={false}>
           <Transition value={transition1}>
             <motion.div
               {...restProps}
-              className={`icon-hover-3d ${className}`}
+              className={`${styles.iconHover3D} icon-hover-3d ${className}`}
               data-framer-name="Default"
               data-highlight={true}
               ref={refBinding}
@@ -155,7 +159,7 @@ export const IconHover3D: React.FC<Props> = ({
             >
               {/* Icon Container */}
               <motion.div
-                className="icon-container"
+                className={`${styles.iconContainer} icon-container`}
                 data-framer-name="Icon"
                 style={{
                   alignContent: "center",
@@ -165,12 +169,12 @@ export const IconHover3D: React.FC<Props> = ({
                   flexDirection: "row",
                   flexWrap: "nowrap",
                   gap: "10px",
-                  height: "64px", // Reduced from 100px
+                  height: "64px", // Back to original desktop size
                   justifyContent: "center",
                   overflow: "visible",
                   padding: "0px",
                   position: "relative",
-                  width: "64px", // Reduced from 100px
+                  width: "64px", // Back to original desktop size
                   zIndex: 1,
                   border: "1px solid hsl(var(--foreground))"
                 }}
@@ -186,7 +190,7 @@ export const IconHover3D: React.FC<Props> = ({
                     position: "relative",
                     width: "348px",
                     zIndex: 2,
-                    scale: 0.2 // Reduced from 0.3
+                    scale: 0.2 // Back to original desktop size
                   }}
                 >
                   {/* Slice Cube */}
@@ -802,7 +806,7 @@ export const IconHover3D: React.FC<Props> = ({
 
               {/* Content */}
               <motion.div
-                className="content"
+                className={`${styles.content} content`}
                 data-framer-name="Content"
                 style={{
                   alignContent: "flex-start",
@@ -811,10 +815,10 @@ export const IconHover3D: React.FC<Props> = ({
                   flex: "none",
                   flexDirection: "column",
                   flexWrap: "nowrap",
-                  gap: "8px", // Reduced from 12px
+                  gap: "8px", // Back to original desktop size
                   height: "min-content",
                   justifyContent: "center",
-                  maxWidth: "350px", // Increased from 200px
+                  maxWidth: "350px", // Back to original desktop size
                   overflow: "hidden",
                   padding: "0px",
                   position: "relative",
@@ -823,7 +827,7 @@ export const IconHover3D: React.FC<Props> = ({
               >
                 {/* Text Container */}
                 <motion.div
-                  className="text-container"
+                  className={`${styles.textContainer} text-container`}
                   data-framer-name="Text"
                   style={{
                     alignContent: "center",
@@ -833,7 +837,7 @@ export const IconHover3D: React.FC<Props> = ({
                     flexDirection: "row",
                     flexWrap: "nowrap",
                     gap: "10px",
-                    height: "24px", // Reduced from 32px
+                    height: "24px", // Back to original desktop size
                     justifyContent: "center",
                     overflow: "visible",
                     padding: "0px",
@@ -846,11 +850,11 @@ export const IconHover3D: React.FC<Props> = ({
                     data-framer-name="BG Fill"
                     style={{
                       flex: "none",
-                      height: "24px", // Reduced from 32px
+                      height: "24px", // Back to original desktop size
                       left: "0px",
                       overflow: "hidden",
                       position: "absolute",
-                      top: "calc(50% - 12px)", // Adjusted for new height
+                      top: "calc(50% - 12px)", // Adjusted for original height
                       width: "1px", // Keep minimal
                       zIndex: 0,
                       backgroundColor: "transparent", // Made transparent
@@ -858,14 +862,15 @@ export const IconHover3D: React.FC<Props> = ({
                     }}
                   />                  {/* Heading Text with hover effect */}
                   <motion.div
+                    className={styles.headingText}
                     style={{
                       flex: "none",
-                      height: "24px", // Reduced from 32px
+                      height: "24px", // Back to original desktop size
                       position: "relative",
                       whiteSpace: "pre",
                       width: "auto",
                       fontWeight: "600",
-                      fontSize: "16px", // Reduced from 18px
+                      fontSize: "16px", // Back to original desktop size
                       color: "hsl(var(--foreground))",
                       userSelect: "none",
                       cursor: "pointer",
@@ -919,17 +924,18 @@ export const IconHover3D: React.FC<Props> = ({
 
                 {/* Description Text */}
                 <motion.div
+                  className={styles.descriptionText}
                   style={{
                     flex: "none",
                     height: "auto",
                     position: "relative",
                     whiteSpace: "pre-wrap",
-                    width: "350px", // Increased from 200px
+                    width: "350px", // Back to original desktop size
                     wordBreak: "break-word",
                     wordWrap: "break-word",
                     fontWeight: "400", // Reduced weight for better readability
-                    fontSize: "14px", // Reduced from 16px
-                    lineHeight: "1.5em", // Improved line height
+                    fontSize: "14px", // Back to original desktop size
+                    lineHeight: "1.5em", // Back to original desktop size
                     color: "hsl(var(--foreground))",
                     userSelect: "none"
                   }}

@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { Faq3 } from '@/components/ui/faq3'
 import ContactForm from './components/ContactForm'
+import { FaqItem } from '@/types/faq'
 
 export const metadata: Metadata = {
   title: 'About GrokInterviews',
@@ -8,24 +9,24 @@ export const metadata: Metadata = {
     'Learn more about GrokInterviews, an AI-powered platform for interview preparation, and how we help you ace your technical interviews.',
 }
 
-const grokInterviewFaqItems = [
+const grokInterviewFaqItems: FaqItem[] = [
   {
     id: 'faq-grok-1',
     question: 'What is GrokInterviews?',
     answer:
-      'GrokInterviews is a comprehensive, AI-enhanced interview preparation platform with over 3.6 million curated resources and 81,000+ technical questions. Our mission is to provide the best tools and content to help software engineers and data scientists ace their interviews.',
+      'GrokInterviews is a comprehensive, AI-enhanced interview preparation platform with over 3.6 million curated resources and 50,000+ technical questions. Our mission is to provide the best tools and content to help software engineers and data scientists ace their interviews.',
   },
   {
     id: 'faq-grok-2',
-    question: 'How does the AI answer generation work?',
+    question: 'How does the AI answer generation work and why is it so fast?',
     answer:
-      'We utilize multiple cutting-edge Large Language Models (LLMs) via the Groq API to generate dynamic, high-quality answers to technical questions. Users can even select their preferred AI model based on their learning preferences.',
+      'We utilize multiple Large Language Models (LLMs) via one of the fastest inference provider to generate dynamic, high-quality answers to technical questions. Users can even select their preferred AI model based on their learning preferences.',
   },
   {
     id: 'faq-grok-3',
     question: 'What are resources?',
     answer:
-      'Resources are collected using a custom-built web search meta search engine hosted locally, then preprocessed, filtered, and embedded to compute a relevance score for each question. These resources are stored in our database and linked to every question. While some may still be not fully relevant, we are continuously working to improve the quality and accuracy of our resource matching.',
+      'Resources are collected using a custom-built web search meta search engine hosted locally, then preprocessed, filtered, and embedded to compute a relevance score for each question. These resources are stored in our database and linked to every question.',
   },
   {
     id: 'faq-grok-4',
@@ -37,13 +38,13 @@ const grokInterviewFaqItems = [
     id: 'faq-grok-5',
     question: 'Is GrokInterviews free to use?',
     answer:
-      'GrokInterviews offers a substantial amount of free content and features. Advanced AI-powered features and personalized learning paths may be part of a premium offering in the future. The platform is open source, and contributions are welcome!',
+      'GrokInterviews offers a substantial amount of free content and features, including AI-powered answer generation and resource lists! We are committed to keeping these features free for as long as possible.',
   },
   {
     id: 'faq-grok-6',
     question: 'What future features are planned?',
     answer:
-      'We are exploring exciting updates such as voice interviews, Duolingo-style roadmaps for every domain, both typed and voice-based quizzes, streak tracking, and a dedicated section for coding questions with virtual machines for live testing. These features will be prioritized if the platform gains traction!',
+      'We are exploring exciting updates such as voice interviews, Duolingo-style roadmaps for every domain, both typed and voice-based quizzes, streak tracking, and a dedicated section for coding questions with virtual machines for live testing and much more. These features will be prioritized if the platform gains traction!',
   },
 ]
 

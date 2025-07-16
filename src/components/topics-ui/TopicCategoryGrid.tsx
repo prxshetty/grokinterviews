@@ -56,6 +56,7 @@ interface TopicCategoryGridProps {
   dataCache?: Record<string, CacheableProgressData>; // Updated type for dataCache
   showDomainTitle?: boolean; // New prop to control domain title visibility
   basePath?: string; // New prop for base path for navigation
+  compact?: boolean; // New prop to control padding and spacing
 }
 
 // Renaming original component
@@ -72,11 +73,14 @@ function TopicCategoryGridComponent({
   dataCache,
   showDomainTitle = true, // Default to false
   basePath, // Destructure new prop
+  compact = false, // Default to false
 }: TopicCategoryGridProps) {
+  const router = useRouter();
   const [itemsWithProgress, setItemsWithProgress] = useState<DisplayItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-  const router = useRouter(); // Initialize useRouter
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
 
   // Memoize the base items to avoid recalculating on every render
   const baseItems = useMemo(() => {
@@ -262,13 +266,26 @@ function TopicCategoryGridComponent({
     }
   }, [level, domain, fetchProgress]);
 
-  // Setup event listeners
+  // Setup event listeners and device detection
   useEffect(() => {
+    // Check device type
+    const checkDeviceType = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 640);
+      setIsTablet(width >= 640 && width < 1024);
+    };
+    
+    // Initial check
+    checkDeviceType();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkDeviceType);
     window.addEventListener('questionCompleted', handleQuestionCompleted);
     window.addEventListener('questionCompletionFailed', handleQuestionCompletionFailed);
     window.addEventListener('sectionProgressUpdate', handleSectionProgressUpdate);
 
     return () => {
+      window.removeEventListener('resize', checkDeviceType);
       window.removeEventListener('questionCompleted', handleQuestionCompleted);
       window.removeEventListener('questionCompletionFailed', handleQuestionCompletionFailed);
       window.removeEventListener('sectionProgressUpdate', handleSectionProgressUpdate);
@@ -332,13 +349,39 @@ function TopicCategoryGridComponent({
   }
 
   return (
-    <div className="w-full px-2 sm:px-4 pt-12 sm:pt-16 md:pt-20">
+    <div className={`w-full max-w-full overflow-x-hidden ${compact ? 'px-0 pt-0' : 'px-2 sm:px-4 pt-12 sm:pt-16 md:pt-20'}`}>
       {showDomainTitle && domain && (
-        <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6 text-left text-gray-800 dark:text-gray-200">
-          {getDisplayDomainName(domain)}
-        </h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
+          {/* Mobile: Back button + Title in same row */}
+          <div className="flex items-center gap-3 sm:gap-0 w-full sm:w-auto">
+            <button
+              onClick={() => router.push('/topics')}
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors sm:hidden"
+              title="Back to Topics"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl text-left text-gray-800 dark:text-gray-200">
+              {getDisplayDomainName(domain)}
+            </h2>
+          </div>
+          {/* Desktop: Back button */}
+          <div className="hidden sm:flex items-center">
+            <button
+              onClick={() => router.push('/topics')}
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+              title="Back to Topics"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
-      <div className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-2 sm:p-4`}>
+      <div className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-2 sm:p-4 lg:p-6`}>
         {displayableItems.map((item, index) => {
           // Determine the text to display. Show total questions for topics/categories,
           // and total subtopics for sections.
@@ -351,7 +394,7 @@ function TopicCategoryGridComponent({
           return (
             <div
               key={item.id || index}
-              className={`${styles.gridItem} px-2 sm:px-3 py-2 sm:py-3 group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800`}
+              className={`${styles.gridItem} px-1 sm:px-2 md:px-1 lg:px-3 py-2 sm:py-3 lg:py-4 group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800 max-w-full`}
               onClick={() => handleItemSelect(item.id)}
               onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
               tabIndex={0}
@@ -359,10 +402,32 @@ function TopicCategoryGridComponent({
               aria-pressed={selectedItemId === item.id}
               aria-label={`Select ${item.label}`}
             >
-              <IconHover3D
-                heading={item.label}
-                text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
-              />
+              {/* Show IconHover3D only on mobile and desktop, hide on tablet */}
+              {!isTablet ? (
+                <IconHover3D
+                  heading={item.label}
+                  text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
+                  width={isMobile ? 280 : 450}
+                  height={isMobile ? 90 : 150}
+                />
+              ) : (
+                /* Simplified tablet layout with matching borders and theme */
+                <div 
+                  className="flex flex-col justify-center flex-1 p-4"
+                  style={{
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--foreground))",
+                    minHeight: "120px"
+                  }}
+                >
+                  <h3 className="text-lg font-semibold mb-2" style={{ color: "hsl(var(--foreground))" }}>
+                    {item.label}
+                  </h3>
+                  <p className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    {item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
+                  </p>
+                </div>
+              )}
               <span className={styles.serialNumber}>{formatIndex(index, item)}</span>
             </div>
           );

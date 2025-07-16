@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Resource, UserPreferences, TYPE_DISPLAY_ORDER, TYPE_DISPLAY_INFO } from '@/components/questions/ResourceUtils';
+import { Resource, UserPreferences, TYPE_DISPLAY_ORDER, TYPE_DISPLAY_INFO } from '@/types/resources.types';
 
 interface UseResourceTabsProps {
   resources: Resource[];
