@@ -2,82 +2,133 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { mapVoiceToCloudTTS, getVoiceGender, CLOUD_TTS_AUDIO_CONFIG } from '@/utils/audioUtils';
 
-// Validate required environment variables
-if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_PROJECT_ID) {
-  throw new Error('Missing required Google Cloud credentials. Please set GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_PROJECT_ID environment variables.');
-}
+// Initialize Google Cloud Text-to-Speech client with lazy initialization
+let ttsClient: TextToSpeechClient | null = null;
 
-// Initialize Google Cloud Text-to-Speech client
-const ttsClient = new TextToSpeechClient({
-  credentials: {
-    client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  },
-  projectId: process.env.GOOGLE_PROJECT_ID,
-});
+function initializeTTSClient(): TextToSpeechClient {
+  if (ttsClient) {
+    return ttsClient;
+  }
+
+  // Validate required environment variables
+  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+  const projectId = process.env.GOOGLE_PROJECT_ID;
+
+  if (!clientEmail || !privateKey || !projectId) {
+    throw new Error('Missing required Google Cloud credentials. Please set GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_PROJECT_ID environment variables.');
+  }
+
+  try {
+    // Handle different private key formats that might exist in production
+    let formattedPrivateKey = privateKey;
+    
+    // If the key doesn't start with -----BEGIN, it might be base64 encoded
+    if (!privateKey.includes('-----BEGIN')) {
+      try {
+        formattedPrivateKey = Buffer.from(privateKey, 'base64').toString('utf8');
+      } catch (e) {
+        // If base64 decoding fails, use the key as-is
+        formattedPrivateKey = privateKey;
+      }
+    }
+    
+    // Ensure proper line breaks in private key
+    formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n');
+    
+    // Validate private key format
+    if (!formattedPrivateKey.includes('-----BEGIN') || !formattedPrivateKey.includes('-----END')) {
+      throw new Error('Invalid private key format');
+    }
+
+    ttsClient = new TextToSpeechClient({
+      credentials: {
+        client_email: clientEmail,
+        private_key: formattedPrivateKey,
+      },
+      projectId: projectId,
+    });
+
+    return ttsClient;
+  } catch (error: any) {
+    console.error('Failed to initialize Google Cloud TTS client:', error);
+    throw new Error(`Failed to initialize Google Cloud TTS client: ${error.message}`);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, voice = 'Fritz-PlayAI' } = await request.json();
+    // Parse request body
+    const body = await request.json();
+    const { text, voice = 'Marcus' } = body;
 
-    if (!text) {
+    // Validate input
+    if (!text || typeof text !== 'string') {
       return NextResponse.json(
-        { error: 'No text provided for speech synthesis' },
+        { error: 'Text is required and must be a string' },
         { status: 400 }
       );
     }
 
     if (text.length > 5000) {
       return NextResponse.json(
-        { error: 'Text too long. Maximum 5000 characters allowed.' },
+        { error: 'Text is too long. Maximum length is 5000 characters.' },
         { status: 400 }
       );
     }
 
-    // Map voice to Google Cloud TTS voice name
-    const cloudTTSVoice = mapVoiceToCloudTTS(voice);
-    const voiceGender = getVoiceGender(cloudTTSVoice);
-    
-    console.log('🔊 Processing text-to-speech request:', {
-      textLength: text.length,
-      originalVoice: voice,
-      cloudTTSVoice: cloudTTSVoice,
-      voiceGender: voiceGender,
-      preview: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-    });
+    // Initialize TTS client with error handling
+    let client: TextToSpeechClient;
+    try {
+      client = initializeTTSClient();
+    } catch (error: any) {
+      console.error('TTS client initialization failed:', error);
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
 
-    // Prepare the request for Google Cloud TTS
-    const request_payload = {
-      input: { text: text },
+    // Map voice to Google Cloud TTS voice
+    const cloudVoice = mapVoiceToCloudTTS(voice);
+    const voiceGender = getVoiceGender(cloudVoice);
+
+    console.log(`TTS Request - Voice: ${voice} -> ${cloudVoice}, Gender: ${voiceGender}, Text length: ${text.length}`);
+
+    // Prepare the synthesis request
+    const request_config = {
+      input: { text },
       voice: {
-        languageCode: cloudTTSVoice.startsWith('en-GB') ? 'en-GB' : 'en-US',
-        name: cloudTTSVoice,
+        languageCode: 'en-US',
+        name: cloudVoice,
         ssmlGender: voiceGender,
       },
       audioConfig: {
-        audioEncoding: CLOUD_TTS_AUDIO_CONFIG.FORMAT as any,
+        audioEncoding: 'LINEAR16' as const,
         sampleRateHertz: CLOUD_TTS_AUDIO_CONFIG.SAMPLE_RATE,
       },
     };
 
-    // Call Google Cloud TTS API
-    const [response] = await ttsClient.synthesizeSpeech(request_payload);
+    // Perform the text-to-speech request with timeout
+    const synthesizePromise = client.synthesizeSpeech(request_config);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 25000); // 25 second timeout
+    });
 
-    console.log('✅ Google Cloud TTS response received');
+    const [response] = await Promise.race([synthesizePromise, timeoutPromise]) as any;
 
-    // Extract audio data from response
-    const audioContent = response.audioContent;
-    
-    if (!audioContent) {
-      throw new Error('No audio data received from Google Cloud TTS');
+    if (!response || !response.audioContent) {
+      console.error('No audio content received from Google Cloud TTS');
+      return NextResponse.json(
+        { error: 'Failed to generate audio content' },
+        { status: 500 }
+      );
     }
 
-    // Convert to Buffer if it's not already
-    const audioBuffer = Buffer.isBuffer(audioContent) 
-      ? audioContent 
-      : Buffer.from(audioContent as Uint8Array);
+    // Convert the audio content to a Buffer
+    const audioBuffer = Buffer.from(response.audioContent);
     
-    console.log('✅ Audio processing successful, size:', audioBuffer.length);
+    console.log(`TTS Success - Generated ${audioBuffer.length} bytes of audio`);
 
     // Return the audio as a response
     return new NextResponse(audioBuffer, {
@@ -85,65 +136,45 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'audio/wav',
         'Content-Length': audioBuffer.length.toString(),
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
       },
     });
 
   } catch (error: any) {
-    console.error('❌ Google Cloud TTS error:', error);
-
-    // Handle specific Google Cloud API errors
-    if (error.code === 'UNAUTHENTICATED' || error.message?.includes('authentication')) {
+    console.error('TTS Error:', error);
+    
+    // Handle specific Google Cloud errors
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       return NextResponse.json(
-        { 
-          error: 'Authentication failed', 
-          details: 'Invalid or missing Google Cloud credentials',
-          type: 'auth_error'
-        },
-        { status: 401 }
+        { error: 'Network connectivity issue. Please try again later.' },
+        { status: 503 }
       );
     }
     
-    if (error.code === 'RESOURCE_EXHAUSTED' || error.message?.includes('quota')) {
+    if (error.message?.includes('quota') || error.message?.includes('limit')) {
       return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded', 
-          details: 'Please try again later',
-          type: 'rate_limit_error'
-        },
+        { error: 'Service quota exceeded. Please try again later.' },
         { status: 429 }
       );
     }
     
-    if (error.code === 'INVALID_ARGUMENT') {
+    if (error.message?.includes('authentication') || error.message?.includes('credentials')) {
       return NextResponse.json(
-        { 
-          error: 'Invalid request parameters', 
-          details: error.message,
-          type: 'validation_error'
-        },
-        { status: 400 }
+        { error: 'Authentication error. Please contact support.' },
+        { status: 401 }
       );
     }
 
-    if (error.code === 'UNAVAILABLE') {
+    if (error.message?.includes('timeout')) {
       return NextResponse.json(
-        { 
-          error: 'TTS service unavailable', 
-          details: 'Google Cloud TTS service is temporarily unavailable',
-          type: 'service_error'
-        },
-        { status: 503 }
+        { error: 'Request timeout. Please try again with shorter text.' },
+        { status: 408 }
       );
     }
 
-    // Handle other errors
+    // Generic error response
     return NextResponse.json(
-      { 
-        error: 'Internal server error during speech synthesis',
-        details: error.message,
-        type: 'internal_error'
-      },
+      { error: 'Internal error during speech synthesis' },
       { status: 500 }
     );
   }
