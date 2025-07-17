@@ -486,7 +486,7 @@ export default function CategoryDetailView({
   if (selectedSubtopic && subtopicDetails) {
     return (
       <motion.div 
-        className="p-4 pt-4 sm:pt-6 md:pt-8"
+        className="p-4 pt-4 sm:pt-6 md:pt-8 lg:px-6 xl:px-8"
         initial="hidden"
         animate="visible"
         variants={fadeInVariants}
@@ -585,8 +585,8 @@ export default function CategoryDetailView({
           </Accordion>
         ) : memoizedFilteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
-          <div className="pt-12 sm:pt-16 md:pt-20">
-            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6">Questions</h2>
+          <div className="pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20">
+            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl lg:text-4xl xl:text-5xl mb-6">Questions</h2>
             <Accordion 
               type="single" 
               collapsible 
@@ -621,7 +621,7 @@ export default function CategoryDetailView({
   // Render category details
   return (
     <motion.div 
-      className="p-4 pt-12 sm:pt-16 md:pt-20"
+      className="p-4 pt-12 sm:pt-16 md:pt-20 lg:px-6 xl:px-8"
       initial="hidden"
       animate="visible"
       variants={fadeInVariants}
@@ -692,9 +692,9 @@ export default function CategoryDetailView({
       
       {/* Show questions if available */}
       {hasQuestions && (
-        <div className="mt-6 pt-12 sm:pt-16 md:pt-20">
+        <div className="mt-6 pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2 text-gray-900 dark:text-white">
-            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl">Questions</h2>
+            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl lg:text-4xl xl:text-5xl">Questions</h2>
             <div className="flex items-center justify-end gap-3 w-full">
               {categoryProgress && (
                 <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -751,4 +751,4 @@ export default function CategoryDetailView({
       )}
     </motion.div>
   );
-} 
+}

@@ -2,12 +2,16 @@
 
 .iconHover3DWrapper {
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible; /* Changed from hidden to visible to prevent cutoff */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .iconHover3D {
   max-width: 100%;
   box-sizing: border-box;
+  overflow: visible; /* Ensure content is not cut off */
 }
 
 .iconContainer {
@@ -90,5 +94,108 @@
   
   .headingText {
     font-size: 13px !important;
+  }
+}
+
+/* Tablet landscape styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .iconHover3DWrapper {
+    width: 380px !important;
+    height: 125px !important;
+    max-width: calc(100vw - 4rem);
+  }
+  
+  .iconHover3D {
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+  
+  .iconContainer {
+    width: 54px !important;
+    height: 54px !important;
+  }
+  
+  .content {
+    max-width: 300px !important;
+  }
+  
+  .descriptionText {
+    width: 300px !important;
+    font-size: 11px !important;
+  }
+  
+  .headingText {
+    font-size: 13px !important;
+  }
+}
+
+/* Laptop-specific adjustments */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .iconHover3DWrapper {
+    width: 340px !important;
+    height: 115px !important;
+  }
+  
+  .iconHover3D {
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+  
+  .iconContainer {
+    width: 50px !important; /* Reduced from 56px */
+    height: 50px !important;
+  }
+  
+  .content {
+    max-width: 260px !important; /* Reduced from 280px */
+    gap: 6px !important;
+  }
+  
+  .textContainer {
+    height: auto !important;
+  }
+  
+  .descriptionText {
+    width: 260px !important;
+    font-size: 10px !important; /* Reduced from 11px */
+    line-height: 1.2em !important;
+    -webkit-line-clamp: 2;
+  }
+  
+  .headingText {
+    font-size: 12px !important; /* Reduced from 13px */
+    height: auto !important;
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1280px) {
+  .iconHover3DWrapper {
+    width: 450px !important;
+    height: 150px !important;
+  }
+  
+  .iconHover3D {
+    gap: 16px !important;
+    padding: 16px !important;
+  }
+  
+  .iconContainer {
+    width: 64px !important;
+    height: 64px !important;
+  }
+  
+  .content {
+    max-width: 350px !important;
+  }
+  
+  .descriptionText {
+    width: 350px !important;
+    font-size: 13px !important;
+    line-height: 1.4em !important;
+  }
+  
+  .headingText {
+    font-size: 15px !important;
   }
 }

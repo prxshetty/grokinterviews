@@ -81,6 +81,7 @@ function TopicCategoryGridComponent({
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
+  const [isLaptop, setIsLaptop] = useState(false);
 
   // Memoize the base items to avoid recalculating on every render
   const baseItems = useMemo(() => {
@@ -273,6 +274,7 @@ function TopicCategoryGridComponent({
       const width = window.innerWidth;
       setIsMobile(width < 640);
       setIsTablet(width >= 640 && width < 1024);
+      setIsLaptop(width >= 1024 && width < 1280);
     };
     
     // Initial check
@@ -381,7 +383,9 @@ function TopicCategoryGridComponent({
           </div>
         </div>
       )}
-      <div className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-2 sm:p-4 lg:p-6`}>
+      <div 
+        className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 xl:gap-8 p-2 sm:p-4 lg:p-6 xl:p-6`}
+      >
         {displayableItems.map((item, index) => {
           // Determine the text to display. Show total questions for topics/categories,
           // and total subtopics for sections.
@@ -407,8 +411,8 @@ function TopicCategoryGridComponent({
                 <IconHover3D
                   heading={item.label}
                   text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
-                  width={isMobile ? 280 : 450}
-                  height={isMobile ? 90 : 150}
+                  width={isMobile ? 280 : isLaptop ? 340 : 450}
+                  height={isMobile ? 90 : isLaptop ? 115 : 150}
                 />
               ) : (
                 /* Simplified tablet layout with matching borders and theme */
