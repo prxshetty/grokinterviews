@@ -351,7 +351,7 @@ function TopicCategoryGridComponent({
   }
 
   return (
-    <div className={`w-full max-w-full overflow-x-hidden ${compact ? 'px-0 pt-0' : 'px-2 sm:px-4 pt-12 sm:pt-16 md:pt-20'}`}>
+    <div className={`w-full max-w-full overflow-x-hidden ${compact ? 'px-0 pt-0' : 'px-0 pt-12 sm:pt-16 md:pt-20'}`}>
       {showDomainTitle && domain && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
           {/* Mobile: Back button + Title in same row */}
@@ -384,7 +384,7 @@ function TopicCategoryGridComponent({
         </div>
       )}
       <div 
-        className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 xl:gap-8 p-2 sm:p-4 lg:p-6 xl:p-6`}
+        className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 xl:gap-8 p-0`}
       >
         {displayableItems.map((item, index) => {
           // Determine the text to display. Show total questions for topics/categories,
@@ -398,7 +398,7 @@ function TopicCategoryGridComponent({
           return (
             <div
               key={item.id || index}
-              className={`${styles.gridItem} px-1 sm:px-2 md:px-1 lg:px-3 py-2 sm:py-3 lg:py-4 group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800 max-w-full`}
+              className={`${styles.gridItem} p-0 group relative rounded-lg transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 dark:focus-within:ring-offset-gray-800 max-w-full`}
               onClick={() => handleItemSelect(item.id)}
               onKeyPress={(e) => e.key === 'Enter' && handleItemSelect(item.id)}
               tabIndex={0}
@@ -408,12 +408,14 @@ function TopicCategoryGridComponent({
             >
               {/* Show IconHover3D only on mobile and desktop, hide on tablet */}
               {!isTablet ? (
-                <IconHover3D
-                  heading={item.label}
-                  text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
-                  width={isMobile ? 280 : isLaptop ? 340 : 450}
-                  height={isMobile ? 90 : isLaptop ? 115 : 150}
-                />
+                <div className="w-full flex justify-center items-center">
+                  <IconHover3D
+                    heading={item.label}
+                    text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
+                    width={isMobile ? 320 : isLaptop ? 340 : 450}
+                    height={isMobile ? 90 : isLaptop ? 115 : 150}
+                  />
+                </div>
               ) : (
                 /* Simplified tablet layout with matching borders and theme */
                 <div 
