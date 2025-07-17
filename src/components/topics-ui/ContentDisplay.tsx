@@ -317,7 +317,7 @@ export default function ContentDisplay({
   
   if (selectedTopic) {
     return (
-      <div className="p-4">
+      <div className="px-0 py-4">
         {/* Topic header can go here */}
         
         {/* Main topic categories */}
@@ -354,4 +354,4 @@ export default function ContentDisplay({
   // specific domain page but no topic is selected yet
   // Return nothing - the topics page will handle this case with MainNavigation
   return null;
-} 
+}

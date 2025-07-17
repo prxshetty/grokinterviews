@@ -621,7 +621,7 @@ export default function CategoryDetailView({
   // Render category details
   return (
     <motion.div 
-      className="p-4 pt-12 sm:pt-16 md:pt-20 lg:px-6 xl:px-8"
+      className="px-0 py-4 pt-12 sm:pt-16 md:pt-20 sm:px-4 lg:px-6 xl:px-8"
       initial="hidden"
       animate="visible"
       variants={fadeInVariants}

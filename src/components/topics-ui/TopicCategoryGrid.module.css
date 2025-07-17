@@ -16,6 +16,8 @@
   cursor: pointer;
   width: 100%;
   max-width: 100%;
+  min-width: 0; /* Allow flex shrinking */
+  flex: 1; /* Allow flex growing */
   overflow: visible; /* Allow content to be visible on desktop */
   position: relative; /* Enable absolute positioning for serial number */
 }
@@ -23,21 +25,30 @@
 /* Mobile-specific styles */
 @media (max-width: 639px) {
   .gridItem {
-    padding: 0.5rem 0.25rem;
+    padding: 0.5rem 0; /* Removed horizontal padding */
     gap: 0.5rem;
     overflow: hidden !important; /* Keep overflow hidden on mobile */
-    justify-content: center !important;
+    justify-content: stretch !important; /* Changed from center to stretch */
+    align-items: stretch !important; /* Ensure full height stretching */
+    width: 100% !important; /* Ensure full width */
+    min-width: 100% !important; /* Force minimum width */
   }
   
   .gridContainer {
-    padding: 0.5rem;
+    padding: 0.5rem 0; /* Removed horizontal padding */
     gap: 0.75rem;
   }
   
   .serialNumber {
     font-size: 0.75rem !important; /* Scaled down from 1rem */
     padding: 0.1875rem 0.375rem !important; /* Scaled down from 0.25rem 0.5rem */
-    bottom: 0.125rem !important;
+    top: 50% !important;
+    left: 0.5rem !important; /* Increased from 0.25rem to add more left padding */
+    transform: translateY(-50%) !important;
+    width: auto !important; /* Ensure compact width */
+    max-width: 2rem !important; /* Limit maximum width */
+    min-width: 1.5rem !important; /* Ensure minimum readable width */
+    white-space: nowrap !important; /* Prevent text wrapping */
   }
 }
 
@@ -51,9 +62,9 @@
   border-radius: 0;
   padding: 0.25rem 0.5rem; /* Scaled down from 0.375rem 0.75rem */
   position: absolute;
-  bottom: 0.25rem;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
   z-index: 10;
   flex-shrink: 0; /* Prevent shrinking */
   min-width: fit-content;
@@ -67,20 +78,20 @@
   .serialNumber {
     font-size: 0.9375rem !important; /* Scaled down from 1.25rem */
     padding: 0.28125rem 0.46875rem !important; /* Scaled down from 0.375rem 0.625rem */
-    bottom: 0.25rem !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    top: 50% !important;
+    right: 0.75rem !important;
+    transform: translateY(-50%) !important;
   }
   
   .gridItem {
-    padding: 0.75rem 0.25rem; /* Reduced horizontal padding */
+    padding: 0.75rem 0; /* Removed horizontal padding for consistency */
     gap: 0.5rem; /* Reduced gap */
     overflow: visible; /* Allow content overflow on larger screens */
     justify-content: center !important;
   }
   
   .gridContainer {
-    padding: 1rem;
+    padding: 1rem 0; /* Removed horizontal padding for consistency */
     gap: 1.5rem;
   }
 }
@@ -90,13 +101,13 @@
   .serialNumber {
     font-size: 1.03125rem !important; /* Scaled down from 1.375rem */
     padding: 0.28125rem 0.5625rem !important; /* Scaled down from 0.375rem 0.75rem */
-    bottom: 0.25rem !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    top: 50% !important;
+    right: 0.75rem !important;
+    transform: translateY(-50%) !important;
   }
   
   .gridItem {
-    padding: 0.75rem 0.125rem; /* Further reduced for tablet */
+    padding: 0.75rem 0; /* Removed horizontal padding for consistency */
     gap: 0.25rem; /* Further reduced gap for tablet */
     overflow: visible; /* Allow content overflow */
     justify-content: center !important;
@@ -130,11 +141,13 @@
   .serialNumber {
     font-size: 1.125rem !important; /* Scaled down from 1.5rem */
     padding: 0.28125rem 0.5625rem !important; /* Scaled down from 0.375rem 0.75rem */
-    bottom: 0.25rem !important;
+    top: 50% !important;
+    right: 1rem !important;
+    transform: translateY(-50%) !important;
   }
   
   .gridItem {
-    padding: 1rem 0.125rem; /* Absolute minimum horizontal padding */
+    padding: 1rem 0; /* Removed horizontal padding for consistency */
     gap: 0.125rem; /* Absolute minimum gap */
     overflow: visible; /* Allow content overflow on larger screens */
     justify-content: center !important;
