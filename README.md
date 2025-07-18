@@ -30,6 +30,14 @@ A comprehensive, AI-enhanced interview preparation platform with **3.6+ million 
 
 ## ✨ Key Features
 
+### 🎙️ Voice Interview Practice
+- **Real-time Voice Interviews** with AI-powered behavioral interview simulation
+- **Dual Interview Modes** - Web-based interviews and authentic phone call experiences
+- **Advanced Voice Settings** with multiple TTS providers (Google Cloud TTS, Groq/PlayAI)
+- **Premium Voice Options** including Google's high-quality Chirp3-HD voices
+- **Voice Activity Detection (VAD)** for natural conversation flow
+- **Real-time Transcription** with instant feedback during interviews
+
 ### 🤖 AI-Powered Learning
 - **Dynamic Answer Generation** using multiple LLM models via Groq API
 - **Personalized Learning Paths** with intelligent resource recommendations
@@ -76,7 +84,10 @@ A comprehensive, AI-enhanced interview preparation platform with **3.6+ million 
 ### AI & API Integration
 ```javascript
 - Groq API integration for LLM-powered answer generation
+- Google Cloud TTS for premium voice synthesis
 - 30 RESTful API endpoints with comprehensive error handling
+- Voice Activity Detection (VAD) for natural conversation flow
+- Real-time audio processing and transcription
 - Request deduplication and intelligent caching
 - User preference-based AI model selection
 - Resource filtering based on learning preferences
@@ -88,6 +99,7 @@ A comprehensive, AI-enhanced interview preparation platform with **3.6+ million 
 - Node.js 18+ and npm
 - Supabase account (for database)
 - Groq API key (for AI features)
+- Google Cloud TTS API key (for premium voice features)
 
 ### Installation
 
@@ -105,7 +117,7 @@ A comprehensive, AI-enhanced interview preparation platform with **3.6+ million 
 3. **Environment Setup**
    ```bash
    cp .env.example .env.local
-   # Add your Supabase and Groq API credentials
+   # Add your Supabase, Groq API, and Google Cloud TTS credentials
    ```
 
 4. **Database Setup**
@@ -131,11 +143,13 @@ grokinterviews/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── api/               # 30 API endpoints
+│   │   ├── voice/             # Voice interview pages
 │   │   ├── components/        # 51 React components
 │   │   │   ├── ui/           # Shared UI components
 │   │   │   ├── topics-ui/    # Topic-specific components
 │   │   │   ├── questions/    # Question components
-│   │   │   └── progress/     # Progress tracking components
+│   │   │   ├── progress/     # Progress tracking components
+│   │   │   └── voice/        # Voice interview components
 │   │   ├── hooks/            # Custom React hooks
 │   │   ├── lib/              # Database utilities
 │   │   ├── types/            # TypeScript type definitions
@@ -194,6 +208,10 @@ Key tables: `profiles`, `topics`, `categories`, `questions`, `resources`, `user_
 
 ## 🎯 Recent Engineering Achievements
 
+- ✅ **Voice Interview System**: Built comprehensive voice interview platform with dual modes
+- ✅ **Multi-TTS Integration**: Implemented Google Cloud TTS and Groq/PlayAI voice synthesis
+- ✅ **Premium Voice Features**: Added high-quality Chirp3-HD voices with voice selection
+- ✅ **Real-time Audio Processing**: Integrated Voice Activity Detection for natural flow
 - ✅ **Performance Optimization**: Implemented React.memo, useMemo, and lazy loading
 - ✅ **Database Optimization**: Created materialized views reducing query time by 80%
 - ✅ **Component Architecture**: Consolidated duplicate components reducing bundle size by 30%
