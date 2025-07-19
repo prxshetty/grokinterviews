@@ -27,7 +27,7 @@ function initializeTTSClient(): TextToSpeechClient {
     if (!privateKey.includes('-----BEGIN')) {
       try {
         formattedPrivateKey = Buffer.from(privateKey, 'base64').toString('utf8');
-      } catch (e) {
+      } catch {
         // If base64 decoding fails, use the key as-is
         formattedPrivateKey = privateKey;
       }
@@ -93,8 +93,6 @@ export async function POST(request: NextRequest) {
     const cloudVoice = mapVoiceToCloudTTS(voice);
     const voiceGender = getVoiceGender(cloudVoice);
 
-    console.log(`TTS Request - Voice: ${voice} -> ${cloudVoice}, Gender: ${voiceGender}, Text length: ${text.length}`);
-
     // Prepare the synthesis request
     const request_config = {
       input: { text },
@@ -128,8 +126,6 @@ export async function POST(request: NextRequest) {
     // Convert the audio content to a Buffer
     const audioBuffer = Buffer.from(response.audioContent);
     
-    console.log(`TTS Success - Generated ${audioBuffer.length} bytes of audio`);
-
     // Return the audio as a response
     return new NextResponse(audioBuffer, {
       status: 200,

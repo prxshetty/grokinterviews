@@ -15,7 +15,6 @@ import { VoicePlayerRef } from '@/components/voice/VoicePlayer';
 import { VoiceOption } from '@/components/voice/VoiceSelector';
 import InterviewModeSelector, { InterviewMode } from '@/components/voice/InterviewModeSelector';
 import PhoneCallInterface from '@/components/voice/PhoneCallInterface';
-import CallHistory from '@/components/voice/CallHistory';
 
 export default function VoicePage() {
   // Interview mode state
@@ -56,7 +55,6 @@ export default function VoicePage() {
   // isRecordingProcessing is now accessed via voiceRecorderRef.current?.isProcessing
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [vadSupported, setVadSupported] = useState(false);
-  const [callHistoryRefreshTrigger, setCallHistoryRefreshTrigger] = useState(0);
 
   // Initialize VAD support check
   useEffect(() => {
@@ -190,8 +188,6 @@ export default function VoicePage() {
   // Handle phone call completion
   const handleCallEnded = useCallback((callId: string) => {
     console.log('Call ended:', callId);
-    // Trigger call history refresh
-    setCallHistoryRefreshTrigger(prev => prev + 1);
   }, []);
 
   const handleStartInterview = async () => {
@@ -299,6 +295,64 @@ export default function VoicePage() {
     setRecordingError(null);
   };
 
+  // Function to automatically terminate interview when critical errors occur
+  const terminateInterviewOnError = async (reason: {
+    type: 'rate_limit' | 'microphone_error' | 'network_error' | 'user_abort' | 'system_error';
+    message: string;
+    details?: string;
+  }) => {
+    if (!isInterviewActive || !sessionId) {
+      return; // Nothing to terminate
+    }
+
+    console.log('🛑 Terminating interview due to error:', reason);
+
+    try {
+      // Call termination API
+      const response = await fetch('/api/voice/terminate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          reason,
+          conversationHistory
+        }),
+      });
+
+      if (response.ok) {
+        console.log('✅ Interview terminated successfully in database');
+      } else {
+        console.error('❌ Failed to terminate interview in database');
+      }
+    } catch (error) {
+      console.error('❌ Error calling termination API:', error);
+    }
+
+    // Force stop all audio operations immediately
+    if (voiceRecorderRef.current) {
+      voiceRecorderRef.current.forceStop();
+    }
+    if (voicePlayerRef.current) {
+      voicePlayerRef.current.stopPlayback();
+    }
+
+    // Update UI state
+    setIsInterviewActive(false);
+    setIsInterviewCompleted(true);
+    setIsProcessingAI(false);
+    setShouldAutoStartRecording(false);
+    
+    // Show appropriate error message
+    if (reason.type === 'rate_limit') {
+      setRateLimited(true);
+      setRateLimitMessage(reason.message);
+    } else {
+      setRecordingError(`Interview terminated: ${reason.message}`);
+    }
+  };
+
   // Function to add initial welcome message to transcripts
   const addInitialWelcomeMessage = async (newSessionId: string) => {
     try {
@@ -366,7 +420,20 @@ export default function VoicePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate AI response');
+        const errorMessage = errorData.error || 'Failed to generate AI response';
+        
+        // Check for rate limit errors
+        if (response.status === 429 || errorMessage.toLowerCase().includes('rate limit') || errorMessage.toLowerCase().includes('quota')) {
+          // Rate limit error - terminate interview
+          terminateInterviewOnError({
+            type: 'rate_limit',
+            message: 'Interview terminated due to API rate limits',
+            details: errorMessage
+          });
+          return; // Exit early, don't continue processing
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -433,8 +500,28 @@ export default function VoicePage() {
         throw new Error('No AI response received');
       }
 
-    } catch {
-      // Failed to generate AI response
+    } catch (error) {
+      console.error('Error in generateAIResponse:', error);
+      
+      // Check for network errors that should terminate the interview
+      const errorMessage = error?.toString().toLowerCase() || '';
+      
+      if (errorMessage.includes('network') || 
+          errorMessage.includes('fetch') ||
+          errorMessage.includes('connection') ||
+          errorMessage.includes('timeout')) {
+        // Network error - terminate interview
+        terminateInterviewOnError({
+          type: 'network_error',
+          message: 'Interview terminated due to network connectivity issues',
+          details: error?.toString() || 'Unknown network error'
+        });
+        return; // Exit early, don't continue with fallback
+      }
+      
+      // For other errors, continue with fallback question
+      console.log('Using fallback question due to non-critical error');
+      
       // Fallback to a generic follow-up question
       const fallbackQuestion = "That's interesting. Can you tell me more about a specific challenge you faced and how you overcame it?";
       setConversationHistory(prev => [...prev, { type: 'ai' as const, text: fallbackQuestion }]);
@@ -480,7 +567,7 @@ export default function VoicePage() {
         <div className="container mx-auto px-4 py-8">
           {/* Interview Mode Selector */}
           {showModeSelector && (
-            <div className="max-w-4xl mx-auto">
+            <div className="w-full">
               <InterviewModeSelector
                 selectedMode={interviewMode}
                 onModeChange={handleModeSelection}
@@ -497,11 +584,6 @@ export default function VoicePage() {
                 onBackToModeSelector={handleBackToModeSelector}
                 onCallEnded={handleCallEnded}
               />
-              
-              {/* Call History */}
-              <div className="mt-8">
-                <CallHistory refreshTrigger={callHistoryRefreshTrigger} />
-              </div>
             </div>
           )}
 
@@ -618,6 +700,40 @@ export default function VoicePage() {
               }}
               onError={(error) => {
                 setRecordingError(error);
+                
+                // Check for critical errors that should terminate the interview
+                const errorMessage = error?.toString().toLowerCase() || '';
+                
+                if (errorMessage.includes('microphone') || 
+                    errorMessage.includes('permission') || 
+                    errorMessage.includes('not allowed') ||
+                    errorMessage.includes('access denied')) {
+                  // Microphone access error - terminate interview
+                  terminateInterviewOnError({
+                    type: 'microphone_error',
+                    message: 'Interview terminated due to microphone access issues',
+                    details: error
+                  });
+                } else if (errorMessage.includes('network') || 
+                          errorMessage.includes('connection') ||
+                          errorMessage.includes('timeout')) {
+                  // Network error - terminate interview
+                  terminateInterviewOnError({
+                    type: 'network_error',
+                    message: 'Interview terminated due to network connectivity issues',
+                    details: error
+                  });
+                } else if (errorMessage.includes('rate limit') || 
+                          errorMessage.includes('429') ||
+                          errorMessage.includes('quota')) {
+                  // Rate limit error - terminate interview
+                  terminateInterviewOnError({
+                    type: 'rate_limit',
+                    message: 'Interview terminated due to service rate limits',
+                    details: error
+                  });
+                }
+                // For other errors, just show the error without terminating
               }}
               disabled={isProcessingAI || rateLimited} // Disable when processing AI response or rate limited
               enableVAD={true} // Enable Voice Activity Detection for auto-stop
@@ -665,38 +781,12 @@ export default function VoicePage() {
                                            errorMessage.includes('Rate limit exceeded');
                     
                     if (isRateLimitError && isInterviewActive) {
-                      // Rate limit detected - terminating interview immediately
-                      
-                      // Immediately terminate the interview
-                      setIsInterviewActive(false);
-                      setIsInterviewCompleted(true);
-                      setRateLimited(true);
-                      setRateLimitMessage('Interview terminated due to TTS rate limit. Please try again later.');
-                      
-                      // Force stop all audio operations
-                      if (voiceRecorderRef.current) {
-                        voiceRecorderRef.current.forceStop();
-                      }
-                      if (voicePlayerRef.current) {
-                        voicePlayerRef.current.stopPlayback();
-                      }
-                      
-                      // Complete the session in database with rate limit reason
-                      if (sessionId) {
-                        fetch('/api/voice/sessions', {
-                          method: 'PUT',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({
-                            sessionId,
-                            action: 'complete',
-                            reason: 'tts_rate_limit'
-                          }),
-                        }).catch(_err => {
-      // Error completing session
-    });
-                      }
+                      // Rate limit detected - terminating interview using termination function
+                      terminateInterviewOnError({
+                        type: 'rate_limit',
+                        message: 'Interview terminated due to TTS service rate limits',
+                        details: error
+                      });
                     }
                   }}
                   onPlaybackComplete={() => {

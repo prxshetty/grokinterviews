@@ -27,22 +27,16 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     authRequired: false
   },
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    href: '/dashboard',
-    authRequired: true
-  },
-  {
-    id: 'bookmarks',
-    label: 'Bookmarks',
-    href: '/dashboard/bookmarks',
-    authRequired: true
-  },
-  {
     id: 'voice',
     label: 'Interviews',
     href: '/voice',
     authRequired: false
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    href: '/dashboard',
+    authRequired: true
   },
   {
     id: 'about',
