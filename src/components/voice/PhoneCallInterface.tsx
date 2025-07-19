@@ -50,7 +50,7 @@ export default function PhoneCallInterface({
   const onCallEndedRef = useRef(onCallEnded);
   onCallEndedRef.current = onCallEnded;
 
-  // Fetch VAPI configuration on component mount
+  // Fetch VAPI configuration on component mount and cleanup stuck calls
   useEffect(() => {
     const fetchConfig = async () => {
       try {
@@ -67,8 +67,101 @@ export default function PhoneCallInterface({
       }
     };
 
+    const cleanupStuckCalls = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Check for stuck calls in database (calls marked as 'in-progress' but actually ended)
+        const response = await fetch(`/api/voice/phone-calls?userId=${user.id}&status=in-progress&limit=5`);
+        if (response.ok) {
+          const { calls } = await response.json();
+          
+          // Only check calls that are older than 2 minutes (likely stuck)
+          const stuckCalls = calls.filter((call: any) => {
+            const callAge = Date.now() - new Date(call.created_at).getTime();
+            return callAge > 120000; // 2 minutes
+          });
+          
+          if (stuckCalls.length > 0) {
+            console.log(`Found ${stuckCalls.length} potentially stuck calls, checking VAPI status...`);
+            
+            // Check each stuck call with VAPI (minimal API calls)
+            for (const call of stuckCalls) {
+              try {
+                const statusResponse = await vapiService.getCallStatus(call.vapi_call_id);
+                if (statusResponse.success && statusResponse.call?.status === 'ended') {
+                  console.log(`Fixing stuck call: ${call.vapi_call_id}`);
+                  
+                  // Calculate actual duration from VAPI data
+                  const actualDuration = statusResponse.call.startedAt && statusResponse.call.endedAt 
+                    ? Math.floor((new Date(statusResponse.call.endedAt).getTime() - new Date(statusResponse.call.startedAt).getTime()) / 1000)
+                    : call.call_duration || 0; // Fallback to existing duration
+                  
+                  // Fix the stuck call in database
+                  await fetch('/api/voice/phone-calls', {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      vapiCallId: call.vapi_call_id,
+                      callStatus: 'ended',
+                      callDuration: actualDuration, // Use VAPI duration
+                      audioRecordingUrl: statusResponse.call.artifact?.recordingUrl,
+                      transcriptText: statusResponse.call.artifact?.transcript,
+                      analysisSummary: statusResponse.call.analysis?.summary,
+                      metadata: {
+                        endedAt: statusResponse.call.endedAt,
+                        endedReason: statusResponse.call.endedReason || 'webhook_missed',
+                        cost: statusResponse.call.cost,
+                        messageCount: statusResponse.call.messages?.length || 0,
+                        fixedStuckCall: true,
+                        fixedOnLoad: true,
+                        vapiStartedAt: statusResponse.call.startedAt,
+                        vapiEndedAt: statusResponse.call.endedAt
+                      }
+                    }),
+                  });
+                }
+              } catch (error) {
+                // Handle 404 errors (call no longer exists in VAPI)
+                if (error instanceof Error && error.message.includes('404')) {
+                  console.log(`Call ${call.vapi_call_id} not found in VAPI (404) - marking as ended`);
+                  
+                  // Update database to mark call as ended
+                  await fetch('/api/voice/phone-calls', {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      vapiCallId: call.vapi_call_id,
+                      callStatus: 'ended',
+                      callDuration: call.call_duration || 0, // Use existing duration as fallback
+                      metadata: {
+                        endedAt: new Date().toISOString(),
+                        endedReason: 'external_termination',
+                        fixedStuckCall: true,
+                        fixedOnLoad: true,
+                        error404Cleanup: true
+                      }
+                    }),
+                  });
+                } else {
+                  console.error(`Error checking stuck call ${call.vapi_call_id}:`, error);
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error during stuck call cleanup:', error);
+      }
+    };
+
     fetchConfig();
-  }, []);
+    cleanupStuckCalls();
+  }, [user?.id]);
 
   // Effect for call duration timer and status polling
   useEffect(() => {
@@ -76,26 +169,38 @@ export default function PhoneCallInterface({
     let statusInterval: NodeJS.Timeout;
 
     if (callState === 'in-progress') {
-      // Update call duration every second
+      // Update call duration every second (for UI display only)
       interval = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
 
-      // Poll call status every 10 seconds
+      // Poll call status every 3 seconds with smart stuck call detection
       statusInterval = setInterval(async () => {
         if (currentCall?.id) {
+          console.log(`Polling call status for ${currentCall.id}...`);
           try {
             const statusResponse = await vapiService.getCallStatus(currentCall.id);
+            console.log('Status response:', statusResponse);
+            
             if (statusResponse.success && statusResponse.call) {
               const vapiCall = statusResponse.call;
+              console.log(`VAPI call status: ${vapiCall.status}, UI state: ${callState}`);
               
               // Update local state based on VAPI status
               if (vapiCall.status === 'ended' && callState === 'in-progress') {
+                console.log('🎯 Call ended detected! Updating UI...');
                 setCallState('ended');
                 
-                // Update database with final call data
+                // Calculate actual duration from VAPI data
+                const actualDuration = vapiCall.startedAt && vapiCall.endedAt 
+                  ? Math.floor((new Date(vapiCall.endedAt).getTime() - new Date(vapiCall.startedAt).getTime()) / 1000)
+                  : callDuration; // Fallback to UI duration if VAPI data unavailable
+                
+                console.log(`Calculated duration: ${actualDuration} seconds`);
+                
+                // Update database with final call data using VAPI duration
                 try {
-                  await fetch('/api/voice/phone-calls', {
+                  const updateResponse = await fetch('/api/voice/phone-calls', {
                     method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',
@@ -103,7 +208,7 @@ export default function PhoneCallInterface({
                     body: JSON.stringify({
                       vapiCallId: currentCall.id,
                       callStatus: 'ended',
-                      callDuration: callDuration,
+                      callDuration: actualDuration, // Use VAPI duration
                       audioRecordingUrl: vapiCall.artifact?.recordingUrl,
                       transcriptText: vapiCall.artifact?.transcript,
                       analysisSummary: vapiCall.analysis?.summary,
@@ -111,22 +216,118 @@ export default function PhoneCallInterface({
                         endedAt: vapiCall.endedAt,
                         endedReason: vapiCall.endedReason,
                         cost: vapiCall.cost,
-                        messageCount: vapiCall.messages?.length || 0
+                        messageCount: vapiCall.messages?.length || 0,
+                        vapiStartedAt: vapiCall.startedAt,
+                        vapiEndedAt: vapiCall.endedAt
                       }
                     }),
                   });
+                  
+                  if (updateResponse.ok) {
+                    console.log('✅ Database updated successfully');
+                  } else {
+                    console.error('❌ Database update failed:', await updateResponse.text());
+                  }
                 } catch (dbError) {
                   console.error('Error updating final call data:', dbError);
                 }
                 
                 onCallEndedRef.current?.(currentCall.id, vapiCall);
               }
+              
+              // BUDGET-FRIENDLY FIX: Detect stuck calls with minimal API overhead
+              // Check call age from VAPI data instead of local timer
+              const callStartTime = vapiCall.startedAt ? new Date(vapiCall.startedAt).getTime() : Date.now();
+              const callAge = (Date.now() - callStartTime) / 1000; // Age in seconds
+              
+              if (callState === 'in-progress' && callAge > 300) { // 5 minutes
+                // Check if VAPI call is actually ended but our UI thinks it's still active
+                if (vapiCall.status === 'ended') {
+                  console.warn('Detected stuck call - VAPI shows ended but UI shows in-progress');
+                  
+                  // Fix the stuck call immediately
+                  setCallState('ended');
+                  
+                  // Calculate actual duration from VAPI data
+                  const actualDuration = vapiCall.startedAt && vapiCall.endedAt 
+                    ? Math.floor((new Date(vapiCall.endedAt).getTime() - new Date(vapiCall.startedAt).getTime()) / 1000)
+                    : Math.floor(callAge); // Use call age as fallback
+                  
+                  // Update database to fix the inconsistency
+                  try {
+                    await fetch('/api/voice/phone-calls', {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        vapiCallId: currentCall.id,
+                        callStatus: 'ended',
+                        callDuration: actualDuration, // Use VAPI duration
+                        audioRecordingUrl: vapiCall.artifact?.recordingUrl,
+                        transcriptText: vapiCall.artifact?.transcript,
+                        analysisSummary: vapiCall.analysis?.summary,
+                        metadata: {
+                          endedAt: vapiCall.endedAt,
+                          endedReason: vapiCall.endedReason || 'webhook_missed',
+                          cost: vapiCall.cost,
+                          messageCount: vapiCall.messages?.length || 0,
+                          fixedStuckCall: true, // Flag for debugging
+                          vapiStartedAt: vapiCall.startedAt,
+                          vapiEndedAt: vapiCall.endedAt
+                        }
+                      }),
+                    });
+                    
+                    console.log('Successfully fixed stuck call in database');
+                  } catch (dbError) {
+                    console.error('Error fixing stuck call in database:', dbError);
+                  }
+                  
+                  onCallEndedRef.current?.(currentCall.id, vapiCall);
+                }
+              }
+            } else {
+              console.warn('Status response not successful:', statusResponse);
             }
           } catch (error) {
             console.error('Error polling call status:', error);
+            
+            // Handle 404 errors (call no longer exists in VAPI)
+            if (error instanceof Error && error.message.includes('404')) {
+              console.warn('Call not found in VAPI (404) - likely ended externally, cleaning up UI state');
+              setCallState('ended');
+              
+              // Update database to mark call as ended
+              try {
+                await fetch('/api/voice/phone-calls', {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    vapiCallId: currentCall.id,
+                    callStatus: 'ended',
+                    callDuration: callDuration, // Use UI duration as fallback
+                    metadata: {
+                      endedAt: new Date().toISOString(),
+                      endedReason: 'external_termination',
+                      fixedStuckCall: true,
+                      error404Cleanup: true
+                    }
+                  }),
+                });
+                
+                console.log('Successfully cleaned up 404 call in database');
+              } catch (dbError) {
+                console.error('Error cleaning up 404 call in database:', dbError);
+              }
+              
+              onCallEndedRef.current?.(currentCall.id, undefined);
+            }
           }
         }
-      }, 10000); // Poll every 10 seconds
+      }, 3000); // Poll every 3 seconds for more responsive updates
     }
 
     return () => {
@@ -501,6 +702,43 @@ export default function PhoneCallInterface({
         <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-2">
           <p>Enter your phone number to receive a call for your behavioral interview practice.</p>
           <p className="text-xs">The interview will last approximately 10-15 minutes.</p>
+        </div>
+      )}
+
+      {/* Privacy and Compliance Notice */}
+      {callState === 'idle' && !error && (
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <div className="text-xs space-y-2">
+              <h4 className="font-medium text-blue-800 dark:text-blue-400">
+                Privacy & Legal Compliance
+              </h4>
+              
+              <div className="space-y-1">
+                <p className="text-blue-700 dark:text-blue-300">
+                  <strong>Recording Notice:</strong> This interview will be recorded for analysis and improvement purposes. By proceeding, you consent to this recording.
+                </p>
+                
+                <details className="text-blue-600 dark:text-blue-400 cursor-pointer"> 
+                  <summary className="hover:text-blue-800 dark:hover:text-blue-300">
+                    Legal Considerations & Best Practices
+                  </summary>
+                  <div className="mt-2 space-y-1 pl-4">
+                    <p>• <strong>Consent:</strong> You confirm that you are the phone number owner and consent to receive recorded calls.</p>
+                    <p>• <strong>Jurisdiction:</strong> Comply with local call recording laws - some regions require two-party consent.</p>
+                    <p>• <strong>Data Protection:</strong> Recordings are encrypted, stored securely, and deleted after 30 days per our retention policy.</p>
+                    <p>• <strong>Access Rights:</strong> You can request recording access or deletion by contacting support.</p>
+                    <p>• <strong>Compliance Standards:</strong> We adhere to GDPR, CCPA, and applicable data protection regulations.</p>
+                  </div>
+                </details>
+              </div>
+              
+              <div className="pt-2 text-blue-600 dark:text-blue-400">
+                <p><strong>Important:</strong> By clicking "Start Phone Interview", you acknowledge and agree to these terms.</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

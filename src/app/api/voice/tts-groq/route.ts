@@ -85,8 +85,6 @@ export async function POST(request: NextRequest) {
     // Determine model based on language
     const model = language === 'ar' ? 'playai-tts-arabic' : 'playai-tts';
 
-    console.log(`Generating speech with Groq TTS: voice=${groqVoice}, model=${model}, language=${language}`);
-
     try {
       // Generate speech using Groq TTS
       const response = await groq.audio.speech.create({

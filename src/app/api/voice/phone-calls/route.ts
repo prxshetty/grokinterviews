@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '10');
 
     if (!userId) {
@@ -19,11 +20,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch phone call history from database
-    const { data: calls, error } = await supabase
+    // Build query with optional status filter
+    let query = supabase
       .from('phone_calls')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', userId);
+
+    // Add status filter if provided
+    if (status) {
+      query = query.eq('call_status', status);
+    }
+
+    // Fetch phone call history from database
+    const { data: calls, error } = await query
       .order('created_at', { ascending: false })
       .limit(limit);
 

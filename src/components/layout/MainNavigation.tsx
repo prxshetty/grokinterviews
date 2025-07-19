@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useImagePreloader } from '@/hooks';
-import { LogOut, Menu, X, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, Menu, X, Settings, ChevronDown, MessageSquare, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -478,6 +478,24 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                   Account
                                 </Link>
                               </SheetClose>
+                              <SheetClose asChild>
+                                <Link
+                                  href="/dashboard/bookmarks"
+                                  className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                                >
+                                  <Bookmark className="mr-2 h-4 w-4" />
+                                  Bookmarks
+                                </Link>
+                              </SheetClose>
+                              <SheetClose asChild>
+                                <Link
+                                  href="/transcripts"
+                                  className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+                                >
+                                  <MessageSquare className="mr-2 h-4 w-4" />
+                                  Transcripts
+                                </Link>
+                              </SheetClose>
                             </div>
                             
                             {/* Bottom action bar */}
@@ -575,6 +593,18 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                           <Link href="/account" className="flex items-center">
                             <Settings className="mr-2 h-4 w-4" />
                             Account
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard/bookmarks" className="flex items-center">
+                            <Bookmark className="mr-2 h-4 w-4" />
+                            Bookmarks
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/transcripts" className="flex items-center">
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Transcripts
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
