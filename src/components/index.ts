@@ -1,6 +1,7 @@
 // Layout components
 export { default as Footer } from './layout/Footer';
 export { default as MainNavigation } from './layout/MainNavigation';
+export { ConditionalLayout } from './layout/ConditionalLayout';
 
 // Topics UI components
 export { default as TopicDataProvider } from './topics-ui/TopicDataProvider';
