@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { 
   VoicePlayer, 
@@ -27,8 +27,7 @@ export default function WebInterviewPage() {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [aiResponseKey, setAiResponseKey] = useState(0); // Force re-render of VoicePlayer
 
-  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>('Arista'); // Default to Arista for Groq
-  const [ttsProvider, setTtsProvider] = useState<'google' | 'groq'>('groq'); // Default to Groq (free)
+  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>('Sophia'); // Default to Google voice
   const [ttsError, setTtsError] = useState<string | null>(null);
   const [shouldAutoStartRecording, setShouldAutoStartRecording] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -71,6 +70,28 @@ export default function WebInterviewPage() {
   
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get voice from URL parameter and map to appropriate Google voice option
+  const getInitialVoice = useCallback((): VoiceOption => {
+    const voiceParam = searchParams.get('voice');
+    if (voiceParam === 'Gideon') {
+      return 'Algieba'; // Premium male voice
+    } else if (voiceParam === 'Gianna') {
+      return 'Aoede'; // Premium female voice
+    } else if (voiceParam === 'George') {
+      return 'Marcus'; // Standard male voice
+    } else if (voiceParam === 'Gia') {
+      return 'Sophia'; // Standard female voice
+    }
+    // Default to female voice
+    return 'Sophia';
+  }, [searchParams]);
+
+  // Initialize voice selection based on URL parameter
+  useEffect(() => {
+    setSelectedVoice(getInitialVoice());
+  }, [getInitialVoice]);
 
   // Function to fetch transcripts for current session only
   const fetchSessionTranscripts = useCallback(async () => {
@@ -158,14 +179,7 @@ export default function WebInterviewPage() {
     }
   }, [sessionId, fetchSessionTranscripts]);
 
-  // Auto-switch voice when TTS provider changes
-  useEffect(() => {
-    if (ttsProvider === 'groq') {
-      setSelectedVoice('Arista'); // Default female voice for Groq
-    } else if (ttsProvider === 'google') {
-      setSelectedVoice('Sophia'); // Default female voice for Google
-    }
-  }, [ttsProvider]);
+
 
   const handleBackToModeSelector = () => {
     router.push('/voice');
@@ -733,7 +747,6 @@ export default function WebInterviewPage() {
                   key={aiResponseKey}
                   text={currentQuestion} 
                   voice={selectedVoice}
-                  ttsProvider={ttsProvider}
                   autoPlay={(isInterviewActive || isInterviewCompleted) && !isProcessingAI && !rateLimited}
                   onPlayStateChange={(isPlaying) => {
                     setIsPlayingTTS(isPlaying);
@@ -798,8 +811,6 @@ export default function WebInterviewPage() {
             rateLimited={rateLimited}
             selectedVoice={selectedVoice}
             onVoiceChange={setSelectedVoice}
-            ttsProvider={ttsProvider}
-            setTtsProvider={setTtsProvider}
             onStartInterview={handleStartInterview}
             onEndInterview={handleEndInterview}
             isRecording={isRecordingActive}

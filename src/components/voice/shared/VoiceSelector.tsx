@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 interface VoiceSelectorProps {
   selectedVoice: VoiceOption;
   onVoiceChange: (voice: VoiceOption) => void;
-  ttsProvider?: 'google' | 'groq';
   disabled?: boolean;
   className?: string;
 }
@@ -47,50 +46,25 @@ const GOOGLE_VOICE_OPTIONS = {
   }
 };
 
-// Groq TTS voice options (PlayAI voices)
-const GROQ_VOICE_OPTIONS = {
-  'Arista': {
-    name: 'Arista',
-    description: 'PlayAI Female Voice',
-    gender: 'Female',
-    groqVoice: 'Arista-PlayAI'
-  },
-  'Atlas': {
-    name: 'Atlas',
-    description: 'PlayAI Male Voice',
-    gender: 'Male',
-    groqVoice: 'Atlas-PlayAI'
-  }
-};
-
 export type GoogleVoiceOption = keyof typeof GOOGLE_VOICE_OPTIONS;
-export type GroqVoiceOption = keyof typeof GROQ_VOICE_OPTIONS;
-export type VoiceOption = GoogleVoiceOption | GroqVoiceOption;
+export type VoiceOption = GoogleVoiceOption;
 
 export function VoiceSelector({ 
   selectedVoice, 
   onVoiceChange, 
-  ttsProvider = 'google',
   disabled = false,
   className 
 }: VoiceSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Set default voice based on provider
-  const defaultVoice = ttsProvider === 'groq' ? 'Arista' : 'Sophia';
+  // Default to Sophia voice
+  const defaultVoice = 'Sophia';
   
-  // Get current voice with proper fallback and type assertion
+  // Get current voice with proper fallback
   const getCurrentVoice = () => {
-    if (ttsProvider === 'groq') {
-      const groqOptions = GROQ_VOICE_OPTIONS;
-      const voice = groqOptions[selectedVoice as keyof typeof groqOptions];
-      return voice || groqOptions[defaultVoice as keyof typeof groqOptions];
-    } else {
-      const googleOptions = GOOGLE_VOICE_OPTIONS;
-      const voice = googleOptions[selectedVoice as keyof typeof googleOptions];
-      return voice || googleOptions[defaultVoice as keyof typeof googleOptions];
-    }
+    const voice = GOOGLE_VOICE_OPTIONS[selectedVoice as keyof typeof GOOGLE_VOICE_OPTIONS];
+    return voice || GOOGLE_VOICE_OPTIONS[defaultVoice as keyof typeof GOOGLE_VOICE_OPTIONS];
   };
   
   const currentVoice = getCurrentVoice();
@@ -135,8 +109,7 @@ export function VoiceSelector({
           <div className="text-left">
             <div className="text-sm font-medium text-gray-900 dark:text-white">{currentVoice.name}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {currentVoice.gender}
-              {ttsProvider === 'google' && 'tier' in currentVoice && ` • ${currentVoice.tier}`}
+              {currentVoice.gender} • {currentVoice.tier}
             </div>
           </div>
         </div>
@@ -150,124 +123,81 @@ export function VoiceSelector({
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[100] overflow-hidden">
           <div className="max-h-64 overflow-y-auto">
-            {ttsProvider === 'google' && (
-              <>
-                {/* Premium voices section */}
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                    Premium Voices
-                  </div>
-                </div>
-                {Object.keys(GOOGLE_VOICE_OPTIONS).filter(voice => {
-                  const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
-                  return 'tier' in voiceInfo && voiceInfo.tier === 'Premium';
-                }).map((voice) => {
-                  const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
-                  const isSelected = voice === selectedVoice;
-                  
-                  return (
-                    <button
-                      key={voice}
-                      onClick={() => handleVoiceSelect(voice as VoiceOption)}
-                      className={cn(
-                        "w-full text-left px-4 py-3 transition-colors duration-150",
-                        "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-                        isSelected && "bg-blue-50 dark:bg-blue-900/30"
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{voiceInfo.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {voiceInfo.gender} • {voiceInfo.description}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        )}
+            {/* Premium voices section */}
+            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
+              <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                Premium Voices
+              </div>
+            </div>
+            {Object.keys(GOOGLE_VOICE_OPTIONS).filter(voice => {
+              const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
+              return voiceInfo.tier === 'Premium';
+            }).map((voice) => {
+              const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
+              const isSelected = voice === selectedVoice;
+              
+              return (
+                <button
+                  key={voice}
+                  onClick={() => handleVoiceSelect(voice as VoiceOption)}
+                  className={cn(
+                    "w-full text-left px-4 py-3 transition-colors duration-150",
+                    "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                    isSelected && "bg-blue-50 dark:bg-blue-900/30"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{voiceInfo.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {voiceInfo.gender} • {voiceInfo.description}
                       </div>
-                    </button>
-                  );
-                })}
-                
-                {/* Standard voices section */}
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                    Standard Voices
+                    </div>
+                    {isSelected && (
+                      <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    )}
                   </div>
-                </div>
-                {Object.keys(GOOGLE_VOICE_OPTIONS).filter(voice => {
-                  const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
-                  return 'tier' in voiceInfo && voiceInfo.tier === 'Standard';
-                }).map((voice) => {
-                  const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
-                  const isSelected = voice === selectedVoice;
-                  
-                  return (
-                    <button
-                      key={voice}
-                      onClick={() => handleVoiceSelect(voice as VoiceOption)}
-                      className={cn(
-                        "w-full text-left px-4 py-3 transition-colors duration-150",
-                        "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-                        isSelected && "bg-blue-50 dark:bg-blue-900/30"
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{voiceInfo.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {voiceInfo.gender} • {voiceInfo.description}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </>
-            )}
+                </button>
+              );
+            })}
             
-            {/* Groq voices */}
-            {ttsProvider === 'groq' && (
-              <>
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
-                    Available Voices
-                  </div>
-                </div>
-                {Object.keys(GROQ_VOICE_OPTIONS).map((voice) => {
-                  const voiceInfo = GROQ_VOICE_OPTIONS[voice as keyof typeof GROQ_VOICE_OPTIONS];
-                  const isSelected = voice === selectedVoice;
-                  
-                  return (
-                    <button
-                      key={voice}
-                      onClick={() => handleVoiceSelect(voice as VoiceOption)}
-                      className={cn(
-                        "w-full text-left px-4 py-3 transition-colors duration-150",
-                        "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-                        isSelected && "bg-blue-50 dark:bg-blue-900/30"
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{voiceInfo.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {voiceInfo.gender} • {voiceInfo.description}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        )}
+            {/* Standard voices section */}
+            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-600">
+              <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                Standard Voices
+              </div>
+            </div>
+            {Object.keys(GOOGLE_VOICE_OPTIONS).filter(voice => {
+              const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
+              return voiceInfo.tier === 'Standard';
+            }).map((voice) => {
+              const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
+              const isSelected = voice === selectedVoice;
+              
+              return (
+                <button
+                  key={voice}
+                  onClick={() => handleVoiceSelect(voice as VoiceOption)}
+                  className={cn(
+                    "w-full text-left px-4 py-3 transition-colors duration-150",
+                    "hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                    isSelected && "bg-blue-50 dark:bg-blue-900/30"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{voiceInfo.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {voiceInfo.gender} • {voiceInfo.description}
                       </div>
-                    </button>
-                  );
-                })}
-              </>
-            )}
+                    </div>
+                    {isSelected && (
+                      <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -281,7 +211,6 @@ export function VoiceSelector({
 interface VoicePreviewProps {
   voice: VoiceOption;
   onPreview: (voice: VoiceOption) => void;
-  ttsProvider?: 'google' | 'groq';
   isPlaying?: boolean;
   disabled?: boolean;
 }
@@ -289,20 +218,11 @@ interface VoicePreviewProps {
 export function VoicePreview({ 
   voice, 
   onPreview, 
-  ttsProvider = 'google',
   isPlaying = false, 
   disabled = false 
 }: VoicePreviewProps) {
-  // Get voice info with proper type handling
-  const getVoiceInfo = () => {
-    if (ttsProvider === 'groq') {
-      return GROQ_VOICE_OPTIONS[voice as keyof typeof GROQ_VOICE_OPTIONS];
-    } else {
-      return GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
-    }
-  };
-  
-  const voiceInfo = getVoiceInfo();
+  // Get voice info from Google voices
+  const voiceInfo = GOOGLE_VOICE_OPTIONS[voice as keyof typeof GOOGLE_VOICE_OPTIONS];
   
   if (!voiceInfo) return null;
   

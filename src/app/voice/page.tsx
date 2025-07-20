@@ -2,14 +2,16 @@
 
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Laptop, Phone, Zap, Clock, Users, Shield } from 'lucide-react';
+import { Laptop, Phone, Zap, Clock, Users, Shield, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VoiceSelection, type VoiceType } from '@/components/voice/VoiceSelection';
 
 export default function VoicePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [selectedVoice, setSelectedVoice] = useState<VoiceType | null>(null);
 
   // Redirect to sign-in if not authenticated
   useEffect(() => {
@@ -33,7 +35,35 @@ export default function VoicePage() {
   }
 
   const handleModeSelection = (mode: 'web' | 'phone') => {
-    router.push(`/voice/${mode}`);
+    // For web mode, voice selection is required
+    if (mode === 'web' && !selectedVoice) return;
+    
+    // For phone mode, use default voice or proceed without voice selection
+    if (mode === 'phone') {
+      router.push(`/voice/${mode}`);
+      return;
+    }
+    
+    // Map voice types to appropriate voice parameters for web mode
+    let voiceParam: string;
+    switch (selectedVoice) {
+      case 'male':
+        voiceParam = 'George';
+        break;
+      case 'female':
+        voiceParam = 'Gia';
+        break;
+      case 'premium-male':
+        voiceParam = 'Gideon';
+        break;
+      case 'premium-female':
+        voiceParam = 'Gianna';
+        break;
+      default:
+        voiceParam = 'Gia';
+    }
+    
+    router.push(`/voice/${mode}?voice=${voiceParam}`);
   };
 
   const modes = [
@@ -67,7 +97,7 @@ export default function VoicePage() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 min-h-[600px]">
         <div className="space-y-6 w-full">
           <div className="text-center space-y-2">
             <h2 className="text-3xl md:text-4xl font-normal text-black dark:text-white">
@@ -84,12 +114,10 @@ export default function VoicePage() {
                 <div
                   key={mode.id}
                   className={cn(
-                    "relative border-2 rounded-xl cursor-pointer transition-all duration-300 transform flex flex-col md:flex-row flex-1",
+                    "relative border-2 rounded-xl transition-all duration-300 flex flex-col md:flex-row flex-1",
                     "h-auto md:h-[480px]",
-                    "hover:scale-[1.02] hover:shadow-lg",
-                    "border-border bg-card hover:border-blue-300 dark:hover:border-blue-600"
+                    "border-border bg-card"
                   )}
-                  onClick={() => handleModeSelection(mode.id)}
                 >
                   {/* Image with overlay text */}
                   <div className="relative w-full md:w-1/2 h-48 md:h-full rounded-t-xl md:rounded-l-xl md:rounded-t-none overflow-hidden">
@@ -117,8 +145,8 @@ export default function VoicePage() {
                   </div>
 
                   {/* Content area */}
-                  <div className="flex-1 p-4 md:p-9 flex flex-col justify-between">
-                    <div>
+                  <div className="relative flex-1 p-4 md:p-9 flex flex-col h-full">
+                    <div className="flex-grow">
                       {/* Recommended badge */}
                       <div className="inline-block px-3 md:px-4 py-1 md:py-2 text-xs md:text-sm font-medium rounded-full mb-4 md:mb-6 bg-muted text-muted-foreground">
                         {mode.recommended}
@@ -138,14 +166,35 @@ export default function VoicePage() {
                           );
                         })}
                       </div>
+
+                      {/* Voice Selection - only show for web mode */}
+                      {mode.id === 'web' && (
+                        <div className="mb-4">
+                          <VoiceSelection
+                            selectedVoice={selectedVoice}
+                            onVoiceChange={setSelectedVoice}
+                          />
+                        </div>
+                      )}
                     </div>
 
-                    {/* Call to action */}
-                    <div className="min-h-[100px] md:min-h-[150px] flex items-center justify-center">
-                      <button className="w-full py-3 px-6 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                        Start {mode.title}
-                      </button>
-                    </div>
+                    {/* Circular Arrow Button - Positioned at bottom right */}
+                    <button 
+                      onClick={() => handleModeSelection(mode.id)}
+                      disabled={mode.id === 'web' && !selectedVoice}
+                      className={cn(
+                        "absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
+                        (mode.id === 'phone' || selectedVoice)
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 cursor-pointer"
+                          : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                      )}
+                      title={mode.id === 'web' 
+                        ? (selectedVoice ? `Start ${mode.title}` : 'Select a voice to continue')
+                        : `Start ${mode.title}`
+                      }
+                    >
+                      <ArrowRight className="h-5 w-5" />
+                    </button>
                   </div>
                 </div>
               );

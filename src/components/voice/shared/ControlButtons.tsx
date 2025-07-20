@@ -10,8 +10,6 @@ interface ControlButtonsProps {
   rateLimited: boolean;
   selectedVoice: VoiceOption;
   onVoiceChange: (voice: VoiceOption) => void;
-  ttsProvider: 'groq' | 'google';
-  setTtsProvider: (provider: 'groq' | 'google') => void;
   onStartInterview: () => Promise<void>;
   onEndInterview: () => void;
   // Recording functionality
@@ -32,8 +30,6 @@ export default function ControlButtons({
   rateLimited,
   selectedVoice,
   onVoiceChange,
-  ttsProvider,
-  setTtsProvider,
   onStartInterview,
   onEndInterview,
   // Recording functionality
@@ -73,8 +69,6 @@ export default function ControlButtons({
         <VoiceSettingsPanel
           selectedVoice={selectedVoice}
           onVoiceChange={onVoiceChange}
-          ttsProvider={ttsProvider}
-          setTtsProvider={setTtsProvider}
         />
       )}
       
