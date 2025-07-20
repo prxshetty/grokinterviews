@@ -10,7 +10,6 @@ interface VoicePlayerProps {
   text: string;
   autoPlay?: boolean;
   voice?: VoiceOption;
-  ttsProvider?: 'google' | 'groq';
   className?: string;
   onPlayStateChange?: (isPlaying: boolean) => void;
   onError?: (error: string) => void;
@@ -27,7 +26,6 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
   text, 
   autoPlay = false, 
   voice = 'Kore',
-  ttsProvider = 'google',
   className,
   onPlayStateChange,
   onError,
@@ -185,12 +183,10 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       setIsLoading(true);
       setError(null);
       
-      console.log(`🎤 Generating speech with ${ttsProvider.toUpperCase()} for:`, text.substring(0, 50) + '...');
+      console.log(`🎤 Generating speech with Google TTS for:`, text.substring(0, 50) + '...');
 
-      // Choose the appropriate TTS endpoint based on provider
-      const ttsEndpoint = ttsProvider === 'groq' ? '/api/voice/tts-groq' : '/api/voice/tts';
-      
-      const response = await fetch(ttsEndpoint, {
+      // Always use Google TTS endpoint
+      const response = await fetch('/api/voice/tts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +276,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       setIsLoading(false);
       isGeneratingRef.current = false;
     }
-  }, [text, voice, ttsProvider, onPlayStateChange, onPlaybackComplete, onError, onAudioData, setupAudioAnalysis]);
+  }, [text, voice, onPlayStateChange, onPlaybackComplete, onError, onAudioData, setupAudioAnalysis]);
   
   // Update the ref whenever generateSpeech changes
   generateSpeechRef.current = generateSpeech;
