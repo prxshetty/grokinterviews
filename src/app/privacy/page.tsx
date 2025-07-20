@@ -66,32 +66,6 @@ export default function PrivacyPolicy() {
     marginBottom: '2rem'
   }
 
-  const summaryStyle = {
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #dee2e6',
-    borderRadius: '8px',
-    padding: '2rem',
-    marginTop: '3rem'
-  }
-
-  const summaryH2Style = {
-    ...h2Style,
-    marginTop: '0',
-    color: '#495057'
-  }
-
-  const summaryContentStyle = {
-    fontWeight: 'bold',
-    marginBottom: '1rem',
-    color: '#495057'
-  }
-
-  const summaryUlStyle = {
-    ...ulStyle,
-    fontSize: '0.95rem',
-    color: '#6c757d'
-  }
-
   const linkStyle = {
     color: '#007bff',
     textDecoration: 'underline'

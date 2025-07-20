@@ -1,7 +1,11 @@
-export { default as VoiceRecorderHeadless } from './VoiceRecorderHeadless';
-export { VoicePlayer } from './VoicePlayer';
-export { VoiceSelector, type GoogleVoiceOption, type GroqVoiceOption, type VoiceOption } from './VoiceSelector';
-export { default as InterviewReport } from './InterviewReport';
-export { VoiceSettingsPanel } from './VoiceSettingsPanel';
-export { default as ControlButtons } from './ControlButtons';
-export { default as RecentTranscriptDisplay } from './RecentTranscriptDisplay';
+// Web-specific components
+export * from './web'
+
+// Phone-specific components  
+export * from './phone'
+
+// Shared components
+export * from './shared'
+
+// Keep InterviewModeSelector in main directory for now (will be integrated inline)
+export { default as InterviewModeSelector } from './InterviewModeSelector'

@@ -6,15 +6,18 @@ import { useRouter } from 'next/navigation';
 import { 
   VoicePlayer, 
   InterviewReport,
-  ControlButtons
+  ControlButtons,
+  RecentTranscriptDisplay,
+  VoicePageWithVisualizer,
+  VoiceRecorderHeadless,
+  InterviewModeSelector,
+  PhoneCallInterface
 } from '@/components/voice';
-import RecentTranscriptDisplay from '@/components/voice/RecentTranscriptDisplay';
-import VoicePageWithVisualizer, { VoicePageWithVisualizerRef } from '@/components/voice/VoicePageWithVisualizer';
-import VoiceRecorderHeadless, { VoiceRecorderHeadlessRef } from '@/components/voice/VoiceRecorderHeadless';
-import { VoicePlayerRef } from '@/components/voice/VoicePlayer';
-import { VoiceOption } from '@/components/voice/VoiceSelector';
-import InterviewModeSelector, { InterviewMode } from '@/components/voice/InterviewModeSelector';
-import PhoneCallInterface from '@/components/voice/PhoneCallInterface';
+import { VoicePageWithVisualizerRef } from '@/components/voice/web/VoicePageWithVisualizer';
+import { VoiceRecorderHeadlessRef } from '@/components/voice/web/VoiceRecorderHeadless';
+import { VoicePlayerRef } from '@/components/voice/shared/VoicePlayer';
+import { VoiceOption } from '@/components/voice/shared/VoiceSelector';
+import { InterviewMode } from '@/components/voice/InterviewModeSelector';
 
 export default function VoicePage() {
   // Interview mode state

@@ -39,11 +39,11 @@ export async function GET(_request: NextRequest) {
     }
 
     const today = new Date();
-    const todayDateString = today.toISOString().split('T')[0];
+    const todayDateString = today.toISOString().split('T')[0]!; // Non-null assertion since toISOString always returns valid format
 
     // Check if streak is broken
     if (streakData.last_active_date) {
-      const lastActiveDateString = new Date(streakData.last_active_date).toISOString().split('T')[0];
+      const lastActiveDateString = new Date(streakData.last_active_date).toISOString().split('T')[0]!;
       
       const todayDate = new Date(todayDateString);
       const lastActiveDate = new Date(lastActiveDateString);
@@ -71,4 +71,15 @@ export async function GET(_request: NextRequest) {
         }
         
         // Return the reset streak data
-        return NextResponse.json(resetData); 
+        return NextResponse.json(resetData);
+      }
+    }
+
+    // Return current streak data
+    return NextResponse.json(streakData);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error in streak route:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
