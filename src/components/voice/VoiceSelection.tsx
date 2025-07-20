@@ -1,6 +1,4 @@
 'use client';
-
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 type VoiceType = 'male' | 'female' | 'premium-male' | 'premium-female';
