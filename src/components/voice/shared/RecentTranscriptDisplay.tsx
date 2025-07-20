@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DEFAULT_AVATAR_URL } from '@/config';
@@ -26,12 +26,15 @@ export default function RecentTranscriptDisplay({
   const { user, profile } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
+  // Safety check for undefined transcripts with useMemo to prevent dependency changes
+  const transcripts = useMemo(() => allTranscripts || [], [allTranscripts]);
+  
   // Auto-scroll to bottom when new transcripts are added
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
-  }, [allTranscripts, isLoadingTranscripts]);
+  }, [transcripts, isLoadingTranscripts]);
   
   if (!isInterviewActive) {
     return null;
@@ -43,7 +46,7 @@ export default function RecentTranscriptDisplay({
         ref={scrollContainerRef}
         className="space-y-4 max-h-96 overflow-y-auto scroll-smooth"
       >
-        {allTranscripts.map((transcript) => (
+        {transcripts.map((transcript) => (
           <div
             key={transcript.id}
             className={`flex gap-3 ${
