@@ -84,7 +84,7 @@ export default function ControlButtons({
             <button
               onClick={onStartInterview}
               disabled={isProcessingAI || rateLimited}
-              className="w-16 h-16 backdrop-blur-xl bg-black/10 hover:bg-black/20 disabled:bg-gray-500/20 dark:bg-white/10 dark:hover:bg-white/20 border border-black/20 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
+              className="w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
               title="Start Interview"
             >
               <PlayIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -94,7 +94,7 @@ export default function ControlButtons({
           <div className="relative">
             <button
               onClick={onEndInterview}
-              className="w-16 h-16 backdrop-blur-xl bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 border border-black/20 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
+              className="w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
               title="End Interview"
             >
               <StopIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -109,7 +109,7 @@ export default function ControlButtons({
               onClick={isRecording ? onStopRecording : onStartRecording}
               disabled={isProcessingAI || rateLimited || isRecordingProcessing}
               className={cn(
-                "w-16 h-16 backdrop-blur-xl bg-black/10 hover:bg-black/20 disabled:bg-gray-500/20 dark:bg-white/10 dark:hover:bg-white/20 border border-black/20 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group relative hover:scale-105",
+                "w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group relative hover:scale-105",
                 isRecordingProcessing && "opacity-50 cursor-not-allowed"
               )}
               title={
@@ -133,12 +133,12 @@ export default function ControlButtons({
             
             {/* Recording indicator */}
             {isRecording && (
-              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full animate-pulse border-2 border-black/50 dark:border-white/50 backdrop-blur-sm bg-black/20 dark:bg-white/20" />
+              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full animate-pulse border-2 border-gray-400/60 dark:border-white/50 backdrop-blur-sm bg-gray-200/40 dark:bg-white/20" />
             )}
             
             {/* VAD indicator */}
             {enableVAD && vadSupported && (
-              <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-black/20 dark:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-black/50 dark:border-white/50">
+              <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-gray-200/40 dark:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-gray-400/60 dark:border-white/50">
                 <Zap className="h-2.5 w-2.5 text-gray-700 dark:text-white" />
               </div>
             )}
@@ -153,8 +153,8 @@ export default function ControlButtons({
               className={cn(
                 "w-16 h-16 backdrop-blur-xl border rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105",
                 showChat
-                  ? 'bg-black/20 hover:bg-black/30 dark:bg-white/20 dark:hover:bg-white/30 border-black/30 dark:border-white/30 text-gray-700 dark:text-white'
-                  : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 border-black/20 dark:border-white/20 text-gray-600 dark:text-white/70 hover:text-gray-700 dark:hover:text-white'
+                  ? 'bg-gray-300/60 hover:bg-gray-300/80 dark:bg-white/20 dark:hover:bg-white/30 border-gray-400/60 dark:border-white/30 text-gray-700 dark:text-white'
+                  : 'bg-gray-200/40 hover:bg-gray-200/60 dark:bg-white/10 dark:hover:bg-white/20 border-gray-300/50 dark:border-white/20 text-gray-600 dark:text-white/70 hover:text-gray-700 dark:hover:text-white'
               )}
               title={showChat ? 'Hide Chat' : 'Show Chat'}
             >
