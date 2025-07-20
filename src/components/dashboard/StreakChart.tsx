@@ -19,7 +19,6 @@ export function StreakChart({ className = '' }: StreakChartProps) {
     highest_streak, 
     last_active_date, 
     streak_start_date,
-    grace_used,
     isLoading, 
     error 
   } = useStreak(!!user);
@@ -130,11 +129,6 @@ export function StreakChart({ className = '' }: StreakChartProps) {
             <Flame className="h-4 w-4 text-orange-500" />
             <h3 className="text-base font-semibold">Streak Calendar</h3>
           </div>
-          {grace_used && (
-            <Badge variant="secondary" className="text-xs">
-              Grace Used
-            </Badge>
-          )}
         </div>
 
         {/* Current Streak Display */}

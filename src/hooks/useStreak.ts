@@ -5,7 +5,6 @@ interface StreakData {
   highest_streak: number;
   last_active_date: string | null;
   streak_start_date: string | null;
-  grace_used: boolean;
 }
 
 // Ultra-efficient cache with localStorage persistence
@@ -54,8 +53,7 @@ export function useStreak(isAuthenticated: boolean = true) {
     current_streak: 0,
     highest_streak: 0,
     last_active_date: null,
-    streak_start_date: null,
-    grace_used: false
+    streak_start_date: null
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
