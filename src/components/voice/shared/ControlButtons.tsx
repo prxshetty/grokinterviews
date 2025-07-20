@@ -2,6 +2,20 @@ import React from 'react';
 import { Mic, Square, MessageCircle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Custom Play Icon Component
+const PlayIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 12 12" className={className}>
+    <path fill="currentColor" d="M4.496 1.994A1 1 0 0 0 3 2.862v6.277a1 1 0 0 0 1.496.868l5.492-3.139a1 1 0 0 0 0-1.736L4.496 1.994Z"/>
+  </svg>
+);
+
+// Custom Stop Icon Component
+const StopIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 1025 1024" className={className}>
+    <path fill="currentColor" d="M128.428 0h768q53 0 90.5 37.5t37.5 90.5v768q0 53-37.5 90.5t-90.5 37.5h-768q-53 0-90.5-37.5T.428 896V128q0-53 37.5-90.5t90.5-37.5z"/>
+  </svg>
+);
+
 interface ControlButtonsProps {
   isInterviewActive: boolean;
   isProcessingAI: boolean;
@@ -45,16 +59,16 @@ export default function ControlButtons({
 }: ControlButtonsProps) {
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-6">
       {/* Recording Error Display */}
       {recordingError && (
-        <div className="max-w-md p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="max-w-md p-4 backdrop-blur-xl bg-red-500/10 border border-red-500/20 rounded-2xl shadow-lg">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-red-700 dark:text-red-400">{recordingError}</p>
+            <p className="text-sm text-red-100">{recordingError}</p>
             {onDismissRecordingError && (
               <button
                 onClick={onDismissRecordingError}
-                className="ml-2 text-red-600 hover:text-red-700 text-sm font-medium"
+                className="ml-2 text-red-200 hover:text-red-100 text-sm font-medium"
               >
                 ×
               </button>
@@ -62,96 +76,92 @@ export default function ControlButtons({
           </div>
         </div>
       )}
-      
 
-      
-      {/* Control Buttons */}
-      <div className="flex items-center space-x-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-gray-200 dark:border-gray-700">
-      {!isInterviewActive ? (
-        <button
-          onClick={onStartInterview}
-          disabled={isProcessingAI || rateLimited}
-          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-full font-medium transition-colors shadow-lg"
-        >
-          <Mic className="w-5 h-5" />
-          <span>Start Interview</span>
-        </button>
-      ) : (
-        <button
-          onClick={onEndInterview}
-          className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full font-medium transition-colors shadow-lg"
-        >
-          <Square className="w-5 h-5" />
-          <span>End Interview</span>
-        </button>
-      )}
-      
-      {/* Recording Toggle Button */}
-      {isInterviewActive && (
-        <div className="relative">
-          <button
-            onClick={isRecording ? onStopRecording : onStartRecording}
-            disabled={isProcessingAI || rateLimited || isRecordingProcessing}
-            className={cn(
-              "flex items-center space-x-2 px-4 py-3 rounded-full font-medium transition-all duration-200 shadow-lg relative",
-              isRecording
-                ? isSpeaking
-                  ? "bg-green-600 hover:bg-green-700 text-white animate-pulse"
-                  : "bg-yellow-600 hover:bg-yellow-700 text-white"
-                : "bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white",
-              isRecordingProcessing && "opacity-50 cursor-not-allowed"
+      {/* Control Buttons - Individual Spacing */}
+      <div className="flex items-center justify-center space-x-8">
+        {!isInterviewActive ? (
+          <div className="relative">
+            <button
+              onClick={onStartInterview}
+              disabled={isProcessingAI || rateLimited}
+              className="w-16 h-16 backdrop-blur-xl bg-black/10 hover:bg-black/20 disabled:bg-gray-500/20 dark:bg-white/10 dark:hover:bg-white/20 border border-black/20 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
+              title="Start Interview"
+            >
+              <PlayIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        ) : (
+          <div className="relative">
+            <button
+              onClick={onEndInterview}
+              className="w-16 h-16 backdrop-blur-xl bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 border border-black/20 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
+              title="End Interview"
+            >
+              <StopIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        )}
+        
+        {/* Recording Toggle Button */}
+        {isInterviewActive && (
+          <div className="relative">
+            <button
+              onClick={isRecording ? onStopRecording : onStartRecording}
+              disabled={isProcessingAI || rateLimited || isRecordingProcessing}
+              className={cn(
+                "w-16 h-16 backdrop-blur-xl bg-black/10 hover:bg-black/20 disabled:bg-gray-500/20 dark:bg-white/10 dark:hover:bg-white/20 border border-black/20 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group relative hover:scale-105",
+                isRecordingProcessing && "opacity-50 cursor-not-allowed"
+              )}
+              title={
+                isRecordingProcessing
+                  ? "Processing..."
+                  : isRecording
+                  ? isSpeaking
+                    ? "Speaking..."
+                    : "Listening..."
+                  : "Record"
+              }
+            >
+              {isRecordingProcessing ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-700 dark:border-white" />
+              ) : isRecording ? (
+                <Square className="w-6 h-6 fill-current group-hover:scale-110 transition-transform" />
+              ) : (
+                <Mic className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              )}
+            </button>
+            
+            {/* Recording indicator */}
+            {isRecording && (
+              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full animate-pulse border-2 border-black/50 dark:border-white/50 backdrop-blur-sm bg-black/20 dark:bg-white/20" />
             )}
-          >
-            {isRecordingProcessing ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-            ) : isRecording ? (
-              <Square className="w-5 h-5 fill-current" />
-            ) : (
-              <Mic className="w-5 h-5" />
+            
+            {/* VAD indicator */}
+            {enableVAD && vadSupported && (
+              <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-black/20 dark:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-black/50 dark:border-white/50">
+                <Zap className="h-2.5 w-2.5 text-gray-700 dark:text-white" />
+              </div>
             )}
-            <span>
-              {isRecordingProcessing
-                ? "Processing..."
-                : isRecording
-                ? isSpeaking
-                  ? "Speaking..."
-                  : "Listening..."
-                : "Record"}
-            </span>
-          </button>
-          
-          {/* Recording indicator */}
-          {isRecording && (
-            <div className={cn(
-              "absolute -top-1 -right-1 h-3 w-3 rounded-full animate-pulse",
-              isSpeaking ? "bg-green-400" : "bg-yellow-400"
-            )} />
-          )}
-          
-          {/* VAD indicator */}
-          {enableVAD && vadSupported && (
-            <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-purple-500 rounded-full flex items-center justify-center">
-              <Zap className="h-2 w-2 text-white" />
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Chat Toggle Button */}
-      {isInterviewActive && onToggleChat && (
-        <button
-          onClick={onToggleChat}
-          className={cn(
-            "flex items-center space-x-2 px-4 py-3 rounded-full font-medium transition-colors shadow-lg",
-            showChat
-              ? 'bg-purple-600 hover:bg-purple-700 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
-          )}
-        >
-          <MessageCircle className="w-5 h-5" />
-          <span>{showChat ? 'Hide Chat' : 'Show Chat'}</span>
-        </button>
-      )}
+          </div>
+        )}
+        
+        {/* Chat Toggle Button */}
+        {isInterviewActive && onToggleChat && (
+          <div className="relative">
+            <button
+              onClick={onToggleChat}
+              className={cn(
+                "w-16 h-16 backdrop-blur-xl border rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105",
+                showChat
+                  ? 'bg-black/20 hover:bg-black/30 dark:bg-white/20 dark:hover:bg-white/30 border-black/30 dark:border-white/30 text-gray-700 dark:text-white'
+                  : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 border-black/20 dark:border-white/20 text-gray-600 dark:text-white/70 hover:text-gray-700 dark:hover:text-white'
+              )}
+              title={showChat ? 'Hide Chat' : 'Show Chat'}
+            >
+              <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
