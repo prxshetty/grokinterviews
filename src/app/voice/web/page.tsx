@@ -50,6 +50,9 @@ export default function WebInterviewPage() {
   // Recording-related states
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [vadSupported, setVadSupported] = useState(false);
+  
+  // Chat visibility state
+  const [showChat, setShowChat] = useState(true);
 
   // Initialize VAD support check
   useEffect(() => {
@@ -791,6 +794,7 @@ export default function WebInterviewPage() {
                 allTranscripts={allTranscripts}
                 isLoadingTranscripts={isLoadingTranscripts}
                 isInterviewActive={isInterviewActive}
+                showChat={showChat}
               />
             </div>
 
@@ -809,8 +813,6 @@ export default function WebInterviewPage() {
             isInterviewActive={isInterviewActive}
             isProcessingAI={isProcessingAI}
             rateLimited={rateLimited}
-            selectedVoice={selectedVoice}
-            onVoiceChange={setSelectedVoice}
             onStartInterview={handleStartInterview}
             onEndInterview={handleEndInterview}
             isRecording={isRecordingActive}
@@ -822,6 +824,8 @@ export default function WebInterviewPage() {
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
             onDismissRecordingError={handleDismissRecordingError}
+            showChat={showChat}
+            onToggleChat={() => setShowChat(!showChat)}
           />
         </div>
       </div>

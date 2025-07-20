@@ -16,12 +16,14 @@ interface RecentTranscriptDisplayProps {
   allTranscripts: Transcript[];
   isInterviewActive: boolean;
   isLoadingTranscripts: boolean;
+  showChat?: boolean;
 }
 
 export default function RecentTranscriptDisplay({
   allTranscripts,
   isInterviewActive,
-  isLoadingTranscripts
+  isLoadingTranscripts,
+  showChat = true
 }: RecentTranscriptDisplayProps) {
   const { user, profile } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -36,7 +38,7 @@ export default function RecentTranscriptDisplay({
     }
   }, [transcripts, isLoadingTranscripts]);
   
-  if (!isInterviewActive) {
+  if (!isInterviewActive || !showChat) {
     return null;
   }
 

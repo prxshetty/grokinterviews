@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
-import { Mic, Square, Settings, Zap } from 'lucide-react';
-import { VoiceSettingsPanel } from './VoiceSettingsPanel';
-import { VoiceOption } from './VoiceSelector';
+import React from 'react';
+import { Mic, Square, MessageCircle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ControlButtonsProps {
   isInterviewActive: boolean;
   isProcessingAI: boolean;
   rateLimited: boolean;
-  selectedVoice: VoiceOption;
-  onVoiceChange: (voice: VoiceOption) => void;
   onStartInterview: () => Promise<void>;
   onEndInterview: () => void;
   // Recording functionality
@@ -22,14 +18,15 @@ interface ControlButtonsProps {
   onStopRecording?: () => Promise<void>;
   recordingError?: string | null;
   onDismissRecordingError?: () => void;
+  // Chat toggle functionality
+  showChat?: boolean;
+  onToggleChat?: () => void;
 }
 
 export default function ControlButtons({
   isInterviewActive,
   isProcessingAI,
   rateLimited,
-  selectedVoice,
-  onVoiceChange,
   onStartInterview,
   onEndInterview,
   // Recording functionality
@@ -41,9 +38,11 @@ export default function ControlButtons({
   onStartRecording,
   onStopRecording,
   recordingError,
-  onDismissRecordingError
+  onDismissRecordingError,
+  // Chat toggle functionality
+  showChat = true,
+  onToggleChat
 }: ControlButtonsProps) {
-  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -64,13 +63,7 @@ export default function ControlButtons({
         </div>
       )}
       
-      {/* Voice Settings Panel */}
-      {showVoiceSettings && (
-        <VoiceSettingsPanel
-          selectedVoice={selectedVoice}
-          onVoiceChange={onVoiceChange}
-        />
-      )}
+
       
       {/* Control Buttons */}
       <div className="flex items-center space-x-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-gray-200 dark:border-gray-700">
@@ -144,17 +137,21 @@ export default function ControlButtons({
         </div>
       )}
       
-      <button
-        onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-        className={`flex items-center space-x-2 px-4 py-3 rounded-full font-medium transition-colors shadow-lg ${
-          showVoiceSettings
-            ? 'bg-orange-600 hover:bg-orange-700 text-white'
-            : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
-        }`}
-      >
-        <Settings className="w-5 h-5" />
-        <span>Settings</span>
-      </button>
+      {/* Chat Toggle Button */}
+      {isInterviewActive && onToggleChat && (
+        <button
+          onClick={onToggleChat}
+          className={cn(
+            "flex items-center space-x-2 px-4 py-3 rounded-full font-medium transition-colors shadow-lg",
+            showChat
+              ? 'bg-purple-600 hover:bg-purple-700 text-white'
+              : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+          )}
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span>{showChat ? 'Hide Chat' : 'Show Chat'}</span>
+        </button>
+      )}
       </div>
     </div>
   );
