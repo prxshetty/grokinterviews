@@ -1,10 +1,8 @@
 'use client';
 
 import React from 'react';
-import { TranscriptHeader } from '@/components/voice/TranscriptHeader';
-import { InterviewList } from '@/components/voice/InterviewList';
-import { TranscriptDisplay } from '@/components/voice/TranscriptDisplay';
-import { useInterviewData } from '@/components/voice/useInterviewData';
+import { TranscriptHeader, InterviewList, TranscriptDisplay } from '@/components/transcripts';
+import { useInterviewData } from '@/components/voice/shared/useInterviewData';
 import { useAuth } from '@/components/AuthProvider';
 
 export default function TranscriptsPage() {
