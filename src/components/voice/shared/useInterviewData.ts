@@ -176,6 +176,10 @@ export function useInterviewData() {
     }
   }, [user?.id]);
 
+  // Store fetchSessions in a ref to access it in useEffect without dependency issues
+  const fetchSessionsRef = useRef(fetchSessions);
+  fetchSessionsRef.current = fetchSessions;
+
   useEffect(() => {
     if (!user) {
       routerRef.current.push('/signin');
@@ -185,9 +189,9 @@ export function useInterviewData() {
     // Only fetch data once, even if user object changes due to desktop switching
     if (!hasFetchedDataRef.current) {
       hasFetchedDataRef.current = true;
-      fetchSessions();
+      fetchSessionsRef.current();
     }
-  }, [user, fetchSessions]);
+  }, [user]); // Use ref pattern to avoid fetchSessions dependency
 
   const fetchScore = useCallback(async (sessionId: string) => {
     try {
@@ -368,9 +372,9 @@ export function useInterviewData() {
   // Manual refresh function that resets the fetch flag and re-fetches data
   const refreshData = useCallback(async () => {
     hasFetchedDataRef.current = false;
-    await fetchSessions();
+    await fetchSessionsRef.current();
     hasFetchedDataRef.current = true;
-  }, [fetchSessions]);
+  }, []);
 
   return {
     // Data

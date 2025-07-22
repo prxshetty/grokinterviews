@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import WebInterviewPageContent from './WebInterviewPageContent';
+import WebInterviewPageContent from './WebInterviewPageContentOptimized';
 
 function WebInterviewPageFallback() {
   return (
