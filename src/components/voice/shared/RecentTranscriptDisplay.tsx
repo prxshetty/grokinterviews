@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, memo, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DEFAULT_AVATAR_URL } from '@/config';
@@ -19,7 +19,7 @@ interface RecentTranscriptDisplayProps {
   showChat?: boolean;
 }
 
-export default function RecentTranscriptDisplay({
+const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
   allTranscripts,
   isInterviewActive,
   isLoadingTranscripts,
@@ -27,16 +27,44 @@ export default function RecentTranscriptDisplay({
 }: RecentTranscriptDisplayProps) {
   const { user, profile } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastTranscriptCountRef = useRef(0);
   
-  // Safety check for undefined transcripts with useMemo to prevent dependency changes
-  const transcripts = useMemo(() => allTranscripts || [], [allTranscripts]);
+  // Memoize processed transcripts to prevent unnecessary recalculations
+  const processedTranscripts = useMemo(() => {
+    if (!allTranscripts || allTranscripts.length === 0) return [];
+    
+    // Sort by conversation_order first, then by created_at as fallback
+    return [...allTranscripts].sort((a, b) => {
+      if (a.conversation_order !== undefined && b.conversation_order !== undefined) {
+        return a.conversation_order - b.conversation_order;
+      }
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+  }, [allTranscripts]);
   
-  // Auto-scroll to bottom when new transcripts are added
+  // Optimized scroll effect - only scroll when new transcripts are added
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    const currentCount = processedTranscripts.length;
+    
+    if (scrollContainerRef.current && currentCount > lastTranscriptCountRef.current) {
+      // Use requestAnimationFrame for smoother scrolling
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+      });
     }
-  }, [transcripts, isLoadingTranscripts]);
+    
+    lastTranscriptCountRef.current = currentCount;
+  }, [processedTranscripts.length]); // Only depend on length
+  
+  // Memoize time formatting to prevent recalculation
+  const formatTime = useCallback((dateString: string) => {
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, []);
   
   if (!isInterviewActive || !showChat) {
     return null;
@@ -48,9 +76,9 @@ export default function RecentTranscriptDisplay({
         ref={scrollContainerRef}
         className="space-y-4 max-h-96 overflow-y-auto scroll-smooth"
       >
-        {transcripts.map((transcript) => (
+        {processedTranscripts.map((transcript) => (
           <div
-            key={transcript.id}
+            key={`${transcript.id}-${transcript.conversation_order}`}
             className={`flex gap-3 ${
               transcript.interaction_type === 'user_response' ? 'justify-end' : 'justify-start'
             }`}
@@ -70,10 +98,7 @@ export default function RecentTranscriptDisplay({
             >
               <p className="text-sm">{transcript.transcript_text}</p>
               <p className="text-xs opacity-70 mt-1">
-                {new Date(transcript.created_at).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+                {formatTime(transcript.created_at)}
               </p>
             </div>
             
@@ -109,4 +134,6 @@ export default function RecentTranscriptDisplay({
       </div>
     </div>
   );
-}
+});
+
+export default RecentTranscriptDisplay;

@@ -6,20 +6,36 @@ interface InterviewReportProps {
     overall_score: number;
     summary?: string;
     detailed_feedback?: string;
-    strengths: string[];
-    weaknesses: string[];
+    strengths?: string[];
+    weaknesses?: string[];
     recommendations?: string[];
     improvements?: string[];
   };
 }
 
 export default function InterviewReport({ report }: InterviewReportProps) {
+  // Add debug logging to help identify data structure issues
+  console.log('InterviewReport received data:', report);
+  
   // Add null/undefined checks
   if (!report) {
+    console.warn('InterviewReport: No report data provided');
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">No report data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Validate required fields
+  if (typeof report.overall_score !== 'number') {
+    console.warn('InterviewReport: Invalid or missing overall_score:', report.overall_score);
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Invalid report data structure</p>
         </div>
       </div>
     );
@@ -63,7 +79,7 @@ export default function InterviewReport({ report }: InterviewReportProps) {
         </h3>
         <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {report.summary || report.detailed_feedback || 'No summary available'}
+            {report.summary || report.detailed_feedback || 'No detailed feedback available for this interview.'}
           </p>
         </div>
       </div>
@@ -76,12 +92,18 @@ export default function InterviewReport({ report }: InterviewReportProps) {
             Strengths
           </h3>
           <div className="space-y-3">
-            {report.strengths?.map((strength, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-gray-700 dark:text-gray-300">{strength}</p>
-              </div>
-            )) || <p className="text-gray-500 dark:text-gray-400">No strengths data available</p>}
+            {(() => {
+              const strengthsList = report.strengths || [];
+              if (strengthsList.length === 0) {
+                return <p className="text-gray-500 dark:text-gray-400">No specific strengths identified in this interview.</p>;
+              }
+              return strengthsList.map((strength, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-gray-700 dark:text-gray-300">{strength}</p>
+                </div>
+              ));
+            })()}
           </div>
         </div>
 
@@ -92,12 +114,18 @@ export default function InterviewReport({ report }: InterviewReportProps) {
             Areas for Improvement
           </h3>
           <div className="space-y-3">
-            {report.weaknesses?.map((weakness, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-gray-700 dark:text-gray-300">{weakness}</p>
-              </div>
-            )) || <p className="text-gray-500 dark:text-gray-400">No weaknesses data available</p>}
+            {(() => {
+              const weaknessesList = report.weaknesses || [];
+              if (weaknessesList.length === 0) {
+                return <p className="text-gray-500 dark:text-gray-400">No specific areas for improvement identified.</p>;
+              }
+              return weaknessesList.map((weakness, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-gray-700 dark:text-gray-300">{weakness}</p>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </div>
@@ -110,12 +138,18 @@ export default function InterviewReport({ report }: InterviewReportProps) {
         </h3>
         <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6">
           <div className="space-y-3">
-            {(report.recommendations || report.improvements)?.map((recommendation, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-gray-700 dark:text-gray-300">{recommendation}</p>
-              </div>
-            )) || <p className="text-gray-500 dark:text-gray-400">No recommendations data available</p>}
+            {(() => {
+              const recommendationsList = report.recommendations || report.improvements || [];
+              if (recommendationsList.length === 0) {
+                return <p className="text-gray-500 dark:text-gray-400">No specific recommendations available for this interview.</p>;
+              }
+              return recommendationsList.map((recommendation, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-gray-700 dark:text-gray-300">{recommendation}</p>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </div>
