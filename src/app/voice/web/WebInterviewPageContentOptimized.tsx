@@ -22,13 +22,13 @@ import {
   InterviewAvatar,
   InterviewFeatures,
   ErrorDisplay,
-} from '@/components/voice/web'
+} from '@/components/voice/web';
 
 import {
   useInterviewSession,
   useVoiceControls,
   useRateLimit,
-} from '@/hooks/voice'
+} from '@/hooks/voice';
 
 import { InterviewService, type TerminationReason } from '@/services/interviewService';
 
@@ -86,10 +86,19 @@ export default function WebInterviewPageContent() {
     checkVADSupport();
   }, [setVadSupported]); // setVadSupported is stable from the hook
 
-  // Function to fetch transcripts for current session only
-  const fetchSessionTranscripts = useCallback(async () => {
+  // Optimized transcript fetching with debouncing and caching
+  const lastFetchRef = useRef<string>('');
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const fetchSessionTranscripts = useCallback(async (forceRefresh = false) => {
     if (!session.id) {
       setAllTranscripts([]);
+      return;
+    }
+    
+    // Prevent duplicate fetches for the same session
+    const fetchKey = `${session.id}-${session.conversationHistory.length}`;
+    if (!forceRefresh && lastFetchRef.current === fetchKey) {
       return;
     }
     
@@ -97,34 +106,50 @@ export default function WebInterviewPageContent() {
       setIsLoadingTranscripts(true);
       const sessionTranscripts = await InterviewService.fetchSessionTranscripts(session.id);
       setAllTranscripts(sessionTranscripts);
+      lastFetchRef.current = fetchKey;
     } catch (error) {
       console.error('Error fetching session transcripts:', error);
       setAllTranscripts([]);
     } finally {
       setIsLoadingTranscripts(false);
     }
-  }, [session.id]);
+  }, [session.id, session.conversationHistory.length]);
 
-  // Fetch transcripts when session changes
+  // Fetch transcripts when session changes (initial load only)
   useEffect(() => {
     if (session.id) {
-      fetchSessionTranscripts();
+      fetchSessionTranscripts(true); // Force refresh on session change
+    } else {
+      setAllTranscripts([]);
+      lastFetchRef.current = '';
     }
-  }, [session.id, fetchSessionTranscripts]); // fetchSessionTranscripts is stable due to useCallback
+  }, [session.id]); // Only depend on session.id
 
-  // Auto-refresh transcripts when conversation history changes
+  // Debounced transcript refresh when conversation history changes
   useEffect(() => {
     if (session.id && session.conversationHistory.length > 0) {
       const lastMessage = session.conversationHistory[session.conversationHistory.length - 1];
-      if (lastMessage && lastMessage.type === 'user') {
-        const timer = setTimeout(() => {
+      
+      // Only fetch after AI responses (when transcripts are actually stored)
+      if (lastMessage && lastMessage.type === 'ai') {
+        // Clear existing timeout
+        if (fetchTimeoutRef.current) {
+          clearTimeout(fetchTimeoutRef.current);
+        }
+        
+        // Debounce the fetch to prevent rapid successive calls
+        fetchTimeoutRef.current = setTimeout(() => {
           fetchSessionTranscripts();
-        }, 1000);
-        return () => clearTimeout(timer);
+        }, 1500); // Increased delay to ensure DB write completion
       }
     }
-    return undefined;
-  }, [session.conversationHistory, session.id, fetchSessionTranscripts]); // Include all dependencies
+    
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+  }, [session.conversationHistory.length, session.id]); // Only depend on length, not entire array
 
   // Function to automatically terminate interview when critical errors occur
   const terminateInterviewOnError = useCallback(async (reason: TerminationReason) => {
