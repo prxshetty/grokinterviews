@@ -12,7 +12,7 @@ import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
 import { PasswordSecuritySection } from '@/components/account/password-security/password-security-section';
 import type { UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
-import { availableGroqModels, DEFAULT_GROQ_MODEL_ID } from './types';
+import { DEFAULT_GROQ_MODEL_ID } from './types';
 
 function AccountPageContent() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -196,9 +196,6 @@ function AccountPageContent() {
     }
   };
 
-  const getSelectedModelDetails = () => {
-    return availableGroqModels.find(model => model.id === formData.specific_model_id);
-  };
 
   if (authLoading || !profile) {
     return (
@@ -253,8 +250,6 @@ function AccountPageContent() {
             {activeTab === 'ai-settings' && (
               <AiSettingsSection
                 formData={{ specific_model_id: formData.specific_model_id }}
-                availableGroqModels={availableGroqModels}
-                getSelectedModelDetails={getSelectedModelDetails}
                 renderSaveChangesButton={renderSaveChangesButton}
                 setFormData={setFormData}
               />
