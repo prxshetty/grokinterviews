@@ -89,22 +89,31 @@ export default function WebInterviewPageContent() {
   // Optimized transcript fetching with debouncing and caching
   const lastFetchRef = useRef<string>('');
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionIdRef = useRef<string>('');
+  const conversationLengthRef = useRef<number>(0);
   
+  // Store stable reference to the fetch function to avoid dependency issues
+  const fetchSessionTranscriptsRef = useRef<((forceRefresh?: boolean) => Promise<void>) | null>(null);
+  
+  // Create the fetch function with stable dependencies
   const fetchSessionTranscripts = useCallback(async (forceRefresh = false) => {
-    if (!session.id) {
+    const currentSessionId = sessionIdRef.current;
+    const currentConversationLength = conversationLengthRef.current;
+    
+    if (!currentSessionId) {
       setAllTranscripts([]);
       return;
     }
     
     // Prevent duplicate fetches for the same session
-    const fetchKey = `${session.id}-${session.conversationHistory.length}`;
+    const fetchKey = `${currentSessionId}-${currentConversationLength}`;
     if (!forceRefresh && lastFetchRef.current === fetchKey) {
       return;
     }
     
     try {
       setIsLoadingTranscripts(true);
-      const sessionTranscripts = await InterviewService.fetchSessionTranscripts(session.id);
+      const sessionTranscripts = await InterviewService.fetchSessionTranscripts(currentSessionId);
       setAllTranscripts(sessionTranscripts);
       lastFetchRef.current = fetchKey;
     } catch (error) {
@@ -113,7 +122,14 @@ export default function WebInterviewPageContent() {
     } finally {
       setIsLoadingTranscripts(false);
     }
-  }, [session.id, session.conversationHistory.length]); // Only include stable dependencies
+  }, [setAllTranscripts, setIsLoadingTranscripts]);
+
+  // Update refs when session data changes
+  useEffect(() => {
+    sessionIdRef.current = session.id || '';
+    conversationLengthRef.current = session.conversationHistory.length;
+    fetchSessionTranscriptsRef.current = fetchSessionTranscripts;
+  }, [session.id, session.conversationHistory.length, fetchSessionTranscripts]);
 
   // Fetch transcripts when session changes (initial load only)
   useEffect(() => {
@@ -123,7 +139,7 @@ export default function WebInterviewPageContent() {
       setAllTranscripts([]);
       lastFetchRef.current = '';
     }
-  }, [session.id]); // Only depend on session.id
+  }, [session.id, fetchSessionTranscripts]);
 
   // Debounced transcript refresh when conversation history changes
   useEffect(() => {
@@ -139,7 +155,9 @@ export default function WebInterviewPageContent() {
         
         // Debounce the fetch to prevent rapid successive calls
         fetchTimeoutRef.current = setTimeout(() => {
-          fetchSessionTranscripts();
+          if (fetchSessionTranscriptsRef.current) {
+            fetchSessionTranscriptsRef.current();
+          }
         }, 1500); // Increased delay to ensure DB write completion
       }
     }
@@ -149,7 +167,7 @@ export default function WebInterviewPageContent() {
         clearTimeout(fetchTimeoutRef.current);
       }
     };
-  }, [session.conversationHistory.length, session.id, fetchSessionTranscripts]); // Added fetchSessionTranscripts
+  }, [session.conversationHistory, session.id]); // Added full conversationHistory since we access the array content
 
   // Function to automatically terminate interview when critical errors occur
   const terminateInterviewOnError = useCallback(async (reason: TerminationReason) => {
