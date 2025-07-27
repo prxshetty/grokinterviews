@@ -1,185 +1,125 @@
 'use client'
 
 import type { GroqModel, AccountFormData } from '@/app/account/types'
+import { PERFORMANCE_TIERS, PerformanceTier, getTierByModelId, getModelIdByTier } from '@/app/account/ai-performance-tiers'
 
 interface AiSettingsSectionProps {
-  formData: Pick<AccountFormData, 'specific_model_id'> // Use Pick for relevant part of AccountFormData
-  availableGroqModels: GroqModel[]
+  formData: Pick<AccountFormData, 'specific_model_id'>
+  availableAIModels: GroqModel[]
   getSelectedModelDetails: () => GroqModel | undefined
   renderSaveChangesButton: () => React.ReactElement
-  setFormData: React.Dispatch<React.SetStateAction<AccountFormData>> // Use AccountFormData
+  setFormData: React.Dispatch<React.SetStateAction<AccountFormData>>
 }
 
 export function AiSettingsSection({
   formData,
-  availableGroqModels,
-  getSelectedModelDetails,
   renderSaveChangesButton,
   setFormData,
-}: AiSettingsSectionProps) {
-  const selectedModelDetails = getSelectedModelDetails()
+}: Omit<AiSettingsSectionProps, 'getSelectedModelDetails' | 'availableAIModels'>) {
+  const selectedTier = getTierByModelId(formData.specific_model_id) || 'fast'
+
+  const renderSpeedMeter = (count: number) => (
+    <div className="flex gap-1">
+      {[...Array(5)].map((_, i) => (
+        <div 
+          key={i}
+          className={`w-2 h-2 rounded-full ${i < count ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'}`}
+        />
+      ))}
+    </div>
+  )
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
-      {/* Model Preview Panel - Mobile First */}
-      <div className="lg:order-2 w-full lg:w-80 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-black/80 rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col">
-        <h3 className="text-sm sm:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">Model Preview</h3>
-        {selectedModelDetails && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 lg:p-4 shadow-sm border border-gray-200 dark:border-gray-700 mb-4 lg:mb-6">
-            <div className="mb-3">
-              <div className="flex items-center mb-2">
-                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">{selectedModelDetails.name}</h4>
-                <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
-                  {selectedModelDetails.id === 'llama-3.1-8b-instant' ? 'Fastest' :
-                   selectedModelDetails.id === 'gemma2-9b-it' ? 'Code/Math' :
-                   selectedModelDetails.id === 'llama-3.3-70b-versatile' ? 'General' :
-                   selectedModelDetails.id === 'llama-guard-3-8b' ? 'Safety' : ''}
-                </span>
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                {selectedModelDetails.notes}
-              </p>
-            </div>
-
-          <div className="mb-4">
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-              <span className="font-medium">Model Statistics:</span> Performance and rate limits for the selected model
-            </p>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-xs border-collapse">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-gray-700">
-                    <th className="py-2 px-2 lg:px-3 text-left font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">RPM</th>
-                    <th className="py-2 px-2 lg:px-3 text-left font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">TPM</th>
-                    <th className="py-2 px-2 lg:px-3 text-left font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">TPD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="bg-white dark:bg-gray-800">
-                    <td className="py-2 px-2 lg:px-3 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                      {selectedModelDetails.rpm || '-'}
-                    </td>
-                    <td className="py-2 px-2 lg:px-3 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                      {selectedModelDetails.id === 'whisper-large-v3-turbo' ? '-' :
-                       selectedModelDetails.id === 'llama-3.1-8b-instant' || selectedModelDetails.id === 'llama-3.3-70b-versatile' ? '6,000' : '15,000'}
-                    </td>
-                    <td className="py-2 px-2 lg:px-3 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                      {selectedModelDetails.id === 'whisper-large-v3-turbo' ? '-' :
-                       selectedModelDetails.id === 'llama-3.3-70b-versatile' ? '100,000' : '500,000'}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {selectedModelDetails.id !== 'whisper-large-v3-turbo' && (
-              <div className="mt-4">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tokens Per Day Capacity</p>
-                <div className="h-3 lg:h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${selectedModelDetails.id === 'llama-3.3-70b-versatile' ? 'bg-amber-500 dark:bg-amber-600' : 'bg-green-500 dark:bg-green-600'}`}
-                    style={{ width: `${selectedModelDetails.id === 'llama-3.3-70b-versatile' ? '20%' : '100%'}` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>0</span>
-                  <span>250K</span>
-                  <span>500K</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            <p><span className="font-medium">RPM:</span> Requests per minute</p>
-            <p><span className="font-medium">TPM:</span> Tokens per minute</p>
-            <p><span className="font-medium">TPD:</span> Tokens per day</p>
-          </div>
-        </div>
-        )}
-
-        <div className="mt-auto">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model Status</h4>
-          <div className="flex items-center">
-            <div className={`w-3 h-3 rounded-full mr-2 ${selectedModelDetails ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-            <span className="text-sm text-gray-600 dark:text-gray-300">
-              {selectedModelDetails ? 'Model Selected' : 'No Model Selected'}
-            </span>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            {selectedModelDetails
-              ? 'Your model is selected and ready for generating answers.'
-              : 'Please select a model to use for generating answers.'}
-          </p>
-        </div>
-      </div>
-
-      {/* Settings Form Panel */}
-      <div className="lg:order-1 flex-1 bg-white dark:bg-black/60 rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 lg:mb-6">AI Settings</h2>
+    <div className="w-full">
+      <div className="bg-white dark:bg-black/60 rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
         <div className="space-y-6 lg:space-y-10">
 
-          {/* Groq Model Selection Sub-section */}
+          {/* AI Model Selection */}
           <section>
-             <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">Groq Model Selection</h3>
+             <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">AI Performance Settings</h3>
              <div className="space-y-2"> 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Groq AI Model
+                    AI Performance Level
                   </label>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {availableGroqModels.filter(model => model.id !== 'whisper-large-v3-turbo').map((model) => {
-                      let tag = ''
-                      if (model.id === 'llama-3.1-8b-instant') tag = 'Fastest'
-                      else if (model.id === 'gemma2-9b-it') tag = 'Code & Math'
-                      else if (model.id === 'llama-3.3-70b-versatile') tag = 'General'
-                      else if (model.id === 'llama-guard-3-8b') tag = 'Safety'
-
-                      const isSelected = formData.specific_model_id === model.id
-
+                  <div className="grid grid-cols-1 gap-4">
+                    {PERFORMANCE_TIERS.map((tier) => {
+                      const isSelected = selectedTier === tier.id
+                      
                       return (
                         <div
-                          key={model.id}
-                          className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-3 lg:p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
+                          key={tier.id}
+                          className={`relative rounded-xl border-2 ${isSelected ? 'border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'} p-4 lg:p-5 cursor-pointer transition-all duration-200`}
                           onClick={() => {
-                            setFormData((prev: AccountFormData) => ({ // Explicitly type prev
-                              ...prev,
-                              specific_model_id: model.id
-                            }))
+                            const modelId = getModelIdByTier(tier.id as PerformanceTier)
+                            if (modelId) {
+                              setFormData((prev: AccountFormData) => ({
+                                ...prev,
+                                specific_model_id: modelId
+                              }))
+                            }
                           }}
                         >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="text-sm lg:text-base font-medium text-gray-900 dark:text-white">{model.name}</h4>
-                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
-                                {tag}
-                              </span>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center flex-shrink-0`}>
+                          <div className="flex flex-col space-y-3">
+                            <div className="flex justify-between items-start">
+                              <h4 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">
+                                {tier.name}
+                              </h4>
                               {isSelected && (
-                                <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
-                                </svg>
+                                <div className="flex items-center bg-blue-100 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+                                  </svg>
+                                  Selected
+                                </div>
                               )}
+                            </div>
+                            
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              {tier.description}
+                            </p>
+                            
+                            <div className="grid grid-cols-2 gap-4 mt-2">
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Speed</p>
+                                <div className="flex items-center gap-1">
+                                  {renderSpeedMeter(tier.speed)}
+                                  <span className="ml-2 text-xs text-gray-700 dark:text-gray-300">
+                                    {['Slow', 'Moderate', 'Fast', 'Very Fast', 'Lightning'][tier.speed - 1]}
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Quality</p>
+                                <div className="flex items-center gap-1">
+                                  {renderSpeedMeter(tier.quality)}
+                                  <span className="ml-2 text-xs text-gray-700 dark:text-gray-300">
+                                    {['Basic', 'Good', 'Great', 'Excellent', 'Best'][tier.quality - 1]}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-1">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h2a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
+                                </svg>
+                                Best for: {tier.bestFor}
+                              </span>
                             </div>
                           </div>
                         </div>
                       )
                     })}
                   </div>
-
-                  <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                    Select a model for generating answers. Model details will appear in the preview panel.
-                  </p>
                 </div>
              </div>
              <div className="mt-4 lg:mt-6">
                {renderSaveChangesButton()}
              </div>
           </section>
-
         </div>
       </div>
     </div>

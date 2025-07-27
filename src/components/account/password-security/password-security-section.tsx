@@ -161,9 +161,8 @@ export function PasswordSecuritySection({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
-      {/* Form Panel - Mobile First, Desktop Left */}
-      <div className="lg:order-1 flex-1 bg-white dark:bg-black/60 rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+    <div className="w-full">
+      <div className="bg-white dark:bg-black/60 rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
         <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 lg:mb-6">
           Update Password
         </h2>
@@ -208,6 +207,36 @@ export function PasswordSecuritySection({
               required
               minLength={6}
             />
+            {newPassword && (
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  <span>Password Strength: <span className={`font-medium ${strengthInfo.color}`}>{strengthInfo.label}</span></span>
+                  <span>{passwordStrength.score * 20}%</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                  <div 
+                    className={`h-1.5 rounded-full ${
+                      passwordStrength.score === 0 ? 'bg-gray-300' :
+                      passwordStrength.score <= 2 ? 'bg-red-500' :
+                      passwordStrength.score <= 3 ? 'bg-yellow-500' :
+                      passwordStrength.score <= 4 ? 'bg-blue-500' :
+                      'bg-green-500'
+                    }`} 
+                    style={{ width: `${passwordStrength.score * 20}%` }}
+                  />
+                </div>
+                {passwordStrength.feedback.length > 0 && (
+                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="font-medium">To improve your password:</p>
+                    <ul className="list-disc list-inside">
+                      {passwordStrength.feedback.map((tip, index) => (
+                        <li key={index}>{tip}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -237,99 +266,6 @@ export function PasswordSecuritySection({
             </DemoButton>
           </div>
         </form>
-      </div>
-
-      {/* Security Info Panel - Mobile Second, Desktop Right */}
-      <div className="lg:order-2 w-full lg:w-80 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-black/80 rounded-xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Password Security
-        </h3>
-
-        {/* Password Strength Indicator */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Password Strength
-            </span>
-            <span className={`text-sm font-medium ${strengthInfo.color}`}>
-              {strengthInfo.label}
-            </span>
-          </div>
-          
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-3">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                passwordStrength.score === 0 ? 'w-0 bg-gray-300' :
-                passwordStrength.score <= 2 ? 'w-2/5 bg-red-500' :
-                passwordStrength.score <= 3 ? 'w-3/5 bg-yellow-500' :
-                passwordStrength.score <= 4 ? 'w-4/5 bg-blue-500' :
-                'w-full bg-green-500'
-              }`}
-            />
-          </div>
-
-          {newPassword && passwordStrength.feedback.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                To improve strength:
-              </p>
-              {passwordStrength.feedback.map((item, index) => (
-                <div key={index} className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                  <span className="mr-2">•</span>
-                  {item}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Security Requirements */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Password Requirements
-          </h4>
-          <div className="space-y-2">
-            {[
-              { test: newPassword.length >= 8, label: 'At least 8 characters' },
-              { test: /[a-z]/.test(newPassword), label: 'One lowercase letter' },
-              { test: /[A-Z]/.test(newPassword), label: 'One uppercase letter' },
-              { test: /\d/.test(newPassword), label: 'One number' },
-              { test: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword), label: 'One special character' },
-            ].map((req, index) => (
-              <div key={index} className="flex items-center text-xs">
-                <svg 
-                  className={`w-3 h-3 mr-2 ${
-                    !newPassword ? 'text-gray-300 dark:text-gray-600' :
-                    req.test ? 'text-green-500' : 'text-red-500'
-                  }`} 
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
-                >
-                  <path 
-                    fillRule="evenodd" 
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-                    clipRule="evenodd" 
-                  />
-                </svg>
-                <span className={
-                  !newPassword ? 'text-gray-500 dark:text-gray-400' :
-                  req.test ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
-                }>
-                  {req.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {isPasswordResetMode && (
-          <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-sm rounded-md border border-green-200 dark:border-green-800">
-            <p className="font-medium">✓ Password reset link authenticated</p>
-            <p className="mt-1 text-xs">
-              No current password required since you came from a valid reset link.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   )
