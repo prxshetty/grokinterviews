@@ -144,7 +144,8 @@ export default function WebInterviewPageContent() {
         },
         body: JSON.stringify({
           checkRateLimit: true,
-          sessionType: 'behavioral'
+          sessionType: 'behavioral',
+          voiceId: selectedVoice // Include voice for tier-based rate limiting
         }),
       });
 
@@ -169,7 +170,7 @@ export default function WebInterviewPageContent() {
       // On error, allow the interview to proceed (fail open)
       return true;
     }
-  }, []);
+  }, [selectedVoice]);
 
   // Check rate limit on component mount
   useEffect(() => {
@@ -239,7 +240,7 @@ export default function WebInterviewPageContent() {
     }
   };
 
-  const handleEndInterview = () => {
+  const handleEndInterview = async () => {
     // Stop all voice operations immediately
     if (voicePlayerRef.current) {
       voicePlayerRef.current.stopPlayback();
@@ -247,6 +248,22 @@ export default function WebInterviewPageContent() {
     
     if (voiceRecorderRef.current) {
       voiceRecorderRef.current.forceStop();
+    }
+    
+    // Mark session as completed in database if there's an active session
+    if (sessionId) {
+      try {
+        await fetch('/api/voice/sessions/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+      } catch (error) {
+        console.error('Error marking session as completed:', error);
+        // Continue with local state reset even if API call fails
+      }
     }
     
     // Reset all states

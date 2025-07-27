@@ -21,7 +21,7 @@ interface ControlButtonsProps {
   isProcessingAI: boolean;
   rateLimited: boolean;
   onStartInterview: () => Promise<void>;
-  onEndInterview: () => void;
+  onEndInterview: () => Promise<void>;
   // Recording functionality
   isRecording?: boolean;
   isSpeaking?: boolean;

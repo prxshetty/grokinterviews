@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createClient } from '@/utils/supabase/server';
+import { checkRateLimit as checkUserRateLimit } from '@/utils/rateLimiting';
 
 // Initialize Groq client (reuse existing API key management)
 const groq = new Groq({
@@ -80,7 +81,7 @@ Be constructive, specific, and helpful in your feedback.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { userResponse, conversationHistory = [], sessionId, sessionType = 'behavioral', checkRateLimit = false } = await request.json();
+    const { userResponse, conversationHistory = [], sessionId, sessionType = 'behavioral', checkRateLimit = false, voiceId } = await request.json();
 
     // Handle rate limit check requests
     if (checkRateLimit) {
@@ -94,26 +95,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check rate limiting - one completed interview per week
-      // COMMENTED OUT FOR ADMIN TESTING
-      // const currentWeek = getCurrentWeekIdentifier();
-      // const { data: existingSession } = await supabase
-      //   .from('interview_sessions')
-      //   .select('id')
-      //   .eq('user_id', user.id)
-      //   .eq('week_identifier', currentWeek)
-      //   .eq('is_completed', true)
-      //   .single();
+      // Check rate limiting using centralized utility with voice tier support
+      const rateLimitResult = await checkUserRateLimit('web', user.id, voiceId);
+      
+      if (!rateLimitResult.isAllowed) {
+        return NextResponse.json({
+          error: 'Rate limit exceeded',
+          message: rateLimitResult.message,
+          rateLimited: true
+        }, { status: 429 });
+      }
 
-      // if (existingSession) {
-      //   return NextResponse.json({
-      //     error: 'Rate limit exceeded',
-      //     message: 'You can only complete one interview per week. Your limit resets every Monday.',
-      //     rateLimited: true
-      //   }, { status: 429 });
-      // }
-
-      return NextResponse.json({ rateLimited: false });
+      return NextResponse.json({ 
+        rateLimited: false,
+        remainingAttempts: rateLimitResult.remainingAttempts 
+      });
     }
 
     if (!userResponse || !userResponse.trim()) {
@@ -141,26 +137,18 @@ export async function POST(request: NextRequest) {
     // Count current questions (user responses in conversation history)
     const currentQuestionCount = conversationHistory.filter((msg: ConversationMessage) => msg.type === 'user').length;
     
-    // Check rate limiting - one completed interview per week (only for new interviews)
-    // COMMENTED OUT FOR ADMIN TESTING
-    // const currentWeek = getCurrentWeekIdentifier();
-    // if (currentQuestionCount === 0) { // Only check on first question
-    //   const { data: existingSession } = await supabase
-    //     .from('interview_sessions')
-    //     .select('id')
-    //     .eq('user_id', user.id)
-    //     .eq('week_identifier', currentWeek)
-    //     .eq('is_completed', true)
-    //     .single();
-
-    //   if (existingSession) {
-    //     return NextResponse.json({
-    //       error: 'Rate limit exceeded',
-    //       message: 'You can only complete one interview per week. Your limit resets every Monday.',
-    //       rateLimited: true
-    //     }, { status: 429 });
-    //   }
-    // }
+    // Check rate limiting for new interviews (only on first question)
+    if (currentQuestionCount === 0) {
+      const rateLimitResult = await checkUserRateLimit('web', user.id, voiceId);
+      
+      if (!rateLimitResult.isAllowed) {
+        return NextResponse.json({
+          error: 'Rate limit exceeded',
+          message: rateLimitResult.message,
+          rateLimited: true
+        }, { status: 429 });
+      }
+    }
     
     // Hard limit: After 4 API calls (plus initial hardcoded question = 5 total)
     if (currentQuestionCount >= 4) {
