@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
 import { PhoneCallInterface } from '@/components/voice';
 
 export default function PhoneInterviewPage() {
@@ -47,7 +46,6 @@ export default function PhoneInterviewPage() {
             onClick={handleBackToModeSelector}
             className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="h-4 w-4" />
             <span>← Switch Interview Mode</span>
           </button>
         </div>

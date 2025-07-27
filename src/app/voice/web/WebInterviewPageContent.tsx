@@ -628,7 +628,7 @@ export default function WebInterviewPageContent() {
               ? 'opacity-0 -translate-y-8 pointer-events-none h-0 overflow-hidden' 
               : 'opacity-100 translate-y-0 mb-6'
           }`}>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-normal text-black dark:text-white mb-6">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-black dark:text-white mb-6" style={{ fontWeight: '500' }}>
               Behavioral Interview Practice
             </h1>
             

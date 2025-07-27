@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Phone, PhoneCall, PhoneOff, Clock, AlertCircle, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { Phone, PhoneCall, PhoneOff, Clock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { vapiService, type VapiCall } from '@/services/VapiService';
 import PhoneNumberInput from './PhoneNumberInput';
@@ -22,7 +22,6 @@ export default function PhoneCallInterface({
   onCallStarted,
   onCallEnded,
   onError,
-  onBackToModeSelector,
   disabled = false,
   className
 }: PhoneCallInterfaceProps) {
@@ -581,18 +580,6 @@ export default function PhoneCallInterface({
 
   return (
     <div className={cn("space-y-6", className)}>
-      {/* Back Button */}
-      {onBackToModeSelector && (
-        <div className="flex justify-start">
-          <button
-            onClick={onBackToModeSelector}
-            className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Mode Selection</span>
-          </button>
-        </div>
-      )}
 
       {/* Configuration Warning */}
       {showConfigWarning && (
@@ -706,43 +693,16 @@ export default function PhoneCallInterface({
         <div className="text-center text-sm text-gray-600 dark:text-gray-400 space-y-2">
           <p>Enter your phone number to receive a call for your behavioral interview practice.</p>
           <p className="text-xs">The interview will last approximately 10-15 minutes.</p>
-        </div>
-      )}
-
-      {/* Privacy and Compliance Notice */}
-      {callState === 'idle' && !error && (
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div className="text-xs space-y-2">
-              <h4 className="font-medium text-blue-800 dark:text-blue-400">
-                Privacy & Legal Compliance
-              </h4>
-              
-              <div className="space-y-1">
-                <p className="text-blue-700 dark:text-blue-300">
-                  <strong>Recording Notice:</strong> This interview will be recorded for analysis and improvement purposes. By proceeding, you consent to this recording.
-                </p>
-                
-                <details className="text-blue-600 dark:text-blue-400 cursor-pointer"> 
-                  <summary className="hover:text-blue-800 dark:hover:text-blue-300">
-                    Legal Considerations & Best Practices
-                  </summary>
-                  <div className="mt-2 space-y-1 pl-4">
-                    <p>• <strong>Consent:</strong> You confirm that you are the phone number owner and consent to receive recorded calls.</p>
-                    <p>• <strong>Jurisdiction:</strong> Comply with local call recording laws - some regions require two-party consent.</p>
-                    <p>• <strong>Data Protection:</strong> Recordings are encrypted, stored securely, and deleted after 30 days per our retention policy.</p>
-                    <p>• <strong>Access Rights:</strong> You can request recording access or deletion by contacting support.</p>
-                    <p>• <strong>Compliance Standards:</strong> We adhere to GDPR, CCPA, and applicable data protection regulations.</p>
-                  </div>
-                </details>
-              </div>
-              
-              <div className="pt-2 text-blue-600 dark:text-blue-400">
-                <p><strong>Important:</strong> By clicking "Start Phone Interview", you acknowledge and agree to these terms.</p>
-              </div>
-            </div>
-          </div>
+          <p className="text-xs">
+            By proceeding, you consent to call recording and agree to our{' '}
+            <a href="/privacy" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline">
+              Privacy Policy
+            </a>{' '}
+            and{' '}
+            <a href="/terms" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline">
+              Terms of Service
+            </a>.
+          </p>
         </div>
       )}
     </div>
