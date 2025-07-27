@@ -455,8 +455,7 @@ export default function PhoneCallInterface({
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              userId: user?.id,
-              vapiCallId: response.call.id,
+              vapi_call_id: response.call.id,
               phoneNumber: phoneNumber,
               callStatus: 'ringing',
               callDuration: 0,
@@ -468,7 +467,12 @@ export default function PhoneCallInterface({
           });
 
           if (!saveResponse.ok) {
-            console.error('Failed to save call data to database');
+            const errorData = await saveResponse.json().catch(() => ({}));
+            console.error('Failed to save call data to database:', {
+              status: saveResponse.status,
+              statusText: saveResponse.statusText,
+              error: errorData
+            });
           }
         } catch (dbError) {
           console.error('Error saving call to database:', dbError);
@@ -503,7 +507,7 @@ export default function PhoneCallInterface({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            vapiCallId: currentCall.id,
+            vapi_call_id: currentCall.id,
             callStatus: 'ended',
             callDuration: callDuration,
             metadata: {

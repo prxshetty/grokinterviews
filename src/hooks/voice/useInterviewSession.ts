@@ -12,7 +12,7 @@ export interface InterviewSession {
 export interface UseInterviewSessionReturn {
   session: InterviewSession;
   createSession: (sessionType: string) => Promise<string | null>;
-  endSession: () => void;
+  endSession: () => Promise<void>;
   addToHistory: (type: 'ai' | 'user', text: string) => void;
   updateCurrentQuestion: (question: string) => void;
   setInterviewReport: (report: any) => void;
@@ -60,7 +60,23 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
     }
   }, []);
 
-  const endSession = useCallback(() => {
+  const endSession = useCallback(async () => {
+    // Mark session as completed in database if there's an active session
+    if (session.id) {
+      try {
+        await fetch('/api/voice/sessions/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId: session.id }),
+        });
+      } catch (error) {
+        console.error('Error marking session as completed:', error);
+        // Continue with local state reset even if API call fails
+      }
+    }
+
     setSession(prev => ({
       ...prev,
       id: null,
@@ -70,7 +86,7 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
       interviewReport: null,
       currentQuestion: "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background.",
     }));
-  }, []);
+  }, [session.id]);
 
   const addToHistory = useCallback((type: 'ai' | 'user', text: string) => {
     setSession(prev => ({

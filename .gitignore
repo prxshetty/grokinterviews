@@ -15,6 +15,7 @@ SECURITY-PLAN.md
 backend_api.md
 sql-commands.md.backup
 sql-commands.md
+RATE_LIMITING.md
 TODO.md
 scripts/
 PROJECT_WIDE_OPTIMIZATION_PLAN.md

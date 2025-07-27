@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createClient } from '@/utils/supabase/server';
+import { checkRateLimit, createRateLimitResponse } from '@/utils/rateLimiting';
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    
+    // Authenticate user first
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('User fetch Error:', userError.message);
+      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
+    }
+    
+    if (!user) {
+      console.log('No user found from auth');
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+    
+    const userId = user.id;
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '10');
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
 
     // Build query with optional status filter
     let query = supabase
@@ -56,11 +60,27 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  
   try {
+    // Authenticate user first
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('User fetch Error:', userError.message);
+      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
+    }
+    
+    if (!user) {
+      console.log('No user found from auth');
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+    
+    const userId = user.id;
+    
     const body = await request.json();
     const {
-      userId,
-      vapiCallId,
+      vapi_call_id,
       phoneNumber,
       callStatus = 'initiating',
       callDuration = 0,
@@ -72,22 +92,70 @@ export async function POST(request: NextRequest) {
       weaknesses,
       recommendations,
       errorMessage,
-      metadata = {}
+      metadata = {},
+      checkRateLimitOnly = false
     } = body;
 
-    if (!userId) {
+    // Handle rate limit check requests
+    if (checkRateLimitOnly) {
+      // Check rate limit for phone interviews
+      const rateLimitResult = await checkRateLimit('phone', userId);
+      
+      if (!rateLimitResult.isAllowed) {
+        return createRateLimitResponse(rateLimitResult);
+      }
+
+      return NextResponse.json({ 
+        allowed: true,
+        remainingAttempts: rateLimitResult.remainingAttempts 
+      });
+    }
+
+    // Validate vapi_call_id if provided (required for tracking)
+    if (vapi_call_id && typeof vapi_call_id !== 'string') {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { error: 'VAPI Call ID must be a string' },
         { status: 400 }
       );
     }
 
-    // Save phone call to database
-    const { data: call, error } = await supabase
+    // Validate phoneNumber format if provided
+    if (phoneNumber && typeof phoneNumber !== 'string') {
+      return NextResponse.json(
+        { error: 'Phone number must be a string' },
+        { status: 400 }
+      );
+    }
+
+    // Check rate limit for phone interviews (for actual calls, not just checks)
+    const rateLimitResult = await checkRateLimit('phone', userId);
+    
+    if (!rateLimitResult.isAllowed) {
+      return createRateLimitResponse(rateLimitResult);
+    }
+
+    // Check for existing call with same vapi_call_id to prevent duplicates
+    if (vapi_call_id) {
+      const { data: existingCall } = await supabase
+        .from('phone_calls')
+        .select('id')
+        .eq('vapi_call_id', vapi_call_id)
+        .single();
+      
+      if (existingCall) {
+        return NextResponse.json({ 
+          error: 'Call with this ID already exists',
+          callId: existingCall.id 
+        }, { status: 409 });
+      }
+    }
+
+    // Insert new phone call record
+    const { data, error } = await supabase
       .from('phone_calls')
       .insert({
         user_id: userId,
-        vapi_call_id: vapiCallId,
+        vapi_call_id: vapi_call_id,
         phone_number: phoneNumber,
         call_status: callStatus,
         call_duration: callDuration,
@@ -101,8 +169,7 @@ export async function POST(request: NextRequest) {
         error_message: errorMessage,
         metadata
       })
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Error saving phone call:', error);
@@ -112,6 +179,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Handle case where no data is returned
+    if (!data || data.length === 0) {
+      console.error('No data returned after insert');
+      return NextResponse.json(
+        { error: 'Failed to save call data - no data returned' },
+        { status: 500 }
+      );
+    }
+
+    const call = data[0];
     return NextResponse.json({ call });
 
   } catch (error) {
@@ -125,9 +202,25 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    
+    // Authenticate user first
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('User fetch Error:', userError.message);
+      return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
+    }
+    
+    if (!user) {
+      console.log('No user found from auth');
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    }
+    
+    const userId = user.id;
     const body = await request.json();
     const {
-      vapiCallId,
+      vapi_call_id,
       callStatus,
       callDuration,
       audioRecordingUrl,
@@ -141,15 +234,15 @@ export async function PUT(request: NextRequest) {
       metadata
     } = body;
 
-    if (!vapiCallId) {
+    if (!vapi_call_id) {
       return NextResponse.json(
         { error: 'VAPI Call ID is required' },
         { status: 400 }
       );
     }
 
-    // Update phone call in database
-    const { data: call, error } = await supabase
+    // Update phone call in database (with user_id check for security)
+    const { data: callData, error } = await supabase
       .from('phone_calls')
       .update({
         call_status: callStatus,
@@ -164,9 +257,9 @@ export async function PUT(request: NextRequest) {
         error_message: errorMessage,
         metadata
       })
-      .eq('vapi_call_id', vapiCallId)
-      .select()
-      .single();
+      .eq('vapi_call_id', vapi_call_id)
+      .eq('user_id', userId) // Ensure user can only update their own calls
+      .select();
 
     if (error) {
       console.error('Error updating phone call:', error);
@@ -176,6 +269,20 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Handle case where no record was found to update
+    if (!callData || callData.length === 0) {
+      return NextResponse.json(
+        { error: 'Phone call not found', details: `No call found with vapi_call_id: ${vapi_call_id}` },
+        { status: 404 }
+      );
+    }
+
+    // Handle case where multiple records were updated (shouldn't happen with unique constraint)
+    if (callData.length > 1) {
+      console.warn(`Multiple records updated for vapi_call_id: ${vapi_call_id}`, callData);
+    }
+
+    const call = callData[0];
     return NextResponse.json({ call });
 
   } catch (error) {

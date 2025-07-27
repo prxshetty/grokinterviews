@@ -113,7 +113,7 @@ export default function WebInterviewPageContent() {
     } finally {
       setIsLoadingTranscripts(false);
     }
-  }, [session.id, session.conversationHistory.length]);
+  }, [session.id, session.conversationHistory.length]); // Only include stable dependencies
 
   // Fetch transcripts when session changes (initial load only)
   useEffect(() => {
@@ -149,7 +149,7 @@ export default function WebInterviewPageContent() {
         clearTimeout(fetchTimeoutRef.current);
       }
     };
-  }, [session.conversationHistory.length, session.id]); // Only depend on length, not entire array
+  }, [session.conversationHistory.length, session.id, fetchSessionTranscripts]); // Added fetchSessionTranscripts
 
   // Function to automatically terminate interview when critical errors occur
   const terminateInterviewOnError = useCallback(async (reason: TerminationReason) => {
@@ -302,7 +302,7 @@ export default function WebInterviewPageContent() {
     setTtsError(null);
     
     // Check rate limit before starting interview
-    const canStart = await checkRateLimit('behavioral');
+    const canStart = await checkRateLimit('web', 'behavioral', selectedVoice);
     
     if (canStart) {
       setSessionActive(true);
@@ -320,9 +320,9 @@ export default function WebInterviewPageContent() {
         console.error('Error creating session:', error);
       }
     }
-  }, [setProcessingAI, setAutoStartRecording, setTtsError, checkRateLimit, setSessionActive, incrementAiResponseKey, createSession, session.currentQuestion]);
+  }, [setProcessingAI, setAutoStartRecording, setTtsError, checkRateLimit, selectedVoice, setSessionActive, incrementAiResponseKey, createSession, session.currentQuestion]);
 
-  const handleEndInterview = useCallback(() => {
+  const handleEndInterview = useCallback(async () => {
     // Stop all voice operations immediately
     if (voicePlayerRef.current) {
       voicePlayerRef.current.stopPlayback();
@@ -332,8 +332,8 @@ export default function WebInterviewPageContent() {
       voiceRecorderRef.current.forceStop();
     }
     
-    // Reset all states
-    endSession();
+    // Reset all states and mark session as completed
+    await endSession();
     resetVoiceControls();
     incrementAiResponseKey();
   }, [endSession, resetVoiceControls, incrementAiResponseKey]);
