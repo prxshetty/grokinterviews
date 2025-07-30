@@ -3,6 +3,7 @@ export { default as InterviewReport } from './InterviewReport'
 export { default as VoicePageWithVisualizer } from './VoicePageWithVisualizer'
 export { default as InnerGlowVisualizer } from './InnerGlowVisualizer'
 export { default as VoiceRecorderHeadless } from './VoiceRecorderHeadless'
+export { default as InterviewContent } from './InterviewContent'
 
 // UI components
 export { default as InterviewHeader } from './InterviewHeader'
