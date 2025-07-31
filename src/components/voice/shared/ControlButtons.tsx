@@ -10,10 +10,10 @@ const PlayIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Custom Stop Icon Component
+// Custom Stop Icon Component - Clean and minimalistic
 const StopIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 1025 1024" className={className}>
-    <path fill="currentColor" d="M128.428 0h768q53 0 90.5 37.5t37.5 90.5v768q0 53-37.5 90.5t-90.5 37.5h-768q-53 0-90.5-37.5T.428 896V128q0-53 37.5-90.5t90.5-37.5z"/>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className={className}>
+    <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
   </svg>
 );
 
@@ -95,7 +95,7 @@ export default function ControlButtons({
           <div className="relative">
             <button
               onClick={onEndInterview}
-              className="w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
+              className="w-16 h-16 backdrop-blur-xl bg-red-500/20 hover:bg-red-500/30 dark:bg-red-500/20 dark:hover:bg-red-500/30 border border-red-500/40 dark:border-red-500/40 text-red-600 dark:text-red-400 rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
               title="End Interview"
             >
               <StopIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
