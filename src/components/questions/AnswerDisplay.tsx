@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Copy, Check, AlertCircle, Loader2, RotateCw, MessageSquare } from 'lucide-react';
+import { Copy, Check, AlertCircle, RotateCw, MessageSquare } from 'lucide-react';
+import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from './CopyButton';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -150,7 +151,7 @@ export function AnswerDisplay({
             className="mt-2"
           >
             {isRetrying || isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <InlineLoadingSpinner size="sm" />
             ) : (
               <RotateCw className="mr-2 h-4 w-4" />
             )}
@@ -243,4 +244,4 @@ export function AnswerDisplay({
       )}
     </div>
   );
-} 
+}

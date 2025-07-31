@@ -5,7 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Phone, PhoneOff, Settings } from 'lucide-react';
+import { Phone, PhoneOff, Settings } from 'lucide-react';
+import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface PhoneNumberHooksManagerProps {
   className?: string;
@@ -190,7 +191,7 @@ export default function PhoneNumberHooksManager({ className }: PhoneNumberHooksM
               disabled={isLoading || !customMessage.trim()}
               size="sm"
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <InlineLoadingSpinner size="sm" />}
               Update Message
             </Button>
           </div>
@@ -223,7 +224,7 @@ export default function PhoneNumberHooksManager({ className }: PhoneNumberHooksM
           className="w-full"
           variant={incomingCallsEnabled ? "destructive" : "default"}
         >
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isLoading && <InlineLoadingSpinner size="sm" />}
           {incomingCallsEnabled ? (
             <>
               <PhoneOff className="mr-2 h-4 w-4" />

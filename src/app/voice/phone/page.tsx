@@ -3,6 +3,7 @@
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { PhoneCallInterface } from '@/components/voice';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function PhoneInterviewPage() {
   const { user, loading } = useAuth();
@@ -26,9 +27,11 @@ export default function PhoneInterviewPage() {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <LoadingSpinner 
+        size="lg" 
+        text="Loading phone interview..." 
+        centered={true}
+      />
     );
   }
 

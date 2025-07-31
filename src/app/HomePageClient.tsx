@@ -10,24 +10,6 @@ const StatsSection = lazy(() => import('@/components/home/StatsSection'));
 const TopicCarousel = lazy(() => import('@/components/home/TopicCarousel'));
 const FeatureSection = lazy(() => import('@/components/home/FeatureSection').then(module => ({ default: module.FeatureSection })));
 
-// Loading skeleton components
-function StatsSkeleton() {
-  return (
-    <div className="py-16 animate-pulse">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="text-center">
-              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded w-16 mx-auto mb-4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mx-auto"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function TopicCarouselSkeleton() {
   return (
     <div className="py-8 animate-pulse">
@@ -91,6 +73,26 @@ function ExploreTopicsSection() {
   );
 }
 
+
+// Loading skeleton components
+function StatsSkeleton() {
+  return (
+    <div className="py-16 animate-pulse">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="text-center">
+              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded w-16 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mx-auto"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // TestimonialsSection component with scroll animations
 // function TestimonialsSection() {
 //   const { ref, isVisible, mounted } = useScrollAnimation();
@@ -139,7 +141,7 @@ export default function HomePageClient() {
       </div>
 
       {/* Voice Hero Section */}
-      <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
+      <div className="mt-16 sm:mt-20 md:mt-24 mb-16 sm:mb-20 md:mb-24">
         <VoiceHeroSection 
           title="Practice with AI Interviews"
           description="Experience realistic interview scenarios with our AI-powered voice interview platform. Practice on web or phone for the most authentic preparation."
