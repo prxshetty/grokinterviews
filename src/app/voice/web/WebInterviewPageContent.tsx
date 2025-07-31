@@ -11,6 +11,7 @@ import { VoicePageWithVisualizerRef } from '@/components/voice/web/VoicePageWith
 import { VoiceRecorderHeadlessRef } from '@/components/voice/web/VoiceRecorderHeadless';
 import { VoicePlayerRef } from '@/components/voice/shared/VoicePlayer';
 import { VoiceOption } from '@/components/voice/shared/VoiceSelector';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Import our new modular components and hooks
 import {
@@ -76,8 +77,14 @@ export default function WebInterviewPageContent() {
   // Initialize VAD support check
   useEffect(() => {
     const checkVADSupport = async () => {
-      const { isVADSupported } = await import('@/utils/vadUtils');
-      setVadSupported(isVADSupported());
+      try {
+        const { isVADSupported } = await import('@/utils/vadUtils');
+        setVadSupported(isVADSupported());
+      } catch (error) {
+        console.error('Error checking VAD support:', error);
+        // Default to false if VAD check fails
+        setVadSupported(false);
+      }
     };
     checkVADSupport();
   }, [setVadSupported]); // setVadSupported is stable from the hook
@@ -301,55 +308,70 @@ export default function WebInterviewPageContent() {
   }, [router]);
 
   const handleStartInterview = useCallback(async () => {
-    // Stop all ongoing audio operations first
-    if (voicePlayerRef.current) {
-      voicePlayerRef.current.stopPlayback();
-    }
-    
-    if (voiceRecorderRef.current) {
-      voiceRecorderRef.current.forceStop();
-    }
-    
-    // Reset states
-    setProcessingAI(false);
-    setAutoStartRecording(false);
-    setTtsError(null);
-    
-    // Check rate limit before starting interview
-    const canStart = await checkRateLimit('web', 'behavioral', selectedVoice);
-    
-    if (canStart) {
-      setSessionActive(true);
-      
-      // Force VoicePlayer to re-render and auto-play the initial question
-      incrementAiResponseKey();
-      
-      // Create a new session and add initial welcome message
-      try {
-        const newSessionId = await createSession('behavioral');
-        if (newSessionId) {
-          await InterviewService.addInitialWelcomeMessage(newSessionId, session.currentQuestion);
-        }
-      } catch (error) {
-        console.error('Error creating session:', error);
+    try {
+      // Stop all ongoing audio operations first
+      if (voicePlayerRef.current) {
+        voicePlayerRef.current.stopPlayback();
       }
+      
+      if (voiceRecorderRef.current) {
+        voiceRecorderRef.current.forceStop();
+      }
+      
+      // Reset states
+      setProcessingAI(false);
+      setAutoStartRecording(false);
+      setTtsError(null);
+      
+      // Check rate limit before starting interview
+      const canStart = await checkRateLimit('web', 'behavioral', selectedVoice);
+      
+      if (canStart) {
+        setSessionActive(true);
+        
+        // Force VoicePlayer to re-render and auto-play the initial question
+        incrementAiResponseKey();
+        
+        // Create a new session and add initial welcome message
+        try {
+          const newSessionId = await createSession('behavioral');
+          if (newSessionId) {
+            await InterviewService.addInitialWelcomeMessage(newSessionId, session.currentQuestion);
+          }
+        } catch (error) {
+          console.error('Error creating session:', error);
+          // Don't throw here - let the interview continue even if session creation fails
+        }
+      }
+    } catch (error) {
+      console.error('Error in handleStartInterview:', error);
+      // Reset states if something goes wrong
+      setProcessingAI(false);
+      setAutoStartRecording(false);
     }
   }, [setProcessingAI, setAutoStartRecording, setTtsError, checkRateLimit, selectedVoice, setSessionActive, incrementAiResponseKey, createSession, session.currentQuestion]);
 
   const handleEndInterview = useCallback(async () => {
-    // Stop all voice operations immediately
-    if (voicePlayerRef.current) {
-      voicePlayerRef.current.stopPlayback();
+    try {
+      // Stop all voice operations immediately
+      if (voicePlayerRef.current) {
+        voicePlayerRef.current.stopPlayback();
+      }
+      
+      if (voiceRecorderRef.current) {
+        voiceRecorderRef.current.forceStop();
+      }
+      
+      // Reset all states and mark session as completed
+      await endSession();
+      resetVoiceControls();
+      incrementAiResponseKey();
+    } catch (error) {
+      console.error('Error in handleEndInterview:', error);
+      // Even if endSession fails, we should still reset the UI state
+      resetVoiceControls();
+      incrementAiResponseKey();
     }
-    
-    if (voiceRecorderRef.current) {
-      voiceRecorderRef.current.forceStop();
-    }
-    
-    // Reset all states and mark session as completed
-    await endSession();
-    resetVoiceControls();
-    incrementAiResponseKey();
   }, [endSession, resetVoiceControls, incrementAiResponseKey]);
 
   // Recording handler functions
@@ -385,8 +407,13 @@ export default function WebInterviewPageContent() {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen">
+        <LoadingSpinner 
+          size="lg" 
+          color="primary" 
+          text="Loading interview..." 
+          centered={true}
+        />
       </div>
     );
   }
@@ -439,9 +466,15 @@ export default function WebInterviewPageContent() {
             voiceRecorderRef={voiceRecorderRef}
             voicePageVisualizerRef={voicePageVisualizerRef}
             onTranscriptionReceived={async (text: string) => {
-               const newHistory = [...session.conversationHistory, { type: 'user' as const, text }];
-               addToHistory('user', text);
-               await generateAIResponse(text, newHistory);
+               try {
+                 const newHistory = [...session.conversationHistory, { type: 'user' as const, text }];
+                 addToHistory('user', text);
+                 await generateAIResponse(text, newHistory);
+               } catch (error) {
+                 console.error('Error in onTranscriptionReceived:', error);
+                 // Handle the error gracefully - the generateAIResponse already has its own error handling
+                 // but this prevents unhandled promise rejections from bubbling up
+               }
              }}
              onRecordingStateChange={handleRecordingStateChange}
              onRecordingError={setRecordingError}

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useMemo, memo, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { DEFAULT_AVATAR_URL } from '@/config';
 import CompanyLogo from './CompanyLogo';
 
@@ -125,7 +126,7 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
             </div>
             <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">
               <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                <InlineLoadingSpinner size="sm" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">Thinking...</span>
               </div>
             </div>
