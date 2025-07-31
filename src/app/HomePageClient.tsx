@@ -126,6 +126,11 @@ export default function HomePageClient() {
         <HeroSection />
       </div>
 
+      <div className="px-4 sm:px-6 md:px-8 lg:px-12">
+        {/* Topic Carousel Section - Lazy loaded */}
+        <ExploreTopicsSection />
+      </div>
+
       {/* Stats Section - Lazy loaded */}
       <div className="mt-12 sm:mt-16 md:mt-24">
         <Suspense fallback={<StatsSkeleton />}>
@@ -133,12 +138,7 @@ export default function HomePageClient() {
         </Suspense>
       </div>
 
-      <div className="px-4 sm:px-6 md:px-8 lg:px-12">
-        {/* Topic Carousel Section - Lazy loaded */}
-        <ExploreTopicsSection />
-      </div>
-
-      {/* Voice Hero Section below Topic Carousel */}
+      {/* Voice Hero Section */}
       <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
         <VoiceHeroSection 
           title="Practice with Voice Interviews"
