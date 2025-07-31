@@ -4,7 +4,7 @@ import { Monitor, Phone, Mic, Video, MessageCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-interface HeroSectionProps {
+interface VoiceHeroSectionProps {
   title: string;
   description: string;
   primaryButtonText: string;
@@ -13,13 +13,13 @@ interface HeroSectionProps {
   onSecondaryClick?: () => void;
 }
 
-export default function HeroSection({
+export default function VoiceHeroSection({
   title,
   description,
   primaryButtonText,
   secondaryButtonText,
   onSecondaryClick,
-}: HeroSectionProps) {
+}: VoiceHeroSectionProps) {
   const [currentTime, setCurrentTime] = useState('');
 
   // Update time every minute for efficiency
