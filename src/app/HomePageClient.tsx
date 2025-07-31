@@ -1,7 +1,7 @@
 'use client';
 
 import { HeroSection } from '@/components/ui/hero-section-1';
-import ProductDemoSection from '@/components/ui/hero-with-product-mockup';
+import VoiceHeroSection from '@/components/ui/VoiceHeroSection';
 import { Suspense, lazy } from 'react';
 import { useScrollAnimation } from '@/hooks/ui';
 
@@ -9,7 +9,6 @@ import { useScrollAnimation } from '@/hooks/ui';
 const StatsSection = lazy(() => import('@/components/home/StatsSection'));
 const TopicCarousel = lazy(() => import('@/components/home/TopicCarousel'));
 const FeatureSection = lazy(() => import('@/components/home/FeatureSection').then(module => ({ default: module.FeatureSection })));
-// const VoiceSection = lazy(() => import('@/components/home/VoiceSection'));
 
 // Loading skeleton components
 function StatsSkeleton() {
@@ -60,31 +59,6 @@ function FeatureSkeleton() {
     </div>
   );
 }
-
-// function VoiceSkeleton() {
-//   return (
-//     <div className="py-16 animate-pulse">
-//       <div className="max-w-2xl mx-auto text-center mb-14">
-//         <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-80 mx-auto mb-4"></div>
-//         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-96 mx-auto"></div>
-//       </div>
-//       <div className="grid gap-10 md:grid-cols-2 w-full max-w-5xl mx-auto">
-//         {[...Array(2)].map((_, i) => (
-//           <div key={i} className="border rounded-2xl overflow-hidden">
-//             <div className="h-56 bg-gray-200 dark:bg-gray-700"></div>
-//             <div className="p-8">
-//               <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4"></div>
-//               <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-4"></div>
-//               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
-//               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-6"></div>
-//               <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
 
 // ExploreTopicsSection component with scroll animations
 function ExploreTopicsSection() {
@@ -164,22 +138,14 @@ export default function HomePageClient() {
         <ExploreTopicsSection />
       </div>
 
-      {/* Product Demo Section below Topic Carousel */}
+      {/* Voice Hero Section below Topic Carousel */}
       <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
-        <ProductDemoSection 
+        <VoiceHeroSection 
           title="Practice with Voice Interviews"
           description="Experience realistic interview scenarios with our AI-powered voice interview platform. Practice on web or phone for the most authentic preparation."
           primaryButtonText="Start Voice Interview"
         />
       </div>
-
-      {/* Voice Section - Commented out
-      <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
-        <Suspense fallback={<VoiceSkeleton />}>
-          <VoiceSection />
-        </Suspense>
-      </div>
-      */}
 
       <div className="px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Feature Section - Lazy loaded */}
