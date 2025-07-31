@@ -91,7 +91,7 @@ export default function LoadingSpinner({
 
   if (centered) {
     return (
-      <div className="flex items-center justify-center p-8 pt-24 sm:pt-28 md:pt-32">
+      <div className="flex items-center justify-center min-h-[50vh]">
         {content}
       </div>
     );

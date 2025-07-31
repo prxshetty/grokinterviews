@@ -153,7 +153,7 @@ export default function VoiceHeroSection({
                     </div>
                     
                     {/* Browser content */}
-                    <div className="p-4 lg:p-6">
+                    <div className="p-4 lg:p-6 pb-8 lg:pb-12">
                       {/* Search bar */}
                       <div className="bg-background/70 backdrop-blur-sm rounded-lg p-3 mb-4 border border-border/20">
                         <div className="flex items-center space-x-2">
@@ -200,41 +200,63 @@ export default function VoiceHeroSection({
 
                 {/* Phone Interview Mockup - Desktop only */}
                 <div className="absolute bottom-0 right-0 z-30 transform translate-y-8">
-                  {/* Phone frame */}
-                  <div className="w-36 h-[280px] xl:w-44 xl:h-[350px] bg-white dark:bg-black rounded-[2.5rem] p-2 shadow-2xl border border-border/30">
-                    {/* Phone screen */}
-                    <div className="w-full h-full bg-white dark:bg-black rounded-[2rem] overflow-hidden border border-border/20">
-                      {/* Status bar */}
-                      <div className="bg-background/90 backdrop-blur-sm px-2 xl:px-3 py-2 xl:py-3 flex justify-between items-center text-xs xl:text-sm border-b border-border/20">
-                        <span className="font-medium">{currentTime}</span>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-3 h-1.5 xl:w-4 xl:h-2 bg-green-500 rounded-sm"></div>
-                          <span className="text-xs">100%</span>
-                        </div>
-                      </div>
+                  {/* iPhone-style frame with more realistic proportions */}
+                  <div className="w-40 h-[320px] xl:w-48 xl:h-[380px] bg-gradient-to-b from-gray-900 to-black dark:from-gray-800 dark:to-gray-900 rounded-[3rem] p-1 shadow-2xl border border-gray-700/50">
+                    {/* iPhone screen with notch */}
+                    <div className="w-full h-full bg-black rounded-[2.7rem] overflow-hidden relative">
+                      {/* iPhone notch */}
+                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-20 xl:w-24 h-6 xl:h-7 bg-black rounded-b-2xl z-10"></div>
                       
-                      {/* Call interface */}
-                      <div className="flex-1 flex flex-col justify-between p-3 xl:p-4 h-full">
-                        {/* Top section with call info */}
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="text-center">
-                            <h3 className="text-base xl:text-lg font-normal mb-1">Gia</h3>
-                            <p className="text-xs text-muted-foreground">Interview Call</p>
-                            <p className="text-xs text-green-600 mt-1">Active • 05:23</p>
+                      {/* Screen content */}
+                      <div className="w-full h-full bg-white dark:bg-gray-950 rounded-[2.7rem] overflow-hidden">
+                        {/* Status bar with iPhone-style elements */}
+                        <div className="bg-white dark:bg-gray-950 px-4 xl:px-5 py-3 xl:py-4 flex justify-between items-center text-xs xl:text-sm pt-8 xl:pt-9">
+                          <span className="font-semibold text-black dark:text-white">{currentTime}</span>
+                          <div className="flex items-center space-x-1">
+                            {/* Signal bars */}
+                            <div className="flex items-end space-x-0.5">
+                              <div className="w-1 h-2 bg-black dark:bg-white rounded-full"></div>
+                              <div className="w-1 h-3 bg-black dark:bg-white rounded-full"></div>
+                              <div className="w-1 h-4 bg-black dark:bg-white rounded-full"></div>
+                              <div className="w-1 h-3 bg-black dark:bg-white rounded-full"></div>
+                            </div>
+                            {/* WiFi icon */}
+                            <div className="w-4 h-3 relative">
+                              <div className="absolute bottom-0 left-0 w-1 h-1 bg-black dark:bg-white rounded-full"></div>
+                              <div className="absolute bottom-0 left-1 w-1 h-2 bg-black dark:bg-white rounded-full"></div>
+                              <div className="absolute bottom-0 left-2 w-1 h-3 bg-black dark:bg-white rounded-full"></div>
+                            </div>
+                            {/* Battery */}
+                            <div className="w-6 h-3 border border-black dark:border-white rounded-sm relative">
+                              <div className="w-4 h-2 bg-green-500 rounded-sm absolute top-0.5 left-0.5"></div>
+                              <div className="w-0.5 h-1.5 bg-black dark:bg-white rounded-r-sm absolute top-0.5 -right-1"></div>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Call controls - positioned at bottom */}
-                        <div className="flex justify-center space-x-1.5 xl:space-x-2 pb-2">
-                          <button className="w-8 h-8 xl:w-10 xl:h-10 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-xl hover:scale-110 hover:bg-gray-300/50 dark:hover:bg-gray-700/50 transition-all duration-200 ease-in-out">
-                            <Mic className="w-3 h-3 xl:w-4 xl:h-4 text-gray-700 dark:text-gray-300" />
-                          </button>
-                          <button className="w-8 h-8 xl:w-10 xl:h-10 bg-red-500 rounded-full flex items-center justify-center shadow-xl hover:scale-110 hover:bg-red-600 transition-all duration-200 ease-in-out">
-                            <Phone className="w-3 h-3 xl:w-4 xl:h-4 text-white transform rotate-[135deg]" />
-                          </button>
-                          <button className="w-8 h-8 xl:w-10 xl:h-10 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-xl hover:scale-110 hover:bg-gray-300/50 dark:hover:bg-gray-700/50 transition-all duration-200 ease-in-out">
-                            <MessageCircle className="w-3 h-3 xl:w-4 xl:h-4 text-gray-700 dark:text-gray-300" />
-                          </button>
+                        {/* Call interface */}
+                        <div className="flex-1 flex flex-col justify-between p-4 xl:p-5 h-full pb-8 xl:pb-12">
+                          {/* Top section with call info */}
+                          <div className="flex-1 flex items-center justify-center">
+                            <div className="text-center">
+                              <h3 className="text-lg xl:text-xl font-medium mb-1 text-black dark:text-white">Gia</h3>
+                              <p className="text-xs xl:text-sm text-gray-600 dark:text-gray-400">Interview Call</p>
+                              <p className="text-xs xl:text-sm text-green-600 mt-2">Active • 05:23</p>
+                            </div>
+                          </div>
+                          
+                          {/* Call controls - iPhone style */}
+                          <div className="flex justify-center items-center space-x-2 xl:space-x-3 pb-4 xl:pb-12">
+                            <button className="w-10 h-10 xl:w-9 xl:h-9 flex-shrink-0 aspect-square bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-200 ease-in-out">
+                              <Mic className="w-3 h-3 xl:w-4 xl:h-4 text-gray-700 dark:text-gray-300" />
+                            </button>
+                            <button className="w-10 h-10 xl:w-9 xl:h-9 flex-shrink-0 aspect-square bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-200 ease-in-out">
+                              <Phone className="w-3 h-3 xl:w-4 xl:h-4 text-white transform rotate-[135deg]" />
+                            </button>
+                            <button className="w-10 h-10 xl:w-9 xl:h-9 flex-shrink-0 aspect-square bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-200 ease-in-out">
+                              <MessageCircle className="w-3 h-3 xl:w-4 xl:h-4 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

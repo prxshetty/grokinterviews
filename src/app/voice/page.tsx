@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Laptop, Phone, Zap, Clock, Users, Shield, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoiceSelection, type VoiceType } from '@/components/voice/VoiceSelection';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function VoicePage() {
   const { user, loading } = useAuth();
@@ -23,9 +24,11 @@ export default function VoicePage() {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <LoadingSpinner 
+        size="lg" 
+        text="Loading interview options..." 
+        centered={true}
+      />
     );
   }
 

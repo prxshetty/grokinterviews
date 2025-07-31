@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { 
   Calendar, 
   Clock, 
@@ -364,7 +365,7 @@ export function TranscriptDisplay({
               // Web Interview Analysis
               loadingScore ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                  <LoadingSpinner size="md" text="Loading analysis..." />
                 </div>
               ) : selectedScore ? (
                 <div className="space-y-6">

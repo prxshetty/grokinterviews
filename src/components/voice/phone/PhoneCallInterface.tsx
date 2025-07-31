@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Phone, PhoneCall, PhoneOff, Clock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Phone, PhoneCall, PhoneOff, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useAuth } from '@/components/AuthProvider';
 import { vapiService, type VapiCall } from '@/services/VapiService';
 import PhoneNumberInput from './PhoneNumberInput';
@@ -563,7 +564,7 @@ export default function PhoneCallInterface({
     switch (callState) {
       case 'initiating':
       case 'ringing':
-        return <Loader2 className="h-5 w-5 animate-spin text-blue-500" />;
+        return <InlineLoadingSpinner size="sm" />;
       case 'in-progress':
         return <PhoneCall className="h-5 w-5 text-green-500" />;
       case 'ended':
