@@ -4,6 +4,7 @@ import React from 'react';
 import { TranscriptHeader, InterviewList, TranscriptDisplay } from '@/components/transcripts';
 import { useInterviewData } from '@/components/voice/shared/useInterviewData';
 import { useAuth } from '@/components/AuthProvider';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function TranscriptsPage() {
   const { profile } = useAuth();
@@ -30,12 +31,12 @@ export default function TranscriptsPage() {
     return (
       <div className="min-h-screen bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 sm:pt-28 md:pt-32">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading interview transcripts...</p>
-            </div>
-          </div>
+          <LoadingSpinner 
+            size="lg" 
+            color="primary" 
+            text="Loading interview transcripts..." 
+            centered={true}
+          />
         </div>
       </div>
     );

@@ -84,21 +84,7 @@ export default function RootLayout({
       <head>
         {/* Critical Resource Hints for LCP Optimization */}
         
-        {/* Preload critical fonts with high priority */}
-        <link 
-          rel="preload" 
-          href="/_next/static/media/GeistVF.woff2" 
-          as="font" 
-          type="font/woff2" 
-          crossOrigin="anonymous"
-        />
-        <link 
-          rel="preload" 
-          href="/_next/static/media/GeistMonoVF.woff2" 
-          as="font" 
-          type="font/woff2" 
-          crossOrigin="anonymous"
-        />
+        {/* Font loading is handled automatically by Next.js and geist/font package */}
         
         {/* Preconnect to external domains for faster loading */}
         <link rel="preconnect" href="https://upload.wikimedia.org" />

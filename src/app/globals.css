@@ -115,6 +115,19 @@ body {
   background-color: var(--background-color);
   color: var(--text-color);
   letter-spacing: -0.025em;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Ensure all text elements use the correct font */
+* {
+  font-family: inherit;
+}
+
+/* Explicit font family for headings to ensure consistency */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 /* Hide scrollbar but keep functionality */
@@ -146,12 +159,6 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out;
-}
-
-/* Improved typography */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.2;
 }
 
 p {

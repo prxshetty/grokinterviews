@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VoiceOption } from './VoiceSelector';
+import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface VoicePlayerProps {
   text: string;
@@ -395,7 +396,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
         )}
       >
         {isLoading ? (
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+          <InlineLoadingSpinner size="sm" />
         ) : isPlaying ? (
           <Pause className="h-4 w-4" />
         ) : (

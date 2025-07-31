@@ -2,12 +2,12 @@ import React from 'react';
 
 export const InterviewFeatures: React.FC = () => {
   return (
-    <div className="mb-12">
+    <div className="mb-12 font-sans">
       <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 font-sans">
           Behavioral Interview Practice
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-sans">
           Practice common behavioral interview questions with our AI interviewer. 
           Get real-time feedback and improve your storytelling skills.
         </p>
