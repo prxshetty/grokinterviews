@@ -22,6 +22,7 @@ export { Input } from './input';
 export { default as LoadingSpinner, InlineLoadingSpinner } from './LoadingSpinner';
 export { Logo } from './Logo';
 export { MessageLoading } from './message-loading';
+export { default as UniqueLoading } from './morph-loading';
 export { default as Pagination } from './Pagination';
 export { default as ProgressBar } from './ProgressBar';
 export { Toaster } from './sonner';

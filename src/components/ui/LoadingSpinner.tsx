@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { MessageLoading } from './message-loading';
+import UniqueLoading from './morph-loading';
 
 /**
  * Unified Loading Spinner System for GrokInterviews
  * 
  * This component provides a consistent loading experience across the entire application.
- * Updated to use the new MessageLoading animated SVG component.
+ * Updated to use the new morph-loading animated component.
  * 
  * @example
  * // Basic usage
@@ -37,11 +37,12 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-const sizeClasses = {
-  sm: 'w-4 h-4',
-  md: 'w-6 h-6', 
-  lg: 'w-8 h-8',
-  xl: 'w-12 h-12'
+// Map LoadingSpinner sizes to UniqueLoading sizes
+const sizeMapping = {
+  sm: 'sm' as const,
+  md: 'sm' as const, 
+  lg: 'md' as const,
+  xl: 'lg' as const
 };
 
 const colorClasses = {
@@ -60,12 +61,11 @@ export default function LoadingSpinner({
   fullScreen = false
 }: LoadingSpinnerProps) {
   const spinner = (
-    <div className={cn(
-      sizeClasses[size],
-      className
-    )}>
-      <MessageLoading className={colorClasses[color]} />
-    </div>
+    <UniqueLoading 
+      variant="morph" 
+      size={sizeMapping[size]}
+      className={cn(colorClasses[color], className)}
+    />
   );
 
   const content = (
@@ -115,4 +115,4 @@ export function InlineLoadingSpinner({ text, size = 'sm' }: { text?: string; siz
   return (
     <LoadingSpinner {...spinnerProps} />
   );
-} 
+}

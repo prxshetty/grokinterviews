@@ -141,7 +141,7 @@ export default function HomePageClient() {
       {/* Voice Hero Section */}
       <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
         <VoiceHeroSection 
-          title="Practice with Voice Interviews"
+          title="Practice with AI Interviews"
           description="Experience realistic interview scenarios with our AI-powered voice interview platform. Practice on web or phone for the most authentic preparation."
           primaryButtonText="Start Voice Interview"
         />
