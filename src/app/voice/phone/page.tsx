@@ -29,7 +29,6 @@ export default function PhoneInterviewPage() {
     return (
       <LoadingSpinner 
         size="lg" 
-        text="Loading phone interview..." 
         centered={true}
       />
     );
