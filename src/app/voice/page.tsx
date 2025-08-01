@@ -25,8 +25,7 @@ export default function VoicePage() {
   if (loading) {
     return (
       <LoadingSpinner 
-        size="lg" 
-        text="Loading interview options..." 
+        size="lg"
         centered={true}
       />
     );

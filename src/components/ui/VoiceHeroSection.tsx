@@ -1,7 +1,7 @@
 'use client';
 
 import { Monitor, Phone, Mic, Video, MessageCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 interface VoiceHeroSectionProps {
@@ -21,6 +21,32 @@ export default function VoiceHeroSection({
   onSecondaryClick,
 }: VoiceHeroSectionProps) {
   const [currentTime, setCurrentTime] = useState('');
+  const [isInView, setIsInView] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for fade-in animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting) {
+          setIsInView(true);
+          // Once animation is triggered, we can disconnect the observer
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.1, // Trigger when 10% of the component is visible
+        rootMargin: '0px 0px -50px 0px' // Start animation slightly before fully visible
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   // Update time every minute for efficiency
   useEffect(() => {
@@ -36,13 +62,20 @@ export default function VoiceHeroSection({
   }, []);
 
   return (
-    <div className="relative bg-transparent overflow-hidden min-h-screen flex flex-col lg:min-h-0">
+    <div 
+      ref={sectionRef}
+      className={`relative bg-transparent overflow-hidden min-h-screen flex flex-col lg:min-h-0 transition-all duration-700 ${
+        isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+    >
       <div className="max-w-7xl mx-auto w-full">
         {/* Mobile/Tablet: Stack content vertically, Desktop: Side by side */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:min-h-[600px]">
           
           {/* Text Content Section */}
-          <div className="relative z-10 flex-1 px-4 py-8 sm:px-6 sm:py-12 md:px-8 md:py-16 lg:py-20 lg:pr-8">
+          <div className={`relative z-10 flex-1 px-4 py-8 sm:px-6 sm:py-12 md:px-8 md:py-16 lg:py-20 lg:pr-8 transition-all duration-700 delay-150 ${
+            isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}>
             <div className="text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
               <h1 className="text-3xl tracking-tight font-normal text-gray-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl">
                 <span className="block">{title}</span>
@@ -52,7 +85,9 @@ export default function VoiceHeroSection({
               </p>
               
               {/* Buttons - Hidden on mobile/tablet, shown on desktop */}
-              <div className="mt-6 sm:mt-8 hidden lg:flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center lg:justify-start">
+              <div className={`mt-6 sm:mt-8 hidden lg:flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center lg:justify-start transition-all duration-700 delay-300 ${
+                isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}>
                 <Link
                   href="/voice"
                   className="inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-3xl text-white bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 touch-manipulation active:scale-95 sm:px-8 sm:py-4 sm:text-lg"
@@ -72,48 +107,68 @@ export default function VoiceHeroSection({
           </div>
 
           {/* Mockup Section */}
-          <div className="relative flex-1 min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[600px] px-4 sm:px-6 md:px-8 lg:px-0">
+          <div className={`relative flex-1 min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[600px] px-4 sm:px-6 md:px-8 lg:px-0 transition-all duration-700 delay-300 ${
+            isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}>
             <div className="relative w-full h-full flex lg:justify-start lg:pl-8">
               
               {/* Mobile/Tablet: Show simplified single mockup */}
-              <div className="block lg:hidden w-full max-w-sm mx-auto">
+              <div className={`block lg:hidden w-full max-w-sm mx-auto transition-all duration-700 delay-450 ${
+                isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}>
                 {/* Single Phone Mockup for Mobile/Tablet */}
                 <div className="relative mx-auto">
-                  {/* Phone frame */}
-                  <div className="w-64 h-[500px] sm:w-72 sm:h-[560px] bg-white dark:bg-black rounded-[2.5rem] p-3 shadow-2xl border border-border/30 mx-auto">
-                    {/* Phone screen */}
-                    <div className="w-full h-full bg-white dark:bg-black rounded-[2rem] overflow-hidden border border-border/20">
-                      {/* Status bar */}
-                      <div className="bg-background/90 backdrop-blur-sm px-4 py-4 flex justify-between items-center text-sm border-b border-border/20">
-                        <span className="font-medium">{currentTime}</span>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-4 h-2 bg-green-500 rounded-sm"></div>
-                          <span className="text-xs">100%</span>
-                        </div>
-                      </div>
+                  {/* iPhone-style frame with gradient */}
+                  <div className="w-64 h-[500px] sm:w-72 sm:h-[560px] bg-gradient-to-b from-gray-900 to-black dark:from-gray-800 dark:to-gray-900 rounded-[3rem] p-1 shadow-2xl border border-gray-700/50 mx-auto">
+                    {/* iPhone screen with notch */}
+                    <div className="w-full h-full bg-black rounded-[2.7rem] overflow-hidden relative">
+                      {/* iPhone notch */}
+                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 sm:w-28 h-6 sm:h-7 bg-black rounded-b-2xl z-10"></div>
                       
-                      {/* Call interface */}
-                      <div className="flex-1 flex flex-col justify-between p-6 h-full">
-                        {/* Top section with call info */}
-                        <div className="flex items-center justify-center pt-8">
-                          <div className="text-center">
-                            <h3 className="text-xl font-normal mb-2">Gia</h3>
-                            <p className="text-sm text-muted-foreground">Interview Call</p>
-                            <p className="text-sm text-green-600 mt-2">Active • 05:23</p>
+                      {/* Screen content */}
+                        <div className="w-full h-full bg-white dark:bg-gray-950 rounded-[1.5rem] overflow-hidden">
+                        {/* Status bar with iPhone-style elements */}
+                        <div className="bg-white dark:bg-gray-950 px-4 sm:px-5 py-3 sm:py-4 flex justify-between items-center text-sm sm:text-base pt-8 sm:pt-9">
+                          <span className="font-semibold text-black dark:text-white">{currentTime}</span>
+                          <div className="flex items-center space-x-1">
+                            {/* Signal bars */}
+                            <div className="flex items-end space-x-0.5">
+                              <div className="w-1 h-1 bg-black dark:bg-white rounded-full"></div>
+                              <div className="w-1 h-2 bg-black dark:bg-white rounded-full"></div>
+                              <div className="w-1 h-3 bg-black dark:bg-white rounded-full"></div>
+                              <div className="w-1 h-4 bg-black dark:bg-white rounded-full"></div>
+                            </div>
+                            {/* Battery */}
+                            <div className="w-6 h-3 border border-black dark:border-white rounded-sm relative">
+                              <div className="w-5 h-2.5 bg-green-500 rounded-sm absolute left-0.25"></div>
+                              <div className="w-0.5 h-1.5 bg-black dark:bg-white rounded-r-sm absolute top-0.5 -right-1"></div>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Call controls - positioned at bottom */}
-                        <div className="flex justify-center space-x-4 pb-8">
-                          <button className="w-14 h-14 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center active:scale-95 transition-all duration-200 ease-in-out touch-manipulation">
-                            <Mic className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                          </button>
-                          <button className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center active:scale-95 transition-all duration-200 ease-in-out touch-manipulation">
-                            <Phone className="w-6 h-6 text-white transform rotate-[135deg]" />
-                          </button>
-                          <button className="w-14 h-14 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center active:scale-95 transition-all duration-200 ease-in-out touch-manipulation">
-                            <MessageCircle className="w-6 h-6 text-gray-700 dark:text-gray-300" />
-                          </button>
+                        {/* Call interface */}
+                        <div className="flex-1 flex flex-col justify-between p-6 h-full">
+                          {/* Top section with call info */}
+                          <div className="flex-1 flex items-center justify-center">
+                            <div className="text-center">
+                              <h3 className="text-xl sm:text-2xl font-medium mb-2 text-black dark:text-white">Gia</h3>
+                              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Interview Call</p>
+                              <p className="text-sm sm:text-base text-green-600 mt-2">Active • 05:23</p>
+                            </div>
+                          </div>
+                          
+                          {/* Call controls - iPhone style */}
+                          <div className="flex justify-center space-x-4 sm:space-x-6 pb-16">
+                            <button className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all duration-200 ease-in-out touch-manipulation">
+                              <Mic className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700 dark:text-gray-300" />
+                            </button>
+                            <button className="w-14 h-14 sm:w-16 sm:h-16 bg-red-500 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all duration-200 ease-in-out touch-manipulation">
+                              <Phone className="w-6 h-6 sm:w-7 sm:h-7 text-white transform rotate-[135deg]" />
+                            </button>
+                            <button className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all duration-200 ease-in-out touch-manipulation">
+                              <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -121,7 +176,9 @@ export default function VoiceHeroSection({
                 </div>
                 
                 {/* Primary Button below phone for Mobile/Tablet */}
-                <div className="mt-8 flex justify-center">
+                <div className={`mt-8 flex justify-center transition-all duration-700 delay-600 ${
+                  isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                   <Link
                     href="/voice"
                     className="inline-flex items-center justify-center px-6 py-3 text-lg font-medium rounded-3xl text-white bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 touch-manipulation active:scale-95"
@@ -132,9 +189,13 @@ export default function VoiceHeroSection({
               </div>
 
               {/* Desktop: Show complex dual mockup */}
-              <div className="hidden lg:block relative w-full max-w-4xl">
+              <div className={`hidden lg:block relative w-full max-w-4xl transition-all duration-700 delay-450 ${
+                isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}>
                 {/* Desktop Web Interview Window */}
-                <div className="relative z-20 w-full max-w-2xl">
+                <div className={`relative z-20 w-full max-w-2xl transition-all duration-700 delay-500 ${
+                  isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}>
                   {/* Stacked background windows for depth */}
                   <div className="absolute -top-4 -left-4 w-full h-full bg-gradient-to-br from-blue-400/30 to-blue-500/30 rounded-lg backdrop-blur-sm border border-border/20 shadow-lg"></div>
                   <div className="absolute -top-2 -left-2 w-full h-full bg-gradient-to-br from-green-400/20 to-green-500/20 rounded-lg backdrop-blur-sm border border-border/20 shadow-lg"></div>
@@ -199,13 +260,15 @@ export default function VoiceHeroSection({
                 </div>
 
                 {/* Phone Interview Mockup - Desktop only */}
-                <div className="absolute bottom-0 right-0 z-30 transform translate-y-8">
+                <div className={`absolute bottom-0 right-0 z-30 transform translate-y-8 transition-all duration-700 delay-600 ${
+                  isInView ? 'opacity-100 translate-y-8' : 'opacity-0 translate-y-12'
+                }`}>
                   {/* iPhone-style frame with more realistic proportions */}
-                  <div className="w-40 h-[320px] xl:w-48 xl:h-[380px] bg-gradient-to-b from-gray-900 to-black dark:from-gray-800 dark:to-gray-900 rounded-[3rem] p-1 shadow-2xl border border-gray-700/50">
+                  <div className="w-40 h-[320px] xl:w-48 xl:h-[380px] bg-gradient-to-b from-gray-900 to-black dark:from-gray-800 dark:to-gray-900 rounded-[2.7rem] p-1 shadow-2xl border border-gray-700/50">
                     {/* iPhone screen with notch */}
                     <div className="w-full h-full bg-black rounded-[2.7rem] overflow-hidden relative">
                       {/* iPhone notch */}
-                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-20 xl:w-24 h-6 xl:h-7 bg-black rounded-b-2xl z-10"></div>
+                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-20 xl:w-24 h-6 xl:h-6 bg-black rounded-b-2xl z-10"></div>
                       
                       {/* Screen content */}
                       <div className="w-full h-full bg-white dark:bg-gray-950 rounded-[2.7rem] overflow-hidden">
@@ -215,20 +278,14 @@ export default function VoiceHeroSection({
                           <div className="flex items-center space-x-1">
                             {/* Signal bars */}
                             <div className="flex items-end space-x-0.5">
+                              <div className="w-1 h-1 bg-black dark:bg-white rounded-full"></div>
                               <div className="w-1 h-2 bg-black dark:bg-white rounded-full"></div>
                               <div className="w-1 h-3 bg-black dark:bg-white rounded-full"></div>
                               <div className="w-1 h-4 bg-black dark:bg-white rounded-full"></div>
-                              <div className="w-1 h-3 bg-black dark:bg-white rounded-full"></div>
-                            </div>
-                            {/* WiFi icon */}
-                            <div className="w-4 h-3 relative">
-                              <div className="absolute bottom-0 left-0 w-1 h-1 bg-black dark:bg-white rounded-full"></div>
-                              <div className="absolute bottom-0 left-1 w-1 h-2 bg-black dark:bg-white rounded-full"></div>
-                              <div className="absolute bottom-0 left-2 w-1 h-3 bg-black dark:bg-white rounded-full"></div>
                             </div>
                             {/* Battery */}
                             <div className="w-6 h-3 border border-black dark:border-white rounded-sm relative">
-                              <div className="w-4 h-2 bg-green-500 rounded-sm absolute top-0.5 left-0.5"></div>
+                              <div className="w-5 h-2.5 bg-green-500 rounded-sm absolute left-0.25"></div>
                               <div className="w-0.5 h-1.5 bg-black dark:bg-white rounded-r-sm absolute top-0.5 -right-1"></div>
                             </div>
                           </div>
