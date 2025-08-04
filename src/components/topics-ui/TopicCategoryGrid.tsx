@@ -7,11 +7,10 @@ import styles from './TopicCategoryGrid.module.css';
 import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
 import { LoadingSpinner } from '@/components/ui';
 
-// Define the structure for items to be displayed
 interface DisplayItem {
   id: string;
   label: string;
-  display_order?: number; // Add display_order for proper section ordering
+  display_order?: number;
   progress?: {
     questionsCompleted: number;
     totalQuestions: number;
@@ -27,12 +26,10 @@ interface SubtopicProgress {
   totalCategories: number;
 }
 
-// Define a more specific type for cached progress data
 interface CacheableProgressData {
   questionsCompleted: number;
   totalQuestions: number;
   completionPercentage: number;
-  // Optional fields if we want to be more precise for section progress
   completed_children?: number;
   total_children?: number;
   subtopicsCompleted?: number;
@@ -320,7 +317,6 @@ function TopicCategoryGridComponent({
       <LoadingSpinner 
         size="lg" 
         color="primary" 
-        text="Loading items..." 
         centered={true}
       />
     );
