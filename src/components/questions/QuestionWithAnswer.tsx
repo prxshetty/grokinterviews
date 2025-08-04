@@ -140,7 +140,11 @@ function QuestionWithAnswerComponent({
   const { isBookmarked: isBookmarkedState, handleBookmarkChange } = useQuestionBookmark({
     questionId,
     initialIsBookmarked,
-    onBookmarkStatusChange
+    onBookmarkStatusChange,
+    ...(actualTopicId && actualCategoryId && {
+      topicId: actualTopicId,
+      categoryId: actualCategoryId
+    })
   });
 
   // Sync expansion state with isOpen prop

@@ -317,6 +317,7 @@ function TopicCategoryGridComponent({
       <LoadingSpinner 
         size="lg" 
         color="primary" 
+        text="Loading items..." 
         centered={true}
       />
     );

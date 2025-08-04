@@ -56,6 +56,8 @@ export interface UseQuestionBookmarkProps {
   questionId: number;
   initialIsBookmarked: boolean;
   onBookmarkStatusChange?: (questionId: number, newStatus: boolean) => void;
+  topicId?: number;
+  categoryId?: number;
 }
 
 export interface UseQuestionBookmarkReturn {
