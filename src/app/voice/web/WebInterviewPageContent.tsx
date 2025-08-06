@@ -10,7 +10,7 @@ import {
 import { VoicePageWithVisualizerRef } from '@/components/voice/web/VoicePageWithVisualizer';
 import { VoiceRecorderHeadlessRef } from '@/components/voice/web/VoiceRecorderHeadless';
 import { VoicePlayerRef } from '@/components/voice/shared/VoicePlayer';
-import { VoiceOption } from '@/components/voice/shared/VoiceSelector';
+import { type VoiceOption } from '@/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Import our new modular components and hooks

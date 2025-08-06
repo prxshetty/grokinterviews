@@ -6,7 +6,7 @@ import { VoicePlayer, type VoicePlayerRef } from '@/components/voice/shared/Voic
 import { RecentTranscriptDisplay } from '@/components/voice/shared';
 import ErrorDisplay from './ErrorDisplay';
 import InterviewReport from './InterviewReport';
-import { type VoiceOption } from '@/components/voice/shared/VoiceSelector';
+import { type VoiceOption } from '@/types';
 import { type TerminationReason } from '@/services/interviewService';
 
 interface InterviewContentProps {
