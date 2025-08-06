@@ -4,8 +4,8 @@ import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from '
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { VoiceOption } from './VoiceSelector';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
+import type { VoiceOption } from '@/types/voice.types';
 
 interface VoicePlayerProps {
   text: string;
