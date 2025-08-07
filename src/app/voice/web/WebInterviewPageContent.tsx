@@ -334,7 +334,7 @@ export default function WebInterviewPageContent() {
         
         // Create a new session and add initial welcome message
         try {
-          const newSessionId = await createSession('behavioral');
+          const newSessionId = await createSession('behavioral', selectedVoice);
           if (newSessionId) {
             await InterviewService.addInitialWelcomeMessage(newSessionId, session.currentQuestion);
           }

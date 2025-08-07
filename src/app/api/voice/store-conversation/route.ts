@@ -11,6 +11,7 @@ interface StoreConversationRequest {
   sessionType?: 'behavioral' | 'technical' | 'general';
   audioFileSize?: number;
   audioDurationSeconds?: number;
+  voiceName?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
       conversationOrder,
       sessionType = 'behavioral',
       audioFileSize,
-      audioDurationSeconds
+      audioDurationSeconds,
+      voiceName
     } = body;
 
     // Validate required fields
@@ -56,7 +58,8 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           session_type: sessionType,
           session_start: new Date().toISOString(),
-          total_interactions: 0
+          total_interactions: 0,
+          voice_name: voiceName || null
         })
         .select('session_id')
         .single();
@@ -83,7 +86,8 @@ export async function POST(request: NextRequest) {
         ai_response: aiResponse || null,
         conversation_order: conversationOrder,
         audio_file_size: audioFileSize || null,
-        audio_duration_seconds: audioDurationSeconds || null
+        audio_duration_seconds: audioDurationSeconds || null,
+        voice_name: voiceName || null
       });
 
     if (transcriptError) {
