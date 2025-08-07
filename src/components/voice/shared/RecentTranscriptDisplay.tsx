@@ -31,7 +31,7 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
   showChat = true,
   selectedVoice
 }: RecentTranscriptDisplayProps) {
-  const googleVoice = selectedVoice ? VOICE_CONFIG[selectedVoice] : undefined;
+  const voiceConfig = selectedVoice ? VOICE_CONFIG[selectedVoice] : undefined;
   const { user, profile } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastTranscriptCountRef = useRef(0);
@@ -93,8 +93,8 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
             {transcript.interaction_type === 'ai_response' && (
               <div className="flex-shrink-0">
                 <img
-                  src={googleVoice?.image || '/ai-avatar.png'}
-                  alt={googleVoice?.label || 'AI'}
+                  src={voiceConfig?.image || '/ai-avatar.png'}
+                  alt={voiceConfig?.label || 'AI'}
                   className="h-8 w-8 rounded-full object-cover"
                 />
               </div>
@@ -133,8 +133,8 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
           <div className="flex justify-start gap-3">
             <div className="flex-shrink-0">
               <img
-                src={googleVoice?.image || '/ai-avatar.png'}
-                alt={googleVoice?.label || 'AI'}
+                src={voiceConfig?.image || '/ai-avatar.png'}
+                alt={voiceConfig?.label || 'AI'}
                 className="h-8 w-8 rounded-full object-cover"
               />
             </div>

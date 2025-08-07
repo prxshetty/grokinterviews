@@ -1,45 +1,40 @@
 export type VoiceOption = 'Sophia' | 'Marcus' | 'Aoede' | 'Algieba';
 
-export interface GoogleVoiceOption {
-  name: VoiceOption;
+export interface VoiceConfig {
+  technicalName: VoiceOption;
+  displayName: string;
   label: string;
-  value: string;
-  gender: 'male' | 'female';
-  premium: boolean;
+  tier: 'standard' | 'premium';
   image: string;
 }
 
-export const VOICE_CONFIG: Record<VoiceOption, GoogleVoiceOption> = {
+export const VOICE_CONFIG: Record<VoiceOption, VoiceConfig> = {
   'Sophia': {
-    name: 'Sophia',
+    technicalName: 'Sophia',
+    displayName: 'Gia',
     label: 'Sophia',
-    value: 'Sophia',
-    gender: 'female',
-    premium: false,
+    tier: 'standard',
     image: '/images/female_default.png'
   },
   'Marcus': {
-    name: 'Marcus',
+    technicalName: 'Marcus',
+    displayName: 'George',
     label: 'Marcus',
-    value: 'Marcus',
-    gender: 'male',
-    premium: false,
+    tier: 'standard',
     image: '/images/male_default.png'
   },
   'Aoede': {
-    name: 'Aoede',
+    technicalName: 'Aoede',
+    displayName: 'Gianna',
     label: 'Aoede',
-    value: 'Aoede',
-    gender: 'female',
-    premium: true,
+    tier: 'premium',
     image: '/images/female_sign.jpeg'
   },
   'Algieba': {
-    name: 'Algieba',
+    technicalName: 'Algieba',
+    displayName: 'Gideon',
     label: 'Algieba',
-    value: 'Algieba',
-    gender: 'male',
-    premium: true,
+    tier: 'premium',
     image: '/images/male_sign.jpeg'
   }
 };

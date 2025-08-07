@@ -48,7 +48,7 @@ export function TranscriptHeader({
           <SelectContent className="rounded-xl border-0 shadow-lg">
             <SelectItem value="all">All Voices</SelectItem>
             {Object.values(VOICE_CONFIG).map((voice) => (
-              <SelectItem key={voice.name} value={voice.name}>
+              <SelectItem key={voice.technicalName} value={voice.technicalName}>
                 {voice.label}
               </SelectItem>
             ))}
