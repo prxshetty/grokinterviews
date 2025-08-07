@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
 import { cn } from '@/lib/utils';
-import { VoiceOption, VOICE_CONFIG } from '@/types/voice.types';
+import { VOICE_CONFIG, VoiceOption } from '@/types/voice.types';
 
 interface InterviewSession {
   id: string;
@@ -189,7 +189,8 @@ export function TranscriptDisplay({
   const isWebInterview = !!selectedSession;
   
   const actualVoice = isWebInterview ? selectedSession?.voice_name : selectedPhoneCall?.voice_name;
-  const googleVoice = actualVoice ? VOICE_CONFIG[actualVoice as VoiceOption] : undefined;
+  
+  const displayVoice = actualVoice && (Object.keys(VOICE_CONFIG) as VoiceOption[]).includes(actualVoice as VoiceOption) ? VOICE_CONFIG[actualVoice as VoiceOption] : undefined;
 
   return (
     <div className="flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl border-0 shadow-sm flex flex-col">
@@ -204,9 +205,9 @@ export function TranscriptDisplay({
               <Badge variant="outline" className="text-xs">
                 {isWebInterview ? 'Web' : 'Phone'} Interview
               </Badge>
-              {(isWebInterview ? selectedSession?.voice_name : selectedPhoneCall?.voice_name) && (
+              {displayVoice && (
                 <Badge variant="secondary" className="text-xs">
-                  {isWebInterview ? selectedSession?.voice_name : selectedPhoneCall?.voice_name}
+                  {displayVoice.displayName}
                 </Badge>
               )}
             </div>
@@ -282,7 +283,7 @@ export function TranscriptDisplay({
                       {transcript.interaction_type === 'ai_response' && (
                         <div className="flex gap-3">
                           <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage src={googleVoice?.image || '/ai-avatar.png'} alt="AI" />
+                            <AvatarImage src={displayVoice?.image || '/ai-avatar.png'} alt="AI" className="object-cover object-[center_25%]" />
                             <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">AI</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4">
@@ -335,7 +336,7 @@ export function TranscriptDisplay({
                         )}>
                           {flow.interactionType === 'ai_response' && (
                             <Avatar className="h-8 w-8 flex-shrink-0">
-                              <AvatarImage src={googleVoice?.image || '/ai-avatar.png'} alt="AI" />
+                              <AvatarImage src={displayVoice?.image || '/ai-avatar.png'} alt="AI" className="object-cover object-[center_25%]" />
                               <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">AI</AvatarFallback>
                             </Avatar>
                           )}

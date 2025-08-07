@@ -1,5 +1,6 @@
 'use client';
 import { cn } from '@/lib/utils';
+import { VOICE_CONFIG } from '@/types/voice.types';
 
 type VoiceType = 'male' | 'female' | 'premium-male' | 'premium-female';
 
@@ -13,27 +14,27 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
   const allVoices = [
     {
       id: 'premium-male' as const,
-      name: 'Gideon',
-      tier: 'premium',
-      image: '/images/male_sign.jpeg',
+      name: VOICE_CONFIG.Algieba.displayName,
+      tier: VOICE_CONFIG.Algieba.tier,
+      image: VOICE_CONFIG.Algieba.image,
     },
     {
       id: 'premium-female' as const,
-      name: 'Gianna',
-      tier: 'premium',
-      image: '/images/female_sign.jpeg',
+      name: VOICE_CONFIG.Aoede.displayName,
+      tier: VOICE_CONFIG.Aoede.tier,
+      image: VOICE_CONFIG.Aoede.image,
     },
     {
       id: 'male' as const,
-      name: 'George',
-      tier: 'standard',
-      image: '/images/male_default.png',
+      name: VOICE_CONFIG.Marcus.displayName,
+      tier: VOICE_CONFIG.Marcus.tier,
+      image: VOICE_CONFIG.Marcus.image,
     },
     {
       id: 'female' as const,
-      name: 'Gia',
-      tier: 'standard',
-      image: '/images/female_default.png',
+      name: VOICE_CONFIG.Sophia.displayName,
+      tier: VOICE_CONFIG.Sophia.tier,
+      image: VOICE_CONFIG.Sophia.image,
     }
   ];
 
