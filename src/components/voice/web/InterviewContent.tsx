@@ -213,6 +213,7 @@ export default function InterviewContent({
           isLoadingTranscripts={isLoadingTranscripts}
           isInterviewActive={isActive}
           showChat={showChat}
+          selectedVoice={selectedVoice}
         />
       </div>
 

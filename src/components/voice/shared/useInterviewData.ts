@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { VoiceOption } from '@/types/voice.types';
 
 interface InterviewSession {
   id: string;
@@ -19,6 +20,7 @@ interface InterviewSession {
     created_at: string;
   }[];
   interview_mode?: 'web' | 'phone';
+  voice_name?: string;
 }
 
 interface PhoneCall {
@@ -39,6 +41,7 @@ interface PhoneCall {
   metadata?: any;
   created_at: string;
   updated_at: string;
+  voice_name?: string;
   conversationFlow?: Array<{
     id: string;
     interactionType: string;
@@ -91,6 +94,7 @@ interface CombinedInterview {
   session_end?: string | null;
   call_duration?: number;
   interview_scores?: any[];
+  voice_name?: string | undefined;
 }
 
 export function useInterviewData() {
@@ -105,6 +109,7 @@ export function useInterviewData() {
   const [phoneCalls, setPhoneCalls] = useState<PhoneCall[]>([]);
   const [loading, setLoading] = useState(true);
   const [interviewModeFilter, setInterviewModeFilter] = useState<string>('all');
+  const [voiceFilter, setVoiceFilter] = useState<VoiceOption | 'all'>('all');
   
   const [selectedSession, setSelectedSession] = useState<InterviewSession | null>(null);
   const [selectedPhoneCall, setSelectedPhoneCall] = useState<PhoneCall | null>(null);
@@ -127,7 +132,8 @@ export function useInterviewData() {
       if (sessionsData.success) {
         const webSessions = (sessionsData.sessions || []).map((session: InterviewSession) => ({
           ...session,
-          interview_mode: 'web' as const
+          interview_mode: 'web' as const,
+          voice_name: session.voice_name || 'Default Voice'
         }));
         setSessions(webSessions);
       } else {
@@ -289,7 +295,8 @@ export function useInterviewData() {
         type: 'web' as const,
         date: session.session_start,
         status: session.is_completed ? 'completed' : 'incomplete',
-        interview_mode: (session.interview_mode || 'web') as 'web' | 'phone'
+        interview_mode: (session.interview_mode || 'web') as 'web' | 'phone',
+        voice_name: session.voice_name
       })),
       ...phoneCalls.map(call => ({
         ...call,
@@ -297,21 +304,25 @@ export function useInterviewData() {
         date: call.created_at,
         status: call.call_status,
         session_type: 'behavioral' as const,
-        interview_mode: 'phone' as const
+        interview_mode: 'phone' as const,
+        voice_name: call.voice_name
       }))
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [sessions, phoneCalls]);
 
-  // Filter interviews based on interview mode
+  // Filter interviews based on interview mode and voice
   const filteredInterviews = useMemo(() => {
     return allInterviews.filter(interview => {
       const matchesModeFilter = interviewModeFilter === 'all' || 
         (interviewModeFilter === 'web' && interview.type === 'web') ||
         (interviewModeFilter === 'phone' && interview.type === 'phone');
       
-      return matchesModeFilter;
+      const matchesVoiceFilter = voiceFilter === 'all' || 
+        (interview.voice_name && interview.voice_name === voiceFilter);
+      
+      return matchesModeFilter && matchesVoiceFilter;
     });
-  }, [allInterviews, interviewModeFilter]);
+  }, [allInterviews, interviewModeFilter, voiceFilter]);
 
   // Group interviews by date
   const groupedInterviews = useMemo(() => {
@@ -387,6 +398,7 @@ export function useInterviewData() {
     // State
     loading,
     interviewModeFilter,
+    voiceFilter,
     selectedSession,
     selectedPhoneCall,
     selectedScore,
@@ -396,6 +408,7 @@ export function useInterviewData() {
     
     // Actions
     setInterviewModeFilter,
+    setVoiceFilter,
     setActiveTab,
     handleSelectInterview,
     fetchScore,

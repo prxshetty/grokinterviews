@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { sessionType = 'behavioral' } = await request.json();
+    const { sessionType = 'behavioral', voiceName } = await request.json();
 
     // Helper function to get current week identifier (YYYY-WW format)
     function getCurrentWeekIdentifier(): string {
@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
         total_interactions: 0,
         week_identifier: currentWeek,
         question_count: 0,
-        is_completed: false
+        is_completed: false,
+        voice_name: voiceName
       })
       .select()
       .single();
