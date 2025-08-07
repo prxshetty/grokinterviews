@@ -6,12 +6,15 @@ import { useInterviewData } from '@/components/voice/shared/useInterviewData';
 import { useAuth } from '@/components/AuthProvider';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
+
 export default function TranscriptsPage() {
   const { profile } = useAuth();
   const {
     loading,
     interviewModeFilter,
     setInterviewModeFilter,
+    voiceFilter,
+    setVoiceFilter,
     filteredInterviews,
     groupedInterviews,
     selectedSession,
@@ -48,6 +51,8 @@ export default function TranscriptsPage() {
         <TranscriptHeader 
           interviewModeFilter={interviewModeFilter}
           onInterviewModeFilterChange={setInterviewModeFilter}
+          voiceFilter={voiceFilter}
+          onVoiceFilterChange={setVoiceFilter}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

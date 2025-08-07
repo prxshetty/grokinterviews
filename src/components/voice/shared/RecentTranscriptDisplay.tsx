@@ -3,7 +3,9 @@ import { useAuth } from '@/components/AuthProvider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { DEFAULT_AVATAR_URL } from '@/config';
-import CompanyLogo from './CompanyLogo';
+import { VoiceOption, VOICE_CONFIG } from '@/types/voice.types';
+
+
 
 interface Transcript {
   id: string;
@@ -11,6 +13,7 @@ interface Transcript {
   interaction_type: 'ai_response' | 'user_response';
   created_at: string;
   conversation_order?: number;
+  voice_name?: string;
 }
 
 interface RecentTranscriptDisplayProps {
@@ -18,14 +21,17 @@ interface RecentTranscriptDisplayProps {
   isInterviewActive: boolean;
   isLoadingTranscripts: boolean;
   showChat?: boolean;
+  selectedVoice?: VoiceOption;
 }
 
 const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
   allTranscripts,
   isInterviewActive,
   isLoadingTranscripts,
-  showChat = true
+  showChat = true,
+  selectedVoice
 }: RecentTranscriptDisplayProps) {
+  const googleVoice = selectedVoice ? VOICE_CONFIG[selectedVoice] : undefined;
   const { user, profile } = useAuth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastTranscriptCountRef = useRef(0);
@@ -86,7 +92,11 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
           >
             {transcript.interaction_type === 'ai_response' && (
               <div className="flex-shrink-0">
-                <CompanyLogo className="text-blue-600 dark:text-blue-400" size="sm" />
+                <img
+                  src={googleVoice?.image || '/ai-avatar.png'}
+                  alt={googleVoice?.label || 'AI'}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
               </div>
             )}
             
@@ -122,7 +132,11 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
         {isLoadingTranscripts && (
           <div className="flex justify-start gap-3">
             <div className="flex-shrink-0">
-              <CompanyLogo className="text-blue-600 dark:text-blue-400" size="sm" />
+              <img
+                src={googleVoice?.image || '/ai-avatar.png'}
+                alt={googleVoice?.label || 'AI'}
+                className="h-8 w-8 rounded-full object-cover"
+              />
             </div>
             <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">
               <div className="flex items-center gap-2">

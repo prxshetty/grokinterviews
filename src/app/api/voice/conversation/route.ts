@@ -81,7 +81,7 @@ Be constructive, specific, and helpful in your feedback.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { userResponse, conversationHistory = [], sessionId, sessionType = 'behavioral', checkRateLimit = false, voiceId } = await request.json();
+    const { userResponse, conversationHistory = [], sessionId, sessionType = 'behavioral', checkRateLimit = false, voiceId, voiceName } = await request.json();
 
     // Handle rate limit check requests
     if (checkRateLimit) {
@@ -164,18 +164,19 @@ export async function POST(request: NextRequest) {
         // Create new session if none exists
         if (!currentSessionId) {
           const { data: sessionData, error: sessionError } = await supabase
-            .from('interview_sessions')
-            .insert({
-              user_id: user.id,
-              session_type: sessionType,
-              session_start: new Date().toISOString(),
-              total_interactions: 0,
-              week_identifier: currentWeek,
-              question_count: 0,
-              is_completed: false
-            })
-            .select('id')
-            .single();
+          .from('interview_sessions')
+          .insert({
+            user_id: user.id,
+            session_type: sessionType,
+            session_start: new Date().toISOString(),
+            total_interactions: 0,
+            week_identifier: currentWeek,
+            question_count: 0,
+            is_completed: false,
+            voice_name: voiceName
+          })
+          .select('id')
+          .single();
 
           if (sessionError) {
             console.error('Error creating session:', sessionError);
@@ -187,15 +188,16 @@ export async function POST(request: NextRequest) {
 
         if (currentSessionId) {
           // Store final user response
-          await supabase
-            .from('voice_transcripts')
-            .insert({
-              user_id: user.id,
-              session_id: currentSessionId,
-              transcript_text: userResponse,
-              interaction_type: 'user_response',
-              conversation_order: conversationHistory.length,
-            });
+        await supabase
+          .from('voice_transcripts')
+          .insert({
+            user_id: user.id,
+            session_id: currentSessionId,
+            transcript_text: userResponse,
+            interaction_type: 'user_response',
+            conversation_order: conversationHistory.length,
+            voice_name: voiceName
+          });
 
           // Store closing message
           await supabase
@@ -206,6 +208,7 @@ export async function POST(request: NextRequest) {
               transcript_text: closingMessage,
               interaction_type: 'ai_response',
               conversation_order: conversationHistory.length + 1,
+              voice_name: voiceName
             });
 
           // Mark session as completed
@@ -355,7 +358,8 @@ ${isLastQuestion ?
             total_interactions: 0,
             week_identifier: currentWeek,
             question_count: 0,
-            is_completed: false
+            is_completed: false,
+            voice_name: voiceName
           })
           .select('id')
           .single();
@@ -378,6 +382,7 @@ ${isLastQuestion ?
             transcript_text: userResponse,
             interaction_type: 'user_response',
             conversation_order: conversationHistory.length,
+            voice_name: voiceName
           });
 
         // Store AI response
@@ -389,6 +394,7 @@ ${isLastQuestion ?
             transcript_text: aiResponse,
             interaction_type: 'ai_response',
             conversation_order: conversationHistory.length + 1,
+            voice_name: voiceName
           });
 
         // Update session with current question count
