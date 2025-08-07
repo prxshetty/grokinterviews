@@ -17,13 +17,13 @@ export interface AIResponseResult {
 }
 
 export class InterviewService {
-  static async createSession(sessionType: string) {
+  static async createSession(sessionType: string, voiceName?: string) {
     const response = await fetch('/api/voice/sessions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ sessionType }),
+      body: JSON.stringify({ sessionType, voiceName }),
     });
     
     if (!response.ok) {

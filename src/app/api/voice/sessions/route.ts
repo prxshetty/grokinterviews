@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       // Get specific session with transcripts
       const { data: session, error: sessionError } = await supabase
         .from('interview_sessions')
-        .select('*')
+        .select('*, voice_name')
         .eq('id', sessionId)
         .eq('user_id', user.id)
         .single();

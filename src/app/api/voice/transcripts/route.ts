@@ -48,7 +48,7 @@ interface TranscriptHistoryItem {
   recommendations?: string[];
   createdAt: string;
   updatedAt?: string;
-  voiceName?: string;
+  voiceName?: string | null;
   // Enhanced data from VAPI
   vapiData?: {
     messages?: VapiMessage[];
@@ -63,7 +63,6 @@ interface TranscriptHistoryItem {
     transcriptText: string;
     conversationOrder: number;
     createdAt: string;
-    voiceName?: string;
   }>;
 }
 
@@ -156,7 +155,7 @@ export async function GET(request: NextRequest) {
           recommendations: call.recommendations,
           createdAt: call.created_at,
           updatedAt: call.updated_at,
-          voiceName: call.voice_name,
+          voiceName: null, // voice_name will be fetched from interview_sessions if linked
           vapiData,
           conversationFlow: transcripts || []
         };
@@ -213,7 +212,7 @@ async function fetchVapiCallData(callId: string): Promise<any> {
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, transcriptText, interactionType, conversationOrder, voiceName } = await request.json();
+    const { sessionId, transcriptText, interactionType, conversationOrder } = await request.json();
 
     if (!sessionId || !transcriptText || !interactionType) {
       return NextResponse.json(
@@ -240,8 +239,7 @@ export async function POST(request: NextRequest) {
         session_id: sessionId,
         transcript_text: transcriptText,
         interaction_type: interactionType,
-        conversation_order: conversationOrder || 0,
-        voice_name: voiceName
+        conversation_order: conversationOrder || 0
       })
       .select()
       .single();

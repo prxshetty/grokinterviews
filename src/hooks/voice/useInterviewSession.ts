@@ -11,7 +11,7 @@ export interface InterviewSession {
 
 export interface UseInterviewSessionReturn {
   session: InterviewSession;
-  createSession: (sessionType: string) => Promise<string | null>;
+  createSession: (sessionType: string, voiceName?: string) => Promise<string | null>;
   endSession: () => Promise<void>;
   addToHistory: (type: 'ai' | 'user', text: string) => void;
   updateCurrentQuestion: (question: string) => void;
@@ -30,14 +30,14 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
     interviewReport: null,
   });
 
-  const createSession = useCallback(async (sessionType: string): Promise<string | null> => {
+  const createSession = useCallback(async (sessionType: string, voiceName?: string): Promise<string | null> => {
     try {
       const response = await fetch('/api/voice/sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ sessionType }),
+        body: JSON.stringify({ sessionType, voiceName }),
       });
       
       if (response.ok) {
