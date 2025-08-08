@@ -197,21 +197,6 @@ export function TranscriptDisplay({
       {/* Header */}
       <div className="p-6 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <Badge className={getSessionTypeColor(isWebInterview ? (selectedSession?.session_type || 'general') : 'general')}>
-                {isWebInterview ? (selectedSession?.session_type || 'General') : 'General'} Interview
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {isWebInterview ? 'Web' : 'Phone'} Interview
-              </Badge>
-              {displayVoice && (
-                <Badge variant="secondary" className="text-xs">
-                  {displayVoice.displayName}
-                </Badge>
-              )}
-            </div>
-            
             <h2 className="text-xl font-semibold text-foreground mb-1">
               Interview Session
             </h2>
@@ -230,31 +215,6 @@ export function TranscriptDisplay({
               </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => isWebInterview ? onExportSession(selectedSession!) : onExportPhoneTranscript(selectedPhoneCall!)}
-              disabled={isExporting}
-              className="rounded-xl"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isExporting ? 'Exporting...' : 'Export'}
-            </Button>
-            
-            {isWebInterview && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDeleteSession(selectedSession!.id)}
-                className="rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Tab Navigation */}

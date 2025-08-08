@@ -1,9 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Clock, MessageSquare, Monitor, Phone } from 'lucide-react';
+import { MessageSquare, User, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { TabNav } from '@/components/ui/tab-nav';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { VOICE_CONFIG, VoiceOption } from '@/types/voice.types';
 
+// Interfaces
 interface InterviewSession {
   id: string;
   session_type: 'behavioral' | 'technical' | 'general';
@@ -17,6 +23,7 @@ interface InterviewSession {
     created_at: string;
   }[];
   interview_mode?: 'web' | 'phone';
+  voice_name?: VoiceOption;
 }
 
 interface PhoneCall {
@@ -37,6 +44,7 @@ interface PhoneCall {
   metadata?: any;
   created_at: string;
   updated_at: string;
+  voice_name?: VoiceOption;
 }
 
 interface CombinedInterview {
@@ -50,6 +58,7 @@ interface CombinedInterview {
   session_end?: string | null;
   call_duration?: number;
   interview_scores?: any[];
+  voice_name?: VoiceOption;
 }
 
 interface InterviewListProps {
@@ -63,153 +72,167 @@ interface InterviewListProps {
   selectedSession: InterviewSession | null;
   selectedPhoneCall: PhoneCall | null;
   onSelectInterview: (interview: CombinedInterview) => void;
+  onExport: (interview: CombinedInterview) => void;
 }
 
 export function InterviewList({
-  filteredInterviews,
   groupedInterviews,
   selectedSession,
   selectedPhoneCall,
-  onSelectInterview
+  onSelectInterview,
+  onExport,
+  filteredInterviews,
 }: InterviewListProps) {
-  const getInterviewModeIcon = (type: 'web' | 'phone') => {
-    return type === 'web' ? Monitor : Phone;
-  };
+  const [activeTab, setActiveTab] = React.useState<'web' | 'phone'>('web');
 
-  const formatWebDuration = (start: string, end: string | null) => {
-    if (!end) {
-      return 'Incomplete';
-    }
-    
-    const duration = new Date(end).getTime() - new Date(start).getTime();
-    const minutes = Math.floor(duration / 60000);
-    return `${minutes} min`;
-  };
-
-  const formatPhoneDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const getCallStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-      case 'ended':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'in-progress':
-      case 'ringing':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'failed':
-      case 'busy':
-      case 'no-answer':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  const getStatusBorderColor = (interview: CombinedInterview) => {
+    if (interview.type === 'web') {
+      if (interview.status === 'completed') return 'bg-green-500';
+      if (interview.interview_scores && interview.interview_scores.length > 0) return 'bg-yellow-500';
+      return 'bg-gray-300 dark:bg-gray-600';
+    } else {
+      switch (interview.status.toLowerCase()) {
+        case 'completed':
+        case 'ended':
+          return 'bg-green-500';
+        case 'failed':
+        case 'busy':
+        case 'no-answer':
+          return 'bg-red-500';
+        default:
+          return 'bg-gray-300 dark:bg-gray-600';
+      }
     }
   };
 
   const renderInterviewItem = (interview: CombinedInterview) => {
-    const IconComponent = getInterviewModeIcon(interview.type);
     const isSelected = (selectedSession?.id === interview.id && interview.type === 'web') ||
                      (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
     
+    const statusBorderColor = getStatusBorderColor(interview);
+    const interviewer = interview.voice_name ? VOICE_CONFIG[interview.voice_name] : null;
+    const interviewerName = interviewer ? interviewer.displayName : 'AI Interviewer';
+    const interviewerImage = interviewer ? interviewer.image : ' / images / female_default.png';
+
     return (
       <div
         key={`${interview.type}-${interview.id}`}
         className={cn(
-          "cursor-pointer transition-all duration-200 rounded-2xl p-4 border group hover:shadow-md",
+          "cursor-pointer transition-all duration-300 rounded-xl overflow-hidden",
+          "bg-white/60 dark:bg-gray-800/60 shadow-sm border",
           isSelected 
-            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 shadow-sm" 
-            : "bg-white/60 dark:bg-gray-700/60 border-gray-200 dark:border-gray-600 hover:bg-white/80 dark:hover:bg-gray-700/80"
+            ? "border-blue-500/50 shadow-md"
+            : "border-gray-200/80 dark:border-gray-700/80 hover:border-gray-300/80 dark:hover:border-gray-600/80"
         )}
         onClick={() => onSelectInterview(interview)}
       >
-        <div className="flex items-center justify-between">
-          {/* Left side: SVG + Status */}
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "p-1.5 rounded-lg",
-              interview.type === 'web' 
-                ? "bg-blue-100 dark:bg-blue-900/30" 
-                : "bg-green-100 dark:bg-green-900/30"
-            )}>
-              <IconComponent className={cn(
-                "h-3.5 w-3.5",
-                interview.type === 'web' 
-                  ? "text-blue-600 dark:text-blue-400" 
-                  : "text-green-600 dark:text-green-400"
-              )} />
+        <AnimatePresence initial={false}>
+          <motion.div
+            key="content"
+            initial={{ height: 'auto' }}
+            animate={{ height: isSelected ? 80 : 72 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="p-3"
+          >
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 flex-shrink-0">
+                <AvatarImage src={interviewerImage} alt={interviewerName} className="object-cover" />
+                <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {interviewerName}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {interview.session_type} Interview
+                </p>
+              </div>
+
+              {isSelected ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2, delay: 0.1 }}
+                >
+                  <Button 
+                    size="icon"
+                    variant="outline"
+                    onClick={(e) => { 
+                      e.stopPropagation();
+                      onExport(interview);
+                    }}
+                    className="rounded-full h-9 w-9 bg-gray-100 dark:bg-gray-700"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              ) : (
+                <div className="text-xs text-muted-foreground">
+                  {new Date(interview.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </div>
+              )}
             </div>
-            
-            <span className={cn(
-              "text-xs px-2 py-1 rounded-full font-medium",
-              interview.type === 'web'
-                ? interview.status === 'completed'
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                  : (interview.interview_scores && interview.interview_scores.length > 0)
-                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                    : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
-                : getCallStatusColor(interview.status)
-            )}>
-              {interview.type === 'web' 
-                ? interview.status === 'completed' 
-                  ? 'Completed' 
-                  : (interview.interview_scores && interview.interview_scores.length > 0)
-                    ? 'In Progress'
-                    : 'Incomplete'
-                : interview.status.charAt(0).toUpperCase() + interview.status.slice(1)
-              }
-            </span>
-          </div>
-          
-          {/* Right side: Duration */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            {interview.type === 'web' 
-              ? formatWebDuration(interview.session_start!, interview.session_end!)
-              : formatPhoneDuration(interview.call_duration || 0)
-            }
-          </div>
-        </div>
+          </motion.div>
+        </AnimatePresence>
+        <div className={cn("h-1 w-full transition-colors duration-300", statusBorderColor)} />
       </div>
     );
   };
 
   const renderInterviewGroup = (title: string, interviews: CombinedInterview[]) => {
-    if (interviews.length === 0) return null;
+    const filtered = interviews.filter(i => i.type === activeTab);
+    if (filtered.length === 0) return null;
 
     return (
-      <div>
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">
+      <div key={title}>
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
           {title}
         </h3>
-        <div className="space-y-3">
-          {interviews.map(renderInterviewItem)}
+        <div className="space-y-2">
+          {filtered.map(renderInterviewItem)}
         </div>
       </div>
     );
   };
 
+  const activeInterviews = React.useMemo(() => {
+    return Object.values(groupedInterviews).flat().filter(i => i.type === activeTab);
+  }, [groupedInterviews, activeTab]);
+
+  const tabItems = [
+    { id: 'web', label: 'Web' },
+    { id: 'phone', label: 'Phone' },
+  ];
+
   return (
-    <div className="w-80 flex-shrink-0">
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl border-0 shadow-sm h-full flex flex-col">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-medium text-foreground mb-1">
+    <div className="w-full max-w-sm mx-auto">
+      <div className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm h-full flex flex-col">
+        <div className="p-4 border-b border-gray-200/80 dark:border-gray-700/80">
+          <h2 className="text-lg font-semibold text-foreground">
             Interview Records
           </h2>
           <p className="text-sm text-muted-foreground">
-            {filteredInterviews.length} interviews found
+            {filteredInterviews.length} total interviews
           </p>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {filteredInterviews.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageSquare className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <h3 className="text-sm font-medium mb-2">No interviews found</h3>
+        <div className="p-3">
+          <TabNav 
+            items={tabItems}
+            activeTab={activeTab}
+            onTabChange={(id) => setActiveTab(id as 'web' | 'phone')}
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          {activeInterviews.length === 0 ? (
+            <div className="text-center py-12 px-4">
+              <MessageSquare className="h-10 w-10 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+              <h3 className="text-sm font-medium text-foreground mb-1">No {activeTab} interviews</h3>
               <p className="text-xs text-muted-foreground">
-                Start your first interview to see records here.
+                Your recorded {activeTab} interviews will appear here.
               </p>
             </div>
           ) : (
