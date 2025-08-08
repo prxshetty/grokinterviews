@@ -5,15 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { VoiceOption, VOICE_CONFIG } from '@/types/voice.types';
 
 interface TranscriptHeaderProps {
-  interviewModeFilter: string;
-  onInterviewModeFilterChange: (value: string) => void;
   voiceFilter: VoiceOption | 'all';
   onVoiceFilterChange: (value: VoiceOption | 'all') => void;
 }
 
 export function TranscriptHeader({
-  interviewModeFilter,
-  onInterviewModeFilterChange,
   voiceFilter,
   onVoiceFilterChange
 }: TranscriptHeaderProps) {
@@ -29,18 +25,6 @@ export function TranscriptHeader({
       </div>
       
       {/* Filters */}
-      <div className="mt-2 flex gap-3">
-        <Select value={interviewModeFilter} onValueChange={onInterviewModeFilterChange}>
-          <SelectTrigger className="w-48 h-12 rounded-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm">
-            <SelectValue placeholder="Interview mode" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl border-0 shadow-lg">
-            <SelectItem value="all">All Interviews</SelectItem>
-            <SelectItem value="web">Web Interviews</SelectItem>
-            <SelectItem value="phone">Phone Interviews</SelectItem>
-          </SelectContent>
-        </Select>
-        
         <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
           <SelectTrigger className="w-48 h-12 rounded-2xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm">
             <SelectValue placeholder="AI Voice" />
@@ -55,6 +39,5 @@ export function TranscriptHeader({
           </SelectContent>
         </Select>
       </div>
-    </div>
   );
 }
