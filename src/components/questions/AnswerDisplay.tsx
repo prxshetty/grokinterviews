@@ -18,7 +18,12 @@ const defaultMarkdownComponents = {
 // Code block component with copy functionality
 const CodeBlock = ({ inline, className, children, ...props }: any) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const codeRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const copyToClipboard = useCallback(() => {
     if (codeRef.current) {
@@ -38,13 +43,15 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
   return (
     <div className="relative group my-4 not-prose">
       <pre className="p-4 rounded-lg overflow-auto bg-gray-100 dark:bg-gray-800">
-        <button
-          type="button"
-          className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md flex items-center justify-center"
-          onClick={copyToClipboard}
-        >
-          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-        </button>
+        {isClient && (
+          <button
+            type="button"
+            className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md flex items-center justify-center"
+            onClick={copyToClipboard}
+          >
+            {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          </button>
+        )}
         <code ref={codeRef} className={className} {...props}>
           {children}
         </code>
@@ -74,32 +81,37 @@ export function AnswerDisplay({
 }: AnswerDisplayProps) {
   const scrollableContainerRef = useRef<HTMLDivElement | null>(null);
   const [contentIsScrollable, setContentIsScrollable] = useState<boolean | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
   const isTabletOrSmaller = useIsTabletOrSmaller();
 
-  // Debug logging for progress bar
+  // Handle hydration
   useEffect(() => {
-    if (answerText && scrollProgress > 0) {
-      console.log('AnswerDisplay - Progress bar data:', {
-        scrollProgress,
-        isCompleted,
-        answerText: answerText ? 'present' : 'null',
-        shouldShowProgress: !isCompleted && scrollProgress > 0 && scrollProgress < 90
-      });
-    }
-  }, [scrollProgress, isCompleted, answerText]);
+    setIsHydrated(true);
+  }, []);
+
+  // Removed debug logging to prevent hydration issues
 
   useEffect(() => {
+    if (!isHydrated) return;
+    
     if (answerText && scrollableContainerRef.current) {
-      Promise.resolve().then(() => {
+      const checkScrollable = () => {
         if (scrollableContainerRef.current) {
           const isScrollable = scrollableContainerRef.current.scrollHeight > scrollableContainerRef.current.clientHeight;
           setContentIsScrollable(isScrollable);
         }
-      });
+      };
+      
+      // Use requestAnimationFrame to ensure DOM is ready
+      const rafId = requestAnimationFrame(checkScrollable);
+      return () => cancelAnimationFrame(rafId);
     } else if (!answerText) {
       setContentIsScrollable(null);
     }
-  }, [answerText]);
+    
+    // Explicit return for TypeScript
+    return;
+  }, [answerText, isHydrated]);
 
   useEffect(() => {
     if (isLoading) {
@@ -126,8 +138,8 @@ export function AnswerDisplay({
     }
   }, [isLoading, error, answerText, isCompleted, contentIsScrollable]);
 
-  // Determine if progress bar should be shown
-  const shouldShowProgress = !isCompleted && scrollProgress >= 0 && scrollProgress < 90;
+  // Determine if progress bar should be shown (only after hydration)
+  const shouldShowProgress = isHydrated && !isCompleted && scrollProgress >= 0 && scrollProgress < 90;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -161,7 +173,7 @@ export function AnswerDisplay({
       ) : answerText ? (
         <div className="h-full flex flex-col relative">
           {/* Progress bar - desktop fixed at bottom, mobile handled in parent */}
-          {shouldShowProgress && !isTabletOrSmaller && (
+          {shouldShowProgress && isHydrated && !isTabletOrSmaller && (
             <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 py-2">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -207,7 +219,7 @@ export function AnswerDisplay({
           </div>
           
           {/* Add bottom padding when progress bar is visible at bottom (desktop only) */}
-          {!isTabletOrSmaller && shouldShowProgress && (
+          {isHydrated && !isTabletOrSmaller && shouldShowProgress && (
             <div className="h-16" />
           )}
           

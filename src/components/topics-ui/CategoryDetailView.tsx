@@ -417,6 +417,10 @@ export default function CategoryDetailView({
   ) => {
     setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
 
+    // Add a small delay to ensure database transaction is fully committed
+    // before fetching fresh progress data
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // After local state for the specific question is updated,
     // re-fetch the aggregate progress for the current view.
     if (selectedSubtopic && subtopicDetails) {
