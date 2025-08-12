@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Phone, PhoneCall, PhoneOff, Clock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Phone, PhoneCall, Clock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { vapiService, type VapiCall } from '@/services/VapiService';
 import PhoneNumberInput from './PhoneNumberInput';
@@ -433,13 +433,6 @@ export default function PhoneCallInterface({
     };
   }, [currentCall?.id, callState]); // onCallEnded is now accessed via ref
 
-  // Format call duration
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   // Handle phone number change
   const handlePhoneNumberChange = useCallback((value: string) => {
     setPhoneNumber(value);
@@ -528,45 +521,45 @@ export default function PhoneCallInterface({
   };
 
   // End phone call
-  const handleEndCall = async () => {
-    if (!currentCall?.id) return;
+  // const handleEndCall = async () => {
+  //   if (!currentCall?.id) return;
 
-    try {
-      await vapiService.endCall(currentCall.id);
-      setCallState('ended');
+  //   try {
+  //     await vapiService.endCall(currentCall.id);
+  //     setCallState('ended');
       
-      // Update call data in database
-      try {
-        const updateResponse = await fetch('/api/voice/phone-calls', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            vapi_call_id: currentCall.id,
-            callStatus: 'ended',
-            callDuration: callDuration,
-            metadata: {
-              endedAt: new Date().toISOString(),
-              endedBy: 'user'
-            }
-          }),
-        });
+  //     // Update call data in database
+  //     try {
+  //       const updateResponse = await fetch('/api/voice/phone-calls', {
+  //         method: 'PUT',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({
+  //           vapi_call_id: currentCall.id,
+  //           callStatus: 'ended',
+  //           callDuration: callDuration,
+  //           metadata: {
+  //             endedAt: new Date().toISOString(),
+  //             endedBy: 'user'
+  //           }
+  //         }),
+  //       });
 
-        if (!updateResponse.ok) {
-          console.error('Failed to update call data in database');
-        }
-      } catch (dbError) {
-        console.error('Error updating call in database:', dbError);
-      }
+  //       if (!updateResponse.ok) {
+  //         console.error('Failed to update call data in database');
+  //       }
+  //     } catch (dbError) {
+  //       console.error('Error updating call in database:', dbError);
+  //     }
       
-      onCallEnded?.(currentCall.id, currentCall);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to end call';
-      setError(errorMessage);
-      onError?.(errorMessage);
-    }
-  };
+  //     onCallEnded?.(currentCall.id, currentCall);
+  //   } catch (err) {
+  //     const errorMessage = err instanceof Error ? err.message : 'Failed to end call';
+  //     setError(errorMessage);
+  //     onError?.(errorMessage);
+  //   }
+  // };
 
   // Reset to initial state
   const handleReset = () => {
