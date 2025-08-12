@@ -1,40 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 import { IconHover3D } from '@/components/ui';
 import styles from './TopicCategoryGrid.module.css';
-import { fetchCategoryProgress, fetchSubtopicProgress, fetchSectionProgress } from '@/app/utils/progress';
 import { LoadingSpinner } from '@/components/ui';
 
 interface DisplayItem {
   id: string;
   label: string;
   display_order?: number;
-  progress?: {
-    questionsCompleted: number;
-    totalQuestions: number;
-    completionPercentage: number;
-  };
-}
-
-interface SubtopicProgress {
-  completionPercentage: number;
-  questionsCompleted: number;
-  totalQuestions: number;
-  categoriesCompleted: number;
-  totalCategories: number;
-}
-
-interface CacheableProgressData {
-  questionsCompleted: number;
-  totalQuestions: number;
-  completionPercentage: number;
-  completed_children?: number;
-  total_children?: number;
-  subtopicsCompleted?: number;
-  partiallyCompletedSubtopics?: number;
-  totalSubtopics?: number;
 }
 
 // Define the possible levels this grid can represent
@@ -49,8 +24,6 @@ interface TopicCategoryGridProps {
   domain?: string; // Optional domain for section progress
   isLoading?: boolean; // Optional loading state controlled by parent
   error?: string | null; // Optional error state controlled by parent
-  subtopicProgress?: Record<string, SubtopicProgress>;
-  dataCache?: Record<string, CacheableProgressData>; // Updated type for dataCache
   showDomainTitle?: boolean; // New prop to control domain title visibility
   basePath?: string; // New prop for base path for navigation
   compact?: boolean; // New prop to control padding and spacing
@@ -66,14 +39,11 @@ function TopicCategoryGridComponent({
   domain,
   isLoading = false, // Default to not loading
   error = null,      // Default to no error
-  subtopicProgress,
-  dataCache,
   showDomainTitle = true, // Default to false
   basePath, // Destructure new prop
   compact = false, // Default to false
 }: TopicCategoryGridProps) {
   const router = useRouter();
-  const [itemsWithProgress, setItemsWithProgress] = useState<DisplayItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -85,10 +55,10 @@ function TopicCategoryGridComponent({
     return items || categories || [];
   }, [items, categories]);
 
-  // Memoize the displayable items calculation
+  // Use base items directly since we removed progress
   const displayableItems = useMemo(() => {
-    return itemsWithProgress.length > 0 ? itemsWithProgress : baseItems;
-  }, [itemsWithProgress, baseItems]);
+    return baseItems;
+  }, [baseItems]);
 
   // Memoize the format index function with useCallback
   const formatIndex = useCallback((index: number, item?: DisplayItem) => {
@@ -117,154 +87,9 @@ function TopicCategoryGridComponent({
     } else {
       setExpandedItemId(itemId);
     }
-  }, [onSelectItem, onSelectCategory, level, expandedItemId, basePath, router]); // Add basePath and router to dependencies
+  }, [onSelectItem, onSelectCategory, level, expandedItemId, basePath, router]);
 
-  // Define fetchProgress function
-  const fetchProgress = useCallback(async (forceRefresh = false) => {
-    // Use the memoized baseItems
-    if (!baseItems || !Array.isArray(baseItems) || baseItems.length === 0) {
-      setItemsWithProgress([]);
-      return;
-    }
-
-    try {
-      // Create a new array with progress data
-      const itemsWithProgressData = await Promise.all(
-        baseItems.map(async (item) => {
-          try {
-            let progress;
-            const isTopic = item.id.startsWith('topic-');
-            const isCategory = !isTopic && !item.id.startsWith('header-');
-            const numericId = parseInt(item.id.split('-').pop() || '0');
-
-            // Fetch progress based on the level
-            if (level === 'category' && isCategory && !isNaN(numericId)) {
-              progress = await fetchCategoryProgress(numericId, forceRefresh);
-            } else if (level === 'topic' && isTopic && !isNaN(numericId)) {
-              const sp = subtopicProgress && subtopicProgress[item.id];
-              if (sp) {
-                progress = {
-                  questionsCompleted: sp.questionsCompleted,
-                  totalQuestions: sp.totalQuestions,
-                  completionPercentage: sp.completionPercentage,
-                };
-              } else {
-                progress = await fetchSubtopicProgress(numericId, forceRefresh);
-              }
-            } else if (level === 'section' && domain) {
-              const cacheKey = `section-progress-${domain}-${item.label}`;
-              if (dataCache && dataCache[cacheKey]) {
-                progress = dataCache[cacheKey];
-              } else {
-                try {
-                  const response = await fetch(`/api/user/progress/summary?domain=${domain}&section=${encodeURIComponent(item.label)}&entityType=section`);
-                  
-                  if (response.ok) {
-                    const data = await response.json();
-
-                    // For sections, use completed_children and total_children instead of questions
-                    // since sections track subtopic completion, not individual question completion
-                    progress = {
-                      questionsCompleted: data.completed_children || 0,  // Number of subtopics completed
-                      totalQuestions: data.total_children || 0,          // Total number of subtopics
-                      completionPercentage: data.completion_percentage || 0
-                    };
-
-                  } else {
-                    // If the API call failed, fall back to the section progress endpoint
-                    progress = await fetchSectionProgress(domain, item.label, forceRefresh); // Pass forceRefresh here too
-                  }
-                } catch { // Error intentionally unused
-                   // Retry might be excessive here, just use fallback or default
-                  try {
-                    progress = await fetchSectionProgress(domain, item.label, forceRefresh);
-                  } catch { // Error intentionally unused
-                    progress = {
-                      questionsCompleted: 0,
-                      totalQuestions: 0,
-                      completionPercentage: 0
-                    };
-                  }
-                }
-              }
-            } else if (!isNaN(numericId)) { // Fallback for potentially numeric IDs if level is unknown
-               progress = await fetchCategoryProgress(numericId, forceRefresh);
-            } else { // Default for non-numeric IDs or other cases
-                progress = { questionsCompleted: 0, totalQuestions: 0, completionPercentage: 0 };
-            }
-
-            // If progress data is valid, add it to the item
-            if (progress && typeof progress.completionPercentage === 'number') {
-              return { ...item, progress };
-            }
-
-            return item; // Return item without progress if fetch failed or wasn't applicable
-          } catch { // Error intentionally unused
-            return item; // Return item without progress data on error
-          }
-        })
-      );
-
-      // Ensure all progress data is properly formatted
-      const validatedProgressData = itemsWithProgressData.map(item => {
-        if (item.progress) {
-          // Make sure completionPercentage is a number
-          const completionPercentage = typeof item.progress.completionPercentage === 'number' ?
-            item.progress.completionPercentage : 0;
-
-          // Make sure other values are numbers
-          return {
-            ...item,
-            progress: {
-              ...item.progress,
-              completionPercentage,
-              questionsCompleted: item.progress.questionsCompleted || 0,
-              totalQuestions: item.progress.totalQuestions || 0
-            }
-          };
-        }
-        // If item has no progress property after fetch, initialize it
-        return {
-          ...item,
-          progress: {
-            questionsCompleted: 0,
-            totalQuestions: 0, // Might need a way to get total questions if progress fetch failed entirely
-            completionPercentage: 0
-          }
-        };
-      });
-
-      setItemsWithProgress(validatedProgressData);
-    } catch { // Error intentionally unused
-      // Set items with default progress on error
-      setItemsWithProgress(baseItems.map(item => ({
-          ...item,
-          progress: { questionsCompleted: 0, totalQuestions: 0, completionPercentage: 0 }
-      })));
-    }
-  }, [baseItems, level, domain, subtopicProgress, dataCache]);
-
-  // Define event handlers with useCallback at component level
-  const handleQuestionCompleted = useCallback((_event: Event) => {
-    fetchProgress(true); // Force refresh on completion event
-  }, [fetchProgress]);
-
-  const handleQuestionCompletionFailed = useCallback((_event: Event) => {
-    // Potentially force a refresh to revert optimistic changes in parent components
-    fetchProgress(true);
-  }, [fetchProgress]);
-
-  const handleSectionProgressUpdate = useCallback((event: Event) => {
-    const customEvent = event as CustomEvent;
-    const detail = customEvent.detail;
-
-    // Only refresh if this grid is showing sections and the event matches the domain
-    if (level === 'section' && domain && detail && detail.domain === domain) {
-      fetchProgress(true); // Force refresh
-    }
-  }, [level, domain, fetchProgress]);
-
-  // Setup event listeners and device detection
+  // Setup device detection
   useEffect(() => {
     // Check device type
     const checkDeviceType = () => {
@@ -279,22 +104,11 @@ function TopicCategoryGridComponent({
     
     // Add resize listener
     window.addEventListener('resize', checkDeviceType);
-    window.addEventListener('questionCompleted', handleQuestionCompleted);
-    window.addEventListener('questionCompletionFailed', handleQuestionCompletionFailed);
-    window.addEventListener('sectionProgressUpdate', handleSectionProgressUpdate);
 
     return () => {
       window.removeEventListener('resize', checkDeviceType);
-      window.removeEventListener('questionCompleted', handleQuestionCompleted);
-      window.removeEventListener('questionCompletionFailed', handleQuestionCompletionFailed);
-      window.removeEventListener('sectionProgressUpdate', handleSectionProgressUpdate);
     };
-  }, [handleQuestionCompleted, handleQuestionCompletionFailed, handleSectionProgressUpdate]);
-
-  // Initial fetch of progress data
-  useEffect(() => {
-    fetchProgress();
-  }, [fetchProgress]);
+  }, []);
 
   // Define a mapping for domain abbreviations to full names
   const domainNameMap: Record<string, string> = {
@@ -348,14 +162,13 @@ function TopicCategoryGridComponent({
   }
 
   return (
-    <div className={`w-full max-w-full overflow-x-hidden ${compact ? 'px-0 pt-0' : 'px-0 pt-12 sm:pt-16 md:pt-20'}`}>
+    <div className={`w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 ${compact ? 'pt-4' : 'pt-12 sm:pt-16 md:pt-20'}`}>
       {showDomainTitle && domain && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
-          {/* Mobile: Back button + Title in same row */}
-          <div className="flex items-center gap-3 sm:gap-0 w-full sm:w-auto">
+        <div className="flex items-center justify-between mb-6 gap-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/topics')}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors sm:hidden"
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
               title="Back to Topics"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -366,32 +179,12 @@ function TopicCategoryGridComponent({
               {getDisplayDomainName(domain)}
             </h2>
           </div>
-          {/* Desktop: Back button */}
-          <div className="hidden sm:flex items-center">
-            <button
-              onClick={() => router.push('/topics')}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              title="Back to Topics"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-          </div>
         </div>
       )}
       <div 
-        className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 xl:gap-8 p-0`}
+        className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 xl:gap-12`}
       >
         {displayableItems.map((item, index) => {
-          // Determine the text to display. Show total questions for topics/categories,
-          // and total subtopics for sections.
-          const total = item.progress?.totalQuestions ?? 0;
-          const completed = item.progress?.questionsCompleted ?? 0;
-          const progressText = level === 'section'
-            ? `${completed} / ${total} Subtopics`
-            : `${completed} / ${total} Questions`;
-
           return (
             <div
               key={item.id || index}
@@ -408,26 +201,19 @@ function TopicCategoryGridComponent({
                 <div className="w-full flex justify-center items-center">
                   <IconHover3D
                     heading={item.label}
-                    text={item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
+                    text={item.label}
                     width={isMobile ? 320 : isLaptop ? 340 : 450}
                     height={isMobile ? 90 : isLaptop ? 115 : 150}
                   />
                 </div>
               ) : (
-                /* Simplified tablet layout with matching borders and theme */
-                <div 
-                  className="flex flex-col justify-center flex-1 p-4"
-                  style={{
-                    backgroundColor: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--foreground))",
-                    minHeight: "120px"
-                  }}
-                >
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: "hsl(var(--foreground))" }}>
+                /* Simplified tablet layout with transparent background and spacing */
+                <div className="flex flex-col justify-center flex-1 p-6 bg-transparent border-0 rounded-lg min-h-[120px] transition-colors">
+                  <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">
                     {item.label}
                   </h3>
-                  <p className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
-                    {item.progress ? `Progress: ${item.progress.completionPercentage.toFixed(0)}% (${progressText})` : 'No progress data'}
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {item.label}
                   </p>
                 </div>
               )}

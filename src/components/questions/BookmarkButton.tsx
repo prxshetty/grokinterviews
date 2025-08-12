@@ -4,7 +4,7 @@ import { useState, useEffect, KeyboardEvent, MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toggleQuestionBookmark } from '@/app/utils/progress';
+// Removed toggleQuestionBookmark import as progress tracking is disabled
 
 interface BookmarkButtonProps {
   questionId: number;
@@ -45,9 +45,9 @@ const animations = {
 };
 
 export function BookmarkButton({
-  questionId,
-  topicId,
-  categoryId,
+  questionId: _questionId,
+  topicId: _topicId,
+  categoryId: _categoryId,
   initialIsBookmarked = false,
   onBookmarkChange,
 }: BookmarkButtonProps) {
@@ -58,61 +58,42 @@ export function BookmarkButton({
     setIsBookmarked(initialIsBookmarked);
   }, [initialIsBookmarked]);
 
-  // Helper function to get topicId from categoryId if needed
-  const getTopicId = async (): Promise<number | null> => {
-    if (topicId) return topicId;
-    
-    try {
-      const response = await fetch('/api/topics/categories', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.categories && Array.isArray(data.categories)) {
-          const category = data.categories.find((cat: { id: number; topic_id: number }) => cat.id === categoryId);
-          if (category && category.topic_id) {
-            return category.topic_id;
-          }
-        }
-      }
-    } catch {
-      // Removed console.error for fetching topic ID
-    }
-    
-    return null;
-  };
-
   // Handle bookmark toggle
   const handleToggleBookmark = async () => {
     const newBookmarkState = !isBookmarked;
     setIsBookmarked(newBookmarkState); // Optimistic update
 
-    try {
-      // Get topicId if it's missing
-      const actualTopicId = await getTopicId();
+    // Make API call to persist bookmark status
+    if (_topicId && _categoryId) {
+      try {
+        const response = await fetch('/api/user/bookmarks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            questionId: _questionId,
+            isBookmarked: newBookmarkState,
+            topicId: _topicId,
+            categoryId: _categoryId,
+          }),
+        });
 
-      if (!actualTopicId) {
-        throw new Error('Could not determine topic ID for bookmarking');
+        if (!response.ok) {
+          // Revert optimistic update on failure
+          setIsBookmarked(!newBookmarkState);
+          console.error('Failed to update bookmark status');
+        }
+      } catch (error) {
+        // Revert optimistic update on error
+        setIsBookmarked(!newBookmarkState);
+        console.error('Error updating bookmark status:', error);
       }
+    }
 
-      // Call API to update bookmark status, passing topicId and categoryId
-      await toggleQuestionBookmark(
-        questionId,
-        newBookmarkState,
-        actualTopicId,
-        categoryId,
-      );
-
-      // Notify parent component if callback provided
-      if (onBookmarkChange) {
-        onBookmarkChange(newBookmarkState);
-      }
-    } catch {
-      // Removed console.error for toggling bookmark
-      // Revert state on error
-      setIsBookmarked(!newBookmarkState);
+    // Notify parent component if callback provided
+    if (onBookmarkChange) {
+      onBookmarkChange(newBookmarkState);
     }
   };
 

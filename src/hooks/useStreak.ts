@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 
+// Extend Window interface to include our custom property
+declare global {
+  interface Window {
+    invalidateStreakCache?: () => void;
+  }
+}
+
 interface StreakData {
   current_streak: number;
   highest_streak: number;
@@ -267,4 +274,4 @@ export function useStreak(isAuthenticated: boolean = true) {
     refresh: forceRefresh,
     invalidateCache
   };
-} 
+}

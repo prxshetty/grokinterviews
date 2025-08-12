@@ -4,14 +4,14 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { QuestionWithAnswer } from '@/components/questions';
-import { ProgressBar, LoadingSpinner, Accordion } from '@/components/ui';
-import { fetchCategoryProgress, fetchSubtopicProgress, isQuestionCompleted, isQuestionBookmarked } from '@/app/utils/progress';
+import { LoadingSpinner, Accordion, ProgressBar } from '@/components/ui';
+// Removed progress tracking imports as functionality is disabled
 import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
 
 // Imported shared types
 import { QuestionType } from '@/types/topics';
-import { SubtopicProgress, CategoryProgress } from '@/types/topic-page.types';
+// Removed progress-related type imports
 
 // Animation variants that don't use transforms
 const fadeInVariants: Variants = {
@@ -26,11 +26,6 @@ const fadeInVariants: Variants = {
 interface DisplayItem {
   id: string;
   label: string;
-  progress?: {
-    questionsCompleted: number;
-    totalQuestions: number;
-    completionPercentage: number;
-  };
 }
 
 // Local types that remain (or are specific to this component's internal API handling)
@@ -56,9 +51,7 @@ interface CategoryDetailViewProps {
   onDifficultyChange?: (difficulty: string | null) => void;
   domain?: string;
   onBackToMainCategories?: () => void;
-  subtopicProgressData?: Record<string, SubtopicProgress>;
-  categoryProgressData?: CategoryProgress | null;
-  currentSubtopicProgress?: SubtopicProgress | null;
+  // Removed progress-related props
 }
 
 // Types for API response structure specific to handleSubtopicSelect
@@ -91,9 +84,7 @@ export default function CategoryDetailView({
   onDifficultyChange,
   domain,
   onBackToMainCategories,
-  subtopicProgressData: passedInSubtopicProgress,
-  categoryProgressData,
-  currentSubtopicProgress
+  // Removed progress-related props
 }: CategoryDetailViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -104,12 +95,7 @@ export default function CategoryDetailView({
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
   const [subtopicDetails, setSubtopicDetails] = useState<TopicItem | null>(null);
   
-  // Progress tracking states
-  const [categoryProgress, setCategoryProgress] = useState<CategoryProgress | null>(null);
-  
-  // Update type for subtopicsProgress to include category counts
-  const [subtopicsProgress, setSubtopicsProgress] = useState<Record<string, SubtopicProgress>>({});
-  
+  // Removed progress-related state variables
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
   const [isSubtopicProgressLoading, ] = useState(false);
   
@@ -186,21 +172,14 @@ export default function CategoryDetailView({
       .filter(([id]) => id.startsWith('topic-'))
       .map(([id, subtopicData]) => {
         const subtopic = subtopicData as TopicItem; // Type assertion for subtopic
-        const progress = subtopicsProgress[id];
         const item: DisplayItem = {
           id,
           label: subtopic.label,
         };
-        if (progress) {
-          item.progress = {
-            questionsCompleted: progress.questionsCompleted,
-            totalQuestions: progress.totalQuestions,
-            completionPercentage: progress.completionPercentage,
-          };
-        }
+        // Removed progress property
         return item;
       });
-  }, [categoryDetails?.subtopics, subtopicsProgress]);
+  }, [categoryDetails?.subtopics]);
 
   // Memoize check for grouped questions
   const hasGroupedQuestions = useMemo(() => {
@@ -220,31 +199,15 @@ export default function CategoryDetailView({
     }));
   }, []);
 
-  // Update filtered questions when calculation changes
-  useEffect(() => {
-    if (passedInSubtopicProgress) {
-      setSubtopicsProgress(passedInSubtopicProgress);
-    }
-  }, [passedInSubtopicProgress]);
+  // Removed progress-related useEffect hooks
 
-  useEffect(() => {
-    if (categoryProgressData) {
-      setCategoryProgress(categoryProgressData);
-    }
-  }, [categoryProgressData]);
-
-  useEffect(() => {
-    if (currentSubtopicProgress) {
-      setSubtopicsProgress(prev => ({ ...prev, [selectedSubtopic || '']: currentSubtopicProgress }));
-    }
-  }, [selectedSubtopic, currentSubtopicProgress]);
-
-  // Fetch bookmark status for each question
+  // Fetch bookmark status for each question (progress tracking disabled)
   const fetchBookmarkStatus = async (questions: QuestionType[]) => {
     const bookmarkStatus: Record<number, boolean> = {};
-    await Promise.all(questions.map(async (question) => {
-      bookmarkStatus[question.id] = await isQuestionBookmarked(question.id);
-    }));
+    // Progress tracking disabled - return empty bookmark status
+    questions.forEach((question) => {
+      bookmarkStatus[question.id] = false;
+    });
     return bookmarkStatus;
   };
 
@@ -255,29 +218,7 @@ export default function CategoryDetailView({
 
     const fetchProgressAndBookmarks = async () => {
       try {
-        if (!selectedSubtopic) {
-          // For categories, fetch their progress data
-          if (categoryId && !categoryId.startsWith('header-')) {
-            const numericId = parseInt(categoryId.replace(/^(topic-|category-)/, ''));
-            if (!isNaN(numericId) && !categoryProgressData) { // Fetch only if not provided
-              const progress = await fetchCategoryProgress(numericId, true);
-              if (!signal.aborted) {
-                setCategoryProgress(progress);
-              }
-            }
-          }
-        }
-        
-        // For subtopics, fetch their progress
-        if (selectedSubtopic) {
-          const numericId = parseInt(selectedSubtopic.replace('topic-', ''));
-          if (!isNaN(numericId) && !currentSubtopicProgress) { // Fetch only if not provided
-            const progress = await fetchSubtopicProgress(numericId, true);
-            if (!signal.aborted) {
-              setSubtopicsProgress(prev => ({ ...prev, [selectedSubtopic]: progress }));
-            }
-          }
-        }
+        // Removed progress fetching logic
         
         // Update completed questions tracking
         const questions = memoizedFilteredQuestions;
@@ -285,7 +226,8 @@ export default function CategoryDetailView({
         
         if (questionIds.length > 0) {
           try {
-            const completedResults = await Promise.all(questionIds.map((id: number) => isQuestionCompleted(id)));
+            // Progress tracking disabled - mark all questions as not completed
+            const completedResults = questionIds.map(() => false);
             
             if (!signal.aborted) {
               const newCompletedStatus: Record<number, boolean> = {};
@@ -321,7 +263,7 @@ export default function CategoryDetailView({
     return () => {
       controller.abort();
     };
-  }, [categoryId, selectedSubtopic, memoizedFilteredQuestions, categoryProgressData, currentSubtopicProgress]);
+  }, [categoryId, selectedSubtopic, memoizedFilteredQuestions]);
 
   // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
   const handleBackToMainCategories = useCallback(() => {
@@ -421,31 +363,12 @@ export default function CategoryDetailView({
     // before fetching fresh progress data
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // After local state for the specific question is updated,
-    // re-fetch the aggregate progress for the current view.
-    if (selectedSubtopic && subtopicDetails) {
-      const currentViewSubtopicId = subtopicDetails.subtopicId ?? parseInt(selectedSubtopic.replace('topic-', ''));
-      if (!isNaN(currentViewSubtopicId)) {
-        const progress = await fetchSubtopicProgress(currentViewSubtopicId, true); // forceRefresh = true
-        setSubtopicsProgress(prev => ({ ...prev, [selectedSubtopic]: progress }));
-      }
-    } else if (!selectedSubtopic && categoryId && !categoryId.startsWith('header-')) {
-      // We are in a "category-like" view. Re-fetch its progress.
-      // The `categoryId` prop of CategoryDetailView defines this view.
-      const numericViewId = parseInt(categoryId.replace(/^(topic-|category-)/, ''));
-      if (!isNaN(numericViewId)) {
-        // This assumes numericViewId is a valid category_id for fetchCategoryProgress
-        const progress = await fetchCategoryProgress(numericViewId, true); // forceRefresh = true
-        setCategoryProgress(progress);
-      }
-    }
+    // Removed progress re-fetching logic
   }, [
     selectedSubtopic, 
     subtopicDetails, 
     categoryId, 
-    setCompletedQuestions, 
-    setSubtopicsProgress, 
-    setCategoryProgress
+    setCompletedQuestions
   ]);
 
   // Handler for Accordion's onValueChange
@@ -490,7 +413,7 @@ export default function CategoryDetailView({
   if (selectedSubtopic && subtopicDetails) {
     return (
       <motion.div 
-        className="p-4 pt-4 sm:pt-6 md:pt-8 lg:px-6 xl:px-8"
+        className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8"
         initial="hidden"
         animate="visible"
         variants={fadeInVariants}
@@ -560,14 +483,15 @@ export default function CategoryDetailView({
                     )}
                   </div>
                 </div>
-                <div className="mb-4">
+                {/* Progress bar with transparent background and stretched container */}
+                <div className="w-full mb-4">
                   <ProgressBar
                     progress={(category.questions.filter(q => completedQuestions[q.id]).length / category.questions.length) * 100}
-                    completed={category.questions.filter(q => completedQuestions[q.id]).length}
                     total={category.questions.length}
-                    height="md"
+                    completed={category.questions.filter(q => completedQuestions[q.id]).length}
                     showText={false}
-                    className={category.name}
+                    height="sm"
+                    className="bg-transparent"
                   />
                 </div>
                 {/* Accordion items for questions within this category group */}
@@ -625,7 +549,7 @@ export default function CategoryDetailView({
   // Render category details
   return (
     <motion.div 
-      className="px-0 py-4 pt-12 sm:pt-16 md:pt-20 sm:px-4 lg:px-6 xl:px-8"
+      className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 py-4 pt-12 sm:pt-16 md:pt-20"
       initial="hidden"
       animate="visible"
       variants={fadeInVariants}
@@ -700,11 +624,7 @@ export default function CategoryDetailView({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2 text-gray-900 dark:text-white">
             <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl lg:text-4xl xl:text-5xl">Questions</h2>
             <div className="flex items-center justify-end gap-3 w-full">
-              {categoryProgress && (
-                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  {categoryProgress.questionsCompleted}/{categoryProgress.totalQuestions} completed     
-                </span>
-              )}
+              {/* Removed category progress display */}
               {/* Mobile FloatingSettings */}
               {hasQuestions && onDifficultyChange && (
                 <div className="sm:hidden ml-auto">

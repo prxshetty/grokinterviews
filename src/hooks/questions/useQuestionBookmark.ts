@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { toggleQuestionBookmark } from '@/app/utils/progress';
+// Removed toggleQuestionBookmark import as progress tracking is disabled
 
 interface UseQuestionBookmarkProps {
   questionId: number;
@@ -19,8 +19,8 @@ export function useQuestionBookmark({
   questionId,
   initialIsBookmarked,
   onBookmarkStatusChange,
-  topicId,
-  categoryId
+  topicId: _topicId,
+  categoryId: _categoryId
 }: UseQuestionBookmarkProps): UseQuestionBookmarkReturn {
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
 
@@ -34,16 +34,36 @@ export function useQuestionBookmark({
     setIsBookmarked(newStatus);
     onBookmarkStatusChange?.(questionId, newStatus);
 
-    // Persist to database if we have the required IDs
-    if (topicId && categoryId) {
+    // Make API call to persist bookmark status
+    if (_topicId && _categoryId) {
       try {
-        await toggleQuestionBookmark(questionId, newStatus, topicId, categoryId);
+        const response = await fetch('/api/user/bookmarks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            questionId,
+            isBookmarked: newStatus,
+            topicId: _topicId,
+            categoryId: _categoryId,
+          }),
+        });
+
+        if (!response.ok) {
+          // Revert optimistic update on failure
+          setIsBookmarked(!newStatus);
+          onBookmarkStatusChange?.(questionId, !newStatus);
+          console.error('Failed to update bookmark status');
+        }
       } catch (error) {
-        console.error('Failed to persist bookmark change:', error);
         // Revert optimistic update on error
         setIsBookmarked(!newStatus);
         onBookmarkStatusChange?.(questionId, !newStatus);
+        console.error('Error updating bookmark status:', error);
       }
+    } else {
+      console.log(`Question ${questionId} bookmark status changed to ${newStatus} (local only - missing topicId or categoryId)`);
     }
   };
 

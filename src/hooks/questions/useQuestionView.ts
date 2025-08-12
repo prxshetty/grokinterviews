@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { markQuestionAsViewed } from '@/app/utils/progress';
+// Removed markQuestionAsViewed import as progress tracking is disabled
 
 interface UseQuestionViewProps {
   questionId: number;
@@ -24,18 +24,12 @@ export function useQuestionView({
   const [isViewed, setIsViewed] = useState(false);
   const viewedAttemptedRef = useRef<boolean>(false);
 
-  // Mark question as viewed when opened
+  // Mark question as viewed when opened (progress tracking disabled)
   useEffect(() => {
     if (isOpen && !isViewed && !viewedAttemptedRef.current) {
       viewedAttemptedRef.current = true;
+      // Progress tracking disabled - just mark as viewed locally
       setIsViewed(true);
-      
-      // Mark as viewed in backend
-      markQuestionAsViewed(questionId, topicId, categoryId, domain)
-        .catch(err => {
-          console.error('Failed to mark question as viewed:', err);
-          // Don't revert isViewed state as this is not critical
-        });
     }
   }, [isOpen, isViewed, questionId, topicId, categoryId, domain]);
 
