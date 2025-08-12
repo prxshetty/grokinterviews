@@ -23,7 +23,7 @@ interface InterviewSession {
     created_at: string;
   }[];
   interview_mode?: 'web' | 'phone';
-  voice_name?: VoiceOption;
+  voice_name?: string;
 }
 
 interface PhoneCall {
@@ -44,7 +44,7 @@ interface PhoneCall {
   metadata?: any;
   created_at: string;
   updated_at: string;
-  voice_name?: VoiceOption;
+  voice_name?: string;
 }
 
 interface CombinedInterview {
@@ -58,7 +58,7 @@ interface CombinedInterview {
   session_end?: string | null;
   call_duration?: number;
   interview_scores?: any[];
-  voice_name?: VoiceOption;
+  voice_name?: string | undefined;
 }
 
 interface InterviewListProps {
@@ -110,7 +110,7 @@ export function InterviewList({
                      (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
     
     const statusBorderColor = getStatusBorderColor(interview);
-    const interviewer = interview.voice_name ? VOICE_CONFIG[interview.voice_name] : null;
+    const interviewer = interview.voice_name && interview.voice_name in VOICE_CONFIG ? VOICE_CONFIG[interview.voice_name as VoiceOption] : null;
     const interviewerName = interviewer ? interviewer.displayName : 'AI Interviewer';
     const interviewerImage = interviewer ? interviewer.image : ' / images / female_default.png';
 

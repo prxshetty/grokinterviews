@@ -2,8 +2,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -12,8 +10,6 @@ import {
   Clock, 
   TrendingUp, 
   Eye, 
-  Trash2,
-  Download,
   ChevronRight,
   Star,
   BarChart3,
@@ -107,13 +103,9 @@ interface TranscriptDisplayProps {
   selectedScore: InterviewScore | null;
   loadingScore: boolean;
   activeTab: string;
-  isExporting: boolean;
   profile: any;
 
   onTabChange: (tab: string) => void;
-  onExportSession: (session: InterviewSession) => void;
-  onExportPhoneTranscript: (phoneCall: PhoneCall) => void;
-  onDeleteSession: (sessionId: string) => void;
 }
 
 export function TranscriptDisplay({
@@ -122,21 +114,9 @@ export function TranscriptDisplay({
   selectedScore,
   loadingScore,
   activeTab,
-  isExporting,
   profile,
-  onTabChange,
-  onExportSession,
-  onExportPhoneTranscript,
-  onDeleteSession
+  onTabChange
 }: TranscriptDisplayProps) {
-  const getSessionTypeColor = (type: string) => {
-    switch (type) {
-      case 'behavioral': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'technical': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'general': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
-  };
 
   const getScoreColor = (score: number) => {
     if (score >= 8) return 'text-green-600 dark:text-green-400';
