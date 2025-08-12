@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { MessageSquare, User, Download } from 'lucide-react';
+import { MessageSquare, User, Download, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VOICE_CONFIG, VoiceOption } from '@/types/voice.types';
 
@@ -73,6 +74,8 @@ interface InterviewListProps {
   selectedPhoneCall: PhoneCall | null;
   onSelectInterview: (interview: CombinedInterview) => void;
   onExport: (interview: CombinedInterview) => void;
+  voiceFilter: VoiceOption | 'all';
+  onVoiceFilterChange: (value: VoiceOption | 'all') => void;
 }
 
 export function InterviewList({
@@ -82,6 +85,8 @@ export function InterviewList({
   onSelectInterview,
   onExport,
   filteredInterviews,
+  voiceFilter,
+  onVoiceFilterChange,
 }: InterviewListProps) {
   const [activeTab, setActiveTab] = React.useState<'web' | 'phone'>('web');
 
@@ -210,9 +215,27 @@ export function InterviewList({
     <div className="w-full max-w-sm mx-auto">
       <div className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm h-full flex flex-col">
         <div className="p-4 border-b border-gray-200/80 dark:border-gray-700/80">
-          <h2 className="text-lg font-semibold text-foreground">
-            Interview Records
-          </h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-foreground">
+              Interview Records
+            </h2>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
+                <SelectTrigger className="w-32 h-8 text-xs">
+                  <SelectValue placeholder="Voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Voices</SelectItem>
+                  {Object.entries(VOICE_CONFIG).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      {config.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <p className="text-sm text-muted-foreground">
             {filteredInterviews.length} total interviews
           </p>
