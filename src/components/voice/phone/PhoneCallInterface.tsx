@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Phone, PhoneCall, PhoneOff, Clock, AlertCircle, CheckCircle } from 'lucide-react';
-import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Phone, PhoneCall, PhoneOff, Clock, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { vapiService, type VapiCall } from '@/services/VapiService';
 import PhoneNumberInput from './PhoneNumberInput';
@@ -41,6 +40,7 @@ export default function PhoneCallInterface({
     hasPhoneNumberId: boolean;
     isFullyConfigured: boolean;
   } | null>(null);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
   
   // Use ref for configStatus to avoid unnecessary re-renders
   const configStatusRef = useRef(configStatus);
@@ -64,6 +64,8 @@ export default function PhoneCallInterface({
           hasPhoneNumberId: false,
           isFullyConfigured: false
         });
+      } finally {
+        setIsConfigLoading(false);
       }
     };
 
@@ -182,9 +184,42 @@ export default function PhoneCallInterface({
             const statusResponse = await vapiService.getCallStatus(currentCall.id);
             console.log('Status response:', statusResponse);
             
-            if (statusResponse.success && statusResponse.call) {
-              const vapiCall = statusResponse.call;
-              console.log(`VAPI call status: ${vapiCall.status}, UI state: ${callState}`);
+            if (statusResponse.success) {
+              // Handle case where call was cancelled/ended externally (call is null)
+              if (!statusResponse.call && callState === 'in-progress') {
+                console.log('🎯 Call cancelled externally - updating UI...');
+                setCallState('ended');
+                
+                // Update database to mark call as ended
+                try {
+                  await fetch('/api/voice/phone-calls', {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      vapiCallId: currentCall.id,
+                      callStatus: 'ended',
+                      callDuration: callDuration,
+                      metadata: {
+                        endedAt: new Date().toISOString(),
+                        endedReason: 'cancelled_externally',
+                        endedBy: 'external'
+                      }
+                    }),
+                  });
+                  console.log('✅ Database updated for externally cancelled call');
+                } catch (dbError) {
+                  console.error('Error updating cancelled call in database:', dbError);
+                }
+                
+                onCallEndedRef.current?.(currentCall.id, undefined);
+                return; // Exit early since call is ended
+              }
+              
+              if (statusResponse.call) {
+                const vapiCall = statusResponse.call;
+                console.log(`VAPI call status: ${vapiCall.status}, UI state: ${callState}`);
               
               // Update local state based on VAPI status
               if (vapiCall.status === 'ended' && callState === 'in-progress') {
@@ -286,6 +321,7 @@ export default function PhoneCallInterface({
                   
                   onCallEndedRef.current?.(currentCall.id, vapiCall);
                 }
+              }
               }
             } else {
               console.warn('Status response not successful:', statusResponse);
@@ -564,7 +600,7 @@ export default function PhoneCallInterface({
     switch (callState) {
       case 'initiating':
       case 'ringing':
-        return <InlineLoadingSpinner size="sm" />;
+        return <Loader2 className="h-5 w-5 animate-spin" />;
       case 'in-progress':
         return <PhoneCall className="h-5 w-5 text-green-500" />;
       case 'ended':
@@ -577,7 +613,7 @@ export default function PhoneCallInterface({
   };
 
   // Check if configuration warning should be shown
-  const showConfigWarning = !configStatusRef.current?.isFullyConfigured;
+  const showConfigWarning = !isConfigLoading && !configStatusRef.current?.isFullyConfigured;
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -605,29 +641,90 @@ export default function PhoneCallInterface({
       )}
 
       {/* Call Status Display */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center space-x-3">
-          {getStatusIcon()}
-          <span className="text-lg font-medium text-gray-900 dark:text-white">
-            {getStatusMessage()}
-          </span>
+      {(callState === 'initiating' || callState === 'ringing' || callState === 'in-progress') ? (
+        <div className="font-sans">
+          {/* Header Section */}
+          <div className="text-center mb-12">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
+              You will receive the call shortly at <span className="font-medium">{phoneNumber}</span>
+            </p>
+          </div>
+
+          {/* Main Status Card */}
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gradient-to-br from-slate-100/20 to-slate-200/10 dark:from-slate-800/20 dark:to-slate-900/10 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/30 dark:border-slate-700/30 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/3 to-transparent" />
+              <div className="relative z-10 text-center">
+                <div className="flex items-center justify-center mb-6">
+                  <Phone className="h-16 w-16 text-slate-600 dark:text-slate-300" />
+                </div>
+                <div className="text-3xl font-light text-slate-800 dark:text-slate-200 mb-6">
+                  Interview Session Active
+                </div>
+                
+                {/* Interview Details Grid */}
+                <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Clock className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                      <span className="text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider">Duration Limit</span>
+                    </div>
+                    <div className="text-2xl font-light text-slate-800 dark:text-slate-200">10 Minutes</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Phone className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                      <span className="text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider">Calling</span>
+                    </div>
+                    <div className="text-2xl font-light text-slate-800 dark:text-slate-200">{phoneNumber}</div>
+                  </div>
+                </div>
+
+                {/* Feature List */}
+                <div className="mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-700/50">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed space-y-3">
+                    <div className="grid md:grid-cols-2 gap-y-2 gap-x-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-green-500 w-4 text-center">✓</span>
+                        <span className="text-left">AI-powered conversation</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-green-500 w-4 text-center">✓</span>
+                        <span className="text-left">Real-time adaptation</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-green-500 w-4 text-center">✓</span>
+                        <span className="text-left">Professional recording</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-green-500 w-4 text-center">✓</span>
+                        <span className="text-left">Personalized questions</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-slate-100/20 dark:bg-slate-800/20 rounded-lg border border-slate-200/20 dark:border-slate-700/20">
+                      <p className="text-center text-xs text-slate-600 dark:text-slate-400">
+                        <strong>Coming Soon:</strong> Reports and transcripts functionality is currently being developed. 
+                        Your interview will be recorded for analysis and feedback purposes.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Call Duration */}
-        {callState === 'in-progress' && (
-          <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <Clock className="h-4 w-4" />
-            <span>{formatDuration(callDuration)}</span>
+      ) : (
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center space-x-3">
+            {getStatusIcon()}
+            <span className="text-lg font-medium text-gray-900 dark:text-white">
+              {getStatusMessage()}
+            </span>
           </div>
-        )}
-
-        {/* Call Details */}
-        {currentCall && (callState === 'ringing' || callState === 'in-progress') && (
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Calling: {phoneNumber}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Phone Number Input (only show when idle or error) */}
       {(callState === 'idle' || callState === 'error') && (
@@ -644,44 +741,36 @@ export default function PhoneCallInterface({
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-center space-x-4">
-        {callState === 'idle' || callState === 'error' ? (
-          <button
-            onClick={handleStartCall}
-            disabled={disabled || !isPhoneNumberValid || showConfigWarning}
-            className={cn(
-              "flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200",
-              "focus:outline-none focus:ring-2 focus:ring-offset-2",
-              disabled || !isPhoneNumberValid || showConfigWarning
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700 text-white focus:ring-green-500 transform hover:scale-105"
-            )}
-          >
-            <PhoneCall className="h-5 w-5" />
-            <span>Start Phone Interview</span>
-          </button>
-        ) : callState === 'ended' ? (
-          <button
-            onClick={handleReset}
-            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:scale-105"
-          >
-            <Phone className="h-5 w-5" />
-            <span>Start New Call</span>
-          </button>
-        ) : (
-          <button
-            onClick={handleEndCall}
-            className="flex items-center space-x-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transform hover:scale-105"
-          >
-            <PhoneOff className="h-5 w-5" />
-            <span>End Call</span>
-          </button>
-        )}
-      </div>
+      {(callState === 'idle' || callState === 'error' || callState === 'ended') && (
+        <div className="flex justify-center space-x-4">
+          {callState === 'idle' || callState === 'error' ? (
+            <button
+              onClick={handleStartCall}
+              disabled={disabled || !isPhoneNumberValid || showConfigWarning}
+              className={cn(
+                "inline-flex items-center justify-center px-6 py-3 text-lg font-medium rounded-3xl transition-all duration-300 shadow-md border touch-manipulation active:scale-95",
+                disabled || !isPhoneNumberValid || showConfigWarning
+                  ? "bg-gray-100/50 text-gray-400 cursor-not-allowed border-gray-200/50"
+                  : "text-white bg-gray-900/80 dark:bg-white/5 hover:bg-black/90 dark:hover:bg-white/10 border-gray-700/30 dark:border-white/10"
+              )}
+            >
+              Start Phone Interview
+            </button>
+          ) : callState === 'ended' ? (
+            <button
+              onClick={handleReset}
+              className="flex items-center space-x-2 px-6 py-3 bg-blue-600/80 hover:bg-blue-700/90 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:scale-105"
+            >
+              <Phone className="h-5 w-5" />
+              <span>Start New Call</span>
+            </button>
+          ) : null}
+        </div>
+      )}
 
       {/* Error Display */}
       {error && callState !== 'error' && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="p-4 bg-red-50/50 dark:bg-red-900/10 border border-red-200/50 dark:border-red-800/50 rounded-lg">
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
             <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>

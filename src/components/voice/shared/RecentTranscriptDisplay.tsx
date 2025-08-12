@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useMemo, memo, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Loader2 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
 import { VoiceOption, VOICE_CONFIG } from '@/types/voice.types';
 
@@ -140,7 +140,7 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
             </div>
             <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">
               <div className="flex items-center gap-2">
-                <InlineLoadingSpinner size="sm" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">Thinking...</span>
               </div>
             </div>
