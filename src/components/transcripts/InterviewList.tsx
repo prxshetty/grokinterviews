@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MessageSquare, User, Download, Filter } from 'lucide-react';
+import { MessageSquare, User, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TabNav } from '@/components/ui/tab-nav';
@@ -219,22 +219,6 @@ export function InterviewList({
             <h2 className="text-lg font-semibold text-foreground">
               Interview Records
             </h2>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
-                <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue placeholder="Voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Voices</SelectItem>
-                  {Object.entries(VOICE_CONFIG).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
-                      {config.displayName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           <p className="text-sm text-muted-foreground">
             {filteredInterviews.length} total interviews
@@ -242,11 +226,26 @@ export function InterviewList({
         </div>
         
         <div className="p-3">
-          <TabNav 
-            items={tabItems}
-            activeTab={activeTab}
-            onTabChange={(id) => setActiveTab(id as 'web' | 'phone')}
-          />
+          <div className="flex items-center justify-between">
+            <TabNav 
+              items={tabItems}
+              activeTab={activeTab}
+              onTabChange={(id) => setActiveTab(id as 'web' | 'phone')}
+            />
+            <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
+              <SelectTrigger className="w-32 h-8 text-xs">
+                <SelectValue placeholder="Voice" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Voices</SelectItem>
+                {Object.entries(VOICE_CONFIG).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    {config.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
