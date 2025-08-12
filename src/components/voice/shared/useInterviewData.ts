@@ -108,7 +108,7 @@ export function useInterviewData() {
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [phoneCalls, setPhoneCalls] = useState<PhoneCall[]>([]);
   const [loading, setLoading] = useState(true);
-  const [interviewModeFilter, setInterviewModeFilter] = useState<string>('all');
+
   const [voiceFilter, setVoiceFilter] = useState<VoiceOption | 'all'>('all');
   
   const [selectedSession, setSelectedSession] = useState<InterviewSession | null>(null);
@@ -310,19 +310,15 @@ export function useInterviewData() {
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [sessions, phoneCalls]);
 
-  // Filter interviews based on interview mode and voice
+  // Filter interviews based on voice
   const filteredInterviews = useMemo(() => {
     return allInterviews.filter(interview => {
-      const matchesModeFilter = interviewModeFilter === 'all' || 
-        (interviewModeFilter === 'web' && interview.type === 'web') ||
-        (interviewModeFilter === 'phone' && interview.type === 'phone');
-      
       const matchesVoiceFilter = voiceFilter === 'all' || 
         (interview.voice_name && interview.voice_name === voiceFilter);
       
-      return matchesModeFilter && matchesVoiceFilter;
+      return matchesVoiceFilter;
     });
-  }, [allInterviews, interviewModeFilter, voiceFilter]);
+  }, [allInterviews, voiceFilter]);
 
   // Group interviews by date
   const groupedInterviews = useMemo(() => {
@@ -397,7 +393,6 @@ export function useInterviewData() {
     
     // State
     loading,
-    interviewModeFilter,
     voiceFilter,
     selectedSession,
     selectedPhoneCall,
@@ -407,7 +402,6 @@ export function useInterviewData() {
     isExporting,
     
     // Actions
-    setInterviewModeFilter,
     setVoiceFilter,
     setActiveTab,
     handleSelectInterview,
