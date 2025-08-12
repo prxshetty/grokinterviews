@@ -51,7 +51,7 @@ export const TYPE_DISPLAY_INFO: Record<string, { Icon: React.ElementType; title:
   paper: { Icon: FileText, title: 'Papers' },
   website: { Icon: Globe, title: 'Websites' },
   book: { Icon: BookOpen, title: 'Books' },
-  image: { Icon: ImageIcon, title: 'TEST_ILLUSTRATIONS' },
+  image: { Icon: ImageIcon, title: 'Illustrations' },
   other: { Icon: ExternalLink, title: 'Other' },
 } as const;
 
