@@ -21,7 +21,7 @@ export class VoiceActivityDetector {
   private isListening = false;
   private config: VADConfig;
   private silenceTimer: NodeJS.Timeout | null = null;
-  private readonly SILENCE_TIMEOUT = 1500; // 1.5 seconds of silence before stopping
+  private readonly SILENCE_TIMEOUT = 2500; // 2.5 seconds of silence before stopping
 
   constructor(config: VADConfig = {}) {
     this.config = {
