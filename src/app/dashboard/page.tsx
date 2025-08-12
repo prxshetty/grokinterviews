@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import ProgressSaver from '@/components/progress/ProgressSaver';
+// Removed ProgressSaver import as progress tracking is disabled
 import { DomainStat } from '@/types/dashboard.types';
 import { LoadingSpinner } from '@/components/ui';
 
@@ -110,15 +110,13 @@ export default function DashboardPage() {
       if (!isMounted.current) return;
       
       try {
-        // Fetch user stats using existing API endpoints
+        // Fetch user stats using existing API endpoints (progress tracking disabled)
         const [
-          progressRes,
           bookmarksRes,
           userStatsRes,
           domainStatsRes,
           activityChartRes
         ] = await Promise.all([
-          fetch('/api/user/progress'),
           fetch('/api/user/bookmarks'),
           fetch('/api/user/stats'),
           fetch('/api/user/domains'),
@@ -126,18 +124,16 @@ export default function DashboardPage() {
         ]);
 
         if (isMounted.current) {
-          // Handle progress data
-          if (progressRes.ok) {
-            const data = await progressRes.json();
-            if (data.totalQuestions > 0) {
-              data.completionPercentage = (data.questionsCompleted / data.totalQuestions) * 100;
-            } else {
-              data.completionPercentage = 0;
-            }
-            setProgressData({...data, loading: false});
-          } else {
-            setProgressData(prev => ({ ...prev, loading: false }));
-          }
+          // Progress tracking disabled - use default values
+          setProgressData({
+            questionsCompleted: 0,
+            questionsViewed: 0,
+            totalQuestions: 0,
+            completionPercentage: 0,
+            domainsSolved: 0,
+            totalDomains: 0,
+            loading: false
+          });
 
           // Handle user stats (including bookmarks)
           let bookmarksCount = 0;
@@ -216,7 +212,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-32 sm:pt-36 md:pt-40">
-        <ProgressSaver />
+        {/* Removed ProgressSaver component as progress tracking is disabled */}
         
         {/* Greeting */}
         <div className="mb-8">

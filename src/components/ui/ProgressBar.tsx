@@ -36,8 +36,8 @@ export default function ProgressBar({
   const progressColor = 'bg-gray-900 dark:bg-gray-100';
 
   return (
-    <div className={`flex items-center ${className}`}>
-      <div className={`flex-grow bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden ${heightClass} border border-gray-300 dark:border-gray-600`}>
+    <div className={`flex items-center w-full ${className}`}>
+      <div className={`flex-grow bg-transparent border border-gray-300 dark:border-gray-600 rounded-full overflow-hidden ${heightClass}`}>
         <div
           className={`${progressColor} rounded-full transition-all duration-300 ease-out`}
           style={{ width: `${displayWidth}%`, height: '100%' }}

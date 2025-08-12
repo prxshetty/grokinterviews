@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, RefObject } from 'react';
-import { markQuestionAsCompleted, isQuestionCompleted } from '@/app/utils/progress';
+// Removed progress tracking imports as functionality is disabled
 import { toast } from '@/hooks/use-toast';
 
 interface UseQuestionProgressProps {
@@ -33,24 +33,11 @@ export function useQuestionProgress({
   const [isCompleted, setIsCompleted] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check if question is already completed on mount
+  // Check if question is already completed on mount (progress tracking disabled)
   useEffect(() => {
-    const checkCompletionStatus = async () => {
-      try {
-        const completed = await isQuestionCompleted(questionId);
-        if (completed) {
-          setIsCompleted(true);
-          onCompletionChange?.(questionId, true, topicId, categoryId);
-        }
-      } catch (error) {
-        console.error('Error checking completion status:', error);
-      }
-    };
-
-    if (questionId) {
-      checkCompletionStatus();
-    }
-  }, [questionId, onCompletionChange, topicId, categoryId]);
+    // Progress tracking disabled - questions start as not completed
+    setIsCompleted(false);
+  }, [questionId]);
 
   useEffect(() => {
     const answerElement = answerRef.current;
@@ -113,25 +100,9 @@ export function useQuestionProgress({
         console.log('Showing toast notification...');
         toast.success("Question marked as completed!");
 
-        markQuestionAsCompleted(questionId, topicId, categoryId, domain)
-          .then((success) => {
-            if (!success) {
-              // Revert if backend update fails
-              console.error(`Failed to save completion status for question ${questionId}`);
-              setIsCompleted(false);
-              onCompletionChange?.(questionId, false, topicId, categoryId);
-              toast.error("Failed to save completion status.");
-            } else {
-              console.log(`Successfully marked question ${questionId} as completed - API call succeeded`);
-              console.log('Streak cache should be invalidated now');
-            }
-          })
-          .catch((err) => {
-            console.error(`Error saving completion status for question ${questionId}:`, err);
-            setIsCompleted(false); // Revert on error
-            onCompletionChange?.(questionId, false, topicId, categoryId);
-            toast.error("Error saving completion status.");
-          });
+        // Progress tracking disabled - completion is only stored locally
+        console.log(`Question ${questionId} marked as completed locally (progress tracking disabled)`);
+        // No backend API call needed since progress tracking is disabled
       }
     };
 

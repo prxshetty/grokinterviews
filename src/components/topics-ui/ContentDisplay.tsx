@@ -107,9 +107,9 @@ export default function ContentDisplay({
   clearDifficultyFilter,
   onDifficultyChange,
   onBackToMainCategories,
-  subtopicProgressData,
-  categoryProgressData,
-  currentSubtopicProgress,
+  subtopicProgressData: _subtopicProgressData,
+  categoryProgressData: _categoryProgressData,
+  currentSubtopicProgress: _currentSubtopicProgress,
 }: ContentDisplayProps) {
   const pathname = usePathname();
 
@@ -302,15 +302,7 @@ export default function ContentDisplay({
     if (onBackToMainCategories !== undefined) {
       categoryDetailViewProps.onBackToMainCategories = onBackToMainCategories;
     }
-    if (subtopicProgressData !== undefined) {
-      categoryDetailViewProps.subtopicProgressData = subtopicProgressData;
-    }
-    if (categoryProgressData !== undefined) {
-      categoryDetailViewProps.categoryProgressData = categoryProgressData;
-    }
-    if (currentSubtopicProgress !== undefined) {
-      categoryDetailViewProps.currentSubtopicProgress = currentSubtopicProgress;
-    }
+    // Removed progress-related props as progress tracking is disabled
 
     return <CategoryDetailView {...categoryDetailViewProps} />;
   }
@@ -330,7 +322,6 @@ export default function ContentDisplay({
                 domain={selectedTopic}
                 level="section"
                 isLoading={isLoading.categories}
-                subtopicProgress={subtopicProgressData ?? {}}
               />
             ) : (
               <div className="w-full text-center py-6">
