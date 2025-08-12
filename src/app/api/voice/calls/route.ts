@@ -124,6 +124,19 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      
+      // Handle 404 specifically - call might have ended or been cancelled
+      if (response.status === 404) {
+        return NextResponse.json(
+          { 
+            success: true, 
+            call: null,
+            error: 'Call not found - likely ended or cancelled externally'
+          },
+          { status: 200 }
+        );
+      }
+      
       return NextResponse.json(
         { error: errorData.message || `HTTP error! status: ${response.status}` },
         { status: response.status }

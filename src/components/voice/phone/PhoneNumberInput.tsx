@@ -107,12 +107,12 @@ export default function PhoneNumberInput({
           <Phone className={cn(
             "h-5 w-5 transition-colors",
             hasError 
-              ? "text-red-500" 
+              ? "text-red-500 dark:text-red-400" 
               : showSuccess 
-              ? "text-green-500" 
+              ? "text-green-500 dark:text-green-400" 
               : isFocused 
-              ? "text-blue-500" 
-              : "text-gray-400"
+              ? "text-blue-500 dark:text-blue-400" 
+              : "text-gray-400 dark:text-gray-500"
           )} />
         </div>
         
@@ -125,17 +125,18 @@ export default function PhoneNumberInput({
           disabled={disabled}
           placeholder={placeholder}
           className={cn(
-            "block w-full pl-10 pr-10 py-3 border rounded-lg text-sm transition-all duration-200",
-            "focus:outline-none focus:ring-2 focus:ring-offset-2",
-            hasError
-              ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
-              : showSuccess
-              ? "border-green-300 focus:border-green-500 focus:ring-green-500 bg-green-50"
-              : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white",
-            disabled && "bg-gray-50 text-gray-500 cursor-not-allowed",
-            "dark:bg-gray-800 dark:border-gray-600 dark:text-white",
-            "dark:focus:border-blue-400 dark:focus:ring-blue-400"
-          )}
+              "block w-full pl-10 pr-10 py-3 border rounded-lg text-sm transition-all duration-200",
+              "focus:outline-none focus:ring-2 focus:ring-offset-2",
+              hasError
+                ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                : showSuccess
+                ? "border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-green-50/20"
+                : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white",
+              disabled && "bg-gray-50 text-gray-500 cursor-not-allowed",
+              "dark:bg-gray-800 dark:border-gray-600 dark:text-white",
+              "dark:focus:border-blue-400 dark:focus:ring-blue-400",
+              showSuccess && "dark:bg-green-900/20"
+            )}
           autoComplete="tel"
           inputMode="tel"
         />
@@ -143,10 +144,10 @@ export default function PhoneNumberInput({
         {/* Validation icon */}
         <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
           {hasError && (
-            <AlertCircle className="h-5 w-5 text-red-500" />
+            <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400" />
           )}
           {showSuccess && (
-            <Check className="h-5 w-5 text-green-500" />
+            <Check className="h-5 w-5 text-green-500 dark:text-green-400" />
           )}
         </div>
       </div>
