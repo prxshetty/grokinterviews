@@ -53,6 +53,7 @@ export function ResourceCard({
               layout="fill" 
               objectFit="cover" 
               className="rounded-t-lg" 
+              sizes="(max-width: 768px) 56vw, (max-width: 1200px) 33vw, 25vw"
             />
             {/* Special handling for website favicons if previewUrl is a favicon */}
             {resource.type === 'website' && resource.previewUrl.includes('google.com/s2/favicons') && (

@@ -78,6 +78,13 @@ export function useQuestionProgress({
     
     if (!scrollableContainer) {
       console.warn('Scrollable container not found in answer element');
+      console.log('Answer element structure:', answerElement);
+      console.log('Answer element classes:', answerElement.className);
+      console.log('Answer element computed style:', {
+        overflowY: computedStyle.overflowY,
+        height: computedStyle.height,
+        maxHeight: computedStyle.maxHeight
+      });
       return;
     }
 
@@ -100,8 +107,10 @@ export function useQuestionProgress({
       // Mark as completed when 90% scrolled and not already completed
       if (percentage >= 90 && !isCompleted && questionId) {
         console.log(`Question ${questionId} reached ${percentage}% scroll, marking as completed`);
+        console.log('Completion details:', { questionId, topicId, categoryId, domain });
         setIsCompleted(true); // Optimistic UI update
         onCompletionChange?.(questionId, true, topicId, categoryId);
+        console.log('Showing toast notification...');
         toast.success("Question marked as completed!");
 
         markQuestionAsCompleted(questionId, topicId, categoryId, domain)
@@ -113,7 +122,8 @@ export function useQuestionProgress({
               onCompletionChange?.(questionId, false, topicId, categoryId);
               toast.error("Failed to save completion status.");
             } else {
-              console.log(`Successfully marked question ${questionId} as completed`);
+              console.log(`Successfully marked question ${questionId} as completed - API call succeeded`);
+              console.log('Streak cache should be invalidated now');
             }
           })
           .catch((err) => {
