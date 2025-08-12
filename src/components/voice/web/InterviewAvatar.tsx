@@ -75,7 +75,7 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
                 ? 'Speaking...' 
                 : isRecordingActive 
                   ? 'Listening...' 
-                  : 'Waiting...'}
+                  : 'Thinking...'}
             </div>
           </div>
         )}

@@ -1,7 +1,6 @@
 import React from 'react';
-import { Mic, Square, MessageCircle, Zap } from 'lucide-react';
+import { Mic, Square, MessageCircle, Zap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 // Custom Play Icon Component
 const PlayIcon = ({ className }: { className?: string }) => (
@@ -124,7 +123,7 @@ export default function ControlButtons({
               }
             >
               {isRecordingProcessing ? (
-                <InlineLoadingSpinner size="sm" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : isRecording ? (
                 <Square className="w-6 h-6 fill-current group-hover:scale-110 transition-transform" />
               ) : (
