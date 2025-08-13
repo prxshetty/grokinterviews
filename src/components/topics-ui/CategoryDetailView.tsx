@@ -419,11 +419,11 @@ export default function CategoryDetailView({
         variants={fadeInVariants}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
-          {/* Mobile: Back button + Title in same row */}
-          <div className="flex items-center gap-3 sm:gap-0 w-full sm:w-auto">
+          {/* Back button + Title */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={handleBackToCategory}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors sm:hidden"
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
               title={`Back to ${categoryDetails?.label || 'Category'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -434,24 +434,14 @@ export default function CategoryDetailView({
               {subtopicDetails.label}
             </h1>
           </div>
-          {/* Desktop: FloatingSettings + Back button */}
-          <div className="hidden sm:flex items-center gap-2">
+          {/* FloatingSettings */}
+          <div className="flex items-center gap-2">
             {subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
               <FloatingSettings
                 selectedDifficulty={propSelectedDifficulty || null}
                 onSelectDifficulty={handleDifficultySelect}
-                className="mr-2"
               />
             )}
-            <button
-              onClick={handleBackToCategory}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-              title={`Back to ${categoryDetails?.label || 'Category'}`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
           </div>
         </div>
         
@@ -556,11 +546,11 @@ export default function CategoryDetailView({
     >
       {/* Title and back button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-        {/* Mobile: Back button + Title in same row */}
-        <div className="flex items-center gap-3 sm:gap-0 w-full sm:w-auto">
+        {/* Back button + Title */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={handleBackToMainCategories}
-            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors sm:hidden"
+            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
             title="Back"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -571,24 +561,14 @@ export default function CategoryDetailView({
             {categoryDetails?.label}
           </h1>
         </div>
-        {/* Desktop: FloatingSettings + Back button */}
-        <div className="hidden sm:flex items-center gap-2">
+        {/* FloatingSettings */}
+        <div className="flex items-center gap-2">
           {hasQuestions && onDifficultyChange && (
             <FloatingSettings
               selectedDifficulty={propSelectedDifficulty || null}
               onSelectDifficulty={handleDifficultySelect}
-              className="mr-2"
             />
           )}
-          <button
-            onClick={handleBackToMainCategories}
-            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-            title="Back"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
         </div>
       </div>
       
