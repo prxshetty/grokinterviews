@@ -92,7 +92,11 @@ export default function CategoryDetailView({
   
   // Local state for UI elements
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
+  
+  // Initialize subtopic state from URL parameters
+  const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(() => {
+    return searchParams.get('subtopic') || null;
+  });
   const [subtopicDetails, setSubtopicDetails] = useState<TopicItem | null>(null);
   
   // Removed progress-related state variables
@@ -265,23 +269,8 @@ export default function CategoryDetailView({
     };
   }, [categoryId, selectedSubtopic, memoizedFilteredQuestions]);
 
-  // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
-  const handleBackToMainCategories = useCallback(() => {
-    if (onBackToMainCategories) {
-      // Use the parent's handler which properly resets state
-      onBackToMainCategories();
-    } else {
-      // Fallback to URL manipulation (original implementation)
-      const searchParams = new URLSearchParams(window.location.search);
-      searchParams.delete('category');
-      searchParams.delete('q'); // Clear question ID when going back
-      const newUrl = `${pathname}?${searchParams.toString()}`;
-      router.push(newUrl);
-    }
-  }, [onBackToMainCategories, pathname, router]);
-
-  // Handle subtopic selection
-  const handleSubtopicSelect = useCallback(async (topicId: string) => {
+  // Separate function for loading subtopic details without URL updates
+  const loadSubtopicDetails = useCallback(async (topicId: string) => {
     try {
       setIsLoading(true);
       
@@ -321,7 +310,6 @@ export default function CategoryDetailView({
         };
         
         setSubtopicDetails(formattedSubtopic);
-        setSelectedSubtopic(topicId);
         setOpenQuestionId(undefined); // Close any previously open question
       } else {
         // console.error('Invalid subtopic data structure:', data); // Example of logging if needed
@@ -333,12 +321,53 @@ export default function CategoryDetailView({
     }
   }, []);
 
+  // Load subtopic details when selectedSubtopic changes (from URL or state)
+  useEffect(() => {
+    if (selectedSubtopic && !subtopicDetails) {
+      loadSubtopicDetails(selectedSubtopic);
+    }
+  }, [selectedSubtopic, subtopicDetails, loadSubtopicDetails]);
+
+  // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
+  const handleBackToMainCategories = useCallback(() => {
+    if (onBackToMainCategories) {
+      // Use the parent's handler which properly resets state
+      onBackToMainCategories();
+    } else {
+      // Fallback to URL manipulation (original implementation)
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.delete('category');
+      searchParams.delete('q'); // Clear question ID when going back
+      const newUrl = `${pathname}?${searchParams.toString()}`;
+      router.push(newUrl);
+    }
+  }, [onBackToMainCategories, pathname, router]);
+
+  // Handle subtopic selection
+  const handleSubtopicSelect = useCallback(async (topicId: string) => {
+    // Update URL first
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('subtopic', topicId);
+    newSearchParams.delete('q'); // Clear question ID when selecting subtopic
+    router.push(`${pathname}?${newSearchParams.toString()}`);
+    
+    // Update state and load details
+    setSelectedSubtopic(topicId);
+    await loadSubtopicDetails(topicId);
+  }, [searchParams, router, pathname, loadSubtopicDetails]);
+
   // Handle back to category from subtopic
   const handleBackToCategory = useCallback(() => {
+    // Update URL first
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('subtopic');
+    newSearchParams.delete('q'); // Clear question ID when going back
+    router.push(`${pathname}?${newSearchParams.toString()}`);
+    
     setSelectedSubtopic(null);
     setSubtopicDetails(null);
     setOpenQuestionId(undefined); // Close any open question when navigating
-  }, []);
+  }, [searchParams, router, pathname]);
 
   // Handle difficulty selection from FloatingSettings
   const handleDifficultySelect = useCallback((difficulty: string) => {
