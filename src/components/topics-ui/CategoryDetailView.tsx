@@ -328,6 +328,109 @@ export default function CategoryDetailView({
     }
   }, [selectedSubtopic, subtopicDetails, loadSubtopicDetails]);
 
+  // Auto-scroll to question or category section when question is highlighted from URL
+  useEffect(() => {
+    // Only attempt scroll when we have data loaded and a highlighted question
+    if (highlightedQuestionId && (memoizedFilteredQuestions.length > 0 || (hasGroupedQuestions && Object.keys(questionsByCategory).length > 0))) {
+      
+      const performStagedScroll = () => {
+        // Stage 1: Find the scroll target (question or category section)
+        let scrollTarget = null;
+        let isQuestionElement = false;
+        
+        // Try to find the question element first
+        const possibleQuestionSelectors = [
+          `[data-value="${highlightedQuestionId}"]`,
+          `[value="${highlightedQuestionId}"]`,
+          `#question-${highlightedQuestionId}`,
+          `[data-question-id="${highlightedQuestionId}"]`
+        ];
+        
+        for (const selector of possibleQuestionSelectors) {
+          scrollTarget = document.querySelector(selector);
+          if (scrollTarget) {
+            isQuestionElement = true;
+            break;
+          }
+        }
+        
+        // Fallback: find category section
+        if (!scrollTarget && hasGroupedQuestions && Object.keys(questionsByCategory).length > 0) {
+          const categoryIdFromUrl = searchParams.get('categoryId');
+          
+          const targetCategoryId = categoryIdFromUrl || 
+            Object.entries(questionsByCategory).find(([_, category]) =>
+              category.questions.some(q => q.id === highlightedQuestionId)
+            )?.[0];
+          
+          if (targetCategoryId) {
+            scrollTarget = document.getElementById(`category-${targetCategoryId}`);
+          }
+        }
+        
+        if (scrollTarget) {
+          // Stage 1: Scroll to position the element optimally in viewport
+          const navHeight = 64; // pt-16 = 64px from MainNavigation
+          const additionalOffset = 20; // Extra spacing for better visual positioning
+          
+          const elementRect = scrollTarget.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          
+          // For question elements, position the question trigger (header) at the top
+          // For category sections, position at the top with some padding
+          let scrollPosition;
+          
+          if (isQuestionElement) {
+            // Position question header at the top of viewport (just below nav)
+            scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
+          } else {
+            // For category sections, ensure they're well-positioned at top
+            scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
+          }
+          
+          // Ensure we don't scroll past the beginning of the page
+          scrollPosition = Math.max(0, scrollPosition);
+          
+          window.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+          });
+          
+          // Stage 2: After scroll completes and 0.5s delay, open the accordion
+          setTimeout(() => {
+            setOpenQuestionId(highlightedQuestionId.toString());
+            
+            // Stage 3: After opening, fine-tune the scroll position if needed
+            // This handles the case where opening changes the layout significantly
+            setTimeout(() => {
+              const updatedElement = isQuestionElement 
+                ? document.querySelector(`[data-value="${highlightedQuestionId}"]`)
+                : document.getElementById(`category-${searchParams.get('categoryId') || ''}`);
+                
+              if (updatedElement) {
+                const updatedRect = updatedElement.getBoundingClientRect();
+                // Only adjust if the element moved significantly out of view
+                if (updatedRect.top < navHeight || updatedRect.top > navHeight + 100) {
+                  const adjustedPosition = window.scrollY + updatedRect.top - navHeight - additionalOffset;
+                  window.scrollTo({
+                    top: Math.max(0, adjustedPosition),
+                    behavior: 'smooth'
+                  });
+                }
+              }
+            }, 300); // Allow accordion animation to complete
+          }, 500);
+        }
+      };
+
+      // Try immediately first
+      performStagedScroll();
+      
+      // Retry after delay to handle async rendering
+      setTimeout(performStagedScroll, 800);
+    }
+  }, [highlightedQuestionId, hasGroupedQuestions, questionsByCategory, searchParams, openQuestionId, memoizedFilteredQuestions]);
+
   // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
   const handleBackToMainCategories = useCallback(() => {
     if (onBackToMainCategories) {
@@ -407,14 +510,28 @@ export default function CategoryDetailView({
     if (value) {
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.set('q', value); // q for question id
+      
+      // Find the category ID for this question and add it to URL
+      const questionId = parseInt(value);
+      if (questionId && hasGroupedQuestions) {
+        const categoryEntry = Object.entries(questionsByCategory).find(([_, category]) =>
+          category.questions.some(q => q.id === questionId)
+        );
+        if (categoryEntry) {
+          const [catId] = categoryEntry;
+          newSearchParams.set('categoryId', catId);
+        }
+      }
+      
       router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
     } else {
       // If accordion is closed (value is empty for single collapsible)
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete('q');
+      newSearchParams.delete('categoryId');
       router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
     }
-  }, [searchParams, router, pathname]);
+  }, [searchParams, router, pathname, hasGroupedQuestions, questionsByCategory]);
 
   if (isLoading && !categoryDetails) {
     return (
@@ -484,7 +601,7 @@ export default function CategoryDetailView({
             onValueChange={handleOpenQuestionChange}
           >
             {Object.entries(questionsByCategory).map(([catId, category], index) => (
-              <div key={catId} className="mb-8">
+              <div key={catId} id={`category-${catId}`} className="mb-8">
                 <div className="flex flex-row justify-between items-center mb-3 gap-2">
                   <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl dark:text-white truncate flex-1 min-w-0">{category.name}</h2>
                   <div className="flex items-center gap-3 flex-shrink-0">
