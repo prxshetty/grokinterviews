@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, RefObject } from 'react';
-// Removed progress tracking imports as functionality is disabled
 import { toast } from '@/hooks/use-toast';
+import { questionCache } from '@/utils/questionCache';
 
 interface UseQuestionProgressProps {
   questionId: number;
@@ -17,6 +17,7 @@ interface UseQuestionProgressReturn {
   scrollProgress: number;
   isCompleted: boolean;
   setIsCompleted: (completed: boolean) => void;
+  toggleCompletion: () => void;
 }
 
 export function useQuestionProgress({
@@ -33,10 +34,10 @@ export function useQuestionProgress({
   const [isCompleted, setIsCompleted] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check if question is already completed on mount (progress tracking disabled)
+  // Check if question is already completed on mount using cache
   useEffect(() => {
-    // Progress tracking disabled - questions start as not completed
-    setIsCompleted(false);
+    const isCompletedFromCache = questionCache.isQuestionCompleted(questionId);
+    setIsCompleted(isCompletedFromCache);
   }, [questionId]);
 
   useEffect(() => {
@@ -96,13 +97,15 @@ export function useQuestionProgress({
         console.log(`Question ${questionId} reached ${percentage}% scroll, marking as completed`);
         console.log('Completion details:', { questionId, topicId, categoryId, domain });
         setIsCompleted(true); // Optimistic UI update
+        
+        // Store completion in cache
+        questionCache.markQuestionCompleted(questionId, topicId, categoryId);
+        
         onCompletionChange?.(questionId, true, topicId, categoryId);
         console.log('Showing toast notification...');
-        toast.success("Question marked as completed!");
+        toast.success("Question Completed! Your progress has been saved locally.");
 
-        // Progress tracking disabled - completion is only stored locally
-        console.log(`Question ${questionId} marked as completed locally (progress tracking disabled)`);
-        // No backend API call needed since progress tracking is disabled
+        console.log(`Question ${questionId} marked as completed and stored in cache`);
       }
     };
 
@@ -123,9 +126,25 @@ export function useQuestionProgress({
     };
   }, [isExpanded, hasAnswer, questionId, isCompleted, onCompletionChange, topicId, categoryId, domain, answerRef]);
 
+  const toggleCompletion = () => {
+    const newCompletedState = !isCompleted;
+    setIsCompleted(newCompletedState);
+    
+    if (newCompletedState) {
+      questionCache.markQuestionCompleted(questionId, topicId, categoryId);
+      toast.success("Question Completed! Your progress has been saved locally.");
+    } else {
+      questionCache.markQuestionIncomplete(questionId);
+      toast.info("Question marked as incomplete. Progress updated locally.");
+    }
+    
+    onCompletionChange?.(questionId, newCompletedState, topicId, categoryId);
+  };
+
   return {
     scrollProgress,
     isCompleted,
-    setIsCompleted
+    setIsCompleted,
+    toggleCompletion
   };
 }

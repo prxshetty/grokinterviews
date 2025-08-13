@@ -5,7 +5,7 @@ import { motion, type Variants } from 'framer-motion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { QuestionWithAnswer } from '@/components/questions';
 import { LoadingSpinner, Accordion, ProgressBar } from '@/components/ui';
-// Removed progress tracking imports as functionality is disabled
+import { questionCache } from '@/utils/questionCache';
 import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
 
@@ -118,6 +118,12 @@ export default function CategoryDetailView({
     highlightedQuestionId ? highlightedQuestionId.toString() : undefined
   );
 
+  // Track if we should allow scroll effects to prevent interference with manual accordion operations
+  const [allowScrollEffect, setAllowScrollEffect] = useState(true);
+  
+  // Track which question ID we've already handled from URL to prevent re-opening
+  const [handledQuestionId, setHandledQuestionId] = useState<number | null>(null);
+
   // Check if this is section/header or specific topic
   const hasSubtopics = categoryDetails?.subtopics && Object.keys(categoryDetails.subtopics).length > 0;
   const hasRealSubtopics = hasSubtopics && Object.keys(categoryDetails?.subtopics || {}).some(id => id.startsWith('topic-'));
@@ -224,14 +230,14 @@ export default function CategoryDetailView({
       try {
         // Removed progress fetching logic
         
-        // Update completed questions tracking
+        // Update completed questions tracking from cache
         const questions = memoizedFilteredQuestions;
         const questionIds = questions.map(q => q.id);
         
         if (questionIds.length > 0) {
           try {
-            // Progress tracking disabled - mark all questions as not completed
-            const completedResults = questionIds.map(() => false);
+            // Get completion status from cache
+            const completedResults = questionIds.map(id => questionCache.isQuestionCompleted(id));
             
             if (!signal.aborted) {
               const newCompletedStatus: Record<number, boolean> = {};
@@ -331,7 +337,11 @@ export default function CategoryDetailView({
   // Auto-scroll to question or category section when question is highlighted from URL
   useEffect(() => {
     // Only attempt scroll when we have data loaded and a highlighted question
-    if (highlightedQuestionId && (memoizedFilteredQuestions.length > 0 || (hasGroupedQuestions && Object.keys(questionsByCategory).length > 0))) {
+    // Also check if scroll effects are allowed and we haven't already handled this question ID
+    if (highlightedQuestionId && 
+        (memoizedFilteredQuestions.length > 0 || (hasGroupedQuestions && Object.keys(questionsByCategory).length > 0)) &&
+        allowScrollEffect &&
+        handledQuestionId !== highlightedQuestionId) {
       
       const performStagedScroll = () => {
         // Stage 1: Find the scroll target (question or category section)
@@ -399,6 +409,9 @@ export default function CategoryDetailView({
           setTimeout(() => {
             setOpenQuestionId(highlightedQuestionId.toString());
             
+            // Mark this question ID as handled to prevent re-opening
+            setHandledQuestionId(highlightedQuestionId);
+            
             // Stage 3: After opening, fine-tune the scroll position if needed
             // This handles the case where opening changes the layout significantly
             setTimeout(() => {
@@ -428,7 +441,7 @@ export default function CategoryDetailView({
       // Retry after delay to handle async rendering
       setTimeout(performStagedScroll, 800);
     }
-  }, [highlightedQuestionId, hasGroupedQuestions, questionsByCategory, searchParams, openQuestionId, memoizedFilteredQuestions]);
+  }, [highlightedQuestionId, hasGroupedQuestions, questionsByCategory, searchParams, memoizedFilteredQuestions, allowScrollEffect, handledQuestionId]);
 
   // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
   const handleBackToMainCategories = useCallback(() => {
@@ -490,11 +503,8 @@ export default function CategoryDetailView({
   ) => {
     setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
 
-    // Add a small delay to ensure database transaction is fully committed
-    // before fetching fresh progress data
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Removed progress re-fetching logic
+    // No need for database delays since we're using local cache
+    // Progress is automatically updated via the cache service
   }, [
     selectedSubtopic, 
     subtopicDetails, 
@@ -505,6 +515,11 @@ export default function CategoryDetailView({
   // Handler for Accordion's onValueChange
   const handleOpenQuestionChange = useCallback((value: string) => {
     setOpenQuestionId(value);
+    
+    // Temporarily disable scroll effects to prevent interference
+    setAllowScrollEffect(false);
+    setTimeout(() => setAllowScrollEffect(true), 1000);
+    
     // If a question is opened, update URL for shareability, but only if not clearing
     if (value) {
       const newSearchParams = new URLSearchParams(searchParams);
