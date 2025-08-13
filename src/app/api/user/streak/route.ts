@@ -3,82 +3,124 @@ import { createClient } from '@/utils/supabase/server';
 
 export const revalidate = 0; // Disable caching for this route
 
+// Helper function to calculate streak from a list of activity dates
+function calculateStreak(activityDates: string[]): { currentStreak: number, streakStartDate: string | null, lastActiveDate: string | null } {
+    if (activityDates.length === 0) {
+        return { currentStreak: 0, streakStartDate: null, lastActiveDate: null };
+    }
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    // Create a set of unique UTC dates from the timestamps
+    const uniqueDates = [...new Set(activityDates.map(d => d.split('T')[0]))].map(d => new Date(d));
+    uniqueDates.sort((a, b) => b.getTime() - a.getTime());
+
+    const mostRecentDate = uniqueDates[0];
+    if (!mostRecentDate) {
+        return { currentStreak: 0, streakStartDate: null, lastActiveDate: null };
+    }
+
+    const diffFromToday = Math.round((today.getTime() - mostRecentDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // If the last activity was more than a day ago, streak is 0
+    if (diffFromToday > 1) {
+        return { currentStreak: 0, streakStartDate: null, lastActiveDate: mostRecentDate.toISOString() };
+    }
+
+    let currentStreak = 1;
+    let streakStartDate = mostRecentDate;
+
+    // Iterate backwards from the most recent activity
+    for (let i = 0; i < uniqueDates.length - 1; i++) {
+        const currentDate = uniqueDates[i];
+        const nextDate = uniqueDates[i+1];
+        
+        if(!currentDate || !nextDate) break;
+
+        const diff = Math.round((currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diff === 1) {
+            currentStreak++;
+            streakStartDate = nextDate;
+        } else {
+            // Found a gap, so the streak ends here
+            break;
+        }
+    }
+
+    return { 
+        currentStreak, 
+        streakStartDate: streakStartDate.toISOString(), 
+        lastActiveDate: mostRecentDate.toISOString() 
+    };
+}
+
+
 export async function GET(_request: NextRequest) {
   const supabase = await createClient();
   
   try {
-    // Authenticate user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      // eslint-disable-next-line no-console
-      console.error('User fetch Error in streak:', userError?.message);
       return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
     }
 
-    // Get streak data directly from user_streaks table
-    const { data: streakData, error: streakError } = await supabase
+    // 1. Fetch all user activity dates from the user_activity table
+    const { data: activities, error: activityError } = await supabase
+      .from('user_activity')
+      .select('created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (activityError) {
+      console.error('Error fetching user activity for streak:', activityError);
+      return NextResponse.json({ error: 'Failed to fetch user activity' }, { status: 500 });
+    }
+
+    const activityDates = activities.map(a => a.created_at);
+
+    // 2. Calculate the streak based on the activity dates
+    const { currentStreak, streakStartDate, lastActiveDate } = calculateStreak(activityDates);
+
+    // 3. Get the current highest streak from the database
+    const { data: streakData } = await supabase
       .from('user_streaks')
-      .select('current_streak, highest_streak, last_active_date, streak_start_date')
+      .select('highest_streak')
       .eq('user_id', user.id)
       .maybeSingle();
-
-    if (streakError) {
-      // eslint-disable-next-line no-console
-      console.error('Error fetching streak:', streakError);
-      return NextResponse.json({ error: 'Failed to fetch streak' }, { status: 500 });
+    
+    let highestStreak = streakData?.highest_streak || 0;
+    if (currentStreak > highestStreak) {
+        highestStreak = currentStreak;
     }
 
-    // If no streak record exists yet, return default values
-    if (!streakData) {
-      return NextResponse.json({
-        current_streak: 0,
-        highest_streak: 0,
-        last_active_date: null,
-        streak_start_date: null
-      });
+    // 4. Upsert the new streak data into the user_streaks table
+    const { error: upsertError } = await supabase
+      .from('user_streaks')
+      .upsert({
+        user_id: user.id,
+        current_streak: currentStreak,
+        highest_streak: highestStreak,
+        last_active_date: lastActiveDate,
+        streak_start_date: streakStartDate,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (upsertError) {
+        console.error('Error upserting streak data:', upsertError);
+        // Non-fatal, return calculated data anyway as it's more up-to-date
     }
 
-    const today = new Date();
-    const todayDateString = today.toISOString().split('T')[0]!; // Non-null assertion since toISOString always returns valid format
+    // 5. Return the newly calculated and saved data
+    return NextResponse.json({
+      current_streak: currentStreak,
+      highest_streak: highestStreak,
+      last_active_date: lastActiveDate,
+      streak_start_date: streakStartDate
+    });
 
-    // Check if streak is broken
-    if (streakData.last_active_date) {
-      const lastActiveDateString = new Date(streakData.last_active_date).toISOString().split('T')[0]!;
-      
-      const todayDate = new Date(todayDateString);
-      const lastActiveDate = new Date(lastActiveDateString);
-
-      const diffTime = todayDate.getTime() - lastActiveDate.getTime();
-      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays > 1) {
-        // Streak is broken, reset it
-        const resetData = {
-          ...streakData,
-          current_streak: 0
-        };
-
-        const { error: updateError } = await supabase
-          .from('user_streaks')
-          .update({ current_streak: 0 })
-          .eq('user_id', user.id);
-
-        if (updateError) {
-          // eslint-disable-next-line no-console
-          console.error('Error resetting streak:', updateError);
-          // Still return reset data to avoid breaking the UI with stale data
-          return NextResponse.json(resetData);
-        }
-        
-        // Return the reset streak data
-        return NextResponse.json(resetData);
-      }
-    }
-
-    // Return current streak data
-    return NextResponse.json(streakData);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Error in streak route:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

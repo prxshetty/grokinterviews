@@ -53,11 +53,6 @@ export function BookmarkButton({
 }: BookmarkButtonProps) {
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
 
-  // Sync state with prop changes
-  useEffect(() => {
-    setIsBookmarked(initialIsBookmarked);
-  }, [initialIsBookmarked]);
-
   // Handle bookmark toggle
   const handleToggleBookmark = async () => {
     const newBookmarkState = !isBookmarked;

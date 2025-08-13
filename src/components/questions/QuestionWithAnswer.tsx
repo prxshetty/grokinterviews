@@ -18,6 +18,7 @@ import {
 import { TabNav } from '@/components/ui/tab-nav';
 import { AnswerDisplay } from './AnswerDisplay';
 import { DifficultyTag } from './DifficultyTag';
+import { BookmarkButton } from './BookmarkButton';
 
 // Lazy load ResourceList component for better performance
 const ResourceList = React.lazy(() => 
@@ -233,36 +234,17 @@ function QuestionWithAnswerComponent({
         
         {/* Right side: Bookmark and chevron */}
         <div className="flex items-center flex-shrink-0 ml-2">
-          {/* Bookmark button - using span to avoid nested buttons */}
+          {/* Bookmark button with animations */}
           {(actualCategoryId !== null && actualCategoryId !== undefined) && (
-            <span 
-              className={`flex items-center ${
-                isTabletOrSmaller ? 'px-1.5 py-1' : 'px-2 py-1'
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                // Trigger bookmark toggle using the hook's handler
-                handleBookmarkChange(!isBookmarkedState);
-              }}
-            >
-              <div 
-                className="h-8 w-8 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-                title={isBookmarkedState ? 'Remove bookmark' : 'Add bookmark'}
-              >
-                <svg 
-                  className={`h-4 w-4 transition-colors ${
-                    isBookmarkedState 
-                      ? 'text-blue-500 fill-blue-500' 
-                      : 'text-gray-400 dark:text-gray-500'
-                  }`}
-                  fill={isBookmarkedState ? 'currentColor' : 'none'}
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </div>
-            </span>
+            <div onClick={(e) => e.stopPropagation()}>
+              <BookmarkButton
+                questionId={questionId}
+                topicId={actualTopicId}
+                categoryId={actualCategoryId}
+                initialIsBookmarked={isBookmarkedState}
+                onBookmarkChange={handleBookmarkChange}
+              />
+            </div>
           )}
           
           {/* Custom chevron */}
