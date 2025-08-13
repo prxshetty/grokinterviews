@@ -33,10 +33,6 @@ export const InterviewFeatures: React.FC = () => {
                      <span className="text-green-500 w-4 text-center">✓</span>
                      <span className="w-32 text-left">Personalized experience</span>
                    </div>
-                   <div className="flex items-center justify-center gap-2">
-                     <span className="text-green-500 w-4 text-center">✓</span>
-                     <span className="w-32 text-left">Session customization</span>
-                   </div>
                  </div>
                  <p className="text-center mt-4 text-xs">
                    Each interview session includes carefully curated behavioral and technical questions. Our AI conversation API generates dynamic questions based on your profile and session type.
@@ -64,10 +60,6 @@ export const InterviewFeatures: React.FC = () => {
                      <span className="text-green-500 w-4 text-center">✓</span>
                      <span className="w-32 text-left">Web & phone support</span>
                    </div>
-                   <div className="flex items-center justify-center gap-2">
-                     <span className="text-green-500 w-4 text-center">✓</span>
-                     <span className="w-32 text-left">Flow analysis</span>
-                   </div>
                  </div>
                  <p className="text-center mt-4 text-xs">
                    Complete conversation transcripts with timestamps and duration tracking. All conversations are automatically transcribed and formatted for easy review.
@@ -94,10 +86,6 @@ export const InterviewFeatures: React.FC = () => {
                    <div className="flex items-center justify-center gap-2">
                      <span className="text-green-500 w-4 text-center">✓</span>
                      <span className="w-32 text-left">Better insights</span>
-                   </div>
-                   <div className="flex items-center justify-center gap-2">
-                     <span className="text-green-500 w-4 text-center">✓</span>
-                     <span className="w-32 text-left">Visual indicators</span>
                    </div>
                  </div>
                  <p className="text-center mt-4 text-xs">
