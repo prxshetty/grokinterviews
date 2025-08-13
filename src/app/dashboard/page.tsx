@@ -110,7 +110,6 @@ export default function DashboardPage() {
       if (!isMounted.current) return;
       
       try {
-        // Fetch user stats using existing API endpoints (progress tracking disabled)
         const [
           bookmarksRes,
           userStatsRes,
@@ -124,18 +123,6 @@ export default function DashboardPage() {
         ]);
 
         if (isMounted.current) {
-          // Progress tracking disabled - use default values
-          setProgressData({
-            questionsCompleted: 0,
-            questionsViewed: 0,
-            totalQuestions: 0,
-            completionPercentage: 0,
-            domainsSolved: 0,
-            totalDomains: 0,
-            loading: false
-          });
-
-          // Handle user stats (including bookmarks)
           let bookmarksCount = 0;
           if (bookmarksRes.ok) {
             const bookmarksResult = await bookmarksRes.json();
@@ -155,12 +142,17 @@ export default function DashboardPage() {
              setUserStats(prev => ({ ...prev, bookmarksCount, loading: false, error: 'Failed to load user stats' }));
           }
 
-          // Handle domain stats
+          let solvedDomains = 0;
+          let totalDomains = 0;
           if (domainStatsRes.ok) {
             const domainData = await domainStatsRes.json();
+            totalDomains = domainData.totalDomains || 0;
+            if (domainData.domains && Array.isArray(domainData.domains)) {
+                solvedDomains = domainData.domains.filter((d: any) => d.completionPercentage > 0).length;
+            }
             setDomainStats({
               domains: domainData.domains || [],
-              totalDomains: domainData.totalDomains || 0,
+              totalDomains: totalDomains,
               loading: false,
               error: null
             });
@@ -168,7 +160,16 @@ export default function DashboardPage() {
             setDomainStats(prev => ({...prev, loading: false, error: 'Failed to load domain stats' }));
           }
           
-          // Handle activity chart data
+          setProgressData({
+            questionsCompleted: 0,
+            questionsViewed: 0,
+            totalQuestions: 0,
+            completionPercentage: 0,
+            domainsSolved: solvedDomains,
+            totalDomains: totalDomains,
+            loading: false
+          });
+
           if (activityChartRes.ok) {
             const chartResult = await activityChartRes.json();
              const chartData = (chartResult.activityData || []).map((item: any) => ({
