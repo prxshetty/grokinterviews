@@ -19,6 +19,46 @@ interface Bookmark {
   timeAgo: string;
 }
 
+// Function to build the proper URL structure for question navigation with enhanced scrolling
+function buildQuestionUrl(bookmark: Bookmark): string {
+  if (!bookmark.domain) {
+    // Fallback to simple URL if domain is missing
+    return `/topics?q=${bookmark.questionId}`;
+  }
+
+  // Build the complete URL structure for proper navigation and scrolling
+  // Since we don't have the exact section ID from bookmarks, we'll use a name-based approach
+  // The TopicPageClient has been updated to handle section name fallbacks
+  
+  let categoryParam = '';
+  if (bookmark.sectionName) {
+    // Create a header-style ID from section name
+    // Convert "Foundations of Artificial Intelligence" -> "header-foundations-of-artificial-intelligence"
+    const sectionSlug = bookmark.sectionName
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .trim();
+    categoryParam = `header-${sectionSlug}`;
+  } else {
+    // Fallback: use a category-based parameter that won't match header format
+    // This will trigger the else branch in TopicPageClient for direct topic loading
+    categoryParam = `bookmark-topic-${bookmark.topicId}`;
+  }
+
+  const url = new URL(`/topics/${bookmark.domain}`, 'http://localhost:3000'); // Base URL doesn't matter for relative links
+  
+  // Add all necessary parameters for proper navigation
+  url.searchParams.set('category', categoryParam);
+  url.searchParams.set('subtopic', `topic-${bookmark.topicId}`);
+  url.searchParams.set('q', bookmark.questionId.toString());
+  url.searchParams.set('categoryId', bookmark.categoryId.toString());
+
+  // Return just the pathname + search params (relative URL)
+  return url.pathname + url.search;
+}
+
 export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,7 +157,7 @@ export default function BookmarksPage() {
                             </div>
                             <div className="mt-3">
                               <Link
-                                href={`/topics?questionId=${bookmark.questionId}`}
+                                href={buildQuestionUrl(bookmark)}
                                 className="inline-flex items-center text-xs sm:text-sm font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-md transition-colors"
                               >
                                 View Question

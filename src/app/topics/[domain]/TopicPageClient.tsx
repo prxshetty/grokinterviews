@@ -120,15 +120,49 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
         return;
       }
 
-      if (categoryId.startsWith('header-')) {
+      if (categoryId.startsWith('header-') || categoryId.startsWith('bookmark-topic-')) {
         // Find the section name from topicCategories for display purposes.
-        const section = topicCategories.find(c => c.id === categoryId);
+        let section = topicCategories.find(c => c.id === categoryId);
+        let sectionName: string;
+        
         if (!section) {
-          console.error('Section not found in topicCategories for categoryId:', categoryId);
-          setIsLoading(prev => ({ ...prev, sections: false }));
-          return;
+          if (categoryId.startsWith('bookmark-topic-')) {
+            // For bookmark URLs, we don't have a matching section ID, so we skip section loading
+            // and go directly to loading the topic details
+            console.log('Bookmark URL detected, skipping section loading for:', categoryId);
+            setCategoryDetails({
+              id: categoryId,
+              label: 'Bookmarked Question',
+              isGenerated: false
+            });
+            setIsLoading(prev => ({ ...prev, sections: false }));
+            return;
+          }
+          
+          console.warn('Section not found in topicCategories for categoryId:', categoryId);
+          
+          // Fallback: try to find section by name if the categoryId was constructed from section name
+          // Extract potential section name from categoryId (e.g., "header-foundations-of-artificial-intelligence" -> "Foundations of Artificial Intelligence")
+          const potentialSectionName = categoryId.replace('header-', '')
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          
+          section = topicCategories.find(c => 
+            c.label.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') === categoryId.replace('header-', '') ||
+            c.label.toLowerCase() === potentialSectionName.toLowerCase()
+          );
+          
+          if (!section) {
+            console.error('No matching section found for categoryId:', categoryId, 'Tried section name:', potentialSectionName);
+            setIsLoading(prev => ({ ...prev, sections: false }));
+            return;
+          }
+          
+          console.log('Found section by name fallback:', section.label);
         }
-        const sectionName = section.label;
+        
+        sectionName = section.label;
 
         // Fetch topics using the section name, not the ID
         const topicsInSection = await TopicDataService.getTopicsBySection(domain, sectionName);

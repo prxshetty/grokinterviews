@@ -374,7 +374,6 @@ export default function CategoryDetailView({
           const additionalOffset = 20; // Extra spacing for better visual positioning
           
           const elementRect = scrollTarget.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
           
           // For question elements, position the question trigger (header) at the top
           // For category sections, position at the top with some padding

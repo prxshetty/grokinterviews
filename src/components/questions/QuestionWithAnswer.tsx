@@ -179,9 +179,15 @@ function QuestionWithAnswerComponent({
       }`}
     >
       {/* Use AccordionTrigger with proper layout structure */}
-      <AccordionTrigger className={`bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors text-left justify-start items-start ${
-        isTabletOrSmaller ? 'px-3 py-2.5' : 'px-4 py-3'
-      } [&>svg]:hidden hover:bg-gray-50 dark:hover:bg-gray-700/50`}>
+      <AccordionTrigger 
+        className={`bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors text-left justify-start items-start ${
+          isTabletOrSmaller ? 'px-3 py-2.5' : 'px-4 py-3'
+        } [&>svg]:hidden hover:bg-gray-50 dark:hover:bg-gray-700/50 relative z-10 cursor-pointer`}
+        onClick={(e) => {
+          console.log('🎯 Accordion trigger clicked for question:', questionId);
+          // Don't preventDefault here - let the accordion handle the toggle
+        }}
+      >
         {/* Left side: Status icon and question content */}
         <div className="flex items-start flex-1 min-w-0">
           {isCompletedState ? (
