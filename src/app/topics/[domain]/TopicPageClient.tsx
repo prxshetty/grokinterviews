@@ -123,7 +123,12 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
       if (categoryId.startsWith('header-')) {
         // Find the section name from topicCategories for display purposes.
         const section = topicCategories.find(c => c.id === categoryId);
-        const sectionName = section ? section.label : 'Section';
+        if (!section) {
+          console.error('Section not found in topicCategories for categoryId:', categoryId);
+          setIsLoading(prev => ({ ...prev, sections: false }));
+          return;
+        }
+        const sectionName = section.label;
 
         // Fetch topics using the section name, not the ID
         const topicsInSection = await TopicDataService.getTopicsBySection(domain, sectionName);
@@ -243,12 +248,12 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     }
   }, [selectedTopic, loadTopics]);
 
-  // Load category details when category is selected from URL
+  // Load category details when category is selected from URL and topics are loaded
   useEffect(() => {
-    if (selectedCategory) {
+    if (selectedCategory && topicCategories.length > 0) {
       loadCategoryDetails(selectedCategory);
     }
-  }, [selectedCategory, loadCategoryDetails]);
+  }, [selectedCategory, topicCategories, loadCategoryDetails]);
 
   // Load difficulty questions when difficulty is selected from URL
   useEffect(() => {

@@ -204,12 +204,15 @@ export function AnswerDisplay({
                 code: CodeBlock,
                 pre: ({ children }) => <>{children}</>, // Let CodeBlock handle the pre element
                 p: ({ children }) => {
-                  // Check if children contains code blocks (pre elements)
-                  const hasCodeBlock = React.Children.toArray(children).some(
-                    child => React.isValidElement(child) && child.type === 'pre'
+                  const hasBlockElement = React.Children.toArray(children).some(
+                    (child) =>
+                      React.isValidElement(child) && (child.type === 'div' || child.type === 'pre')
                   );
-                  // If it contains a code block, render as div instead of p
-                  return hasCodeBlock ? <div>{children}</div> : <p>{children}</p>;
+
+                  if (hasBlockElement) {
+                    return <>{children}</>;
+                  }
+                  return <p>{children}</p>;
                 },
                 a: (props) => (
                   <a 
