@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, KeyboardEvent, MouseEvent } from 'react';
+import { useState, KeyboardEvent, MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';

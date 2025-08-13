@@ -13,7 +13,8 @@ function calculateStreak(activityDates: string[]): { currentStreak: number, stre
     today.setUTCHours(0, 0, 0, 0);
 
     // Create a set of unique UTC dates from the timestamps
-    const uniqueDates = [...new Set(activityDates.map(d => d.split('T')[0]))].map(d => new Date(d));
+    const uniqueDateStrings = activityDates.map(d => d.split('T')[0]).filter((d): d is string => !!d);
+    const uniqueDates = [...new Set(uniqueDateStrings)].map(d => new Date(d));
     uniqueDates.sort((a, b) => b.getTime() - a.getTime());
 
     const mostRecentDate = uniqueDates[0];
