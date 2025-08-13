@@ -48,7 +48,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 0 0% 3.9%;
+    --ring: 217 91% 60%;
     --radius: 0.5rem;
     
     /* Chart Colors - Light Mode */
@@ -96,6 +96,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 15%;
     --input: 0 0% 15%;
+    --ring: 217 91% 60%;
     
     /* Chart Colors - Dark Mode */
     --chart-1: 220 13% 69%;
