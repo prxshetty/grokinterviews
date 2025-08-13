@@ -121,9 +121,9 @@ export default function ContentDisplay({
     highlightedQuestionId ? highlightedQuestionId.toString() : undefined
   );
 
-  // Scroll to highlighted question if it exists
+  // Scroll to highlighted question if it exists (only for difficulty-filtered questions, not for category details)
   useEffect(() => {
-    if (highlightedQuestionId) {
+    if (highlightedQuestionId && selectedDifficulty && !selectedCategory) {
       setTimeout(() => {
         const questionElement = document.getElementById(`question-${highlightedQuestionId}`);
         if (questionElement) {

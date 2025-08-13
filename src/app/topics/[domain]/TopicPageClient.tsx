@@ -64,7 +64,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // State for highlighted question (from URL)
   const [highlightedQuestionId] = useState<number | undefined>(() => {
-    const qIdParam = searchParams.get('questionId');
+    const qIdParam = searchParams.get('q');
     if (qIdParam) {
       const num = parseInt(qIdParam, 10);
       return !isNaN(num) ? num : undefined;
