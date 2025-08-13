@@ -203,16 +203,34 @@ export function AnswerDisplay({
                 ...defaultMarkdownComponents,
                 code: CodeBlock,
                 pre: ({ children }) => <>{children}</>, // Let CodeBlock handle the pre element
-                p: ({ children }) => {
+                p: ({ children, ...props }) => {
+                  // Check if any child is a block element that should not be inside a p tag
                   const hasBlockElement = React.Children.toArray(children).some(
-                    (child) =>
-                      React.isValidElement(child) && (child.type === 'div' || child.type === 'pre')
+                    (child) => {
+                      if (React.isValidElement(child)) {
+                        // Check for direct block elements
+                        if (child.type === 'div' || child.type === 'pre') {
+                          return true;
+                        }
+                        // Check for CodeBlock component (which renders a pre inside a div)
+                        if (typeof child.type === 'function' && child.type === CodeBlock) {
+                          return true;
+                        }
+                        // Check for code elements that might contain pre elements
+                        if (child.type === 'code' && child.props && !(child.props as any).inline) {
+                          return true;
+                        }
+                      }
+                      return false;
+                    }
                   );
 
+                  // If we have block elements, render as a div instead of p to avoid nesting issues
                   if (hasBlockElement) {
-                    return <>{children}</>;
+                    return <div {...props}>{children}</div>;
                   }
-                  return <p>{children}</p>;
+                  
+                  return <p {...props}>{children}</p>;
                 },
                 a: (props) => (
                   <a 
