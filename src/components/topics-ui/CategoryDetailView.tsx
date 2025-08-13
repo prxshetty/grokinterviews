@@ -456,15 +456,15 @@ export default function CategoryDetailView({
           >
             {Object.entries(questionsByCategory).map(([catId, category], index) => (
               <div key={catId} className="mb-8">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
-                  <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl dark:text-white">{category.name}</h2>
-                  <div className="flex items-center justify-end gap-3 w-full">
-                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300">
+                <div className="flex flex-row justify-between items-center mb-3 gap-2">
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl dark:text-white truncate flex-1 min-w-0">{category.name}</h2>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
                       {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
                     </span>
                     {/* Mobile FloatingSettings - only show on first category */}
                     {index === 0 && subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
-                      <div className="sm:hidden ml-auto">
+                      <div className="sm:hidden">
                         <FloatingSettings
                           selectedDifficulty={propSelectedDifficulty || null}
                           onSelectDifficulty={handleDifficultySelect}
