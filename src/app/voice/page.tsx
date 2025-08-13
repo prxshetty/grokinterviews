@@ -102,10 +102,10 @@ export default function VoicePage() {
       <div className="container mx-auto px-4 py-8 min-h-[600px]">
         <div className="space-y-6 w-full">
           <div className="text-center space-y-2">
-            <h2 className="text-3xl md:text-4xl font-normal text-black dark:text-white">
+            <h2 className="text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-tight">
               Choose Your Interview Mode
             </h2>
-            <p className="text-muted-foreground lg:text-lg">
+            <p className="mx-auto max-w-2xl text-balance text-sm sm:text-base md:text-lg text-muted-foreground">
               Select how you'd like to practice your behavioral interview
             </p>
           </div>
@@ -128,9 +128,10 @@ export default function VoicePage() {
                       alt={mode.title}
                       fill
                       className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-center items-center text-white text-center p-4 md:p-6">
-                      <h3 className="text-2xl md:text-3xl font-semibold mb-2 md:mb-3">
+                      <h3 className="text-2xl md:text-3xl font-normal mb-2 md:mb-3">
                         {mode.title}
                       </h3>
                       <p className="text-sm md:text-base opacity-90">

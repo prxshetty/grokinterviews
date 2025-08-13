@@ -52,7 +52,8 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
             key={voice.id}
             onClick={() => onVoiceChange(voice.id)}
             className={cn(
-              "relative flex flex-col items-center transition-all duration-200 group"
+              "relative flex flex-col items-center transition-all duration-200 group",
+              selectedVoice && selectedVoice !== voice.id ? "opacity-40" : "opacity-100"
             )}
           >
             {/* Circular Icon Container */}
@@ -65,12 +66,6 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
                 : "border-border bg-card hover:border-gray-400"
             )}>
               <img src={voice.image} alt={voice.name} className="w-full h-full object-cover object-[center_25%]" />
-              {selectedVoice === voice.id && (
-                <div className={cn(
-                  "absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-900",
-                  voice.tier === 'premium' ? "bg-amber-500" : "bg-primary"
-                )}></div>
-              )}
             </div>
             
             {/* Voice Info */}
@@ -85,11 +80,7 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
               )}>
                 {voice.name}
               </div>
-              {voice.tier === 'premium' && (
-                <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                  Premium
-                </div>
-              )}
+
             </div>
           </button>
         ))}
