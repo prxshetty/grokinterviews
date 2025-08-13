@@ -110,6 +110,22 @@ export function InterviewList({
     }
   };
 
+  const formatDuration = (interview: CombinedInterview) => {
+    if (interview.type === 'phone' && interview.call_duration) {
+      const minutes = Math.floor(interview.call_duration / 60);
+      const seconds = interview.call_duration % 60;
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } else if (interview.type === 'web' && interview.session_start && interview.session_end) {
+      const start = new Date(interview.session_start);
+      const end = new Date(interview.session_end);
+      const durationMs = end.getTime() - start.getTime();
+      const minutes = Math.floor(durationMs / (1000 * 60));
+      const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return null;
+  };
+
   const renderInterviewItem = (interview: CombinedInterview) => {
     const isSelected = (selectedSession?.id === interview.id && interview.type === 'web') ||
                      (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
@@ -118,6 +134,7 @@ export function InterviewList({
     const interviewer = interview.voice_name && interview.voice_name in VOICE_CONFIG ? VOICE_CONFIG[interview.voice_name as VoiceOption] : null;
     const interviewerName = interviewer ? interviewer.displayName : 'AI Interviewer';
     const interviewerImage = interviewer ? interviewer.image : ' / images / female_default.png';
+    const duration = formatDuration(interview);
 
     return (
       <div
@@ -174,8 +191,15 @@ export function InterviewList({
                   </Button>
                 </motion.div>
               ) : (
-                <div className="text-xs text-muted-foreground">
-                  {new Date(interview.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                <div className="text-xs text-muted-foreground text-right">
+                  <div>
+                    {new Date(interview.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
+                  {duration && (
+                    <div className="text-xs text-muted-foreground/70">
+                      {duration}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
