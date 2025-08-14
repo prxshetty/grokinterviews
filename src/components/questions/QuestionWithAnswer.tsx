@@ -7,6 +7,7 @@ import { ChevronUp } from 'lucide-react';
 // Import custom hooks
 import { useQuestionAnswer, useQuestionProgress, useQuestionBookmark, useQuestionView } from '@/hooks/questions';
 import { useIsTabletOrSmaller } from '@/hooks/ui';
+import { useAuth } from '@/hooks/auth';
 
 // Import the new accordion components
 import {
@@ -125,6 +126,8 @@ function QuestionWithAnswerComponent({
     predefinedAnswer: question.answer_text || undefined
   });
 
+  const { user } = useAuth();
+  
   const { isCompleted: isCompletedState, scrollProgress, toggleCompletion } = useQuestionProgress({
     questionId,
     topicId: actualTopicId || undefined,
@@ -133,7 +136,8 @@ function QuestionWithAnswerComponent({
     answerRef: answerRef as React.RefObject<HTMLDivElement | null>,
     isExpanded: isExpandedState,
     hasAnswer: Boolean(generatedAnswer || question.answer_text),
-    onCompletionChange: onCompletionChange as (questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void
+    onCompletionChange: onCompletionChange as (questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void,
+    userId: user?.id
   });
 
   // Note: Completion status is now handled directly in useQuestionProgress hook
@@ -179,85 +183,87 @@ function QuestionWithAnswerComponent({
         isTabletOrSmaller ? 'mb-2' : 'mb-3'
       }`}
     >
-      {/* Use AccordionTrigger with proper layout structure */}
-      <AccordionTrigger 
-        className={`bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors text-left justify-start items-start ${
-          isTabletOrSmaller ? 'px-3 py-2.5' : 'px-4 py-3'
-        } [&>svg]:hidden hover:bg-gray-50 dark:hover:bg-gray-700/50 relative z-10 cursor-pointer`}
-        onClick={() => {
-          console.log('🎯 Accordion trigger clicked for question:', questionId);
-          // Don't preventDefault here - let the accordion handle the toggle
-        }}
-      >
-        {/* Left side: Status icon and question content */}
-        <div className="flex items-start flex-1 min-w-0">
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleCompletion();
-            }}
-            className="mr-2 w-5 h-5 flex-shrink-0 mt-1 hover:scale-110 transition-transform cursor-pointer"
-            title={isCompletedState ? 'Mark as incomplete' : 'Mark as complete'}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+      {/* Header with AccordionTrigger and Bookmark Button */}
+      <div className="relative bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors">
+        {/* Use AccordionTrigger with proper layout structure */}
+        <AccordionTrigger 
+          className={`text-left justify-start items-start ${
+            isTabletOrSmaller ? 'px-3 py-2.5 pr-16' : 'px-4 py-3 pr-20'
+          } [&>svg]:hidden hover:bg-gray-50 dark:hover:bg-gray-700/50 relative z-10 cursor-pointer w-full`}
+          onClick={() => {
+            console.log('🎯 Accordion trigger clicked for question:', questionId);
+            // Don't preventDefault here - let the accordion handle the toggle
+          }}
+        >
+          {/* Left side: Status icon and question content */}
+          <div className="flex items-start flex-1 min-w-0">
+            <div
+              onClick={(e) => {
                 e.stopPropagation();
                 toggleCompletion();
-              }
-            }}
-          >
-            {isCompletedState ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-            )}
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <div className={`font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words text-left ${
-              isTabletOrSmaller ? 'text-sm leading-5' : 'text-base'
-            }`}>
-              {question.question_text || 'Question text not available'}
+              }}
+              className="mr-2 w-5 h-5 flex-shrink-0 mt-1 hover:scale-110 transition-transform cursor-pointer"
+              title={isCompletedState ? 'Mark as incomplete' : 'Mark as complete'}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleCompletion();
+                }
+              }}
+            >
+              {isCompletedState ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
+              )}
             </div>
-            {question.difficulty && (
-              <div className="mt-1 text-left">
-                <DifficultyTag difficulty={question.difficulty} />
+            <div className="flex-1 min-w-0 text-left">
+              <div className={`font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words text-left ${
+                isTabletOrSmaller ? 'text-sm leading-5' : 'text-base'
+              }`}>
+                {question.question_text || 'Question text not available'}
               </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Right side: Bookmark and chevron */}
-        <div className="flex items-center flex-shrink-0 ml-2">
-          {/* Bookmark button with animations */}
-          {(actualCategoryId !== null && actualCategoryId !== undefined) && (
-            <div onClick={(e) => e.stopPropagation()}>
-              <BookmarkButton
-                questionId={questionId}
-                topicId={actualTopicId}
-                categoryId={actualCategoryId}
-                initialIsBookmarked={isBookmarkedState}
-                onBookmarkChange={handleBookmarkChange}
-              />
+              {question.difficulty && (
+                <div className="mt-1 text-left">
+                  <DifficultyTag difficulty={question.difficulty} />
+                </div>
+              )}
             </div>
-          )}
+          </div>
           
           {/* Custom chevron */}
           <svg 
-            className="h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180 ml-1" 
+            className="h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180 flex-shrink-0" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
-        </div>
-      </AccordionTrigger>
+        </AccordionTrigger>
+        
+        {/* Bookmark button positioned absolutely outside the trigger */}
+        {(actualCategoryId !== null && actualCategoryId !== undefined) && (
+          <div className={`absolute top-1/2 -translate-y-1/2 z-20 ${
+            isTabletOrSmaller ? 'right-8' : 'right-10'
+          }`}>
+            <BookmarkButton
+              questionId={questionId}
+              topicId={actualTopicId}
+              categoryId={actualCategoryId}
+              initialIsBookmarked={isBookmarkedState}
+              onBookmarkChange={handleBookmarkChange}
+            />
+          </div>
+        )}
+      </div>
 
       <AccordionContent 
         className={`pt-0 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 relative ${

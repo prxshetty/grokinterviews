@@ -28,15 +28,16 @@ let streakCache: {
 };
 
 // Load from localStorage on initialization
-const loadFromLocalStorage = (): void => {
+const loadFromLocalStorage = (userId?: string): void => {
   if (typeof window === 'undefined') return;
   
   try {
-    const cached = localStorage.getItem('streak_cache');
+    const cacheKey = userId ? `streak_cache_${userId}` : 'streak_cache';
+    const cached = localStorage.getItem(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
       streakCache = { ...streakCache, ...parsed };
-      console.log('Loaded streak cache from localStorage:', streakCache);
+      console.log('Loaded streak cache from localStorage for user:', userId || 'anonymous', streakCache);
     }
   } catch (error) {
     console.warn('Failed to load streak cache from localStorage:', error);
@@ -44,18 +45,19 @@ const loadFromLocalStorage = (): void => {
 };
 
 // Save to localStorage
-const saveToLocalStorage = (): void => {
+const saveToLocalStorage = (userId?: string): void => {
   if (typeof window === 'undefined') return;
   
   try {
-    localStorage.setItem('streak_cache', JSON.stringify(streakCache));
-    console.log('Saved streak cache to localStorage');
+    const cacheKey = userId ? `streak_cache_${userId}` : 'streak_cache';
+    localStorage.setItem(cacheKey, JSON.stringify(streakCache));
+    console.log('Saved streak cache to localStorage for user:', userId || 'anonymous');
   } catch (error) {
     console.warn('Failed to save streak cache to localStorage:', error);
   }
 };
 
-export function useStreak(isAuthenticated: boolean = true) {
+export function useStreak(isAuthenticated: boolean = true, userId?: string) {
   const [streakData, setStreakData] = useState<StreakData>({
     current_streak: 0,
     highest_streak: 0,
@@ -154,7 +156,7 @@ export function useStreak(isAuthenticated: boolean = true) {
       };
       
       // Save to localStorage for future visits
-      saveToLocalStorage();
+      saveToLocalStorage(userId);
       
       setStreakData(data);
       console.log('Streak data cached for date:', today);
@@ -178,7 +180,7 @@ export function useStreak(isAuthenticated: boolean = true) {
       return;
     }
 
-    loadFromLocalStorage();
+    loadFromLocalStorage(userId);
     
     // If we have valid cached data, use it immediately
     if (streakCache.data && streakCache.fetchDate) {
@@ -263,7 +265,7 @@ export function useStreak(isAuthenticated: boolean = true) {
     if (streakCache.fetchDate && streakCache.fetchDate !== today) {
       console.log('New day detected - resetting cache flags');
       streakCache.updatedToday = false;
-      saveToLocalStorage();
+      saveToLocalStorage(userId);
     }
   });
 

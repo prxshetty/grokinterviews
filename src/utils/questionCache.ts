@@ -25,12 +25,22 @@ class QuestionCacheService {
   private static readonly STORAGE_KEY = 'grok_question_progress';
   private static readonly CATEGORY_PROGRESS_KEY = 'grok_category_progress';
   private static readonly TOPIC_PROGRESS_KEY = 'grok_topic_progress';
+  
+  private userId: string | undefined;
+  
+  setUserId(userId: string | undefined): void {
+    this.userId = userId;
+  }
+  
+  private getStorageKey(baseKey: string): string {
+    return this.userId ? `${baseKey}_${this.userId}` : baseKey;
+  }
 
   private getStorageData(): Map<number, QuestionCompletionData> {
     if (typeof window === 'undefined') return new Map();
     
     try {
-      const stored = localStorage.getItem(QuestionCacheService.STORAGE_KEY);
+      const stored = localStorage.getItem(this.getStorageKey(QuestionCacheService.STORAGE_KEY));
       if (!stored) return new Map();
       
       const data = JSON.parse(stored);
@@ -49,7 +59,7 @@ class QuestionCacheService {
     
     try {
       const dataObject = Object.fromEntries(data);
-      localStorage.setItem(QuestionCacheService.STORAGE_KEY, JSON.stringify(dataObject));
+      localStorage.setItem(this.getStorageKey(QuestionCacheService.STORAGE_KEY), JSON.stringify(dataObject));
     } catch (error) {
       console.error('Error saving question cache:', error);
     }
@@ -155,7 +165,7 @@ class QuestionCacheService {
     if (typeof window === 'undefined') return new Map();
     
     try {
-      const stored = localStorage.getItem(QuestionCacheService.CATEGORY_PROGRESS_KEY);
+      const stored = localStorage.getItem(this.getStorageKey(QuestionCacheService.CATEGORY_PROGRESS_KEY));
       if (!stored) return new Map();
       
       const data = JSON.parse(stored);
@@ -174,7 +184,7 @@ class QuestionCacheService {
     
     try {
       const dataObject = Object.fromEntries(data);
-      localStorage.setItem(QuestionCacheService.CATEGORY_PROGRESS_KEY, JSON.stringify(dataObject));
+      localStorage.setItem(this.getStorageKey(QuestionCacheService.CATEGORY_PROGRESS_KEY), JSON.stringify(dataObject));
     } catch (error) {
       console.error('Error saving category progress cache:', error);
     }
@@ -184,7 +194,7 @@ class QuestionCacheService {
     if (typeof window === 'undefined') return new Map();
     
     try {
-      const stored = localStorage.getItem(QuestionCacheService.TOPIC_PROGRESS_KEY);
+      const stored = localStorage.getItem(this.getStorageKey(QuestionCacheService.TOPIC_PROGRESS_KEY));
       if (!stored) return new Map();
       
       const data = JSON.parse(stored);
@@ -203,7 +213,7 @@ class QuestionCacheService {
     
     try {
       const dataObject = Object.fromEntries(data);
-      localStorage.setItem(QuestionCacheService.TOPIC_PROGRESS_KEY, JSON.stringify(dataObject));
+      localStorage.setItem(this.getStorageKey(QuestionCacheService.TOPIC_PROGRESS_KEY), JSON.stringify(dataObject));
     } catch (error) {
       console.error('Error saving topic progress cache:', error);
     }
