@@ -5,6 +5,7 @@ interface UseQuestionCacheProgressProps {
   topicId?: number;
   categoryId?: number;
   questions?: { id: number; category_id?: number; topic_id?: number }[];
+  userId?: string;
 }
 
 interface UseQuestionCacheProgressReturn {
@@ -18,7 +19,8 @@ interface UseQuestionCacheProgressReturn {
 export function useQuestionCacheProgress({
   topicId,
   categoryId,
-  questions = []
+  questions = [],
+  userId
 }: UseQuestionCacheProgressProps): UseQuestionCacheProgressReturn {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -119,6 +121,9 @@ export function useQuestionCacheProgress({
   }, [topicId, questions, refreshTrigger]);
 
   const refreshProgress = () => {
+    // Set user ID on questionCache
+    questionCache.setUserId(userId);
+    
     setRefreshTrigger(prev => prev + 1);
   };
 

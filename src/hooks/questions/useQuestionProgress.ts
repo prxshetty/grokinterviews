@@ -11,6 +11,7 @@ interface UseQuestionProgressProps {
   isExpanded: boolean;
   hasAnswer: boolean;
   onCompletionChange: ((questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void) | undefined;
+  userId?: string;
 }
 
 interface UseQuestionProgressReturn {
@@ -28,17 +29,19 @@ export function useQuestionProgress({
   answerRef,
   isExpanded,
   hasAnswer,
-  onCompletionChange
+  onCompletionChange,
+  userId
 }: UseQuestionProgressProps): UseQuestionProgressReturn {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check if question is already completed on mount using cache
+  // Set user ID on questionCache and check if question is already completed on mount using cache
   useEffect(() => {
+    questionCache.setUserId(userId);
     const isCompletedFromCache = questionCache.isQuestionCompleted(questionId);
     setIsCompleted(isCompletedFromCache);
-  }, [questionId]);
+  }, [questionId, userId]);
 
   useEffect(() => {
     const answerElement = answerRef.current;

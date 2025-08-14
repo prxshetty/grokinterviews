@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useImagePreloader } from '@/hooks';
+
 import { LogOut, Menu, X, Settings, ChevronDown, MessageSquare, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -98,7 +99,9 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
   
   // Use the shared auth state from the provider
   const { user, profile, signOut, supabase, refreshAuth } = useAuth();
-  const { current_streak, highest_streak, isLoading, error, refresh, invalidateCache } = useStreak(!!user);
+  const { current_streak, highest_streak, isLoading, error, refresh, invalidateCache } = useStreak(!!user, user?.id);
+  
+
 
   // Track previous streak values for toast notifications
   const prevStreakRef = useRef<{ current: number; highest: number } | null>(null);

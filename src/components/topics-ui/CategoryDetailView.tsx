@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { QuestionWithAnswer } from '@/components/questions';
 import { LoadingSpinner, Accordion, ProgressBar } from '@/components/ui';
 import { questionCache } from '@/utils/questionCache';
+import { useAuth } from '@/hooks/auth';
 import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
 
@@ -84,10 +85,15 @@ export default function CategoryDetailView({
   onDifficultyChange,
   domain,
   onBackToMainCategories,
-  // Removed progress-related props
 }: CategoryDetailViewProps) {
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Set user ID on questionCache when user changes
+  useEffect(() => {
+    questionCache.setUserId(user?.id);
+  }, [user?.id]);
   const searchParams = useSearchParams();
   
   // Local state for UI elements
@@ -502,6 +508,11 @@ export default function CategoryDetailView({
     _changedQuestionCategoryId?: number
   ) => {
     setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
+
+    // Invalidate streak cache when a question is completed
+    if (status && typeof window !== 'undefined' && window.invalidateStreakCache) {
+      window.invalidateStreakCache();
+    }
 
     // No need for database delays since we're using local cache
     // Progress is automatically updated via the cache service

@@ -20,7 +20,7 @@ export function StreakChart({ className = '' }: StreakChartProps) {
     streak_start_date,
     isLoading, 
     error 
-  } = useStreak(!!user);
+  } = useStreak(!!user, user?.id);
 
   if (isLoading) {
     return (
