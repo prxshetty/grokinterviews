@@ -40,9 +40,8 @@ export function ResourceCard({
           <YouTubeThumbnailWithFallback
             videoId={resource.videoId}
             alt={resource.title || 'YouTube video preview'}
-            layout="fill"
-            objectFit="cover"
-            className="rounded-t-lg"
+            fill
+            className="rounded-t-lg object-cover"
             priority={index < 3} // Prioritize loading for first few images
           />
         ) : resource.previewUrl ? (
@@ -50,9 +49,8 @@ export function ResourceCard({
             <Image 
               src={resource.previewUrl} 
               alt={resource.title || 'Resource preview'} 
-              layout="fill" 
-              objectFit="cover" 
-              className="rounded-t-lg" 
+              fill
+              className="rounded-t-lg object-cover" 
               sizes="(max-width: 768px) 56vw, (max-width: 1200px) 33vw, 25vw"
             />
             {/* Special handling for website favicons if previewUrl is a favicon */}
