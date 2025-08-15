@@ -251,4 +251,4 @@ export function StreakChart({ className = '' }: StreakChartProps) {
   );
 }
 
-export default StreakChart; 
+export default StreakChart;

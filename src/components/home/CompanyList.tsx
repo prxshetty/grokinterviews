@@ -155,9 +155,9 @@ export default function ResourceCarousel() {
               {[...Array(14)].map((_, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center justify-center mx-1.5 sm:mx-2 md:mx-3 lg:mx-4 xl:mx-6 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28 opacity-0 flex-shrink-0"
+                  className="flex flex-col items-center justify-center mx-1.5 sm:mx-2 md:mx-3 lg:mx-4 xl:mx-5 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28 opacity-0 flex-shrink-0"
                 >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 mb-1 sm:mb-2" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 xl:w-20 xl:h-20 mb-1 sm:mb-2" />
                 </div>
               ))}
             </div>
@@ -200,14 +200,14 @@ export default function ResourceCarousel() {
                 key={`${resource.name}-${index}`}
                 className="flex flex-col items-center justify-center mx-1.5 sm:mx-2 md:mx-3 lg:mx-4 xl:mx-5 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"
               >
-                {/* Logo container */}
-                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 xl:w-18 xl:h-18 transform transition-transform duration-300 ease-in-out mb-1 sm:mb-2 flex items-center justify-center group-hover/item:scale-110">
+                {/* Logo container - Fixed sizing for perfect fit */}
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 xl:w-20 xl:h-20 transform transition-transform duration-300 ease-in-out mb-1 sm:mb-2 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
                   <Image
                     src={resource.logo}
                     alt={`${resource.name} Logo`}
-                    className={`${resource.className} max-h-full max-w-full object-contain`}
-                    width={64}
-                    height={64}
+                    className={`${resource.className} max-h-[80%] max-w-[80%] object-contain`}
+                    width={80}
+                    height={80}
                     unoptimized
                     priority={index < resources.length} // Prioritize first set for LCP
                   />
