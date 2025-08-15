@@ -516,12 +516,7 @@ export default function CategoryDetailView({
 
     // No need for database delays since we're using local cache
     // Progress is automatically updated via the cache service
-  }, [
-    selectedSubtopic, 
-    subtopicDetails, 
-    categoryId, 
-    setCompletedQuestions
-  ]);
+  }, [setCompletedQuestions]); // Remove unused dependencies
 
   // Handler for Accordion's onValueChange
   const handleOpenQuestionChange = useCallback((value: string) => {
