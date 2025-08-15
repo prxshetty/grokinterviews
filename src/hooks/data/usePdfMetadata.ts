@@ -65,6 +65,7 @@ function enhanceResourceWithMetadata(resource: Resource, metadata: PdfMetadata |
     title: cleanHtmlTags(metadata.title || resource.title || ''),
     description: cleanHtmlTags(metadata.description || resource.description || ''),
     previewUrl: metadata.previewUrl || resource.previewUrl || null,
+    directPdfUrl: metadata.directPdfUrl || resource.directPdfUrl || null,
   };
 }
 
@@ -110,15 +111,7 @@ export function usePdfMetadata(
 
     try {
       const metadata = await pdfMetadataService.extractMetadata(resource.url);
-      console.log('🔍 Raw metadata from service:', metadata);
       const enhanced = enhanceResourceWithMetadata(resource, metadata);
-      console.log('🔧 Enhanced resource details:', {
-        hasMetadata: !!metadata,
-        metadataPreviewUrl: metadata?.previewUrl,
-        metadataDescription: metadata?.description,
-        enhancedPreviewUrl: enhanced.previewUrl,
-        enhancedDescription: enhanced.description
-      });
       return enhanced;
     } catch (err) {
       console.warn(`Failed to enhance PDF resource ${resource.id}:`, err);
@@ -161,21 +154,7 @@ export function usePdfMetadata(
         const batch = pdfResources.slice(i, i + batchSize);
         
         const batchPromises = batch.map(async (resource) => {
-          console.log('🚀 Processing PDF resource:', {
-            id: resource.id,
-            title: resource.title,
-            url: resource.url
-          });
           const enhancedResource = await enhanceResource(resource);
-          console.log('✅ Enhanced resource result:', {
-            id: enhancedResource.id,
-            originalTitle: resource.title,
-            enhancedTitle: enhancedResource.title,
-            originalDescription: resource.description,
-            enhancedDescription: enhancedResource.description,
-            originalPreviewUrl: resource.previewUrl,
-            enhancedPreviewUrl: enhancedResource.previewUrl
-          });
           const originalIndex = resources.findIndex(r => r.id === resource.id);
           if (originalIndex !== -1) {
             enhanced[originalIndex] = enhancedResource;
@@ -203,7 +182,7 @@ export function usePdfMetadata(
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       console.error('Error processing PDF resources:', err);
     }
-  }, [resources, enabled, batchSize, delay, enhanceResource]);
+  }, [resources, enabled, batchSize, delay, enhanceResource, state.processedIds]);
 
   /**
    * Clear the PDF metadata cache
@@ -221,16 +200,8 @@ export function usePdfMetadata(
       if (resource.type === 'pdf' && resource.url) {
         const cachedMetadata = pdfMetadataService.getCached(resource.url);
         if (cachedMetadata) {
-          console.log('🔍 Applying cached metadata:', {
-            url: resource.url,
-            originalTitle: resource.title,
-            cachedTitle: cachedMetadata.title,
-            cachedDescription: cachedMetadata.description,
-            cachedPreviewUrl: cachedMetadata.previewUrl
-          });
           return enhanceResourceWithMetadata(resource, cachedMetadata);
         } else {
-          console.log('❌ No cached metadata found for:', resource.url);
         }
       }
       return resource;
@@ -241,11 +212,6 @@ export function usePdfMetadata(
    * Effect to process resources when they change
    */
   useEffect(() => {
-    console.log('🔄 useEffect triggered with:', {
-      enabled,
-      resourceCount: resources.length,
-      processedIds: Array.from(state.processedIds)
-    });
 
     if (!enabled) {
       dispatch({ type: 'SET_ENHANCED_RESOURCES', payload: resources });
@@ -256,22 +222,15 @@ export function usePdfMetadata(
     const currentPdfIds = new Set(resources.filter(r => r.type === 'pdf').map(r => r.id));
     const hasNewPdfs = Array.from(currentPdfIds).some(id => !state.processedIds.has(id));
     
-    console.log('📊 PDF Analysis:', {
-      currentPdfIds: Array.from(currentPdfIds),
-      processedIds: Array.from(state.processedIds),
-      hasNewPdfs
-    });
     
     if (hasNewPdfs) {
-      console.log('🚀 Starting batch processing for new PDFs');
       processResourcesBatch(resources);
     } else {
-      console.log('📋 Applying cached metadata to existing resources');
       // Apply cached metadata to existing resources
       const enhancedWithCache = applyCachedMetadata(resources);
       dispatch({ type: 'SET_ENHANCED_RESOURCES', payload: enhancedWithCache });
     }
-  }, [resources, enabled]);
+  }, [resources, enabled, applyCachedMetadata, processResourcesBatch, state.processedIds]);
 
   return {
     enhancedResources: state.enhancedResources,
@@ -288,14 +247,14 @@ export function usePdfMetadata(
  */
 export function useSinglePdfMetadata(resource: Resource | null) {
   const [state, dispatch] = useReducer(
-    (state: { enhancedResource: Resource | null; loading: boolean; error: string | null }, action: any) => {
+    (state: { enhancedResource: Resource | null; loading: boolean; error: string | null }, action: { type: string; payload?: Resource | boolean | string | null }) => {
       switch (action.type) {
         case 'SET_RESOURCE':
-          return { ...state, enhancedResource: action.payload };
+          return { ...state, enhancedResource: action.payload as Resource | null };
         case 'SET_LOADING':
-          return { ...state, loading: action.payload };
+          return { ...state, loading: action.payload as boolean };
         case 'SET_ERROR':
-          return { ...state, error: action.payload };
+          return { ...state, error: action.payload as string | null };
         default:
           return state;
       }

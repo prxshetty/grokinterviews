@@ -10,7 +10,6 @@ import {
 // Removed ProgressSaver import as progress tracking is disabled
 import TopicDataService from '@/services/TopicDataService';
 // Removed useFilterLogic import as it's no longer needed
-import { LoadingSpinner } from '@/components/ui';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
 
 // Types
@@ -315,12 +314,6 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
       <div className="min-h-screen bg-transparent">
         <div className="container mx-auto px-4 py-8">
           <ErrorBoundary>
-            {isLoading.categories && (
-              <div className="flex justify-center items-center py-12">
-                <LoadingSpinner size="lg" />
-              </div>
-            )}
-
             {!isLoading.sections && showTopicGrid && (
               <TopicCategoryGrid
                 items={topicCategories}

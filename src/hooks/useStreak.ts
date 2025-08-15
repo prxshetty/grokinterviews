@@ -37,7 +37,6 @@ const loadFromLocalStorage = (userId?: string): void => {
     if (cached) {
       const parsed = JSON.parse(cached);
       streakCache = { ...streakCache, ...parsed };
-      console.log('Loaded streak cache from localStorage for user:', userId || 'anonymous', streakCache);
     }
   } catch (error) {
     console.warn('Failed to load streak cache from localStorage:', error);
@@ -51,7 +50,6 @@ const saveToLocalStorage = (userId?: string): void => {
   try {
     const cacheKey = userId ? `streak_cache_${userId}` : 'streak_cache';
     localStorage.setItem(cacheKey, JSON.stringify(streakCache));
-    console.log('Saved streak cache to localStorage for user:', userId || 'anonymous');
   } catch (error) {
     console.warn('Failed to save streak cache to localStorage:', error);
   }
@@ -76,7 +74,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
     
     // If we fetched on a different day, we need fresh data
     if (streakCache.fetchDate !== today) {
-      console.log('Cache invalid: Different day detected');
       return true;
     }
     
@@ -84,7 +81,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
     if (isQuestionCompletion) {
       // Check if we've already updated the streak today
       if (streakCache.updatedToday) {
-        console.log('Cache valid: Streak already updated today, skipping API call');
         return false; // Don't fetch - streak won't change again today
       }
       
@@ -93,21 +89,17 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
       const lastActiveDate = streakCache.lastActiveDate;
       
       if (lastActiveDate && lastActiveDate.startsWith(todayDate || '')) {
-        console.log('Cache valid: User already active today, streak unchanged');
         return false; // Don't fetch - user already completed something today
       }
       
-      console.log('Cache invalid: First completion today, need to update streak');
       return true; // First completion today - need to update streak
     }
     
     // Background fetch or regular page load - use cache if same day
     if (isBackgroundFetch) {
-      console.log('Background fetch: Updating stale cache');
       return true;
     }
     
-    console.log('Cache valid: Same day, using cached data');
     return false;
   }, []);
 
@@ -115,7 +107,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
     try {
       // Don't fetch if user is not authenticated
       if (!isAuthenticated) {
-        console.log('User not authenticated - skipping streak fetch');
         if (!isBackgroundFetch) setIsLoading(false);
         return;
       }
@@ -127,7 +118,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
         return;
       }
 
-      console.log(`Fetching fresh streak data from API (${isBackgroundFetch ? 'background' : 'foreground'})`);
       if (!isBackgroundFetch) {
         setIsLoading(true);
         setError(null);
@@ -159,7 +149,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
       saveToLocalStorage(userId);
       
       setStreakData(data);
-      console.log('Streak data cached for date:', today);
     } catch (err: any) {
       console.error('Error fetching streak data:', err);
       if (!isBackgroundFetch) {
@@ -170,7 +159,7 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
         setIsLoading(false);
       }
     }
-  }, [isAuthenticated, shouldFetchFreshData]);
+  }, [isAuthenticated, shouldFetchFreshData, userId]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -188,7 +177,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
       
       // If cached data is from today, use it to eliminate initial API call
       if (streakCache.fetchDate === today) {
-        console.log('Using localStorage cache - no initial API call needed!');
         setStreakData(streakCache.data);
         setIsLoading(false);
         return;
@@ -196,7 +184,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
       
       // If cached data is from yesterday or before, we'll show it temporarily
       // while fetching fresh data in the background
-      console.log('Using stale localStorage cache while fetching fresh data');
       setStreakData(streakCache.data);
       setIsLoading(false); // Show cached data immediately
       
@@ -206,13 +193,11 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
     }
     
     // No cached data - need initial fetch
-    console.log('No localStorage cache - performing initial fetch');
     fetchStreakData();
-  }, [isAuthenticated, fetchStreakData]);
+  }, [isAuthenticated, fetchStreakData, userId]);
 
   // Force refresh function for external use
   const forceRefresh = useCallback(() => {
-    console.log('Force refresh requested');
     return fetchStreakData(true, false);
   }, [fetchStreakData]);
 
@@ -220,28 +205,23 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
   const invalidateCache = useCallback(() => {
     // Don't invalidate if user is not authenticated
     if (!isAuthenticated) {
-      console.log('User not authenticated - skipping cache invalidation');
       return;
     }
 
-    console.log('Question completed - checking if streak update needed');
     
     const today = new Date().toISOString().split('T')[0] || null;
     
     // If we already updated today, don't fetch again
     if (streakCache.updatedToday && streakCache.fetchDate === today) {
-      console.log('Streak already updated today - no API call needed');
       return;
     }
     
     // Check if user was already active today
     if (streakCache.lastActiveDate && streakCache.lastActiveDate.startsWith(today || '')) {
-      console.log('User already active today - no streak change expected');
       return;
     }
     
     // This is the first completion today - fetch fresh data
-    console.log('First completion today - updating streak');
     fetchStreakData(true, true);
   }, [isAuthenticated, fetchStreakData]);
 
@@ -263,7 +243,6 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0] || null;
     if (streakCache.fetchDate && streakCache.fetchDate !== today) {
-      console.log('New day detected - resetting cache flags');
       streakCache.updatedToday = false;
       saveToLocalStorage(userId);
     }

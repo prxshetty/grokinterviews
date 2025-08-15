@@ -22,9 +22,9 @@ export function ResourceCard({
   // Use resource data
   const displayTitle = resource.title || 'Untitled Resource';
   
-  // For image resources, use favicon as the preview (similar to website resources)
+  // For image/pdf resources, use favicon as the preview (similar to website resources)
   const displayImage = resource.previewUrl || 
-    (resource.type === 'image' && resource.url ? getWebsiteFavicon(resource.url) : null);
+    ((resource.type === 'image' || resource.type === 'pdf') && resource.url ? getWebsiteFavicon(resource.url) : null);
   return (
     <motion.div
       key={resource.id}
@@ -60,8 +60,8 @@ export function ResourceCard({
               className="rounded-t-lg object-cover" 
               unoptimized={resource.type === 'image'} // Don't optimize external preview images
             />
-            {/* Special handling for favicons - both website and image resources */}
-            {(resource.type === 'website' || resource.type === 'image') && 
+            {/* Special handling for favicons - website, image, and pdf resources */}
+            {(resource.type === 'website' || resource.type === 'image' || resource.type === 'pdf') && 
              displayImage?.includes('google.com/s2/favicons') && (
               <div className={`absolute inset-0 bg-gradient-to-br ${getGradientForType(resource.type)} rounded-t-lg flex items-center justify-center`}>
                 <div className="bg-white/95 dark:bg-gray-800/95 rounded-full p-6 shadow-lg">

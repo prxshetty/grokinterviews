@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
 import { Resource, TYPE_DISPLAY_INFO, getGradientForType, getWebsiteFavicon } from '@/types/resources.types';
+import { PdfViewer } from '@/components/ui/PdfViewer';
 
 interface ResourcePreviewProps {
   resource: Resource;
@@ -12,15 +14,16 @@ interface ResourcePreviewProps {
 }
 
 export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewProps) {
+  const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
   const ResourceTypeIcon = TYPE_DISPLAY_INFO[resource.type || 'other']?.Icon || ExternalLink;
   const isMobile = useIsMobile();
   const isTabletOrSmaller = useIsTabletOrSmaller();
 
-  // Use resource data - for image resources, fallback to favicon like website resources
+  // Use resource data - for image/website/pdf resources, fallback to favicon
   const displayTitle = resource.title || 'Untitled Resource';
   const displayDescription = resource.description;
   const displayImage = resource.previewUrl || 
-    ((resource.type === 'image' || resource.type === 'website') && resource.url ? 
+    ((resource.type === 'image' || resource.type === 'website' || resource.type === 'pdf' || resource.type === 'paper') && resource.url ? 
      getWebsiteFavicon(resource.url) : null);
 
 
@@ -73,7 +76,13 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
           ) : displayImage ? (
             <div 
               className="relative w-full h-full cursor-pointer" 
-              onClick={() => onResourceClick(resource)}
+              onClick={() => {
+                if (resource.type === 'pdf') {
+                  setIsPdfViewerOpen(true);
+                } else {
+                  onResourceClick(resource);
+                }
+              }}
             >
               <Image 
                 src={displayImage}
@@ -88,7 +97,13 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
           ) : (
             <div 
               className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getGradientForType(resource.type || 'other')} cursor-pointer`}
-              onClick={() => onResourceClick(resource)}
+              onClick={() => {
+                if (resource.type === 'pdf') {
+                  setIsPdfViewerOpen(true);
+                } else {
+                  onResourceClick(resource);
+                }
+              }}
             >
               <ResourceTypeIcon className={`text-white/70 ${getIconSize()}`} />
             </div>
@@ -128,6 +143,15 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
           </div>
         </div>
       </div>
+      
+      {/* PDF Viewer Modal */}
+      {resource.type === 'pdf' && (
+        <PdfViewer 
+          resource={resource}
+          isOpen={isPdfViewerOpen}
+          onClose={() => setIsPdfViewerOpen(false)}
+        />
+      )}
     </div>
   );
 }

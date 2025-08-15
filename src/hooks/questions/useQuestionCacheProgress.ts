@@ -1,5 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { questionCache, type CategoryProgress, type TopicProgress } from '@/utils/questionCache';
+
+interface Question {
+  id: number;
+  category_id?: number;
+  topic_id?: number;
+}
 
 interface UseQuestionCacheProgressProps {
   topicId?: number;
@@ -33,7 +39,7 @@ export function useQuestionCacheProgress({
     // If we have questions, calculate current progress
     if (questions.length > 0) {
       const categoryQuestions = questions.filter(q => 
-        q.category_id === categoryId || (q as any).categories?.id === categoryId
+        q.category_id === categoryId || (q as Question & { categories?: { id: number } }).categories?.id === categoryId
       );
       
       const completedCount = categoryQuestions.filter(q => 
@@ -55,7 +61,7 @@ export function useQuestionCacheProgress({
     }
     
     return cachedProgress;
-  }, [categoryId, questions, refreshTrigger]);
+  }, [categoryId, questions, refreshTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const topicProgress = useMemo(() => {
     if (!topicId) return null;
@@ -65,7 +71,7 @@ export function useQuestionCacheProgress({
     // If we have questions, calculate current progress
     if (questions.length > 0) {
       const topicQuestions = questions.filter(q => 
-        q.topic_id === topicId || (q as any).categories?.topic_id === topicId
+        q.topic_id === topicId || (q as Question & { categories?: { topic_id: number } }).categories?.topic_id === topicId
       );
       
       const completedCount = topicQuestions.filter(q => 
@@ -78,9 +84,9 @@ export function useQuestionCacheProgress({
       // Calculate category breakdown
       const categoriesInTopic = new Map<number, { name: string; questions: any[]; topic_id: number }>();
       topicQuestions.forEach(q => {
-        const catId = q.category_id || (q as any).categories?.id;
-        const catName = (q as any).categories?.name || `Category ${catId}`;
-        const catTopicId = q.topic_id || (q as any).categories?.topic_id || topicId;
+        const catId = q.category_id || (q as Question & { categories?: { id: number } }).categories?.id;
+        const catName = (q as Question & { categories?: { name: string } }).categories?.name || `Category ${catId}`;
+        const catTopicId = q.topic_id || (q as Question & { categories?: { topic_id: number } }).categories?.topic_id || topicId;
         
         if (catId) {
           if (!categoriesInTopic.has(catId)) {
@@ -118,14 +124,14 @@ export function useQuestionCacheProgress({
     }
     
     return cachedProgress;
-  }, [topicId, questions, refreshTrigger]);
+  }, [topicId, questions, refreshTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const refreshProgress = () => {
+  const refreshProgress = useCallback(() => {
     // Set user ID on questionCache
     questionCache.setUserId(userId);
     
     setRefreshTrigger(prev => prev + 1);
-  };
+  }, [userId]);
 
   const getCompletedCount = (questionIds: number[]): number => {
     return questionIds.filter(id => questionCache.isQuestionCompleted(id)).length;
@@ -145,7 +151,7 @@ export function useQuestionCacheProgress({
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [refreshProgress]); // Add refreshProgress dependency
 
   return {
     categoryProgress,

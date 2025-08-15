@@ -22,6 +22,7 @@ export interface Resource {
   previewUrl?: string | null;
   duration?: string | null;
   videoId?: string | null;
+  directPdfUrl?: string | null;
 }
 
 /** User preferences for resource types */

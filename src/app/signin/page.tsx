@@ -311,7 +311,7 @@ function SignInForm() {
 
         {/* Title that changes based on mode */}
         <h1 className="text-2xl font-normal text-center text-black dark:text-white mb-2 tracking-tight transition-all duration-500">
-          {isSignUp ? 'Create your account' : 'Yooo, welcome back!'}
+          {isSignUp ? 'Create your account' : 'Welcome back'}
         </h1>
 
         {/* Toggle text that changes based on mode */}

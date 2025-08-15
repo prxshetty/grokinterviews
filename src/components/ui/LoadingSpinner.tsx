@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import UniqueLoading from './morph-loading';
+import { AnimatedSpinner } from './animated_spinner';
 
 /**
  * Unified Loading Spinner System for GrokInterviews
@@ -37,12 +37,12 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-// Map LoadingSpinner sizes to UniqueLoading sizes
+// Map LoadingSpinner sizes to AnimatedSpinner sizes
 const sizeMapping = {
-  sm: 'sm' as const,
-  md: 'sm' as const, 
-  lg: 'md' as const,
-  xl: 'lg' as const
+  sm: '4rem',
+  md: '5rem', 
+  lg: '6rem',
+  xl: '8rem'
 };
 
 const colorClasses = {
@@ -61,8 +61,7 @@ export default function LoadingSpinner({
   fullScreen = false
 }: LoadingSpinnerProps) {
   const spinner = (
-    <UniqueLoading 
-      variant="morph" 
+    <AnimatedSpinner 
       size={sizeMapping[size]}
       className={cn(colorClasses[color], className)}
     />
