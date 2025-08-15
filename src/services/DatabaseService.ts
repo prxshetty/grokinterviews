@@ -499,7 +499,6 @@ class DatabaseService {
           const fakeCategory: CategoryWithQuestions = {
             id: parseInt(headerId, 10),
             name: sectionName,
-            slug: `section-${headerId}`,
             topic_id: 0,
             created_at: new Date().toISOString(), // Required by type - this is synthetic data for section headers
             questions: [] // Ensure questions is initialized as Question[]
