@@ -14,6 +14,7 @@ import { ResourceCard } from './ResourceCard';
 // Import custom hooks
 import { useResources, useResourceTabs } from '@/hooks/data';
 import { useAuth, useUserPreferences } from '@/hooks/auth';
+import { usePdfMetadata } from '@/hooks/data/usePdfMetadata';
 
 interface ResourceListProps {
   questionId: number | null;
@@ -63,7 +64,7 @@ export function ResourceList({
   };
 
   // Custom hooks for data management
-  const { resources, loading: loadingData, error } = useResources({
+  const { resources: rawResources, loading: loadingData, error } = useResources({
     questionId,
     domain: domain || null,
     topicId: topicId || null,
@@ -77,6 +78,16 @@ export function ResourceList({
     isLoggedIn,
     userId: user?.id || null
   });
+
+  // Enhance PDF resources with metadata
+  const { enhancedResources: resources, loading: loadingPdfMetadata } = usePdfMetadata(
+    rawResources || [],
+    {
+      enabled: true,
+      batchSize: 2, // Conservative batch size to avoid overwhelming APIs
+      delay: 200    // Small delay between batches
+    }
+  );
 
   const { tabs, activeTab, activeTabType, setActiveTabType, featuredResource, setFeaturedResource } = useResourceTabs({
     resources,
@@ -99,6 +110,9 @@ export function ResourceList({
       </div>
     );
   }
+
+  // Show loading spinner for PDF metadata enhancement (but allow interaction)
+  const isEnhancing = loadingPdfMetadata && resources.length > 0;
 
   // Error state
   if (error) {
@@ -151,6 +165,7 @@ export function ResourceList({
 
   return (
     <div className="w-full">
+
       {/* Tab Navigation - More compact on mobile */}
       <div className={isMobile ? 'mb-4 px-4 flex justify-center' : 'mb-6 flex justify-center'}>
         <TabNav

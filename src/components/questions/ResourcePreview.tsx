@@ -16,6 +16,7 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
   const isMobile = useIsMobile();
   const isTabletOrSmaller = useIsTabletOrSmaller();
 
+
   // Determine optimal sizing based on device
   const getAspectRatio = () => {
     if (isMobile) return 'aspect-[16/10] max-h-48';
@@ -71,7 +72,7 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
                 src={resource.previewUrl}
                 alt={resource.title || 'Resource preview'}
                 fill
-                className="object-cover"
+                className="object-contain"
               />
               <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-200" />
             </div>
@@ -88,9 +89,16 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
         {/* Content Area - Responsive padding and text sizing */}
         <div className={`flex flex-col ${getPadding()}`}>
           <div className="flex items-start justify-between gap-3 mb-2">
-            <h3 className={`font-medium text-foreground line-clamp-2 flex-1 leading-tight ${getTextSize()}`}>
-              {resource.title || 'Untitled Resource'}
-            </h3>
+            <div className="flex-1">
+              <h3 className={`font-medium text-foreground line-clamp-2 leading-tight ${getTextSize()}`}>
+                {resource.title || 'Untitled Resource'}
+              </h3>
+              {resource.description && (
+                <p className={`text-muted-foreground line-clamp-2 mt-1 leading-tight ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                  {resource.description}
+                </p>
+              )}
+            </div>
             <div className="flex items-center flex-shrink-0">
               <Button 
                 variant="default"

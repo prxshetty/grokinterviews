@@ -78,6 +78,12 @@ const nextConfig = {
         hostname: 'shadcnblocks.com',
         port: '',
         pathname: '/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
