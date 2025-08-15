@@ -16,10 +16,12 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 // Import our new modular components and hooks
 import {
   InterviewHeader,
-  InterviewAvatar,
-  InterviewFeatures,
   InterviewContent,
 } from '@/components/voice/web';
+import InterviewSelectionPanel from '@/components/voice/web/InterviewSelectionPanel';
+import InterviewConfigPanel from '@/components/voice/web/InterviewConfigPanel';
+import { InterviewType } from '@/components/voice/web/InterviewAvatar';
+import { InterviewModeConfig } from '@/app/api/voice/types';
 
 import {
   useInterviewSession,
@@ -40,6 +42,15 @@ export default function WebInterviewPageContent() {
   const [showChat, setShowChat] = useState(true);
   const [allTranscripts, setAllTranscripts] = useState<Array<{id: string, session_id: string, transcript_text: string, interaction_type: 'user_response' | 'ai_response', created_at: string, conversation_order: number}>>([]);
   const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
+  
+  // Interview type and custom configuration state
+  const [selectedInterviewType, setSelectedInterviewType] = useState<InterviewType>('behavioral');
+  const [customConfig, setCustomConfig] = useState<InterviewModeConfig>({
+    customTopics: '',
+    questionFormat: '',
+    difficulty: ''
+  });
+  const [customConfigErrors, setCustomConfigErrors] = useState<Record<string, string>>({});
   
   // Refs for cleanup
   const voicePlayerRef = useRef<VoicePlayerRef | null>(null);
@@ -94,11 +105,9 @@ export default function WebInterviewPageContent() {
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<string>('');
   const conversationLengthRef = useRef<number>(0);
+  const conversationHistoryRef = useRef<Array<{type: 'ai' | 'user', text: string}>>([]);
   
-  // Store stable reference to the fetch function to avoid dependency issues
-  const fetchSessionTranscriptsRef = useRef<((forceRefresh?: boolean) => Promise<void>) | null>(null);
-  
-  // Create the fetch function with stable dependencies
+  // Create a stable fetch function using useCallback with stable dependencies
   const fetchSessionTranscripts = useCallback(async (forceRefresh = false) => {
     const currentSessionId = sessionIdRef.current;
     const currentConversationLength = conversationLengthRef.current;
@@ -125,24 +134,28 @@ export default function WebInterviewPageContent() {
     } finally {
       setIsLoadingTranscripts(false);
     }
-  }, [setAllTranscripts, setIsLoadingTranscripts]);
+  }, []); // Empty dependency array since we use refs for dynamic values
+  
+  // Store the function in a ref for use in timeouts
+  const fetchSessionTranscriptsRef = useRef(fetchSessionTranscripts);
+  fetchSessionTranscriptsRef.current = fetchSessionTranscripts;
 
   // Update refs when session data changes
   useEffect(() => {
     sessionIdRef.current = session.id || '';
     conversationLengthRef.current = session.conversationHistory.length;
-    fetchSessionTranscriptsRef.current = fetchSessionTranscripts;
-  }, [session.id, session.conversationHistory.length, fetchSessionTranscripts]);
+    conversationHistoryRef.current = session.conversationHistory;
+  }, [session.id, session.conversationHistory.length]);
 
   // Fetch transcripts when session changes (initial load only)
   useEffect(() => {
     if (session.id) {
-      fetchSessionTranscripts(true); // Force refresh on session change
+      fetchSessionTranscriptsRef.current?.(true); // Force refresh on session change
     } else {
       setAllTranscripts([]);
       lastFetchRef.current = '';
     }
-  }, [session.id, fetchSessionTranscripts]);
+  }, [session.id]); // Removed fetchSessionTranscripts from dependency array
 
   // Debounced transcript refresh when conversation history changes
   useEffect(() => {
@@ -170,7 +183,7 @@ export default function WebInterviewPageContent() {
         clearTimeout(fetchTimeoutRef.current);
       }
     };
-  }, [session.conversationHistory, session.id]); // Added full conversationHistory since we access the array content
+  }, [session.conversationHistory.length, session.id]); // Only depend on length, not the entire array
 
   // Function to automatically terminate interview when critical errors occur
   const terminateInterviewOnError = useCallback(async (reason: TerminationReason) => {
@@ -181,7 +194,7 @@ export default function WebInterviewPageContent() {
     console.log('🛑 Terminating interview due to error:', reason);
 
     try {
-      await InterviewService.terminateInterview(session.id, reason, session.conversationHistory);
+      await InterviewService.terminateInterview(session.id, reason, conversationHistoryRef.current);
     } catch (error) {
       console.error('❌ Error calling termination API:', error);
     }
@@ -206,14 +219,14 @@ export default function WebInterviewPageContent() {
     } else {
       setRecordingError(`Interview terminated: ${reason.message}`);
     }
-  }, [session.isActive, session.id, session.conversationHistory, setSessionActive, setSessionCompleted, setProcessingAI, setAutoStartRecording, setRateLimited, setRecordingError]);
+  }, [session.isActive, session.id, setSessionActive, setSessionCompleted, setProcessingAI, setAutoStartRecording, setRateLimited, setRecordingError]);
 
   // Generate AI response based on user input
   const generateAIResponse = useCallback(async (userText: string, history: Array<{type: 'ai' | 'user', text: string}>) => {
     try {
       setProcessingAI(true);
       
-      const result = await InterviewService.generateAIResponse(userText, history, session.id, 'behavioral');
+      const result = await InterviewService.generateAIResponse(userText, history, sessionIdRef.current, 'behavioral');
       
       // Update sessionId if returned from API
       if (result.sessionId && !session.id) {
@@ -301,14 +314,53 @@ export default function WebInterviewPageContent() {
         setProcessingAI(false);
       }, 100);
     }
-  }, [session.id, setProcessingAI, setInterviewReport, setSessionCompleted, setSessionActive, addToHistory, updateCurrentQuestion, incrementAiResponseKey, terminateInterviewOnError]);
+  }, [setProcessingAI, setInterviewReport, setSessionCompleted, setSessionActive, addToHistory, updateCurrentQuestion, incrementAiResponseKey, terminateInterviewOnError]);
 
   const handleBackToModeSelector = useCallback(() => {
     router.push('/voice');
   }, [router]);
 
+  const handleInterviewTypeChange = useCallback((type: InterviewType) => {
+    setSelectedInterviewType(type);
+    // Clear custom config errors when switching types
+    setCustomConfigErrors({});
+  }, []);
+
+  const handleCustomConfigChange = useCallback((config: InterviewModeConfig) => {
+    setCustomConfig(config);
+    // Clear errors for fields that have been filled
+    const newErrors = { ...customConfigErrors };
+    if (config.customTopics?.trim()) delete newErrors.customTopics;
+    if (config.questionFormat?.trim()) delete newErrors.questionFormat;
+    if (config.difficulty?.trim()) delete newErrors.difficulty;
+    setCustomConfigErrors(newErrors);
+  }, [customConfigErrors]);
+
+  const validateCustomConfig = useCallback(() => {
+    if (selectedInterviewType !== 'custom') return true;
+    
+    const errors: Record<string, string> = {};
+    if (!customConfig.customTopics?.trim()) {
+      errors.customTopics = 'Please specify the topics you want to practice';
+    }
+    if (!customConfig.questionFormat?.trim()) {
+      errors.questionFormat = 'Please select a question format';
+    }
+    if (!customConfig.difficulty?.trim()) {
+      errors.difficulty = 'Please select a difficulty level';
+    }
+    
+    setCustomConfigErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [selectedInterviewType, customConfig]);
+
   const handleStartInterview = useCallback(async () => {
     try {
+      // Validate custom config if custom interview type is selected
+      if (!validateCustomConfig()) {
+        return; // Don't start if validation fails
+      }
+
       // Stop all ongoing audio operations first
       if (voicePlayerRef.current) {
         voicePlayerRef.current.stopPlayback();
@@ -323,8 +375,13 @@ export default function WebInterviewPageContent() {
       setAutoStartRecording(false);
       setTtsError(null);
       
+      // Map interview type to session type
+      const sessionType = selectedInterviewType === 'system-design' ? 'technical' : 
+                          selectedInterviewType === 'custom' ? 'behavioral' : 
+                          selectedInterviewType;
+      
       // Check rate limit before starting interview
-      const canStart = await checkRateLimit('web', 'behavioral', selectedVoice);
+      const canStart = await checkRateLimit('web', sessionType as any, selectedVoice);
       
       if (canStart) {
         setSessionActive(true);
@@ -334,7 +391,7 @@ export default function WebInterviewPageContent() {
         
         // Create a new session and add initial welcome message
         try {
-          const newSessionId = await createSession('behavioral', selectedVoice);
+          const newSessionId = await createSession(sessionType as any, selectedVoice);
           if (newSessionId) {
             await InterviewService.addInitialWelcomeMessage(newSessionId, session.currentQuestion);
           }
@@ -349,7 +406,7 @@ export default function WebInterviewPageContent() {
       setProcessingAI(false);
       setAutoStartRecording(false);
     }
-  }, [setProcessingAI, setAutoStartRecording, setTtsError, checkRateLimit, selectedVoice, setSessionActive, incrementAiResponseKey, createSession, session.currentQuestion]);
+  }, [validateCustomConfig, setProcessingAI, setAutoStartRecording, setTtsError, selectedInterviewType, checkRateLimit, selectedVoice, setSessionActive, incrementAiResponseKey, createSession, session.currentQuestion]);
 
   const handleEndInterview = useCallback(async () => {
     try {
@@ -435,17 +492,49 @@ export default function WebInterviewPageContent() {
           {/* Back to Mode Selector Button */}
           <InterviewHeader onBackToModeSelector={handleBackToModeSelector} />
 
-          {/* AI Avatar - Always visible, enlarges when interview is active */}
-          <InterviewAvatar
-            isInterviewActive={session.isActive}
-            isPlayingTTS={voiceState.isPlayingTTS}
-            isRecordingActive={voiceState.isRecordingActive}
-            isSpeakingDetected={voiceState.isSpeakingDetected}
-          />
-
-          {/* Interview Features - Only show when interview is not active */}
+          {/* Pre-Interview Setup: Left-Right Layout */}
           {!session.isActive && !session.isCompleted && (
-            <InterviewFeatures />
+            <div className="grid lg:grid-cols-2 gap-12 mb-16">
+              {/* Left Panel: Avatar Selection */}
+              <div className="flex justify-center">
+                <InterviewSelectionPanel
+                  selectedType={selectedInterviewType}
+                  onTypeChange={handleInterviewTypeChange}
+                  isInterviewActive={session.isActive}
+                  isPlayingTTS={voiceState.isPlayingTTS}
+                  isRecordingActive={voiceState.isRecordingActive}
+                  isSpeakingDetected={voiceState.isSpeakingDetected}
+                />
+              </div>
+
+              {/* Right Panel: Interview Configuration */}
+              <div>
+                <InterviewConfigPanel
+                  selectedType={selectedInterviewType}
+                  config={customConfig}
+                  onConfigChange={handleCustomConfigChange}
+                  errors={customConfigErrors}
+                  onStartInterview={handleStartInterview}
+                  isInterviewActive={session.isActive}
+                  isProcessingAI={voiceState.isProcessingAI}
+                  rateLimited={rateLimitState.isRateLimited}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Active Interview: Show avatar only */}
+          {(session.isActive || session.isCompleted) && (
+            <div className="flex justify-center mb-8">
+              <InterviewSelectionPanel
+                selectedType={selectedInterviewType}
+                onTypeChange={handleInterviewTypeChange}
+                isInterviewActive={session.isActive}
+                isPlayingTTS={voiceState.isPlayingTTS}
+                isRecordingActive={voiceState.isRecordingActive}
+                isSpeakingDetected={voiceState.isSpeakingDetected}
+              />
+            </div>
           )}
 
           {/* Main Interview Content */}
@@ -505,27 +594,29 @@ export default function WebInterviewPageContent() {
           />
         </div>
 
-        {/* Fixed Bottom Controls */}
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-          <ControlButtons
-            isInterviewActive={session.isActive}
-            isProcessingAI={voiceState.isProcessingAI}
-            rateLimited={rateLimitState.isRateLimited}
-            onStartInterview={handleStartInterview}
-            onEndInterview={handleEndInterview}
-            isRecording={voiceState.isRecordingActive}
-            isSpeaking={voiceState.isSpeakingDetected}
-            isRecordingProcessing={voiceRecorderRef.current?.isProcessing || false}
-            enableVAD={true}
-            vadSupported={voiceState.vadSupported}
-            recordingError={voiceState.recordingError}
-            onStartRecording={handleStartRecording}
-            onStopRecording={handleStopRecording}
-            onDismissRecordingError={handleDismissRecordingError}
-            showChat={showChat}
-            onToggleChat={() => setShowChat(!showChat)}
-          />
-        </div>
+        {/* Fixed Bottom Controls - Only show during active interview */}
+        {session.isActive && (
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+            <ControlButtons
+              isInterviewActive={session.isActive}
+              isProcessingAI={voiceState.isProcessingAI}
+              rateLimited={rateLimitState.isRateLimited}
+              onStartInterview={handleStartInterview}
+              onEndInterview={handleEndInterview}
+              isRecording={voiceState.isRecordingActive}
+              isSpeaking={voiceState.isSpeakingDetected}
+              isRecordingProcessing={voiceRecorderRef.current?.isProcessing || false}
+              enableVAD={true}
+              vadSupported={voiceState.vadSupported}
+              recordingError={voiceState.recordingError}
+              onStartRecording={handleStartRecording}
+              onStopRecording={handleStopRecording}
+              onDismissRecordingError={handleDismissRecordingError}
+              showChat={showChat}
+              onToggleChat={() => setShowChat(!showChat)}
+            />
+          </div>
+        )}
       </div>
     </VoicePageWithVisualizer>
   );
