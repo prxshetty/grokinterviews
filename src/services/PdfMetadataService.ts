@@ -3,7 +3,7 @@
  * Handles metadata extraction for PDF resources, primarily from Wikimedia Commons
  */
 
-import { cleanHtmlTags, cleanTitle, cleanDescription, formatFileSize } from '@/utils/textUtils';
+import { cleanTitle, cleanDescription } from '@/utils/textUtils';
 
 export interface PdfMetadata {
   title: string;
@@ -26,6 +26,7 @@ export interface WikimediaFileInfo {
   pagecount?: number;
   user?: string;
   timestamp?: string;
+  metadata?: Array<{ name: string; value: string }>;
   extmetadata?: {
     ObjectName?: { value: string };
     ImageDescription?: { value: string };

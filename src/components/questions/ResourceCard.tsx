@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { YouTubeThumbnailWithFallback } from '@/components/ui/YouTubeThumbnail';
 
-import { Resource, TYPE_DISPLAY_INFO, getGradientForType } from '@/types/resources.types';
+import { Resource, TYPE_DISPLAY_INFO, getGradientForType, getWebsiteFavicon } from '@/types/resources.types';
 
 interface ResourceCardProps {
   resource: Resource;
@@ -19,6 +19,12 @@ export function ResourceCard({
   onResourceClick, 
   shouldReduceMotion = false 
 }: ResourceCardProps) {
+  // Use resource data
+  const displayTitle = resource.title || 'Untitled Resource';
+  
+  // For image resources, use favicon as the preview (similar to website resources)
+  const displayImage = resource.previewUrl || 
+    (resource.type === 'image' && resource.url ? getWebsiteFavicon(resource.url) : null);
   return (
     <motion.div
       key={resource.id}
@@ -44,22 +50,24 @@ export function ResourceCard({
             className="rounded-t-lg object-cover"
             priority={index < 3} // Prioritize loading for first few images
           />
-        ) : resource.previewUrl ? (
+        ) : displayImage ? (
           <div className="relative h-full w-full">
             <Image 
-              src={resource.previewUrl} 
-              alt={resource.title || 'Resource preview'} 
+              src={displayImage} 
+              alt={displayTitle} 
               fill
-              className="rounded-t-lg object-cover" 
               sizes="(max-width: 768px) 56vw, (max-width: 1200px) 33vw, 25vw"
+              className="rounded-t-lg object-cover" 
+              unoptimized={resource.type === 'image'} // Don't optimize external preview images
             />
-            {/* Special handling for website favicons if previewUrl is a favicon */}
-            {resource.type === 'website' && resource.previewUrl.includes('google.com/s2/favicons') && (
+            {/* Special handling for favicons - both website and image resources */}
+            {(resource.type === 'website' || resource.type === 'image') && 
+             displayImage?.includes('google.com/s2/favicons') && (
               <div className={`absolute inset-0 bg-gradient-to-br ${getGradientForType(resource.type)} rounded-t-lg flex items-center justify-center`}>
                 <div className="bg-white/95 dark:bg-gray-800/95 rounded-full p-6 shadow-lg">
                   <Image 
-                    src={resource.previewUrl} 
-                    alt="Website favicon" 
+                    src={displayImage} 
+                    alt="Site favicon" 
                     width={48} 
                     height={48} 
                     className="rounded-lg"
@@ -103,7 +111,7 @@ export function ResourceCard({
         
         {/* Title - Allow more lines for better readability */}
         <h3 className="text-xs font-semibold tracking-tight text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-          {resource.title || 'Untitled Resource'}
+          {displayTitle}
         </h3>
       </div>
     </motion.div>

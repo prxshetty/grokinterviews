@@ -2,11 +2,14 @@
 
 import { useTheme } from "next-themes"
 import { Toaster as Sonner } from "sonner"
+import { useEffect } from "react"
+import { useConfetti } from "@/hooks/useConfetti"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
   const { resolvedTheme } = useTheme()
+  const { fireStreakConfetti } = useConfetti()
 
   // Determine the theme to use from the hook, defaulting to "system"
   const effectiveThemeFromHook: "system" | "light" | "dark" =
@@ -22,6 +25,32 @@ const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
 
   // Determine if light mode is active
   // const isLight = theme === 'light' || (theme === 'system' && typeof window !== 'undefined' && !window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+  // Listen for streak toast notifications and trigger confetti
+  useEffect(() => {
+    const handleToast = (event: CustomEvent) => {
+      const { message, description } = event.detail
+      
+      // Check if this is a streak notification
+      const isStreakToast = 
+        (message && (message.includes('streak') || message.includes('🔥') || message.includes('🚀'))) ||
+        (description && (description.includes('streak') || description.includes('momentum') || description.includes('fire')))
+      
+      if (isStreakToast) {
+        // Small delay to let the toast appear first
+        setTimeout(() => {
+          fireStreakConfetti()
+        }, 100)
+      }
+    }
+
+    // Listen for toast events
+    window.addEventListener('toast-created' as any, handleToast)
+    
+    return () => {
+      window.removeEventListener('toast-created' as any, handleToast)
+    }
+  }, [fireStreakConfetti])
 
   return (
     <Sonner

@@ -80,7 +80,7 @@ export function ResourceList({
   });
 
   // Enhance PDF resources with metadata
-  const { enhancedResources: resources, loading: loadingPdfMetadata } = usePdfMetadata(
+  const { enhancedResources: resources } = usePdfMetadata(
     rawResources || [],
     {
       enabled: true,
@@ -111,8 +111,8 @@ export function ResourceList({
     );
   }
 
-  // Show loading spinner for PDF metadata enhancement (but allow interaction)
-  const isEnhancing = loadingPdfMetadata && resources.length > 0;
+  // Show loading spinner for resource enhancement (but allow interaction)
+  // Enhancement loading states have been removed for cleaner build
 
   // Error state
   if (error) {

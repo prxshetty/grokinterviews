@@ -97,7 +97,7 @@ export function usePdfMetadata(
     loading: false,
     error: null,
     progress: 0,
-    processedIds: new Set(),
+    processedIds: new Set<number>(),
   });
 
   /**

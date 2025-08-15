@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Confetti canvas positioning - ensure it appears behind toasts */
+canvas {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999; /* High z-index but still behind toasts */
+}
+
+/* Ensure toasts appear above confetti */
+.toaster {
+  z-index: 10000 !important;
+}
+
+.sonner-glassy-toast {
+  z-index: 10001 !important;
+}
+
 @layer base {
   :root {
     /* Brand Colors */
