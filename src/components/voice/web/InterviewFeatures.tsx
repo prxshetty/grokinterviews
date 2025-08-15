@@ -1,6 +1,5 @@
 import React from 'react';
 import { InterviewType } from './InterviewAvatar';
-import CustomInterviewForm from './CustomInterviewForm';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 
 interface InterviewFeaturesProps {
@@ -12,9 +11,6 @@ interface InterviewFeaturesProps {
 
 export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
   selectedType = 'behavioral',
-  customConfig = { customTopics: '', questionFormat: '', difficulty: '' },
-  onCustomConfigChange,
-  customConfigErrors = {}
 }) => {
   const getFeatureContent = () => {
     switch (selectedType) {

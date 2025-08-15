@@ -36,8 +36,6 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
   config,
   onConfigChange,
   errors,
-  isInterviewActive,
-  isProcessingAI,
   rateLimited,
 }) => {
   // Use a ref to track the previous type to avoid infinite loops
