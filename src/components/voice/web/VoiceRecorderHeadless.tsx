@@ -48,6 +48,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const autoStopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const autoStartRef = useRef(autoStart);
+  const isForceStoppedRef = useRef(false);
 
   // Keep autoStartRef updated
   useEffect(() => {
@@ -204,6 +205,9 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
   const startRecording = useCallback(async () => {
     try {
+      // Reset force stop flag for new recording
+      isForceStoppedRef.current = false;
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -258,6 +262,13 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         
         if (vadRef.current) {
           await vadRef.current.stop();
+        }
+        
+        // Skip transcription if recording was force-stopped (manual interview termination)
+        if (isForceStoppedRef.current) {
+          console.log('🛑 Recording was force-stopped, skipping transcription');
+          isForceStoppedRef.current = false; // Reset flag
+          return;
         }
         
         if (audioBlob.size < 1000) {
@@ -333,6 +344,9 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
   const forceStop = useCallback(() => {
     console.log('🛑 VoiceRecorderHeadless: Force stopping recording');
+    
+    // Set flag to prevent transcription on manual termination
+    isForceStoppedRef.current = true;
     
     if (mediaRecorderRef.current && isRecording) {
       try {
