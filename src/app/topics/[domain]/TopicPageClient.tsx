@@ -98,7 +98,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     } finally {
       setIsLoading(prev => ({ ...prev, categories: false }));
     }
-  }, [dataCache]);
+  }, [dataCache, setTopicCategories, setIsLoading, setDataCache]);
 
   // Load category details
   const loadCategoryDetails = useCallback(async (categoryId: string) => {
@@ -200,7 +200,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     } finally {
       setIsLoading(prev => ({ ...prev, sections: false }));
     }
-  }, [selectedTopic, dataCache, topicCategories]);
+  }, [selectedTopic, dataCache, topicCategories, setCategoryDetails, setIsLoading, setDataCache]);
 
   // Handle category selection from TopicCategoryGrid
   const handleCategorySelect = useCallback(async (categoryId: string) => {
@@ -214,7 +214,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     
     // Load category details
     await loadCategoryDetails(categoryId);
-  }, [searchParams, pathname, router, loadCategoryDetails]);
+  }, [searchParams, pathname, router, loadCategoryDetails, setSelectedCategory]);
 
   // Handle difficulty selection
   const handleDifficultyChange = useCallback(async (difficulty: string | null) => {
@@ -241,7 +241,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     } finally {
       setIsLoading(prev => ({ ...prev, difficultyQuestions: false }));
     }
-  }, [searchParams, pathname, router, domain]);
+  }, [searchParams, pathname, router, domain, setSelectedDifficulty, setIsLoading, setDifficultyQuestions]);
 
   // Clear difficulty filter
   const clearDifficultyFilter = useCallback(() => {
@@ -252,7 +252,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('difficulty');
     router.push(`${pathname}?${params.toString()}`);
-  }, [searchParams, pathname, router]);
+  }, [searchParams, pathname, router, setSelectedDifficulty, setDifficultyQuestions]);
 
   // Handle back to main categories
   const handleBackToMainCategories = useCallback(() => {
@@ -264,7 +264,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     params.delete('category');
     params.delete('q'); // Clear question ID when going back
     router.push(`${pathname}?${params.toString()}`);
-  }, [searchParams, pathname, router]);
+  }, [searchParams, pathname, router, setSelectedCategory, setCategoryDetails]);
 
   // Handle page change
   const handlePageChange = useCallback((page: number) => {
@@ -272,7 +272,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', page.toString());
     router.push(`${pathname}?${params.toString()}`);
-  }, [searchParams, pathname, router]);
+  }, [searchParams, pathname, router, setCurrentPage]);
 
   // Load topics when domain changes
   useEffect(() => {

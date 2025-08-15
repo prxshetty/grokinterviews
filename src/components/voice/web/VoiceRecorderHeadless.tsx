@@ -85,7 +85,11 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       setIsProcessing(true);
       
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      // Use the correct filename based on the blob's type
+      const filename = audioBlob.type.includes('wav') ? 'recording.wav' : 
+                      audioBlob.type.includes('webm') ? 'recording.webm' : 
+                      'recording.wav'; // default to wav
+      formData.append('audio', audioBlob, filename);
 
       console.log('📝 Sending audio for transcription...');
 
@@ -115,7 +119,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     } finally {
       setIsProcessing(false);
     }
-  }, [onTranscriptionReceived, onError]);
+  }, [onTranscriptionReceived, onError, setIsProcessing]);
 
   // VAD callback handlers
   const handleSpeechStart = useCallback(() => {
@@ -125,7 +129,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       clearTimeout(autoStopTimeoutRef.current);
       autoStopTimeoutRef.current = null;
     }
-  }, []);
+  }, [setIsSpeaking]);
 
   const handleSpeechPause = useCallback(() => {
     console.log('⏸️ VAD: Speech paused - checking MediaRecorder state');
@@ -148,7 +152,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setIsSpeaking(false);
-  }, [recordingStartTime]);
+  }, [recordingStartTime, setIsRecording, setIsSpeaking]);
 
   const handleSpeechEnd = useCallback(() => {
     console.log('🤫 VAD: Speech ended after silence timeout (backup)');
@@ -163,7 +167,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setIsSpeaking(false);
-  }, []);
+  }, [setIsRecording, setIsSpeaking]);
 
   const handleVADMisfire = useCallback(() => {
     console.log('⚠️ VAD: Misfire detected');
@@ -216,27 +220,23 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         }
       });
 
-      const mediaRecorderOptions: MediaRecorderOptions = {};
+      // Force consistent WAV format for reliability
+      const mediaRecorderOptions: MediaRecorderOptions = {
+        mimeType: 'audio/wav'
+      };
       
-      const supportedFormats = [
-        'audio/wav',
-        'audio/mp4',
-        'audio/mpeg',
-        'audio/webm',
-        'audio/ogg'
-      ];
-      
-      for (const format of supportedFormats) {
-        if (MediaRecorder.isTypeSupported(format)) {
-          mediaRecorderOptions.mimeType = format;
-          console.log(`🎤 Using recording format: ${format}`);
-          break;
+      // Fallback if WAV is not supported (rare)
+      if (!MediaRecorder.isTypeSupported('audio/wav')) {
+        console.warn('⚠️ WAV not supported, trying WebM');
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mediaRecorderOptions.mimeType = 'audio/webm';
+        } else {
+          console.warn('⚠️ Neither WAV nor WebM supported, using default');
+          delete mediaRecorderOptions.mimeType;
         }
       }
       
-      if (!mediaRecorderOptions.mimeType) {
-        console.warn('⚠️ No preferred format supported, using default');
-      }
+      console.log(`🎤 Using recording format: ${mediaRecorderOptions.mimeType || 'default'}`);
       
       const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
       mediaRecorderRef.current = mediaRecorder;
@@ -252,7 +252,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: mediaRecorderOptions.mimeType || 'audio/webm' 
+          type: mediaRecorderOptions.mimeType || 'audio/wav' 
         });
         
         setRecordingStartTime(null);
@@ -321,7 +321,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         onError?.('Failed to access microphone. Please check permissions and try again.');
       }
     }
-  }, [onRecordingComplete, transcribeAudio, enableVAD, vadSupported, onError]);
+  }, [onRecordingComplete, transcribeAudio, enableVAD, vadSupported, onError, setIsRecording, setRecordingStartTime, setHasAutoStarted]);
 
   const stopRecording = useCallback(async () => {
     if (mediaRecorderRef.current && isRecording) {
@@ -340,7 +340,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       
       console.log('🛑 Recording stopped');
     }
-  }, [isRecording]);
+  }, [isRecording, setIsRecording, setIsSpeaking]);
 
   const forceStop = useCallback(() => {
     console.log('🛑 VoiceRecorderHeadless: Force stopping recording');
@@ -387,7 +387,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     audioChunksRef.current = [];
     
     console.log('✅ VoiceRecorderHeadless: Recording stopped successfully');
-  }, [isRecording]);
+  }, [isRecording, setIsRecording, setIsProcessing, setIsSpeaking]);
 
   const pauseVAD = useCallback(async () => {
     console.log('⏸️ VoiceRecorderHeadless: Pausing VAD');
@@ -433,7 +433,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     } else if (!autoStart && hasAutoStarted) {
       setHasAutoStarted(false);
     }
-  }, [autoStart, isRecording, disabled, isProcessing, hasAutoStarted, startRecording]);
+  }, [autoStart, isRecording, disabled, isProcessing, hasAutoStarted, startRecording, setHasAutoStarted]);
 
   // Notify parent component about recording state changes
   useEffect(() => {

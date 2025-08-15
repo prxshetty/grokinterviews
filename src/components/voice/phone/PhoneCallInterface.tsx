@@ -57,7 +57,6 @@ export default function PhoneCallInterface({
         const config = await vapiService.getConfigStatus();
         setConfigStatus(config);
       } catch (error) {
-        console.error('Error fetching VAPI configuration:', error);
         setConfigStatus({
           hasApiKey: false,
           hasAssistantId: false,
@@ -85,14 +84,11 @@ export default function PhoneCallInterface({
           });
           
           if (stuckCalls.length > 0) {
-            console.log(`Found ${stuckCalls.length} potentially stuck calls, checking VAPI status...`);
-            
             // Check each stuck call with VAPI (minimal API calls)
             for (const call of stuckCalls) {
               try {
                 const statusResponse = await vapiService.getCallStatus(call.vapi_call_id);
                 if (statusResponse.success && statusResponse.call?.status === 'ended') {
-                  console.log(`Fixing stuck call: ${call.vapi_call_id}`);
                   
                   // Calculate actual duration from VAPI data
                   const actualDuration = statusResponse.call.startedAt && statusResponse.call.endedAt 
@@ -128,8 +124,6 @@ export default function PhoneCallInterface({
               } catch (error) {
                 // Handle 404 errors (call no longer exists in VAPI)
                 if (error instanceof Error && error.message.includes('404')) {
-                  console.log(`Call ${call.vapi_call_id} not found in VAPI (404) - marking as ended`);
-                  
                   // Update database to mark call as ended
                   await fetch('/api/voice/phone-calls', {
                     method: 'PUT',
@@ -149,15 +143,13 @@ export default function PhoneCallInterface({
                       }
                     }),
                   });
-                } else {
-                  console.error(`Error checking stuck call ${call.vapi_call_id}:`, error);
                 }
               }
             }
           }
         }
       } catch (error) {
-        console.error('Error during stuck call cleanup:', error);
+        // Error during stuck call cleanup
       }
     };
 
@@ -179,15 +171,12 @@ export default function PhoneCallInterface({
       // Poll call status every 3 seconds with smart stuck call detection
       statusInterval = setInterval(async () => {
         if (currentCall?.id) {
-          console.log(`Polling call status for ${currentCall.id}...`);
           try {
             const statusResponse = await vapiService.getCallStatus(currentCall.id);
-            console.log('Status response:', statusResponse);
             
             if (statusResponse.success) {
               // Handle case where call was cancelled/ended externally (call is null)
               if (!statusResponse.call && callState === 'in-progress') {
-                console.log('🎯 Call cancelled externally - updating UI...');
                 setCallState('ended');
                 
                 // Update database to mark call as ended
@@ -208,9 +197,8 @@ export default function PhoneCallInterface({
                       }
                     }),
                   });
-                  console.log('✅ Database updated for externally cancelled call');
                 } catch (dbError) {
-                  console.error('Error updating cancelled call in database:', dbError);
+                  // Error updating cancelled call in database
                 }
                 
                 onCallEndedRef.current?.(currentCall.id, undefined);
@@ -219,11 +207,9 @@ export default function PhoneCallInterface({
               
               if (statusResponse.call) {
                 const vapiCall = statusResponse.call;
-                console.log(`VAPI call status: ${vapiCall.status}, UI state: ${callState}`);
               
               // Update local state based on VAPI status
               if (vapiCall.status === 'ended' && callState === 'in-progress') {
-                console.log('🎯 Call ended detected! Updating UI...');
                 setCallState('ended');
                 
                 // Calculate actual duration from VAPI data
@@ -231,11 +217,9 @@ export default function PhoneCallInterface({
                   ? Math.floor((new Date(vapiCall.endedAt).getTime() - new Date(vapiCall.startedAt).getTime()) / 1000)
                   : callDuration; // Fallback to UI duration if VAPI data unavailable
                 
-                console.log(`Calculated duration: ${actualDuration} seconds`);
-                
                 // Update database with final call data using VAPI duration
                 try {
-                  const updateResponse = await fetch('/api/voice/phone-calls', {
+                  await fetch('/api/voice/phone-calls', {
                     method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',
@@ -258,13 +242,8 @@ export default function PhoneCallInterface({
                     }),
                   });
                   
-                  if (updateResponse.ok) {
-                    console.log('✅ Database updated successfully');
-                  } else {
-                    console.error('❌ Database update failed:', await updateResponse.text());
-                  }
                 } catch (dbError) {
-                  console.error('Error updating final call data:', dbError);
+                  // Error updating final call data
                 }
                 
                 onCallEndedRef.current?.(currentCall.id, vapiCall);
@@ -278,8 +257,6 @@ export default function PhoneCallInterface({
               if (callState === 'in-progress' && callAge > 300) { // 5 minutes
                 // Check if VAPI call is actually ended but our UI thinks it's still active
                 if (vapiCall.status === 'ended') {
-                  console.warn('Detected stuck call - VAPI shows ended but UI shows in-progress');
-                  
                   // Fix the stuck call immediately
                   setCallState('ended');
                   
@@ -314,24 +291,20 @@ export default function PhoneCallInterface({
                       }),
                     });
                     
-                    console.log('Successfully fixed stuck call in database');
                   } catch (dbError) {
-                    console.error('Error fixing stuck call in database:', dbError);
+                    // Error fixing stuck call in database
                   }
                   
                   onCallEndedRef.current?.(currentCall.id, vapiCall);
                 }
               }
               }
-            } else {
-              console.warn('Status response not successful:', statusResponse);
             }
           } catch (error) {
-            console.error('Error polling call status:', error);
+            // Error polling call status
             
             // Handle 404 errors (call no longer exists in VAPI)
             if (error instanceof Error && error.message.includes('404')) {
-              console.warn('Call not found in VAPI (404) - likely ended externally, cleaning up UI state');
               setCallState('ended');
               
               // Update database to mark call as ended
@@ -354,9 +327,8 @@ export default function PhoneCallInterface({
                   }),
                 });
                 
-                console.log('Successfully cleaned up 404 call in database');
               } catch (dbError) {
-                console.error('Error cleaning up 404 call in database:', dbError);
+                // Error cleaning up 404 call in database
               }
               
               onCallEndedRef.current?.(currentCall.id, undefined);
@@ -370,7 +342,7 @@ export default function PhoneCallInterface({
       if (interval) clearInterval(interval);
       if (statusInterval) clearInterval(statusInterval);
     };
-  }, [callState, currentCall?.id, callDuration]); // onCallEnded is now accessed via ref
+  }, [callState, currentCall?.id, callDuration, setCallDuration, setCallState]); // onCallEnded is now accessed via ref
 
   // Poll call status when call is active
   useEffect(() => {
@@ -431,18 +403,18 @@ export default function PhoneCallInterface({
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [currentCall?.id, callState]); // onCallEnded is now accessed via ref
+  }, [currentCall?.id, callState, setCurrentCall, setCallState]); // onCallEnded is now accessed via ref
 
   // Handle phone number change
   const handlePhoneNumberChange = useCallback((value: string) => {
     setPhoneNumber(value);
     setError(null); // Clear any previous errors
-  }, []);
+  }, [setPhoneNumber, setError]);
 
   // Handle phone number validation change
   const handlePhoneNumberValidation = useCallback((isValid: boolean) => {
     setIsPhoneNumberValid(isValid);
-  }, []);
+  }, [setIsPhoneNumberValid]);
 
   // Start phone call
   const handleStartCall = async () => {
