@@ -8,7 +8,6 @@ interface InterviewConfigPanelProps {
   config: InterviewModeConfig;
   onConfigChange: (config: InterviewModeConfig) => void;
   errors: Record<string, string>;
-  onStartInterview: () => void;
   isInterviewActive: boolean;
   isProcessingAI: boolean;
   rateLimited: boolean;
@@ -37,7 +36,6 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
   config,
   onConfigChange,
   errors,
-  onStartInterview,
   isInterviewActive,
   isProcessingAI,
   rateLimited,
@@ -106,7 +104,7 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
     }
   };
 
-  const isReadOnly = selectedType !== 'custom';
+  const isReadOnly = selectedType === 'behavioral';
 
   return (
     <div className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 h-fit">
@@ -138,7 +136,7 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
               <div className="ml-3">
                 <p className="text-sm text-blue-800 dark:text-blue-200">
                   <strong>Pre-configured settings:</strong> These settings are optimized for {selectedType} interviews. 
-                  Switch to "Custom Interview" to modify these fields.
+                  These fields are read-only for behavioral interviews.
                 </p>
               </div>
             </div>
@@ -146,29 +144,21 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
         )}
       </div>
 
-      <button
-        onClick={onStartInterview}
-        disabled={isInterviewActive || isProcessingAI || rateLimited}
-        className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-200 ${
-          isInterviewActive || isProcessingAI || rateLimited
-            ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-        }`}
-      >
-        {isProcessingAI 
-          ? 'Starting Interview...' 
-          : rateLimited 
-            ? 'Rate Limited' 
-            : isInterviewActive 
-              ? 'Interview Active' 
-              : `Start ${selectedType === 'system-design' ? 'System Design' : selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} Interview`
-        }
-      </button>
-
       {rateLimited && (
-        <p className="text-red-500 text-sm mt-2 text-center">
-          You've reached the rate limit. Please wait before starting another interview.
-        </p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                <strong>Rate Limited:</strong> You've reached the rate limit. Please wait before starting another interview.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

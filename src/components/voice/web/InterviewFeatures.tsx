@@ -130,88 +130,42 @@ export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
   const content = getFeatureContent();
 
   return (
-    <div className="mb-16 font-sans">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-light text-foreground mb-6 tracking-tight">
+    <div className="mb-8 font-sans">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-light text-foreground mb-4 tracking-tight">
           {content.title}
         </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-light leading-relaxed">
-          {content.description}
-        </p>
       </div>
       
-      {/* Layout: Statistics on left, Custom Form on right for custom type */}
-      <div className={`${selectedType === 'custom' ? 'grid lg:grid-cols-2 gap-12' : ''} max-w-6xl mx-auto`}>
+      <div className="w-full">
         {/* Statistics Cards */}
-        <div className={`${selectedType === 'custom' ? '' : 'grid md:grid-cols-3 gap-8'}`}>
-          {selectedType === 'custom' ? (
-            <div className="space-y-8">
-              {content.stats.map((stat, index) => (
-                <div key={index} className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
-                  <div className="relative z-10">
-                    <div className="flex items-start gap-4">
-                      <div className="text-3xl font-light text-slate-800 dark:text-slate-200">{stat.number}</div>
-                      <div className="flex-1">
-                        <div className="text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider mb-2">{stat.label}</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            {stat.features.map((feature, featureIndex) => (
-                              <div key={featureIndex} className="flex items-center gap-1">
-                                <span className="text-green-500 text-xs">✓</span>
-                                <span className="text-xs">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <p className="text-xs mt-2">{stat.description}</p>
-                        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          {content.stats.map((stat, index) => (
+            <div key={index} className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden">
+              <div className={`absolute inset-0 bg-gradient-to-br ${
+                index === 0 ? 'from-blue-500/5' : 
+                index === 1 ? 'from-purple-500/5' : 
+                'from-green-500/5'
+              } to-transparent`} />
+              <div className="relative z-10 text-center">
+                <div className="text-5xl font-light text-slate-800 dark:text-slate-200 mb-3">{stat.number}</div>
+                <div className="text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider mb-4">{stat.label}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed space-y-3">
+                  <div className="space-y-2">
+                    {stat.features.map((feature, featureIndex) => (
+                      <div key={featureIndex} className="flex items-center justify-center gap-2">
+                        <span className="text-green-500 w-4 text-center">✓</span>
+                        <span className="w-32 text-left">{feature}</span>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            content.stats.map((stat, index) => (
-              <div key={index} className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden">
-                <div className={`absolute inset-0 bg-gradient-to-br ${
-                  index === 0 ? 'from-blue-500/5' : 
-                  index === 1 ? 'from-purple-500/5' : 
-                  'from-green-500/5'
-                } to-transparent`} />
-                <div className="relative z-10 text-center">
-                  <div className="text-5xl font-light text-slate-800 dark:text-slate-200 mb-3">{stat.number}</div>
-                  <div className="text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider mb-4">{stat.label}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed space-y-3">
-                    <div className="space-y-2">
-                      {stat.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-center justify-center gap-2">
-                          <span className="text-green-500 w-4 text-center">✓</span>
-                          <span className="w-32 text-left">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-center mt-4 text-xs">{stat.description}</p>
+                    ))}
                   </div>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
 
-        {/* Custom Interview Form - Only show for custom type */}
-        {selectedType === 'custom' && onCustomConfigChange && (
-          <div className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50">
-            <h3 className="text-xl font-semibold text-foreground mb-6">Configure Your Custom Interview</h3>
-            <div className="space-y-6">
-              <CustomInterviewForm
-                config={customConfig}
-                onConfigChange={onCustomConfigChange}
-                errors={customConfigErrors}
-              />
-            </div>
-          </div>
-        )}
+        {/* Custom Interview Form removed to prevent duplication - form is in right panel */}
       </div>
     </div>
   );
