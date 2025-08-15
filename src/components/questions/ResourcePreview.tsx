@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { useIsMobile, useIsTabletOrSmaller } from '@/hooks/ui';
-import { Resource, TYPE_DISPLAY_INFO, getGradientForType } from '@/types/resources.types';
+import { Resource, TYPE_DISPLAY_INFO, getGradientForType, getWebsiteFavicon } from '@/types/resources.types';
 
 interface ResourcePreviewProps {
   resource: Resource;
@@ -15,6 +15,13 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
   const ResourceTypeIcon = TYPE_DISPLAY_INFO[resource.type || 'other']?.Icon || ExternalLink;
   const isMobile = useIsMobile();
   const isTabletOrSmaller = useIsTabletOrSmaller();
+
+  // Use resource data - for image resources, fallback to favicon like website resources
+  const displayTitle = resource.title || 'Untitled Resource';
+  const displayDescription = resource.description;
+  const displayImage = resource.previewUrl || 
+    ((resource.type === 'image' || resource.type === 'website') && resource.url ? 
+     getWebsiteFavicon(resource.url) : null);
 
 
   // Determine optimal sizing based on device
@@ -63,16 +70,18 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
               className="w-full h-full"
               loading="eager"
             />
-          ) : resource.previewUrl ? (
+          ) : displayImage ? (
             <div 
               className="relative w-full h-full cursor-pointer" 
               onClick={() => onResourceClick(resource)}
             >
               <Image 
-                src={resource.previewUrl}
-                alt={resource.title || 'Resource preview'}
+                src={displayImage}
+                alt={displayTitle}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-contain"
+                unoptimized={resource.type === 'image'} // Don't optimize external preview images
               />
               <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-200" />
             </div>
@@ -91,11 +100,11 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1">
               <h3 className={`font-medium text-foreground line-clamp-2 leading-tight ${getTextSize()}`}>
-                {resource.title || 'Untitled Resource'}
+                {displayTitle}
               </h3>
-              {resource.description && (
+              {displayDescription && (
                 <p className={`text-muted-foreground line-clamp-2 mt-1 leading-tight ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                  {resource.description}
+                  {displayDescription}
                 </p>
               )}
             </div>

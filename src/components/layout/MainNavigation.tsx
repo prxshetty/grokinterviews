@@ -229,24 +229,38 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
     
     // Show toast only when streak actually increases
     if (streakIncreased) {
+      let message: string;
+      let description: string;
+      let duration: number;
+      
       if (newHighestStreak) {
         // New personal best!
-        toast.success(`🔥 New record! ${current_streak} day streak!`, {
-          description: `You've beaten your previous best of ${prevStreak.highest} days`,
-          duration: 4000,
-        });
+        message = `🔥 New record! ${current_streak} day streak!`;
+        description = `You've beaten your previous best of ${prevStreak.highest} days`;
+        duration = 4000;
       } else if (current_streak === 1) {
         // Starting a new streak
-        toast.success(`🚀 Streak started!`, {
-          description: `Great job! Keep it up to build your streak`,
-          duration: 3000,
-        });
+        message = `🚀 Streak started!`;
+        description = `Great job! Keep it up to build your streak`;
+        duration = 3000;
       } else {
         // Regular streak increase
-        toast.success(`🔥 ${current_streak} day streak!`, {
-          description: `You're on fire! Keep the momentum going`,
-          duration: 3000,
-        });
+        message = `🔥 ${current_streak} day streak!`;
+        description = `You're on fire! Keep the momentum going`;
+        duration = 3000;
+      }
+      
+      // Show the toast
+      toast.success(message, {
+        description,
+        duration,
+      });
+      
+      // Dispatch custom event for confetti
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('toast-created', {
+          detail: { message, description, type: 'streak' }
+        }));
       }
     }
     
