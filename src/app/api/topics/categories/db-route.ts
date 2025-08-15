@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { Category, CategoryWithQuestions } from '@/types/database';
 
+// Utility function to generate slugs
+function slugify(text: string): string {
+  if (typeof text !== 'string') return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+}
+
 // Removed convertCategoriesToLegacyFormat (will be fully removed if not used elsewhere after refactor)
 // Removed convertQuestionsToLegacyFormat (will be fully removed if not used elsewhere after refactor)
 
@@ -139,11 +151,11 @@ export async function GET(request: NextRequest) {
 
       // Legacy processing for this path
       const categoriesByTopic: Record<string, any[]> = {};
-      const convertCategoriesToLegacyFormat = (cats: Category[]) => cats.map(c => ({ id: c.slug || c.id.toString(), label: c.name }));
+      const convertCategoriesToLegacyFormat = (cats: Category[]) => cats.map(c => ({ id: slugify(c.name) || c.id.toString(), label: c.name }));
 
 
       for (const topic of joinData || []) {
-        const key = topic.slug || topic.name; // Prioritize slug, then name
+        const key = slugify(topic.name) || topic.name; // Use slugified name as key
         categoriesByTopic[key] = convertCategoriesToLegacyFormat(topic.categories || []);
       }
       console.timeEnd('all-topics-with-categories-query');
