@@ -98,7 +98,7 @@ export const useRateLimit = (): UseRateLimitReturn => {
   // Check rate limit on mount (default to web interviews)
   useEffect(() => {
     checkRateLimit('web');
-  }, [checkRateLimit]); // checkRateLimit is stable due to useCallback with empty deps
+  }, []); // Only run on mount, no dependencies needed
 
   return {
     rateLimitState,

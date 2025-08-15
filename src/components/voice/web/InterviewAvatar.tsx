@@ -1,10 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+type InterviewType = 'behavioral' | 'technical' | 'system-design' | 'custom';
+
+interface AvatarConfig {
+  src: string;
+  alt: string;
+  title: string;
+  description: string;
+}
+
+const avatarConfigs: Record<InterviewType, AvatarConfig> = {
+  behavioral: {
+    src: '/behavior.svg',
+    alt: 'AI Behavioral Interview Assistant',
+    title: 'Behavioral Interview',
+    description: 'Practice behavioral questions and soft skills'
+  },
+  technical: {
+    src: '/techAI.svg',
+    alt: 'AI Technical Interview Assistant',
+    title: 'Technical Interview',
+    description: 'Practice coding and technical questions'
+  },
+  'system-design': {
+    src: '/sdAI.svg',
+    alt: 'AI System Design Interview Assistant',
+    title: 'System Design Interview',
+    description: 'Practice system architecture and design'
+  },
+  custom: {
+    src: '/customAI.svg',
+    alt: 'AI Custom Interview Assistant',
+    title: 'Custom Interview',
+    description: 'Practice custom topics and questions'
+  }
+};
 
 interface InterviewAvatarProps {
   isInterviewActive: boolean;
   isPlayingTTS: boolean;
   isRecordingActive: boolean;
   isSpeakingDetected: boolean;
+  selectedType?: InterviewType;
+  onTypeChange?: (type: InterviewType) => void;
 }
 
 export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
@@ -12,10 +50,61 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
   isPlayingTTS,
   isRecordingActive,
   isSpeakingDetected,
+  selectedType = 'behavioral',
+  onTypeChange,
 }) => {
+  const [currentIndex, setCurrentIndex] = useState<number>(
+    Object.keys(avatarConfigs).indexOf(selectedType)
+  );
+  
+  const interviewTypes = Object.keys(avatarConfigs) as InterviewType[];
+  const currentType = interviewTypes[currentIndex] || selectedType;
+  const currentConfig = avatarConfigs[currentType];
+
+  const handlePrevious = () => {
+    const newIndex = (currentIndex - 1 + interviewTypes.length) % interviewTypes.length;
+    setCurrentIndex(newIndex);
+    const newType = interviewTypes[newIndex];
+    if (newType) {
+      onTypeChange?.(newType);
+    }
+  };
+
+  const handleNext = () => {
+    const newIndex = (currentIndex + 1) % interviewTypes.length;
+    setCurrentIndex(newIndex);
+    const newType = interviewTypes[newIndex];
+    if (newType) {
+      onTypeChange?.(newType);
+    }
+  };
+
   return (
     <div className="flex justify-center mb-8">
       <div className="relative">
+        {/* Carousel Navigation - Only show when interview is not active */}
+        {!isInterviewActive && (
+          <>
+            <button
+              onClick={handlePrevious}
+              className="absolute left-[-60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <button
+              onClick={handleNext}
+              className="absolute right-[-60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-white dark:hover:bg-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
+
         {/* Main Avatar with Responsive Animations */}
         <div className={`relative transition-all duration-700 ease-in-out ${
           isInterviewActive 
@@ -27,8 +116,8 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
             : 'scale-100'
         }`}>
           <img 
-            src="/behavior.svg" 
-            alt="AI Behavioral Interview Assistant" 
+            src={currentConfig.src} 
+            alt={currentConfig.alt} 
             className={`w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain transition-all duration-300 ${
               isInterviewActive 
                 ? isPlayingTTS 
@@ -79,9 +168,45 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
             </div>
           </div>
         )}
+
+        {/* Interview Type Display - Only visible when interview is not active */}
+        {!isInterviewActive && (
+          <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-center min-w-max">
+            <h3 className="text-lg font-semibold text-foreground mb-1">
+              {currentConfig.title}
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              {currentConfig.description}
+            </p>
+          </div>
+        )}
+
+        {/* Carousel Indicators */}
+        {!isInterviewActive && (
+          <div className="absolute -bottom-24 left-1/2 transform -translate-x-1/2 flex space-x-2">
+            {interviewTypes.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setCurrentIndex(index);
+                  const type = interviewTypes[index];
+                  if (type) {
+                    onTypeChange?.(type);
+                  }
+                }}
+                className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                  index === currentIndex
+                    ? 'bg-blue-500 dark:bg-blue-400'
+                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default InterviewAvatar;
+export type { InterviewType };
