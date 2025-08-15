@@ -1,5 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { InterviewAvatar, InterviewType } from './InterviewAvatar';
+import { InterviewFeatures } from './InterviewFeatures';
+import { InterviewModeConfig } from '@/app/api/voice/types';
+
+// Default objects to prevent re-renders
+const DEFAULT_CUSTOM_CONFIG: InterviewModeConfig = {
+  customTopics: '',
+  questionFormat: '',
+  difficulty: ''
+};
+
+const DEFAULT_CUSTOM_CONFIG_ERRORS: Record<string, string> = {};
 
 interface InterviewSelectionPanelProps {
   selectedType: InterviewType;
@@ -8,6 +19,9 @@ interface InterviewSelectionPanelProps {
   isPlayingTTS: boolean;
   isRecordingActive: boolean;
   isSpeakingDetected: boolean;
+  customConfig?: InterviewModeConfig;
+  onCustomConfigChange?: (config: InterviewModeConfig) => void;
+  customConfigErrors?: Record<string, string>;
 }
 
 export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = ({
@@ -17,7 +31,15 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
   isPlayingTTS,
   isRecordingActive,
   isSpeakingDetected,
+  customConfig,
+  onCustomConfigChange,
+  customConfigErrors,
 }) => {
+  // Memoize the callback to prevent re-renders
+  const stableOnCustomConfigChange = useMemo(
+    () => onCustomConfigChange || (() => {}),
+    [onCustomConfigChange]
+  );
   return (
     <div className="flex flex-col items-center">
       {/* AI Avatar with Carousel */}
@@ -30,15 +52,17 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
         onTypeChange={onTypeChange}
       />
       
-      {/* Additional info or features can go here */}
-      {!isInterviewActive && (
-        <div className="text-center max-w-md mt-8">
-          <p className="text-muted-foreground text-sm">
-            Use the arrows or indicators to switch between different interview types. 
-            Configure your settings on the right and start when ready.
-          </p>
-        </div>
-      )}
+      {/* Interview Features positioned below Avatar */}
+        {!isInterviewActive && (
+          <div className="w-full mt-8">
+            <InterviewFeatures
+              selectedType={selectedType}
+              customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
+              onCustomConfigChange={stableOnCustomConfigChange}
+              customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+            />
+          </div>
+        )}
     </div>
   );
 };

@@ -126,8 +126,8 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
                     ? '' 
                     : isRecordingActive 
                       ? '' 
-                      : 'animate-pulse opacity-50'
-                : 'animate-pulse'
+                      : 'opacity-50'
+                : ''
             }`}
             style={{
               animationDuration: isInterviewActive && !isPlayingTTS && !isRecordingActive ? '3s' : undefined
@@ -169,40 +169,9 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
           </div>
         )}
 
-        {/* Interview Type Display - Only visible when interview is not active */}
-        {!isInterviewActive && (
-          <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-center min-w-max">
-            <h3 className="text-lg font-semibold text-foreground mb-1">
-              {currentConfig.title}
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              {currentConfig.description}
-            </p>
-          </div>
-        )}
+        {/* Interview Type Display removed to prevent duplication */}
 
-        {/* Carousel Indicators */}
-        {!isInterviewActive && (
-          <div className="absolute -bottom-24 left-1/2 transform -translate-x-1/2 flex space-x-2">
-            {interviewTypes.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setCurrentIndex(index);
-                  const type = interviewTypes[index];
-                  if (type) {
-                    onTypeChange?.(type);
-                  }
-                }}
-                className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                  index === currentIndex
-                    ? 'bg-blue-500 dark:bg-blue-400'
-                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
-              />
-            ))}
-          </div>
-        )}
+        {/* Carousel Indicators - Hidden to prevent interference with names */}
       </div>
     </div>
   );

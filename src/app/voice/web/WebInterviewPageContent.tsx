@@ -504,6 +504,9 @@ export default function WebInterviewPageContent() {
                   isPlayingTTS={voiceState.isPlayingTTS}
                   isRecordingActive={voiceState.isRecordingActive}
                   isSpeakingDetected={voiceState.isSpeakingDetected}
+                  customConfig={customConfig}
+                  onCustomConfigChange={handleCustomConfigChange}
+                  customConfigErrors={customConfigErrors}
                 />
               </div>
 
@@ -514,7 +517,6 @@ export default function WebInterviewPageContent() {
                   config={customConfig}
                   onConfigChange={handleCustomConfigChange}
                   errors={customConfigErrors}
-                  onStartInterview={handleStartInterview}
                   isInterviewActive={session.isActive}
                   isProcessingAI={voiceState.isProcessingAI}
                   rateLimited={rateLimitState.isRateLimited}
@@ -533,6 +535,9 @@ export default function WebInterviewPageContent() {
                 isPlayingTTS={voiceState.isPlayingTTS}
                 isRecordingActive={voiceState.isRecordingActive}
                 isSpeakingDetected={voiceState.isSpeakingDetected}
+                customConfig={customConfig}
+                onCustomConfigChange={handleCustomConfigChange}
+                customConfigErrors={customConfigErrors}
               />
             </div>
           )}
@@ -594,29 +599,27 @@ export default function WebInterviewPageContent() {
           />
         </div>
 
-        {/* Fixed Bottom Controls - Only show during active interview */}
-        {session.isActive && (
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-            <ControlButtons
-              isInterviewActive={session.isActive}
-              isProcessingAI={voiceState.isProcessingAI}
-              rateLimited={rateLimitState.isRateLimited}
-              onStartInterview={handleStartInterview}
-              onEndInterview={handleEndInterview}
-              isRecording={voiceState.isRecordingActive}
-              isSpeaking={voiceState.isSpeakingDetected}
-              isRecordingProcessing={voiceRecorderRef.current?.isProcessing || false}
-              enableVAD={true}
-              vadSupported={voiceState.vadSupported}
-              recordingError={voiceState.recordingError}
-              onStartRecording={handleStartRecording}
-              onStopRecording={handleStopRecording}
-              onDismissRecordingError={handleDismissRecordingError}
-              showChat={showChat}
-              onToggleChat={() => setShowChat(!showChat)}
-            />
-          </div>
-        )}
+        {/* Fixed Bottom Controls - Show for both starting and during interview */}
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+          <ControlButtons
+            isInterviewActive={session.isActive}
+            isProcessingAI={voiceState.isProcessingAI}
+            rateLimited={rateLimitState.isRateLimited}
+            onStartInterview={handleStartInterview}
+            onEndInterview={handleEndInterview}
+            isRecording={voiceState.isRecordingActive}
+            isSpeaking={voiceState.isSpeakingDetected}
+            isRecordingProcessing={voiceRecorderRef.current?.isProcessing || false}
+            enableVAD={true}
+            vadSupported={voiceState.vadSupported}
+            recordingError={voiceState.recordingError}
+            onStartRecording={handleStartRecording}
+            onStopRecording={handleStopRecording}
+            onDismissRecordingError={handleDismissRecordingError}
+            showChat={showChat}
+            onToggleChat={() => setShowChat(!showChat)}
+          />
+        </div>
       </div>
     </VoicePageWithVisualizer>
   );
