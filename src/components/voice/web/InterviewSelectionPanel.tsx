@@ -50,45 +50,45 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
         return (
           <InterviewFeatures
             selectedType={selectedType}
-            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
-            onCustomConfigChange={stableOnCustomConfigChange}
-            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+            config={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onConfigChange={stableOnCustomConfigChange}
+            errors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
           />
         );
       case 'system-design':
         return (
           <InterviewFeatures
             selectedType={selectedType}
-            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
-            onCustomConfigChange={stableOnCustomConfigChange}
-            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+            config={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onConfigChange={stableOnCustomConfigChange}
+            errors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
           />
         );
       case 'behavioral':
         return (
           <InterviewFeatures
             selectedType={selectedType}
-            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
-            onCustomConfigChange={stableOnCustomConfigChange}
-            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+            config={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onConfigChange={stableOnCustomConfigChange}
+            errors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
           />
         );
       case 'custom':
         return (
           <InterviewFeatures
             selectedType={selectedType}
-            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
-            onCustomConfigChange={stableOnCustomConfigChange}
-            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+            config={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onConfigChange={stableOnCustomConfigChange}
+            errors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
           />
         );
       default:
         return (
           <InterviewFeatures
             selectedType="behavioral"
-            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
-            onCustomConfigChange={stableOnCustomConfigChange}
-            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+            config={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onConfigChange={stableOnCustomConfigChange}
+            errors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
           />
         );
     }

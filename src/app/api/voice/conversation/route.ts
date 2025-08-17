@@ -292,7 +292,12 @@ export async function POST(request: NextRequest) {
     console.log('🤖 Processing interview:', {
       sessionType,
       configUsed: config ? 'custom' : 'preselected',
-      questionCount: currentQuestionCount + 1
+      questionCount: currentQuestionCount + 1,
+      configDetails: {
+        programmingLanguage: config?.programmingLanguage,
+        focusAreas: config?.focusAreas,
+        difficulty: config?.difficulty
+      }
     });
 
     // Create dynamic system prompt using PromptService
