@@ -68,7 +68,7 @@ const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
       }}
       gap={8}
       visibleToasts={4}
-      position="top-right"
+      position="bottom-right"
       {...otherProps}
     />
   )
