@@ -11,8 +11,10 @@ export { default as InterviewAvatar, type InterviewType } from './InterviewAvata
 export { default as InterviewFeatures } from './InterviewFeatures'
 export { default as InterviewSelectionPanel } from './InterviewSelectionPanel'
 export { default as InterviewConfigPanel } from './InterviewConfigPanel'
-export { default as ErrorDisplay } from './ErrorDisplay'
+export { default as TechnicalInterviewForm } from './TechnicalInterviewForm'
+export { default as SystemDesignForm } from './SystemDesignForm'
 export { default as CustomInterviewForm } from './CustomInterviewForm'
+export { default as ErrorDisplay } from './ErrorDisplay'
 
 // Re-export hooks from the proper location
 export * from '@/hooks/voice'

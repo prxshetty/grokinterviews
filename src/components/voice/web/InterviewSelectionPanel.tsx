@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { InterviewAvatar, InterviewType } from './InterviewAvatar';
-import { InterviewFeatures } from './InterviewFeatures';
 import { InterviewModeConfig } from '@/app/api/voice/types';
+import { InterviewFeatures } from './InterviewFeatures';
 
 // Default objects to prevent re-renders
 const DEFAULT_CUSTOM_CONFIG: InterviewModeConfig = {
@@ -40,29 +40,78 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
     () => onCustomConfigChange || (() => {}),
     [onCustomConfigChange]
   );
+
+  // Render appropriate form based on interview type
+  const renderInterviewForm = () => {
+    if (isInterviewActive) return null;
+    
+    switch (selectedType) {
+      case 'technical':
+        return (
+          <InterviewFeatures
+            selectedType={selectedType}
+            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onCustomConfigChange={stableOnCustomConfigChange}
+            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+          />
+        );
+      case 'system-design':
+        return (
+          <InterviewFeatures
+            selectedType={selectedType}
+            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onCustomConfigChange={stableOnCustomConfigChange}
+            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+          />
+        );
+      case 'behavioral':
+        return (
+          <InterviewFeatures
+            selectedType={selectedType}
+            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onCustomConfigChange={stableOnCustomConfigChange}
+            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+          />
+        );
+      case 'custom':
+        return (
+          <InterviewFeatures
+            selectedType={selectedType}
+            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onCustomConfigChange={stableOnCustomConfigChange}
+            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+          />
+        );
+      default:
+        return (
+          <InterviewFeatures
+            selectedType="behavioral"
+            customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
+            onCustomConfigChange={stableOnCustomConfigChange}
+            customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
+          />
+        );
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center">
-      {/* AI Avatar with Carousel */}
-      <InterviewAvatar
-        isInterviewActive={isInterviewActive}
-        isPlayingTTS={isPlayingTTS}
-        isRecordingActive={isRecordingActive}
-        isSpeakingDetected={isSpeakingDetected}
-        selectedType={selectedType}
-        onTypeChange={onTypeChange}
-      />
+    <div className="flex flex-col gap-8 items-center">
+      {/* Top Section: AI Avatar with Carousel */}
+      <div className="flex flex-col items-center">
+        <InterviewAvatar
+          isInterviewActive={isInterviewActive}
+          isPlayingTTS={isPlayingTTS}
+          isRecordingActive={isRecordingActive}
+          isSpeakingDetected={isSpeakingDetected}
+          selectedType={selectedType}
+          onTypeChange={onTypeChange}
+        />
+      </div>
       
-      {/* Interview Features positioned below Avatar */}
-        {!isInterviewActive && (
-          <div className="w-full mt-8">
-            <InterviewFeatures
-              selectedType={selectedType}
-              customConfig={customConfig || DEFAULT_CUSTOM_CONFIG}
-              onCustomConfigChange={stableOnCustomConfigChange}
-              customConfigErrors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
-            />
-          </div>
-        )}
+      {/* Bottom Section: Interview Configuration Forms */}
+      <div className="w-full max-w-2xl">
+        {renderInterviewForm()}
+      </div>
     </div>
   );
 };

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createClient } from '@/utils/supabase/server';
 import { checkRateLimit as checkUserRateLimit } from '@/utils/rateLimiting';
+import { PromptService } from '../services/promptService';
+import { InterviewMode, InterviewModeConfig, PromptContext } from '../types';
 
 // Initialize Groq client (reuse existing API key management)
 const groq = new Groq({
@@ -23,37 +25,18 @@ function getCurrentWeekIdentifier(): string {
   return `${now.getFullYear()}-${weekNumber.toString().padStart(2, '0')}`;
 }
 
-// Helper function to generate AI scoring
-async function generateInterviewScore(conversationHistory: ConversationMessage[]): Promise<any> {
+// Helper function to generate AI scoring using PromptService
+async function generateInterviewScore(
+  conversationHistory: ConversationMessage[], 
+  sessionType: InterviewMode, 
+  config?: InterviewModeConfig
+): Promise<any> {
   const userResponses = conversationHistory
     .filter(msg => msg.type === 'user')
     .map(msg => msg.text)
     .join('\n\n');
 
-  const scoringPrompt = `You are an expert HR interviewer evaluating a candidate's performance in a behavioral interview. 
-
-Analyze the following candidate responses and provide a comprehensive evaluation:
-
-${userResponses}
-
-Provide your evaluation in the following JSON format:
-{
-  "overall_score": [score from 1-10],
-  "strengths": ["strength1", "strength2", "strength3"],
-  "weaknesses": ["weakness1", "weakness2"],
-  "improvements": ["improvement1", "improvement2", "improvement3"],
-  "detailed_feedback": "Comprehensive feedback paragraph"
-}
-
-Evaluation criteria:
-- Communication clarity and structure
-- Use of STAR method (Situation, Task, Action, Result)
-- Specific examples and details
-- Problem-solving approach
-- Leadership and teamwork skills
-- Self-awareness and growth mindset
-
-Be constructive, specific, and helpful in your feedback.`;
+  const scoringPrompt = PromptService.createScoringPrompt(sessionType, config, userResponses);
 
   const completion = await groq.chat.completions.create({
     messages: [{ role: 'user', content: scoringPrompt }],
@@ -81,7 +64,16 @@ Be constructive, specific, and helpful in your feedback.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { userResponse, conversationHistory = [], sessionId, sessionType = 'behavioral', checkRateLimit = false, voiceId, voiceName } = await request.json();
+    const { 
+      userResponse, 
+      conversationHistory = [], 
+      sessionId, 
+      sessionType = 'behavioral', 
+      config, // New: optional configuration from frontend
+      checkRateLimit = false, 
+      voiceId, 
+      voiceName 
+    } = await request.json();
 
     // Handle rate limit check requests
     if (checkRateLimit) {
@@ -173,7 +165,8 @@ export async function POST(request: NextRequest) {
             week_identifier: currentWeek,
             question_count: 0,
             is_completed: false,
-            voice_name: voiceName
+            voice_name: voiceName,
+            interview_config: config || null // Store configuration
           })
           .select('id')
           .single();
@@ -227,7 +220,7 @@ export async function POST(request: NextRequest) {
           ];
           
           try {
-            const score = await generateInterviewScore(updatedHistory);
+            const score = await generateInterviewScore(updatedHistory, sessionType as InterviewMode, config);
             
             // Store the interview score
             await supabase
@@ -264,6 +257,13 @@ export async function POST(request: NextRequest) {
         console.error('⚠️ Failed to store final conversation data:', dbError);
       }
 
+      console.log('📊 Interview completed:', {
+        sessionType,
+        totalQuestions: 5,
+        finalScore: interviewScore?.overall_score,
+        configUsed: config ? 'custom' : 'preselected'
+      });
+
       return NextResponse.json({
         success: true,
         aiResponse: closingMessage,
@@ -289,30 +289,24 @@ export async function POST(request: NextRequest) {
       )
       .join('\n');
 
-    // Create system prompt for behavioral interview
-    const systemPrompt = `You are an experienced HR interviewer conducting a behavioral interview. Your role is to:
+    console.log('🤖 Processing interview:', {
+      sessionType,
+      configUsed: config ? 'custom' : 'preselected',
+      questionCount: currentQuestionCount + 1
+    });
 
-1. Ask thoughtful follow-up questions based on the candidate's responses
-2. Use the STAR method (Situation, Task, Action, Result) to guide deeper questioning
-3. Be professional, encouraging, and conversational
-4. Ask one question at a time
-5. Keep responses concise (1-3 sentences)
-6. Focus on behavioral interview topics like teamwork, problem-solving, leadership, challenges, etc.
+    // Create dynamic system prompt using PromptService
+    const promptContext: PromptContext = {
+      sessionType: sessionType as InterviewMode,
+      config: config as InterviewModeConfig,
+      conversationContext,
+      userResponse,
+      currentQuestionCount,
+      isLastQuestion
+    };
 
-IMPORTANT: This is a 5-question interview. Current question count: ${currentQuestionCount + 1}/5
-
-${isLastQuestion ? 
-  'This is the 4th and FINAL AI-generated question. Make it count - ask something insightful about their experience.' : 
-  'Continue with engaging behavioral questions.'}
-
-Current conversation context:
-${conversationContext}
-
-Latest candidate response: "${userResponse}"
-
-${isLastQuestion ? 
-  'Ask your final behavioral interview question. Focus on leadership, problem-solving, or career growth.' : 
-  'Provide a natural follow-up question or move to a new behavioral interview topic. Be conversational and engaging.'}`;
+    const systemPrompt = PromptService.createSystemPrompt(promptContext);
+    const startTime = Date.now();
 
     // Call Groq LLM for AI response
     const chatCompletion = await groq.chat.completions.create({
@@ -337,9 +331,11 @@ ${isLastQuestion ?
       throw new Error('No response generated from AI');
     }
 
-    console.log('✅ AI interview response generated:', {
+    console.log('✅ AI response generated:', {
+      sessionType,
+      responseTime: Date.now() - startTime,
       responseLength: aiResponse.length,
-      preview: aiResponse.substring(0, 100) + '...',
+      preview: aiResponse.substring(0, 100) + '...'
     });
 
     // Store conversation data to database (for non-final questions)

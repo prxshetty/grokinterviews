@@ -48,7 +48,6 @@ export default function PhoneInterviewPage() {
             onClick={handleBackToModeSelector}
             className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <span>← Switch Interview Mode</span>
           </button>
         </div>
 

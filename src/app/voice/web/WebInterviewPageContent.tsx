@@ -488,15 +488,15 @@ export default function WebInterviewPageContent() {
       isPlayingTTS={voiceState.isPlayingTTS}
     >
       <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-2">
           {/* Back to Mode Selector Button */}
           <InterviewHeader onBackToModeSelector={handleBackToModeSelector} />
 
           {/* Pre-Interview Setup: Left-Right Layout */}
           {!session.isActive && !session.isCompleted && (
-            <div className="grid lg:grid-cols-2 gap-12 mb-16">
-              {/* Left Panel: Avatar Selection */}
-              <div className="flex justify-center">
+            <div className="grid lg:grid-cols-5 gap-6 mb-4">
+              {/* Left Panel: Avatar Selection - 60% (3 columns) */}
+              <div className="lg:col-span-3 flex justify-center">
                 <InterviewSelectionPanel
                   selectedType={selectedInterviewType}
                   onTypeChange={handleInterviewTypeChange}
@@ -510,8 +510,8 @@ export default function WebInterviewPageContent() {
                 />
               </div>
 
-              {/* Right Panel: Interview Configuration */}
-              <div>
+              {/* Right Panel: Interview Configuration - 40% (2 columns) */}
+              <div className="lg:col-span-2">
                 <InterviewConfigPanel
                   selectedType={selectedInterviewType}
                   config={customConfig}
@@ -527,7 +527,7 @@ export default function WebInterviewPageContent() {
 
           {/* Active Interview: Show avatar only */}
           {(session.isActive || session.isCompleted) && (
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-4">
               <InterviewSelectionPanel
                 selectedType={selectedInterviewType}
                 onTypeChange={handleInterviewTypeChange}
@@ -605,6 +605,7 @@ export default function WebInterviewPageContent() {
             isInterviewActive={session.isActive}
             isProcessingAI={voiceState.isProcessingAI}
             rateLimited={rateLimitState.isRateLimited}
+            selectedInterviewType={selectedInterviewType}
             onStartInterview={handleStartInterview}
             onEndInterview={handleEndInterview}
             isRecording={voiceState.isRecordingActive}

@@ -66,6 +66,9 @@ const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
+      gap={8}
+      visibleToasts={4}
+      position="top-right"
       {...otherProps}
     />
   )

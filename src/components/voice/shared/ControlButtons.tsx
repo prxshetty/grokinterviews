@@ -20,6 +20,7 @@ interface ControlButtonsProps {
   isInterviewActive: boolean;
   isProcessingAI: boolean;
   rateLimited: boolean;
+  selectedInterviewType?: string;
   onStartInterview: () => Promise<void>;
   onEndInterview: () => Promise<void>;
   // Recording functionality
@@ -41,6 +42,7 @@ export default function ControlButtons({
   isInterviewActive,
   isProcessingAI,
   rateLimited,
+  selectedInterviewType,
   onStartInterview,
   onEndInterview,
   // Recording functionality
@@ -81,14 +83,22 @@ export default function ControlButtons({
       <div className="flex items-center justify-center space-x-8">
         {!isInterviewActive ? (
           <div className="relative">
-            <button
-              onClick={onStartInterview}
-              disabled={isProcessingAI || rateLimited}
-              className="w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
-              title="Start Interview"
-            >
-              <PlayIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </button>
+            {selectedInterviewType === 'custom' ? (
+              <div className="px-6 py-3 backdrop-blur-xl bg-gray-200/40 dark:bg-white/10 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-xs font-medium">Coming Soon</div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={onStartInterview}
+                disabled={isProcessingAI || rateLimited}
+                className="w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
+                title="Start Interview"
+              >
+                <PlayIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </button>
+            )}
           </div>
         ) : (
           <div className="relative">
