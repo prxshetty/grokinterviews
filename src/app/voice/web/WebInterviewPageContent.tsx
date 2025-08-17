@@ -19,7 +19,6 @@ import {
   InterviewContent,
 } from '@/components/voice/web';
 import InterviewSelectionPanel from '@/components/voice/web/InterviewSelectionPanel';
-import InterviewConfigPanel from '@/components/voice/web/InterviewConfigPanel';
 import { InterviewType } from '@/components/voice/web/InterviewAvatar';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 
@@ -30,6 +29,24 @@ import {
 } from '@/hooks/voice';
 
 import { InterviewService, type TerminationReason } from '@/services/interviewService';
+
+const getBehavioralDefaults = (): InterviewModeConfig => ({
+  customTopics: 'Leadership, teamwork, problem-solving, conflict resolution, adaptability, communication skills, time management, decision-making under pressure',
+  questionFormat: 'Open-ended Discussion',
+  difficulty: 'Medium'
+});
+
+const getTechnicalDefaults = (): InterviewModeConfig => ({
+  programmingLanguage: 'JavaScript', // Default that matches TechnicalInterviewForm fallback
+  focusAreas: ['Data Structures', 'Algorithms'], // Default that matches TechnicalInterviewForm fallback  
+  difficulty: 'Medium'
+});
+
+const getSystemDesignDefaults = (): InterviewModeConfig => ({
+  customTopics: 'Scalable systems, database design, microservices, load balancing, caching strategies, API design, distributed systems',
+  questionFormat: 'Case Studies',
+  difficulty: 'Hard'
+});
 
 export default function WebInterviewPageContent() {
   // Custom hooks for state management
@@ -51,6 +68,10 @@ export default function WebInterviewPageContent() {
     difficulty: ''
   });
   const [customConfigErrors, setCustomConfigErrors] = useState<Record<string, string>>({});
+  
+  // Track current active interview type and config for follow-up questions
+  const [activeInterviewType, setActiveInterviewType] = useState<string>('behavioral');
+  const [activeConfig, setActiveConfig] = useState<InterviewModeConfig | undefined>(undefined);
   
   // Refs for cleanup
   const voicePlayerRef = useRef<VoicePlayerRef | null>(null);
@@ -226,7 +247,7 @@ export default function WebInterviewPageContent() {
     try {
       setProcessingAI(true);
       
-      const result = await InterviewService.generateAIResponse(userText, history, sessionIdRef.current, 'behavioral');
+      const result = await InterviewService.generateAIResponse(userText, history, sessionIdRef.current, activeInterviewType, activeConfig);
       
       // Update sessionId if returned from API
       if (result.sessionId && !session.id) {
@@ -314,7 +335,7 @@ export default function WebInterviewPageContent() {
         setProcessingAI(false);
       }, 100);
     }
-  }, [setProcessingAI, setInterviewReport, setSessionCompleted, setSessionActive, addToHistory, updateCurrentQuestion, incrementAiResponseKey, terminateInterviewOnError]);
+  }, [setProcessingAI, setInterviewReport, setSessionCompleted, setSessionActive, addToHistory, updateCurrentQuestion, incrementAiResponseKey, terminateInterviewOnError, activeInterviewType, activeConfig]);
 
   const handleBackToModeSelector = useCallback(() => {
     router.push('/voice');
@@ -376,14 +397,18 @@ export default function WebInterviewPageContent() {
       setTtsError(null);
       
       // Map interview type to session type
-      const sessionType = selectedInterviewType === 'system-design' ? 'technical' : 
-                          selectedInterviewType === 'custom' ? 'behavioral' : 
+      const sessionType = selectedInterviewType === 'system-design' ? 'sd' : 
                           selectedInterviewType;
       
       // Check rate limit before starting interview
       const canStart = await checkRateLimit('web', sessionType as any, selectedVoice);
       
       if (canStart) {
+        // Set the active interview type and config for follow-up questions
+        console.log('🎯 Starting interview with config:', JSON.stringify(customConfig, null, 2));
+        setActiveInterviewType(sessionType as any);
+        setActiveConfig(customConfig);
+        
         setSessionActive(true);
         
         // Force VoicePlayer to re-render and auto-play the initial question
@@ -391,10 +416,10 @@ export default function WebInterviewPageContent() {
         
         // Create a new session and add initial welcome message
         try {
-          const newSessionId = await createSession(sessionType as any, selectedVoice);
-          if (newSessionId) {
-            await InterviewService.addInitialWelcomeMessage(newSessionId, session.currentQuestion);
-          }
+          await createSession(sessionType as any, selectedVoice, customConfig);
+          // Note: The createSession function already updates the session state with the dynamic welcome message
+          // and that's what matters for the UI. The database storage via InterviewService is for historical purposes
+          // and will be handled by the conversation API when the interview actually starts.
         } catch (error) {
           console.error('Error creating session:', error);
           // Don't throw here - let the interview continue even if session creation fails
@@ -406,7 +431,7 @@ export default function WebInterviewPageContent() {
       setProcessingAI(false);
       setAutoStartRecording(false);
     }
-  }, [validateCustomConfig, setProcessingAI, setAutoStartRecording, setTtsError, selectedInterviewType, checkRateLimit, selectedVoice, setSessionActive, incrementAiResponseKey, createSession, session.currentQuestion]);
+  }, [validateCustomConfig, setProcessingAI, setAutoStartRecording, setTtsError, selectedInterviewType, checkRateLimit, selectedVoice, setSessionActive, incrementAiResponseKey, createSession, session.currentQuestion, customConfig]);
 
   const handleEndInterview = useCallback(async () => {
     try {
@@ -423,6 +448,10 @@ export default function WebInterviewPageContent() {
       await endSession();
       resetVoiceControls();
       incrementAiResponseKey();
+      
+      // Reset active interview type and config
+      setActiveInterviewType('behavioral');
+      setActiveConfig(undefined);
     } catch (error) {
       console.error('Error in handleEndInterview:', error);
       // Even if endSession fails, we should still reset the UI state
@@ -461,6 +490,33 @@ export default function WebInterviewPageContent() {
     }
   }, [user, loading]); // Router is now accessed via ref
 
+  // Set defaults when interview type changes
+  const prevTypeRef = useRef<InterviewType | null>(null);
+  useEffect(() => {
+    if (prevTypeRef.current === selectedInterviewType) {
+      return;
+    }
+    prevTypeRef.current = selectedInterviewType;
+    let defaults: InterviewModeConfig;
+    switch (selectedInterviewType) {
+      case 'behavioral':
+        defaults = getBehavioralDefaults();
+        break;
+      case 'technical':
+        defaults = getTechnicalDefaults();
+        break;
+      case 'system-design':
+        defaults = getSystemDesignDefaults();
+        break;
+      case 'custom':
+        defaults = { customTopics: '', questionFormat: '', difficulty: '' };
+        break;
+      default:
+        defaults = getBehavioralDefaults();
+    }
+    handleCustomConfigChange(defaults);
+  }, [selectedInterviewType, handleCustomConfigChange]);
+
   // Show loading state while checking authentication
   if (loading) {
     return (
@@ -494,9 +550,9 @@ export default function WebInterviewPageContent() {
 
           {/* Pre-Interview Setup: Left-Right Layout */}
           {!session.isActive && !session.isCompleted && (
-            <div className="grid lg:grid-cols-5 gap-6 mb-4">
-              {/* Left Panel: Avatar Selection - 60% (3 columns) */}
-              <div className="lg:col-span-3 flex justify-center">
+            <div className="flex flex-col items-center gap-6 mb-4">
+              {/* Top Panel: Avatar Selection */}
+              <div className="w-full flex justify-center">
                 <InterviewSelectionPanel
                   selectedType={selectedInterviewType}
                   onTypeChange={handleInterviewTypeChange}
@@ -507,19 +563,6 @@ export default function WebInterviewPageContent() {
                   customConfig={customConfig}
                   onCustomConfigChange={handleCustomConfigChange}
                   customConfigErrors={customConfigErrors}
-                />
-              </div>
-
-              {/* Right Panel: Interview Configuration - 40% (2 columns) */}
-              <div className="lg:col-span-2">
-                <InterviewConfigPanel
-                  selectedType={selectedInterviewType}
-                  config={customConfig}
-                  onConfigChange={handleCustomConfigChange}
-                  errors={customConfigErrors}
-                  isInterviewActive={session.isActive}
-                  isProcessingAI={voiceState.isProcessingAI}
-                  rateLimited={rateLimitState.isRateLimited}
                 />
               </div>
             </div>

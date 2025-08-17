@@ -60,7 +60,8 @@ export class InterviewService {
     userText: string, 
     conversationHistory: ConversationMessage[], 
     sessionId: string | null,
-    sessionType: string = 'behavioral'
+    sessionType: string = 'behavioral',
+    config?: any
   ): Promise<AIResponseResult> {
     const response = await fetch('/api/voice/conversation', {
       method: 'POST',
@@ -71,7 +72,8 @@ export class InterviewService {
         userResponse: userText,
         conversationHistory,
         sessionId,
-        sessionType
+        sessionType,
+        config
       }),
     });
 

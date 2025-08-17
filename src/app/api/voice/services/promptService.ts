@@ -86,15 +86,15 @@ Latest candidate response: "${userResponse}"`;
 1. Ask thoughtful follow-up questions based on the candidate's responses
 2. Use the STAR method (Situation, Task, Action, Result) to guide deeper questioning
 3. Be professional, encouraging, and conversational
-4. Ask one question at a time
+4. Ask one question at a time - NEVER provide examples or suggestions
 5. Keep responses concise (1-3 sentences)
-6. Focus on behavioral interview topics like teamwork, problem-solving, leadership, challenges, etc.
+6. Simply acknowledge their answer and move to the next behavioral topic
 
 ${baseInstructions}
 
 ${isLastQuestion ? 
   'Ask your final behavioral interview question. Focus on leadership, problem-solving, or career growth.' : 
-  'Provide a natural follow-up question or move to a new behavioral interview topic. Be conversational and engaging.'}`;
+  'Acknowledge their previous answer briefly and ask your next behavioral question. Do not give examples or suggestions.'}`;
   }
 
   private static createSystemDesignPrompt(
@@ -106,16 +106,16 @@ ${isLastQuestion ?
 
 1. Guide the candidate through designing a ${config?.systemType || 'scalable system'} that handles ${config?.scale || 'significant scale'}
 2. Focus on the following constraints: ${config?.constraints?.join(', ') || 'scalability and performance'}
-3. Ask probing questions about architecture, data flow, scalability, and trade-offs
-4. Be technical but encouraging, helping the candidate think through design decisions
+3. Ask questions that can be answered conceptually (architecture choices, trade-offs, approaches)
+4. NEVER provide architectural solutions - only ask probing questions
 5. Keep responses concise (1-3 sentences)
-6. Focus on system components, data modeling, API design, and scalability patterns
+6. Simply acknowledge their answer and move to the next design aspect
 
 ${baseInstructions}
 
 ${isLastQuestion ? 
   'Ask your final system design question. Focus on optimization, monitoring, or failure handling.' : 
-  'Guide the candidate deeper into the system design. Ask about specific components, data flow, or scaling challenges.'}`;
+  'Acknowledge their previous answer briefly and ask about the next system design aspect. Do not provide solutions.'}`;
   }
 
   private static createTechnicalPrompt(
@@ -128,15 +128,16 @@ ${isLastQuestion ?
 1. Ask coding and technical questions related to ${config?.programmingLanguage || 'programming'}
 2. Focus on these areas: ${config?.focusAreas?.join(', ') || 'problem-solving and algorithms'}
 3. Set questions at ${config?.difficulty?.toLowerCase() || 'medium'} difficulty level
-4. Be supportive while challenging the candidate's technical thinking
-5. Ask about code complexity, edge cases, and optimization
+4. Ask questions that can be answered in words (explain concepts, approach, trade-offs)
+5. NEVER provide solutions or answers - only ask questions
 6. Keep responses concise (1-3 sentences)
+7. Simply acknowledge the answer and move to the next question
 
 ${baseInstructions}
 
 ${isLastQuestion ? 
   'Ask your final technical question. Focus on optimization, debugging, or advanced concepts.' : 
-  'Present a technical problem or ask about implementation details. Be specific and practical.'}`;
+  'Acknowledge their previous answer briefly and ask your next technical question. Do not give solutions.'}`;
   }
 
   private static createCustomPrompt(
@@ -149,15 +150,16 @@ ${isLastQuestion ?
 1. Ask questions about: ${config?.customTopics || 'the specified topics'}
 2. Use ${config?.questionFormat?.toLowerCase() || 'flexible'} format for your questions
 3. Set questions at ${config?.difficulty?.toLowerCase() || 'medium'} difficulty level
-4. Be knowledgeable and engaging about the specific subject matter
-5. Tailor your approach to the candidate's responses and expertise level
+4. Ask questions that can be answered conceptually and in words
+5. NEVER provide solutions, examples, or detailed explanations - only ask questions
 6. Keep responses concise (1-3 sentences)
+7. Simply acknowledge their answer and move to the next topic
 
 ${baseInstructions}
 
 ${isLastQuestion ? 
   'Ask your final question about the specified topics. Make it insightful and comprehensive.' : 
-  'Continue exploring the candidate\'s knowledge and experience in the specified areas.'}`;
+  'Acknowledge their previous answer briefly and ask your next question about the topics. Do not provide solutions.'}`;
   }
 
   private static getBaseScoringPrompt(userResponses: string): string {

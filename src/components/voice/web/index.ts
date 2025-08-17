@@ -10,7 +10,7 @@ export { default as InterviewHeader } from './InterviewHeader'
 export { default as InterviewAvatar, type InterviewType } from './InterviewAvatar'
 export { default as InterviewFeatures } from './InterviewFeatures'
 export { default as InterviewSelectionPanel } from './InterviewSelectionPanel'
-export { default as InterviewConfigPanel } from './InterviewConfigPanel'
+
 export { default as TechnicalInterviewForm } from './TechnicalInterviewForm'
 export { default as SystemDesignForm } from './SystemDesignForm'
 export { default as CustomInterviewForm } from './CustomInterviewForm'

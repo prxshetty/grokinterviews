@@ -1,125 +1,91 @@
 import React from 'react';
 import { InterviewType } from './InterviewAvatar';
 import { InterviewModeConfig } from '@/app/api/voice/types';
+import TechnicalInterviewForm from './TechnicalInterviewForm';
+import SystemDesignForm from './SystemDesignForm';
+import CustomInterviewForm from './CustomInterviewForm';
 
 interface InterviewFeaturesProps {
   selectedType?: InterviewType;
-  customConfig?: InterviewModeConfig;
-  onCustomConfigChange?: (config: InterviewModeConfig) => void;
-  customConfigErrors?: Record<string, string>;
+  config?: InterviewModeConfig;
+  onConfigChange?: (config: InterviewModeConfig) => void;
+  errors?: Record<string, string>;
+  isReadOnly?: boolean;
 }
 
 export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
   selectedType = 'behavioral',
+  config = {},
+  onConfigChange = () => {},
+  errors = {},
+  isReadOnly = false,
 }) => {
   const getFeatureContent = () => {
     switch (selectedType) {
       case 'behavioral':
         return {
           title: 'Behavioral Interview',
-          description: 'Track your progress with comprehensive analytics and detailed performance insights',
-          stats: [
-            {
-              number: '5',
-              label: 'Questions per session',
-              features: ['AI-powered questions', 'Real-time adaptation', 'Personalized experience'],
-              description: 'Each interview session includes carefully curated behavioral and technical questions. Our AI conversation API generates dynamic questions based on your profile and session type.'
-            },
-            {
-              number: '100%',
-              label: 'Downloadable transcripts',
-              features: ['Timed transcripts', 'Duration tracking', 'Web & phone support'],
-              description: 'Complete conversation transcripts with timestamps and duration tracking. All conversations are automatically transcribed and formatted for easy review.'
-            },
-            {
-              number: '360°',
-              label: 'Comprehensive feedback report',
-              features: ['Performance scores', 'Strength identification', 'Better insights'],
-              description: 'Detailed performance analysis with overall scores and identified strengths. Our AI provides comprehensive feedback reports with actionable recommendations.'
-            }
-          ]
         };
       case 'technical':
         return {
           title: 'Technical Interview',
-          description: 'Master coding challenges and technical problem-solving skills',
-          stats: [
-            {
-              number: '8',
-              label: 'Coding challenges',
-              features: ['Algorithm problems', 'Data structures', 'Code optimization'],
-              description: 'Comprehensive coding challenges covering algorithms, data structures, and system design. Practice with real interview questions from top tech companies.'
-            },
-            {
-              number: '100%',
-              label: 'Code review & feedback',
-              features: ['Syntax analysis', 'Performance review', 'Best practices'],
-              description: 'Detailed code analysis with performance metrics and best practice recommendations. Get insights on code quality, efficiency, and maintainability.'
-            },
-            {
-              number: '24/7',
-              label: 'Practice environment',
-              features: ['Multiple languages', 'IDE integration', 'Real-time testing'],
-              description: 'Practice coding in a realistic environment with support for multiple programming languages and real-time code execution and testing.'
-            }
-          ]
         };
       case 'system-design':
         return {
           title: 'System Design Interview',
-          description: 'Learn to design scalable systems and architecture patterns',
-          stats: [
-            {
-              number: '6',
-              label: 'Design scenarios',
-              features: ['Scalability focus', 'Real-world problems', 'Architecture patterns'],
-              description: 'Practice designing large-scale systems with focus on scalability, reliability, and performance. Learn common architecture patterns and trade-offs.'
-            },
-            {
-              number: '360°',
-              label: 'Architecture review',
-              features: ['Component analysis', 'Scalability assessment', 'Best practices'],
-              description: 'Comprehensive review of your system design with focus on component interaction, scalability bottlenecks, and industry best practices.'
-            },
-            {
-              number: '∞',
-              label: 'Iterative improvement',
-              features: ['Design refinement', 'Trade-off analysis', 'Performance optimization'],
-              description: 'Continuous improvement process with iterative design refinement, trade-off analysis, and performance optimization recommendations.'
-            }
-          ]
         };
       case 'custom':
         return {
           title: 'Custom Interview',
-          description: 'Tailor your interview practice to specific topics and requirements',
-          stats: [
-            {
-              number: '∞',
-              label: 'Custom topics',
-              features: ['Your topics', 'Flexible format', 'Adaptive difficulty'],
-              description: 'Practice with topics of your choice. Define custom areas of focus, question formats, and difficulty levels tailored to your specific needs.'
-            },
-            {
-              number: '100%',
-              label: 'Personalized feedback',
-              features: ['Topic-specific insights', 'Custom metrics', 'Targeted improvement'],
-              description: 'Receive feedback specifically tailored to your chosen topics and format. Get insights and recommendations based on your custom interview configuration.'
-            },
-            {
-              number: '24/7',
-              label: 'Flexible scheduling',
-              features: ['On-demand practice', 'Custom duration', 'Adaptive sessions'],
-              description: 'Practice anytime with flexible session duration and adaptive questioning based on your progress and performance in custom topics.'
-            }
-          ]
         };
       default:
         return {
           title: 'Behavioral Interview',
-          description: 'Track your progress with comprehensive analytics and detailed performance insights',
-          stats: []
         };
+    }
+  };
+
+  const renderInterviewForm = () => {
+    switch (selectedType) {
+      case 'technical':
+        return (
+          <TechnicalInterviewForm
+            config={config}
+            onConfigChange={onConfigChange}
+            errors={errors}
+            disabled={isReadOnly}
+          />
+        );
+      case 'system-design':
+        return (
+          <SystemDesignForm
+            config={config}
+            onConfigChange={onConfigChange}
+            errors={errors}
+            disabled={isReadOnly}
+          />
+        );
+      case 'custom':
+        return (
+          <CustomInterviewForm
+            config={config}
+            onConfigChange={onConfigChange}
+            errors={errors}
+            disabled={false} // Custom form is never read-only
+          />
+        );
+      case 'behavioral':
+      default:
+        return (
+          <div className="text-center py-8">
+            <div className="flex items-center justify-center space-x-2 text-sm text-green-600 dark:text-green-400">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span>Ready to start behavioral interview</span>
+            </div>
+          </div>
+        );
     }
   };
 
@@ -133,35 +99,8 @@ export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
         </h1>
       </div>
       
-      <div className="w-full">
-        {/* Statistics Cards */}
-        <div className="grid md:grid-cols-3 gap-4">
-          {content.stats.map((stat, index) => (
-            <div key={index} className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden min-h-[280px] flex flex-col justify-center">
-              <div className={`absolute inset-0 bg-gradient-to-br ${
-                index === 0 ? 'from-blue-500/5' : 
-                index === 1 ? 'from-purple-500/5' : 
-                'from-green-500/5'
-              } to-transparent`} />
-              <div className="relative z-10 text-center">
-                <div className="text-5xl font-light text-slate-800 dark:text-slate-200 mb-3">{stat.number}</div>
-                <div className="text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider mb-4">{stat.label}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed space-y-3">
-                  <div className="space-y-2">
-                    {stat.features.map((feature, featureIndex) => (
-                      <div key={featureIndex} className="flex items-center justify-center gap-2">
-                        <span className="text-green-500 w-4 text-center">✓</span>
-                        <span className="w-32 text-left">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Custom Interview Form removed to prevent duplication - form is in right panel */}
+      <div className="w-full bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden">
+        {renderInterviewForm()}
       </div>
     </div>
   );

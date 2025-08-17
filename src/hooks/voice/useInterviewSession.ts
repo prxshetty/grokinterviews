@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { InterviewModeConfig } from '@/app/api/voice/types';
 
 export interface InterviewSession {
   id: string | null;
@@ -11,7 +12,7 @@ export interface InterviewSession {
 
 export interface UseInterviewSessionReturn {
   session: InterviewSession;
-  createSession: (sessionType: string, voiceName?: string) => Promise<string | null>;
+  createSession: (sessionType: string, voiceName?: string, config?: InterviewModeConfig) => Promise<string | null>;
   endSession: () => Promise<void>;
   addToHistory: (type: 'ai' | 'user', text: string) => void;
   updateCurrentQuestion: (question: string) => void;
@@ -20,17 +21,44 @@ export interface UseInterviewSessionReturn {
   setSessionCompleted: (completed: boolean) => void;
 }
 
+// Utility function to generate dynamic welcome messages
+const generateWelcomeMessage = (sessionType: string, config?: InterviewModeConfig): string => {
+  const baseGreeting = "Welcome to your";
+  
+  switch (sessionType) {
+    case 'behavioral':
+      return `${baseGreeting} behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background.`;
+    
+    case 'sd':
+      const systemType = config?.systemType || 'scalable system';
+      const scale = config?.scale || 'significant scale';
+      return `${baseGreeting} system design interview! Today we'll design a ${systemType} that handles ${scale}. Let's start by discussing your experience with system architecture and distributed systems.`;
+    
+    case 'technical':
+      const language = config?.programmingLanguage || 'programming';
+      const focusArea = config?.focusAreas?.[0] || 'problem-solving';
+      return `${baseGreeting} technical interview focusing on ${language} and ${focusArea}! I'll present coding challenges and technical problems. Let's begin: Tell me about your experience with ${language} and your approach to problem-solving.`;
+    
+    case 'custom':
+      const topics = config?.customTopics || 'specialized topics';
+      return `${baseGreeting} custom interview session! We'll be focusing on ${topics}. Let's start by discussing your background and experience in these areas.`;
+    
+    default:
+      return `${baseGreeting} interview practice session! I'll ask you questions to help you prepare. Let's start with: Tell me about yourself and your background.`;
+  }
+};
+
 export const useInterviewSession = (): UseInterviewSessionReturn => {
   const [session, setSession] = useState<InterviewSession>({
     id: null,
     isActive: false,
     isCompleted: false,
     conversationHistory: [],
-    currentQuestion: "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background.",
+    currentQuestion: generateWelcomeMessage('behavioral'), // Default to behavioral
     interviewReport: null,
   });
 
-  const createSession = useCallback(async (sessionType: string, voiceName?: string): Promise<string | null> => {
+  const createSession = useCallback(async (sessionType: string, voiceName?: string, config?: InterviewModeConfig): Promise<string | null> => {
     try {
       const response = await fetch('/api/voice/sessions', {
         method: 'POST',
@@ -43,12 +71,14 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
       if (response.ok) {
         const result = await response.json();
         const newSessionId = result.session.id;
+        const dynamicWelcomeMessage = generateWelcomeMessage(sessionType, config);
         
         setSession(prev => ({
           ...prev,
           id: newSessionId,
           isActive: true,
           conversationHistory: [],
+          currentQuestion: dynamicWelcomeMessage,
         }));
         
         return newSessionId;
@@ -84,7 +114,7 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
       isCompleted: false,
       conversationHistory: [],
       interviewReport: null,
-      currentQuestion: "Welcome to your behavioral interview practice session! I'll ask you some common behavioral questions to help you prepare. Let's start with: Tell me about yourself and your background.",
+      currentQuestion: generateWelcomeMessage('behavioral'), // Reset to default behavioral
     }));
   }, [session.id]);
 
