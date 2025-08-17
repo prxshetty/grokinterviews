@@ -80,7 +80,7 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
   };
 
   return (
-    <div className="flex justify-center mb-8">
+    <div className="flex justify-center mb-8 pt-8">
       <div className="relative">
         {/* Carousel Navigation - Only show when interview is not active */}
         {!isInterviewActive && (
