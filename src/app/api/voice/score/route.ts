@@ -48,15 +48,7 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Verify the session is completed
-    if (!scoreData.interview_sessions.is_completed) {
-      return NextResponse.json(
-        { error: 'Interview not yet completed' },
-        { status: 400 }
-      );
-    }
-
+    
     return NextResponse.json({
       success: true,
       score: {
