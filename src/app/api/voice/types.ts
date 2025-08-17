@@ -15,6 +15,7 @@ export interface InterviewModeConfig {
   difficulty?: string;
   customTopics?: string;
   questionFormat?: string;
+  additionalInstructions?: string;
 }
 
 export interface InterviewScore {

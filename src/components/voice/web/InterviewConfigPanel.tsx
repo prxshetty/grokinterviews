@@ -1,6 +1,7 @@
 import React from 'react';
 import { InterviewType } from './InterviewAvatar';
-import CustomInterviewForm from './CustomInterviewForm';
+import TechnicalInterviewForm from './TechnicalInterviewForm';
+import SystemDesignForm from './SystemDesignForm';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 
 interface InterviewConfigPanelProps {
@@ -104,10 +105,47 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
 
   const isReadOnly = selectedType === 'behavioral';
 
+  // Render appropriate form based on interview type
+  const renderInterviewForm = () => {
+    switch (selectedType) {
+      case 'technical':
+        return (
+          <TechnicalInterviewForm
+            config={config}
+            onConfigChange={onConfigChange}
+            errors={errors}
+            disabled={isReadOnly}
+          />
+        );
+      case 'system-design':
+        return (
+          <SystemDesignForm
+            config={config}
+            onConfigChange={onConfigChange}
+            errors={errors}
+            disabled={isReadOnly}
+          />
+        );
+      case 'behavioral':
+      case 'custom':
+      default:
+        return (
+          <div className="text-center py-8">
+            <div className="flex items-center justify-center space-x-2 text-sm text-green-600 dark:text-green-400">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span>Ready to start {selectedType === 'custom' ? 'custom' : 'behavioral'} interview</span>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 h-fit">
+    <div className="bg-white/80 dark:bg-black/80 backdrop-blur-lg rounded-2xl p-6 border border-slate-200/70 dark:border-slate-800/70 h-full min-h-[500px] flex flex-col shadow-lg">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-foreground mb-3">
+        <h2 className="text-2xl font-sans font-bold text-foreground mb-2">
           {getTitle()}
         </h2>
         <p className="text-muted-foreground text-sm leading-relaxed">
@@ -115,16 +153,11 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
         </p>
       </div>
 
-      <div className="space-y-6 mb-8">
-        <CustomInterviewForm
-          config={config}
-          onConfigChange={onConfigChange}
-          errors={errors}
-          disabled={isReadOnly}
-        />
+      <div className="flex-1 space-y-6">
+        {renderInterviewForm()}
         
         {isReadOnly && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -143,7 +176,7 @@ export const InterviewConfigPanel: React.FC<InterviewConfigPanelProps> = ({
       </div>
 
       {rateLimited && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg p-4 mt-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">

@@ -137,7 +137,7 @@ export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
         {/* Statistics Cards */}
         <div className="grid md:grid-cols-3 gap-4">
           {content.stats.map((stat, index) => (
-            <div key={index} className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden">
+            <div key={index} className="bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden min-h-[280px] flex flex-col justify-center">
               <div className={`absolute inset-0 bg-gradient-to-br ${
                 index === 0 ? 'from-blue-500/5' : 
                 index === 1 ? 'from-purple-500/5' : 
