@@ -5,6 +5,7 @@ import { LoadingSpinner } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { Tag, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TabNav } from '@/components/ui/tab-nav';
 import {
   Select,
   SelectContent,
@@ -172,19 +173,12 @@ export default function BookmarksPage() {
             <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex-1 w-full">
                     <p className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Filter by Domain</p>
-                    <div className="flex flex-wrap items-center gap-2">
-                        {allDomains.map(domain => (
-                            <Button
-                                key={domain}
-                                variant={selectedDomain === domain ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setSelectedDomain(domain)}
-                                className={cn("capitalize transition-all", selectedDomain === domain && "bg-blue-600 hover:bg-blue-700 text-white")}
-                            >
-                                {DOMAIN_NAMES[domain] || 'All'}
-                            </Button>
-                        ))}
-                    </div>
+                    <TabNav
+                        items={allDomains.map(domain => ({ id: domain, label: DOMAIN_NAMES[domain] || 'All' }))}
+                        activeTab={selectedDomain}
+                        onTabChange={setSelectedDomain}
+                        variant="button"
+                    />
                 </div>
                 <div className="w-full sm:w-auto">
                     <p className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Sort by</p>
@@ -210,7 +204,7 @@ export default function BookmarksPage() {
             <p className="text-red-500">{error}</p>
           </div>
         ) : bookmarks.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
+          <div className="text-center py-20">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
             <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">No bookmarks yet</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Start saving questions to find them here later.</p>
