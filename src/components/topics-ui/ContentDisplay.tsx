@@ -7,7 +7,7 @@ import { Pagination, Accordion } from '@/components/ui';
 import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView, TopicCategoryGrid } from '@/components/topics-ui';
 import { LoadingSpinner } from '@/components/ui';
-import { supabase } from "@/utils/supabase/client";
+import { useAuth } from '@/components/AuthProvider';
 
 // Import necessary types
 interface QuestionType {
@@ -111,6 +111,7 @@ export default function ContentDisplay({
   categoryProgressData: _categoryProgressData,
   currentSubtopicProgress: _currentSubtopicProgress,
 }: ContentDisplayProps) {
+  const { user, supabase } = useAuth();
   const pathname = usePathname();
 
   // State for bookmarked questions
@@ -133,11 +134,9 @@ export default function ContentDisplay({
     }
   }, [highlightedQuestionId, selectedCategory, selectedDifficulty]);
 
-  // Fetch bookmarks when difficultyQuestions change or user changes (implicitly via supabase client)
+  // Fetch bookmarks when difficultyQuestions change or user changes
   useEffect(() => {
     const fetchUserAndBookmarks = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (user && difficultyQuestions.length > 0) {
         const questionIds = difficultyQuestions.map(q => q.id);
         try {
@@ -165,7 +164,7 @@ export default function ContentDisplay({
     } else {
         setBookmarkedQuestions(new Set()); // Ensure bookmarks are cleared if questions are cleared
     }
-  }, [difficultyQuestions]);
+  }, [difficultyQuestions, user, supabase]);
 
   // Handler for bookmark changes from QuestionWithAnswer
   const handleBookmarkChange = (questionId: number, newStatus: boolean) => {

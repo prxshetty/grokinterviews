@@ -137,7 +137,7 @@ function QuestionWithAnswerComponent({
     isExpanded: isExpandedState,
     hasAnswer: Boolean(generatedAnswer || question.answer_text),
     onCompletionChange: onCompletionChange as (questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void,
-    userId: user?.id
+    userId: user?.id || undefined
   });
 
   // Note: Completion status is now handled directly in useQuestionProgress hook
