@@ -7,7 +7,6 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { 
   Calendar, 
-  Clock, 
   TrendingUp, 
   Eye, 
   ChevronRight,
@@ -18,10 +17,11 @@ import {
 import { DEFAULT_AVATAR_URL } from '@/config';
 import { cn } from '@/lib/utils';
 import { VOICE_CONFIG, VoiceOption } from '@/types/voice.types';
+import { getScoreColor } from '@/components/voice/shared/utils';
 
 interface InterviewSession {
   id: string;
-  session_type: 'behavioral' | 'technical' | 'general';
+  session_type: 'behavioral' | 'technical' | 'custom' | 'sd';
   session_start: string;
   session_end: string | null;
   question_count: number;
@@ -118,11 +118,7 @@ export function TranscriptDisplay({
   onTabChange
 }: TranscriptDisplayProps) {
 
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600 dark:text-green-400';
-    if (score >= 6) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -134,26 +130,12 @@ export function TranscriptDisplay({
     });
   };
 
-  const formatDuration = (start: string, end: string | null) => {
-    if (!end) return 'Incomplete';
-    const duration = new Date(end).getTime() - new Date(start).getTime();
-    const minutes = Math.floor(duration / 60000);
-    const seconds = Math.floor((duration % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const formatPhoneDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
   if (!selectedSession && !selectedPhoneCall) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Eye className="h-12 w-12 text-gray-400" />
+          <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Eye className="h-20 w-20 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-foreground mb-2">
             Select an Interview
@@ -174,39 +156,25 @@ export function TranscriptDisplay({
 
   return (
     <div className="flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl border-0 shadow-sm flex flex-col">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-start justify-between">
-            <h2 className="text-xl font-semibold text-foreground mb-1">
-              Interview Session
-            </h2>
-            
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {formatDate(isWebInterview ? (selectedSession?.session_start || '') : (selectedPhoneCall?.created_at || ''))}
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {isWebInterview 
-                  ? formatDuration(selectedSession!.session_start, selectedSession!.session_end)
-                  : formatPhoneDuration(selectedPhoneCall!.call_duration || 0)
-                }
-              </div>
+      {/* Tab Navigation with Session Info */}
+      <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <TabNav
+            items={[
+              { id: 'transcript', label: 'Transcript' },
+              { id: 'analysis', label: 'Analysis' }
+            ]}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              {formatDate(isWebInterview ? (selectedSession?.session_start || '') : (selectedPhoneCall?.created_at || ''))}
             </div>
-          </div>
-      </div>
 
-      {/* Tab Navigation */}
-      <div className="px-6 pt-4">
-        <TabNav
-          items={[
-            { id: 'transcript', label: 'Transcript' },
-            { id: 'analysis', label: 'Analysis' }
-          ]}
-          activeTab={activeTab}
-          onTabChange={onTabChange}
-        />
+          </div>
+        </div>
       </div>
 
       {/* Content */}
@@ -333,7 +301,7 @@ export function TranscriptDisplay({
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-4">
-                        <div className={cn("text-3xl font-bold", getScoreColor(selectedScore.overall_score))}>
+                        <div className={cn("text-3xl font-bold", getScoreColor(selectedScore.overall_score, true))}>
                           {selectedScore.overall_score}/10
                         </div>
                         <div className="flex-1">
@@ -423,7 +391,7 @@ export function TranscriptDisplay({
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center gap-4">
-                          <div className={cn("text-3xl font-bold", getScoreColor(selectedPhoneCall!.interview_score!))}>
+                          <div className={cn("text-3xl font-bold", getScoreColor(selectedPhoneCall!.interview_score!, true))}>
                             {selectedPhoneCall!.interview_score}/10
                           </div>
                           <div className="flex-1">

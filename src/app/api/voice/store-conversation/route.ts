@@ -8,7 +8,7 @@ interface StoreConversationRequest {
   interactionType: 'user_response' | 'ai_response';
   transcriptText: string;
   conversationOrder: number;
-  sessionType?: 'behavioral' | 'technical' | 'general';
+  sessionType?: 'behavioral' | 'technical' | 'custom' | 'sd';
   audioFileSize?: number;
   audioDurationSeconds?: number;
   voiceName?: string;

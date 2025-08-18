@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { getScoreColor } from '@/components/voice/shared/utils';
 
 interface InterviewProgressProps {
   current: number;
@@ -54,11 +55,6 @@ export function InterviewProgress({ current, total, isComplete }: InterviewProgr
 }
 
 export function InterviewScoreDisplay({ score, onClose }: InterviewScoreDisplayProps) {
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600';
-    if (score >= 6) return 'text-yellow-600';
-    return 'text-red-600';
-  };
 
   const getScoreLabel = (score: number) => {
     if (score >= 9) return 'Excellent';
@@ -79,7 +75,7 @@ export function InterviewScoreDisplay({ score, onClose }: InterviewScoreDisplayP
               Interview Results
             </h2>
             <div className="flex items-center justify-center gap-4">
-              <div className={`text-4xl font-bold ${getScoreColor(score.overall_score)}`}>
+              <div className={`text-4xl font-bold ${getScoreColor(score.overall_score, false)}`}>
                 {score.overall_score}/10
               </div>
               <div className="text-lg text-gray-600">

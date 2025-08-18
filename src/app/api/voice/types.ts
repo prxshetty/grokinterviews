@@ -16,6 +16,11 @@ export interface InterviewModeConfig {
   customTopics?: string;
   questionFormat?: string;
   additionalInstructions?: string;
+  // Behavioral interview specific fields
+  industry?: string;
+  targetRole?: string;
+  minYearsExperience?: number;
+  maxYearsExperience?: number;
 }
 
 export interface InterviewScore {

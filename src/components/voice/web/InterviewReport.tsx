@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle, TrendingUp, Target, Lightbulb } from 'lucide-react';
+import { getScoreColor } from '@/components/voice/shared/utils';
 
 interface InterviewReportProps {
   report: {
@@ -15,7 +16,13 @@ interface InterviewReportProps {
 
 export default function InterviewReport({ report }: InterviewReportProps) {
   // Add debug logging to help identify data structure issues
-  console.log('InterviewReport received data:', report);
+  console.log('InterviewReport received data:', {
+    report,
+    type: typeof report,
+    keys: report ? Object.keys(report) : 'null',
+    overall_score: report?.overall_score,
+    overall_score_type: typeof report?.overall_score
+  });
   
   // Add null/undefined checks
   if (!report) {
@@ -24,32 +31,43 @@ export default function InterviewReport({ report }: InterviewReportProps) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">No report data available</p>
+          <p className="text-sm text-gray-500 mt-2">The interview report could not be loaded.</p>
         </div>
       </div>
     );
   }
 
-  // Validate required fields
-  if (typeof report.overall_score !== 'number') {
-    console.warn('InterviewReport: Invalid or missing overall_score:', report.overall_score);
+  // Validate required fields with more detailed error handling
+  if (typeof report.overall_score !== 'number' || isNaN(report.overall_score)) {
+    console.warn('InterviewReport: Invalid or missing overall_score:', {
+      value: report.overall_score,
+      type: typeof report.overall_score,
+      isNaN: isNaN(report.overall_score as any)
+    });
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">Invalid report data structure</p>
+          <p className="text-sm text-gray-500 mt-2">The interview score could not be parsed correctly.</p>
+          {process.env.NODE_ENV === 'development' && (
+            <pre className="text-xs text-left mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded overflow-auto">
+              {JSON.stringify(report, null, 2)}
+            </pre>
+          )}
         </div>
       </div>
     );
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
+  // Ensure score is within valid range (1-10)
+  const normalizedScore = Math.max(1, Math.min(10, Math.round(report.overall_score)));
+  if (normalizedScore !== report.overall_score) {
+    console.warn(`InterviewReport: Score ${report.overall_score} normalized to ${normalizedScore}`);
+  }
 
   const getScoreBgColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 dark:bg-green-900/20';
-    if (score >= 60) return 'bg-yellow-100 dark:bg-yellow-900/20';
+    if (score >= 8) return 'bg-green-100 dark:bg-green-900/20';
+    if (score >= 6) return 'bg-yellow-100 dark:bg-yellow-900/20';
     return 'bg-red-100 dark:bg-red-900/20';
   };
 
@@ -57,9 +75,9 @@ export default function InterviewReport({ report }: InterviewReportProps) {
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
       <div className="text-center mb-8">
         <div className="flex items-center justify-center mb-4">
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center ${getScoreBgColor(report.overall_score)}`}>
-            <span className={`text-3xl font-bold ${getScoreColor(report.overall_score)}`}>
-              {report.overall_score}/10
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center ${getScoreBgColor(normalizedScore)}`}>
+            <span className={`text-3xl font-bold ${getScoreColor(normalizedScore)}`}>
+              {normalizedScore}/10
             </span>
           </div>
         </div>

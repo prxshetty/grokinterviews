@@ -25,7 +25,7 @@ export class PromptService {
 
     switch (sessionType) {
       case 'behavioral':
-        return this.createBehavioralPrompt(baseInstructions, isLastQuestion);
+        return this.createBehavioralPrompt(baseInstructions, config, isLastQuestion);
       case 'sd':
         return this.createSystemDesignPrompt(baseInstructions, config, isLastQuestion);
       case 'technical':
@@ -33,7 +33,7 @@ export class PromptService {
       case 'custom':
         return this.createCustomPrompt(baseInstructions, config, isLastQuestion);
       default:
-        return this.createBehavioralPrompt(baseInstructions, isLastQuestion);
+        return this.createBehavioralPrompt(baseInstructions, config, isLastQuestion);
     }
   }
 
@@ -46,7 +46,7 @@ export class PromptService {
 
     switch (sessionType) {
       case 'behavioral':
-        return this.createBehavioralScoringPrompt(basePrompt);
+        return this.createBehavioralScoringPrompt(basePrompt, config);
       case 'sd':
         return this.createSystemDesignScoringPrompt(basePrompt, config);
       case 'technical':
@@ -54,7 +54,7 @@ export class PromptService {
       case 'custom':
         return this.createCustomScoringPrompt(basePrompt, config);
       default:
-        return this.createBehavioralScoringPrompt(basePrompt);
+        return this.createBehavioralScoringPrompt(basePrompt, config);
     }
   }
 
@@ -79,9 +79,22 @@ Latest candidate response: "${userResponse}"`;
 
   private static createBehavioralPrompt(
     baseInstructions: string,
+    config: InterviewModeConfig | undefined,
     isLastQuestion: boolean
   ): string {
-    return `You are an experienced HR interviewer conducting a behavioral interview. Your role is to:
+    const industryContext = config?.industry ? `in the ${config.industry} industry` : '';
+    const roleContext = config?.targetRole ? `for the ${config.targetRole} role` : '';
+    const experienceContext = config?.minYearsExperience !== undefined && config?.maxYearsExperience !== undefined ? 
+      `targeting candidates with ${config.minYearsExperience}-${config.maxYearsExperience} years of experience` : '';
+    
+    const experienceLevel = config?.minYearsExperience !== undefined && config?.maxYearsExperience !== undefined ?
+      config.minYearsExperience === 0 && config.maxYearsExperience <= 2 ? 'entry-level' :
+      config.minYearsExperience <= 2 && config.maxYearsExperience <= 5 ? 'junior to mid-level' :
+      config.minYearsExperience <= 5 && config.maxYearsExperience <= 10 ? 'mid-level to senior' :
+      config.minYearsExperience >= 8 ? 'senior to executive-level' : 'mid-level'
+      : 'mid-level';
+
+    return `You are an experienced HR interviewer conducting a behavioral interview${industryContext} ${roleContext} ${experienceContext}. Your role is to:
 
 1. Ask thoughtful follow-up questions based on the candidate's responses
 2. Use the STAR method (Situation, Task, Action, Result) to guide deeper questioning
@@ -89,12 +102,14 @@ Latest candidate response: "${userResponse}"`;
 4. Ask one question at a time - NEVER provide examples or suggestions
 5. Keep responses concise (1-3 sentences)
 6. Simply acknowledge their answer and move to the next behavioral topic
+7. Ask ${experienceLevel} appropriate questions based on their experience range
+8. Focus on competencies relevant to the ${config?.targetRole || 'target role'} ${industryContext}
 
 ${baseInstructions}
 
 ${isLastQuestion ? 
-  'Ask your final behavioral interview question. Focus on leadership, problem-solving, or career growth.' : 
-  'Acknowledge their previous answer briefly and ask your next behavioral question. Do not give examples or suggestions.'}`;
+  'Ask your final behavioral interview question. Focus on the most critical competency for this role and experience level.' : 
+  'Acknowledge their previous answer briefly and ask your next behavioral question relevant to their experience level and role. Do not give examples or suggestions.'}`;
   }
 
   private static createSystemDesignPrompt(
@@ -168,29 +183,56 @@ Analyze the following candidate responses and provide a comprehensive evaluation
 
 ${userResponses}
 
-Provide your evaluation in the following JSON format:
+IMPORTANT: You must respond with ONLY valid JSON in the exact format below. Do not include any text before or after the JSON.
+
 {
-  "overall_score": [score from 1-10],
-  "strengths": ["strength1", "strength2", "strength3"],
-  "weaknesses": ["weakness1", "weakness2"],
-  "improvements": ["improvement1", "improvement2", "improvement3"],
-  "detailed_feedback": "Comprehensive feedback paragraph"
-}`;
+  "overall_score": 7,
+  "strengths": ["Clear communication", "Good problem-solving approach", "Relevant experience"],
+  "weaknesses": ["Could provide more specific examples", "Needs to elaborate on technical details"],
+  "improvements": ["Use the STAR method for behavioral questions", "Provide quantifiable results", "Practice explaining complex concepts simply"],
+  "detailed_feedback": "The candidate demonstrated solid understanding and communication skills. Their responses showed good analytical thinking, though they could benefit from providing more concrete examples and measurable outcomes. Overall performance indicates strong potential with room for growth in storytelling and technical depth."
+}
+
+Score Guidelines:
+- 9-10: Exceptional performance, ready for senior roles
+- 7-8: Strong performance, good fit for the role
+- 5-6: Average performance, some concerns but potential
+- 3-4: Below average, significant gaps
+- 1-2: Poor performance, not suitable for the role`;
   }
 
-  private static createBehavioralScoringPrompt(basePrompt: string): string {
-    return `You are an expert HR interviewer evaluating a candidate's performance in a behavioral interview. 
+  private static createBehavioralScoringPrompt(
+    basePrompt: string,
+    config: InterviewModeConfig | undefined
+  ): string {
+    const industryContext = config?.industry ? ` in the ${config.industry} industry` : '';
+    const roleContext = config?.targetRole ? ` for the ${config.targetRole} role` : '';
+    const experienceContext = config?.minYearsExperience !== undefined && config?.maxYearsExperience !== undefined ? 
+      ` with ${config.minYearsExperience}-${config.maxYearsExperience} years of experience` : '';
+    
+    const experienceLevel = config?.minYearsExperience !== undefined && config?.maxYearsExperience !== undefined ?
+      config.minYearsExperience === 0 && config.maxYearsExperience <= 2 ? 'entry-level' :
+      config.minYearsExperience <= 2 && config.maxYearsExperience <= 5 ? 'junior to mid-level' :
+      config.minYearsExperience <= 5 && config.maxYearsExperience <= 10 ? 'mid-level to senior' :
+      config.minYearsExperience >= 8 ? 'senior to executive-level' : 'mid-level'
+      : 'mid-level';
+
+    return `You are an expert HR interviewer evaluating a candidate's performance in a behavioral interview${industryContext}${roleContext}${experienceContext}. 
 
 ${basePrompt}
 
 Evaluation criteria:
 - Communication clarity and structure
 - Use of STAR method (Situation, Task, Action, Result)
-- Specific examples and details
-- Problem-solving approach
-- Leadership and teamwork skills
+- Specific examples and details relevant to ${config?.targetRole || 'the target role'}
+- Problem-solving approach and critical thinking appropriate for ${experienceLevel} professionals
+- Leadership and teamwork skills matching the ${config?.minYearsExperience}-${config?.maxYearsExperience || 'target'} year experience range
 - Self-awareness and growth mindset
+- Industry-specific competencies${industryContext}
+- Role-appropriate depth and complexity for ${config?.targetRole || 'the position'}
 
+Experience Level Assessment: ${experienceLevel} (${config?.minYearsExperience || 0}-${config?.maxYearsExperience || 5} years)
+Evaluate responses against expectations for this experience level and role.
 Be constructive, specific, and helpful in your feedback.`;
   }
 

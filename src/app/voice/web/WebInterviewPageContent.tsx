@@ -31,9 +31,10 @@ import {
 import { InterviewService, type TerminationReason } from '@/services/interviewService';
 
 const getBehavioralDefaults = (): InterviewModeConfig => ({
-  customTopics: 'Leadership, teamwork, problem-solving, conflict resolution, adaptability, communication skills, time management, decision-making under pressure',
-  questionFormat: 'Open-ended Discussion',
-  difficulty: 'Medium'
+  industry: 'Technology',
+  targetRole: '',
+  minYearsExperience: 0,
+  maxYearsExperience: 5
 });
 
 const getTechnicalDefaults = (): InterviewModeConfig => ({
@@ -53,6 +54,9 @@ export default function WebInterviewPageContent() {
   const { session, createSession, endSession, addToHistory, updateCurrentQuestion, setInterviewReport, setSessionActive, setSessionCompleted } = useInterviewSession();
   const { state: voiceState, setRecordingActive, setSpeakingDetected, setPlayingTTS, setProcessingAI, setAutoStartRecording, incrementAiResponseKey, setRecordingError, setTtsError, setVadSupported, resetVoiceControls } = useVoiceControls();
   const { rateLimitState, checkRateLimit, setRateLimited } = useRateLimit();
+  
+  // Local state for microphone toggle
+  const [isMicEnabled, setIsMicEnabled] = useState(true);
 
   // Local component state
   const [selectedVoice, setSelectedVoice] = useState<VoiceOption>('Sophia');
@@ -166,7 +170,7 @@ export default function WebInterviewPageContent() {
     sessionIdRef.current = session.id || '';
     conversationLengthRef.current = session.conversationHistory.length;
     conversationHistoryRef.current = session.conversationHistory;
-  }, [session.id, session.conversationHistory.length]);
+  }, [session.id, session.conversationHistory]);
 
   // Fetch transcripts when session changes (initial load only)
   useEffect(() => {
@@ -460,16 +464,13 @@ export default function WebInterviewPageContent() {
     }
   }, [endSession, resetVoiceControls, incrementAiResponseKey]);
 
-  // Recording handler functions
-  const handleStartRecording = useCallback(async () => {
+  // Microphone toggle handler
+  const handleToggleMic = useCallback(() => {
     if (voiceRecorderRef.current) {
-      voiceRecorderRef.current.startRecording();
-    }
-  }, []);
-
-  const handleStopRecording = useCallback(async () => {
-    if (voiceRecorderRef.current) {
-      voiceRecorderRef.current.stopRecording();
+      // Toggle the mic state
+      voiceRecorderRef.current.toggleMic();
+      // Update local state by toggling the current state (since toggleMic flips it)
+      setIsMicEnabled(prev => !prev);
     }
   }, []);
 
@@ -613,6 +614,7 @@ export default function WebInterviewPageContent() {
                  // but this prevents unhandled promise rejections from bubbling up
                }
              }}
+             micEnabled={isMicEnabled}
              onRecordingStateChange={handleRecordingStateChange}
              onRecordingError={setRecordingError}
              onTtsError={setTtsError}
@@ -651,14 +653,11 @@ export default function WebInterviewPageContent() {
             selectedInterviewType={selectedInterviewType}
             onStartInterview={handleStartInterview}
             onEndInterview={handleEndInterview}
-            isRecording={voiceState.isRecordingActive}
+            isMicEnabled={isMicEnabled}
             isSpeaking={voiceState.isSpeakingDetected}
-            isRecordingProcessing={voiceRecorderRef.current?.isProcessing || false}
-            enableVAD={true}
             vadSupported={voiceState.vadSupported}
             recordingError={voiceState.recordingError}
-            onStartRecording={handleStartRecording}
-            onStopRecording={handleStopRecording}
+            onToggleMic={handleToggleMic}
             onDismissRecordingError={handleDismissRecordingError}
             showChat={showChat}
             onToggleChat={() => setShowChat(!showChat)}
