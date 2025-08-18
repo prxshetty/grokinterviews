@@ -49,15 +49,24 @@ async function generateInterviewScore(
   if (!response) throw new Error('No scoring response generated');
 
   try {
-    return JSON.parse(response);
-  } catch {
+    const parsed = JSON.parse(response);
+    // Ensure the parsed object has all required fields with proper defaults
+    return {
+      overall_score: parsed.overall_score || 7,
+      strengths: Array.isArray(parsed.strengths) ? parsed.strengths : ['Provided detailed responses', 'Showed enthusiasm'],
+      weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses : ['Could improve structure', 'Needs more specific examples'],
+      improvements: Array.isArray(parsed.improvements) ? parsed.improvements : ['Use STAR method', 'Provide quantifiable results', 'Practice storytelling'],
+      detailed_feedback: parsed.detailed_feedback || response
+    };
+  } catch (parseError) {
+    console.warn('Failed to parse AI scoring response, using fallback:', parseError);
     // Fallback if JSON parsing fails
     return {
       overall_score: 7,
-      strengths: ['Provided detailed responses', 'Showed enthusiasm'],
-      weaknesses: ['Could improve structure', 'Needs more specific examples'],
-      improvements: ['Use STAR method', 'Provide quantifiable results', 'Practice storytelling'],
-      detailed_feedback: response
+      strengths: ['Provided detailed responses', 'Showed enthusiasm for the role'],
+      weaknesses: ['Could improve response structure', 'Needs more specific examples'],
+      improvements: ['Use STAR method for behavioral questions', 'Provide quantifiable results', 'Practice storytelling techniques'],
+      detailed_feedback: response || 'The candidate provided responses to the interview questions. Due to a technical issue, detailed feedback could not be generated, but the overall performance was satisfactory.'
     };
   }
 }
@@ -142,143 +151,8 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Hard limit: After 4 API calls (plus initial hardcoded question = 5 total)
-    if (currentQuestionCount >= 4) {
-      // Force interview completion with hardcoded closing message
-      const closingMessage = "Thank you for completing your interview! This concludes our session. You've answered all 5 questions, and we'll now evaluate your responses. You should receive your detailed feedback and score shortly. We appreciate your time and thoughtful answers.";
-      
-      // Store the final user response and closing message
-      let currentSessionId = sessionId;
-      let interviewScore = null;
-      const currentWeek = getCurrentWeekIdentifier();
-      
-      try {
-        // Create new session if none exists
-        if (!currentSessionId) {
-          const { data: sessionData, error: sessionError } = await supabase
-          .from('interview_sessions')
-          .insert({
-            user_id: user.id,
-            session_type: sessionType,
-            session_start: new Date().toISOString(),
-            total_interactions: 0,
-            week_identifier: currentWeek,
-            question_count: 0,
-            is_completed: false,
-            voice_name: voiceName,
-            interview_config: config || null // Store configuration
-          })
-          .select('id')
-          .single();
-
-          if (sessionError) {
-            console.error('Error creating session:', sessionError);
-          } else {
-            currentSessionId = sessionData.id;
-            console.log('✅ New session created:', currentSessionId);
-          }
-        }
-
-        if (currentSessionId) {
-          // Store final user response
-        await supabase
-          .from('voice_transcripts')
-          .insert({
-            user_id: user.id,
-            session_id: currentSessionId,
-            transcript_text: userResponse,
-            interaction_type: 'user_response',
-            conversation_order: conversationHistory.length,
-            voice_name: voiceName
-          });
-
-          // Store closing message
-          await supabase
-            .from('voice_transcripts')
-            .insert({
-              user_id: user.id,
-              session_id: currentSessionId,
-              transcript_text: closingMessage,
-              interaction_type: 'ai_response',
-              conversation_order: conversationHistory.length + 1,
-              voice_name: voiceName
-            });
-
-          // Mark session as completed
-          await supabase
-            .from('interview_sessions')
-            .update({
-              session_end: new Date().toISOString(),
-              question_count: 5,
-              is_completed: true
-            })
-            .eq('id', currentSessionId);
-
-          // Generate score and report synchronously for immediate response
-          const updatedHistory = [...conversationHistory, 
-            { type: 'user', text: userResponse }
-          ];
-          
-          try {
-            const score = await generateInterviewScore(updatedHistory, sessionType as InterviewMode, config);
-            
-            // Store the interview score
-            await supabase
-              .from('interview_scores')
-              .insert({
-                session_id: currentSessionId,
-                overall_score: score.overall_score,
-                strengths: score.strengths,
-                weaknesses: score.weaknesses,
-                improvements: score.improvements,
-                detailed_feedback: score.detailed_feedback
-              });
-            
-            // Update session (interview_report column may not exist yet)
-            await supabase
-              .from('interview_sessions')
-              .update({
-                session_end: new Date().toISOString(),
-                question_count: 5,
-                is_completed: true
-              })
-              .eq('id', currentSessionId);
-            
-            // TODO: Add interview_report column to store JSON report when database migration is possible
-            
-            interviewScore = score;
-            console.log('✅ Interview score generated and stored successfully');
-          } catch (error) {
-            console.error('⚠️ Failed to generate interview score:', error);
-            // Continue without score if generation fails
-          }
-        }
-      } catch (dbError) {
-        console.error('⚠️ Failed to store final conversation data:', dbError);
-      }
-
-      console.log('📊 Interview completed:', {
-        sessionType,
-        totalQuestions: 5,
-        finalScore: interviewScore?.overall_score,
-        configUsed: config ? 'custom' : 'preselected'
-      });
-
-      return NextResponse.json({
-        success: true,
-        aiResponse: closingMessage,
-        conversationContinues: false,
-        sessionId: currentSessionId,
-        questionProgress: {
-          current: 5,
-          total: 5,
-          isComplete: true
-        },
-        interviewComplete: true,
-        interviewReport: interviewScore,
-        message: interviewScore ? "Interview completed! Your detailed report is ready." : "Interview completed! Your score will be available shortly."
-      });
-    }
+    // Note: Interview completion is now handled in the regular flow below
+    // when newQuestionCount >= 4, so no need for separate hard limit logic
     
     const isLastQuestion = currentQuestionCount >= 3; // 4th question (0-indexed)
 
@@ -398,14 +272,62 @@ export async function POST(request: NextRequest) {
             voice_name: voiceName
           });
 
-        // Update session with current question count
+        // Update session with current question count and check for completion
+        const newQuestionCount = currentQuestionCount + 1;
+        
+        // Check if interview should complete - ensure we have at least 5 questions
+        // (including the initial welcome message as question 0)
+        const shouldComplete = newQuestionCount >= 5;
+        
         await supabase
           .from('interview_sessions')
           .update({
-            session_end: new Date().toISOString(),
-            question_count: currentQuestionCount + 1
+            session_end: shouldComplete ? new Date().toISOString() : null,
+            question_count: newQuestionCount,
+            is_completed: shouldComplete
           })
           .eq('id', currentSessionId);
+          
+        // If this completes the interview, generate score
+        if (shouldComplete) {
+          console.log('🎯 Interview completed after', newQuestionCount, 'questions');
+          
+          try {
+            const updatedHistory = [...conversationHistory, 
+              { type: 'user', text: userResponse },
+              { type: 'ai', text: aiResponse }
+            ];
+            
+            const score = await generateInterviewScore(updatedHistory, sessionType as InterviewMode, config);
+            
+            // Check if score already exists for this session to prevent duplicates
+            const { data: existingScore } = await supabase
+              .from('interview_scores')
+              .select('id')
+              .eq('session_id', currentSessionId)
+              .single();
+              
+            if (!existingScore) {
+              // Store the interview score only if it doesn't exist
+              await supabase
+                .from('interview_scores')
+                .insert({
+                  session_id: currentSessionId,
+                  overall_score: score.overall_score,
+                  strengths: score.strengths,
+                  weaknesses: score.weaknesses,
+                  improvements: score.improvements,
+                  detailed_feedback: score.detailed_feedback
+                });
+                
+              console.log('✅ Interview score generated and stored for completed interview');
+            } else {
+              console.log('ℹ️ Score already exists for this session, skipping duplicate creation');
+            }
+          } catch (error) {
+            console.error('⚠️ Failed to generate score for completed interview:', error);
+          }
+        }
           
         console.log('✅ Conversation data stored successfully');
       }
@@ -414,16 +336,38 @@ export async function POST(request: NextRequest) {
       // Don't fail the main request if database storage fails
     }
 
+    // Check if interview was completed
+    const newQuestionCount = currentQuestionCount + 1;
+    const isComplete = newQuestionCount >= 5;
+    
+    // If completed, get the generated score
+    let interviewScore = null;
+    if (isComplete && currentSessionId) {
+      try {
+        const { data: scoreData } = await supabase
+          .from('interview_scores')
+          .select('*')
+          .eq('session_id', currentSessionId)
+          .single();
+        interviewScore = scoreData;
+      } catch (error) {
+        console.error('Failed to fetch generated score:', error);
+      }
+    }
+    
     return NextResponse.json({
       success: true,
       aiResponse: aiResponse,
-      conversationContinues: true,
+      conversationContinues: !isComplete,
       sessionId: currentSessionId,
       questionProgress: {
-        current: currentQuestionCount + 1,
+        current: newQuestionCount,
         total: 5,
-        isComplete: false
-      }
+        isComplete: isComplete
+      },
+      interviewComplete: isComplete,
+      interviewReport: interviewScore,
+      message: isComplete ? (interviewScore ? "Interview completed! Your detailed report is ready." : "Interview completed! Your score will be available shortly.") : undefined
     });
 
   } catch (error: any) {

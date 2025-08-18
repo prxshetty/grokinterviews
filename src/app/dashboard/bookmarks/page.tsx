@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { LoadingSpinner } from '@/components/ui';
-import { cn } from '@/lib/utils';
 import { Tag, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TabNav } from '@/components/ui/tab-nav';

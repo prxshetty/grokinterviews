@@ -51,6 +51,7 @@ interface InterviewContentProps {
   
   // Voice settings
   selectedVoice: VoiceOption;
+  micEnabled: boolean; // New prop for microphone toggle
   
   // Refs for external control
   voicePlayerRef: React.RefObject<VoicePlayerRef | null>;
@@ -84,6 +85,7 @@ export default function InterviewContent({
   isLoadingTranscripts,
   showChat,
   selectedVoice,
+  micEnabled,
   voicePlayerRef,
   voiceRecorderRef,
   onTranscriptionReceived,
@@ -186,7 +188,8 @@ export default function InterviewContent({
         onRecordingStateChange={onRecordingStateChange}
         onError={handleRecordingError}
         disabled={voiceState.isProcessingAI || rateLimitState.isRateLimited}
-        enableVAD={true}
+        enableVAD={isActive && !isCompleted}
+        micEnabled={micEnabled}
         autoStart={voiceState.shouldAutoStartRecording && !rateLimitState.isRateLimited}
       />
 
@@ -199,7 +202,7 @@ export default function InterviewContent({
             key={voiceState.aiResponseKey}
             text={currentQuestion} 
             voice={selectedVoice}
-            autoPlay={(isActive || isCompleted) && !voiceState.isProcessingAI && !rateLimitState.isRateLimited}
+            autoPlay={isActive && !isCompleted && !voiceState.isProcessingAI && !rateLimitState.isRateLimited}
             onPlayStateChange={onPlayStateChange}
             onAudioData={onAudioData}
             onError={handleTtsError}
@@ -223,6 +226,11 @@ export default function InterviewContent({
           <InterviewReport report={interviewReport} />
         </div>
       )}
+      
+      {/* Debug: Show completion state */}
+      <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-50">
+        isCompleted: {isCompleted.toString()}, hasReport: {!!interviewReport}
+      </div>
     </div>
   );
 }

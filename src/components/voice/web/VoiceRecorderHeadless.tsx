@@ -8,6 +8,7 @@ interface VoiceRecorderHeadlessProps {
   onTranscriptionReceived: (text: string) => void;
   disabled?: boolean;
   enableVAD?: boolean;
+  micEnabled?: boolean; // New prop to control microphone state
   autoStart?: boolean;
   onRecordingStateChange?: (isRecording: boolean, isSpeaking: boolean) => void;
   onError?: (error: string) => void;
@@ -21,9 +22,11 @@ export interface VoiceRecorderHeadlessRef {
   resumeVAD: () => Promise<void>;
   checkMicrophonePermission: () => Promise<PermissionState | 'prompt'>;
   requestMicrophonePermission: () => Promise<boolean>;
+  toggleMic: () => void; // New method to toggle microphone
   isRecording: boolean;
   isSpeaking: boolean;
   isProcessing: boolean;
+  micEnabled: boolean; // New property to expose mic state
 }
 
 const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorderHeadlessProps>(({ 
@@ -31,6 +34,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   onTranscriptionReceived, 
   disabled = false,
   enableVAD = true,
+  micEnabled = true, // Default to enabled
   autoStart = false,
   onRecordingStateChange,
   onError
@@ -41,6 +45,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const [vadSupported, setVadSupported] = useState(false);
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [internalMicEnabled, setInternalMicEnabled] = useState(micEnabled);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -49,11 +54,33 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const streamRef = useRef<MediaStream | null>(null);
   const autoStartRef = useRef(autoStart);
   const isForceStoppedRef = useRef(false);
+  const micEnabledRef = useRef(internalMicEnabled);
+  const recordingStartTimeRef = useRef(recordingStartTime);
+  const isRecordingRef = useRef(isRecording);
+  const isSpeakingRef = useRef(isSpeaking);
+  const startRecordingRef = useRef<(() => Promise<void>) | null>(null);
 
-  // Keep autoStartRef updated
+  // Keep refs updated with current state
   useEffect(() => {
     autoStartRef.current = autoStart;
   }, [autoStart]);
+  
+  useEffect(() => {
+    setInternalMicEnabled(micEnabled);
+  }, [micEnabled]);
+  
+  useEffect(() => {
+    micEnabledRef.current = internalMicEnabled;
+  }, [internalMicEnabled]);
+  
+  useEffect(() => {
+    recordingStartTimeRef.current = recordingStartTime;
+  }, [recordingStartTime]);
+  
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+    isSpeakingRef.current = isSpeaking;
+  }, [isRecording, isSpeaking]);
 
   // Define permission functions
   const checkMicrophonePermission = useCallback(async () => {
@@ -107,7 +134,14 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       
       if (result.success && result.text) {
         console.log('✅ Transcription received:', result.text);
-        onTranscriptionReceived(result.text);
+        
+        // Only send transcription to AI if microphone is enabled
+        if (micEnabledRef.current) {
+          console.log('🎤 Microphone enabled, sending transcription to AI');
+          onTranscriptionReceived(result.text);
+        } else {
+          console.log('🔇 Microphone disabled, transcription received but not sent to AI');
+        }
       } else {
         throw new Error('No transcription text received');
       }
@@ -121,7 +155,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     }
   }, [onTranscriptionReceived, onError, setIsProcessing]);
 
-  // VAD callback handlers
+  // VAD callback handlers - using refs to avoid recreating VAD instance
   const handleSpeechStart = useCallback(() => {
     console.log('🗣️ VAD: Speech started');
     setIsSpeaking(true);
@@ -129,7 +163,20 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       clearTimeout(autoStopTimeoutRef.current);
       autoStopTimeoutRef.current = null;
     }
-  }, [setIsSpeaking]);
+    
+    // Start recording when speech is detected, but only if mic is enabled
+    if (micEnabledRef.current && !isRecordingRef.current) {
+      console.log('🎤 VAD triggering recording start');
+      // Use a timeout to avoid circular dependency issues
+      setTimeout(() => {
+        if (micEnabledRef.current && !isRecordingRef.current) {
+          startRecordingRef.current?.();
+        }
+      }, 0);
+    } else if (!micEnabledRef.current) {
+      console.log('🔇 VAD detected speech but microphone is disabled');
+    }
+  }, []); // Empty dependency array to avoid circular dependencies
 
   const handleSpeechPause = useCallback(() => {
     console.log('⏸️ VAD: Speech paused - checking MediaRecorder state');
@@ -143,7 +190,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     const now = Date.now();
     const minRecordingDuration = 1000;
     
-    if (recordingStartTime && (now - recordingStartTime) < minRecordingDuration) {
+    if (recordingStartTimeRef.current && (now - recordingStartTimeRef.current) < minRecordingDuration) {
       console.log('⚠️ Recording too short, waiting for minimum duration...');
       return;
     }
@@ -152,7 +199,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setIsSpeaking(false);
-  }, [recordingStartTime, setIsRecording, setIsSpeaking]);
+  }, []); // Empty dependency array
 
   const handleSpeechEnd = useCallback(() => {
     console.log('🤫 VAD: Speech ended after silence timeout (backup)');
@@ -167,19 +214,27 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setIsSpeaking(false);
-  }, [setIsRecording, setIsSpeaking]);
+  }, []); // Empty dependency array
 
   const handleVADMisfire = useCallback(() => {
     console.log('⚠️ VAD: Misfire detected');
-  }, []);
+  }, []); // Empty dependency array
 
   // Initialize VAD on component mount
   useEffect(() => {
-    console.log('🔧 VAD useEffect triggered, enableVAD:', enableVAD, 'isVADSupported:', isVADSupported());
+    const vadInstanceId = Math.random().toString(36).substring(7);
+    console.log(`🔧 VAD useEffect triggered [${vadInstanceId}], enableVAD:`, enableVAD, 'isVADSupported:', isVADSupported());
     setVadSupported(isVADSupported());
     
+    // Ensure any existing VAD is cleaned up first
+    if (vadRef.current) {
+      console.log(`🧹 Cleaning up existing VAD before creating new one [${vadInstanceId}]`);
+      vadRef.current.destroy();
+      vadRef.current = null;
+    }
+    
     if (enableVAD && isVADSupported()) {
-      console.log('🎯 Creating VAD instance...');
+      console.log(`🎯 Creating VAD instance [${vadInstanceId}]...`);
       vadRef.current = createVAD({
         onSpeechStart: handleSpeechStart,
         onSpeechPause: handleSpeechPause,
@@ -191,24 +246,32 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         minSpeechFrames: 4,
         preSpeechPadFrames: 1
       });
-      console.log('✅ VAD instance created successfully');
+      console.log(`✅ VAD instance created successfully [${vadInstanceId}]`);
     } else {
-      console.log('❌ VAD not enabled or not supported');
+      console.log(`❌ VAD not enabled or not supported [${vadInstanceId}]`);
     }
 
     return () => {
-      console.log('🧹 Cleaning up VAD...');
+      console.log(`🧹 Cleaning up VAD [${vadInstanceId}]...`);
       if (vadRef.current) {
         vadRef.current.destroy();
+        vadRef.current = null;
       }
       if (autoStopTimeoutRef.current) {
         clearTimeout(autoStopTimeoutRef.current);
       }
     };
-  }, [enableVAD, handleSpeechStart, handleSpeechPause, handleSpeechEnd, handleVADMisfire]);
+  }, [enableVAD, handleSpeechStart, handleSpeechPause, handleSpeechEnd, handleVADMisfire]); // Include all callback dependencies
 
   const startRecording = useCallback(async () => {
     try {
+      // Check if microphone is enabled before starting recording
+      if (!micEnabledRef.current) {
+        console.log('🔇 Microphone disabled, cannot start recording');
+        onError?.('Microphone is disabled. Please enable it to record.');
+        return;
+      }
+      
       // Reset force stop flag for new recording
       isForceStoppedRef.current = false;
       
@@ -323,6 +386,11 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     }
   }, [onRecordingComplete, transcribeAudio, enableVAD, vadSupported, onError, setIsRecording, setRecordingStartTime, setHasAutoStarted]);
 
+  // Keep startRecordingRef updated with current function
+  useEffect(() => {
+    startRecordingRef.current = startRecording;
+  }, [startRecording]);
+
   const stopRecording = useCallback(async () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -411,6 +479,24 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     }
   }, []);
 
+  // Toggle microphone function
+  const toggleMic = useCallback(() => {
+    const newMicState = !internalMicEnabled;
+    setInternalMicEnabled(newMicState);
+    
+    if (!newMicState) {
+      // If disabling mic, stop any current recording and ensure VAD is aware
+      if (isRecording) {
+        console.log('🔇 Microphone disabled, stopping current recording');
+        stopRecording();
+      }
+      // Also clear any speaking state when mic is disabled
+      setIsSpeaking(false);
+    }
+    
+    console.log(`🎤 Microphone ${newMicState ? 'enabled' : 'disabled'}`);
+  }, [internalMicEnabled, isRecording, stopRecording]);
+
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
     startRecording,
@@ -420,14 +506,16 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     resumeVAD,
     checkMicrophonePermission,
     requestMicrophonePermission,
+    toggleMic,
     isRecording,
     isSpeaking,
-    isProcessing
-  }), [startRecording, stopRecording, forceStop, pauseVAD, resumeVAD, checkMicrophonePermission, requestMicrophonePermission, isRecording, isSpeaking, isProcessing]);
+    isProcessing,
+    micEnabled: internalMicEnabled
+  }), [startRecording, stopRecording, forceStop, pauseVAD, resumeVAD, checkMicrophonePermission, requestMicrophonePermission, toggleMic, isRecording, isSpeaking, isProcessing, internalMicEnabled]);
 
-  // Auto-start recording when autoStart prop becomes true
+  // Auto-start recording when autoStart prop becomes true (only if mic is enabled)
   useEffect(() => {
-    if (autoStart && !isRecording && !disabled && !isProcessing && !hasAutoStarted) {
+    if (autoStart && !isRecording && !disabled && !isProcessing && !hasAutoStarted && micEnabledRef.current) {
       console.log('🎤 Auto-starting recording after TTS completion');
       startRecording();
     } else if (!autoStart && hasAutoStarted) {

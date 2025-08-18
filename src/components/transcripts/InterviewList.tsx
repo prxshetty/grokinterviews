@@ -13,7 +13,7 @@ import { VOICE_CONFIG, VoiceOption } from '@/types/voice.types';
 // Interfaces
 interface InterviewSession {
   id: string;
-  session_type: 'behavioral' | 'technical' | 'general';
+  session_type: 'behavioral' | 'technical' | 'custom' | 'sd';
   session_start: string;
   session_end: string | null;
   question_count: number;
@@ -53,7 +53,7 @@ interface CombinedInterview {
   type: 'web' | 'phone';
   date: string;
   status: string;
-  session_type: 'behavioral' | 'technical' | 'general';
+  session_type: 'behavioral' | 'technical' | 'custom' | 'sd';
   interview_mode: 'web' | 'phone';
   session_start?: string;
   session_end?: string | null;
@@ -90,25 +90,7 @@ export function InterviewList({
 }: InterviewListProps) {
   const [activeTab, setActiveTab] = React.useState<'web' | 'phone'>('web');
 
-  const getStatusBorderColor = (interview: CombinedInterview) => {
-    if (interview.type === 'web') {
-      if (interview.status === 'completed') return 'bg-green-500';
-      if (interview.interview_scores && interview.interview_scores.length > 0) return 'bg-yellow-500';
-      return 'bg-gray-300 dark:bg-gray-600';
-    } else {
-      switch (interview.status.toLowerCase()) {
-        case 'completed':
-        case 'ended':
-          return 'bg-green-500';
-        case 'failed':
-        case 'busy':
-        case 'no-answer':
-          return 'bg-red-500';
-        default:
-          return 'bg-gray-300 dark:bg-gray-600';
-      }
-    }
-  };
+
 
   const formatDuration = (interview: CombinedInterview) => {
     if (interview.type === 'phone' && interview.call_duration) {
@@ -130,17 +112,17 @@ export function InterviewList({
     const isSelected = (selectedSession?.id === interview.id && interview.type === 'web') ||
                      (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
     
-    const statusBorderColor = getStatusBorderColor(interview);
+
     const interviewer = interview.voice_name && interview.voice_name in VOICE_CONFIG ? VOICE_CONFIG[interview.voice_name as VoiceOption] : null;
     const interviewerName = interviewer ? interviewer.displayName : 'AI Interviewer';
-    const interviewerImage = interviewer ? interviewer.image : ' / images / female_default.png';
+    const interviewerImage = interviewer ? interviewer.image : '/images/female_default.png';
     const duration = formatDuration(interview);
 
     return (
       <div
         key={`${interview.type}-${interview.id}`}
         className={cn(
-          "cursor-pointer transition-all duration-300 rounded-xl overflow-hidden",
+          "cursor-pointer transition-all duration-300 rounded-xl",
           "bg-white/60 dark:bg-gray-800/60 shadow-sm border",
           isSelected 
             ? "border-blue-500/50 shadow-md"
@@ -156,18 +138,29 @@ export function InterviewList({
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="p-3"
           >
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={interviewerImage} alt={interviewerName} className="object-cover" />
-                <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
-              </Avatar>
+            <div className="flex items-start gap-4">
+              <div className="relative flex-shrink-0">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage 
+                    src={interviewerImage} 
+                    alt={interviewerName} 
+                    className="object-cover object-[center_25%]" 
+                  />
+                  <AvatarFallback><User className="h-6 w-6" /></AvatarFallback>
+                </Avatar>
+              </div>
               
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">
+                <p className={cn(
+                  "text-sm font-semibold truncate",
+                  interviewer?.tier === 'premium' 
+                    ? "text-amber-600 dark:text-amber-400" 
+                    : "text-foreground"
+                )}>
                   {interviewerName}
                 </p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {interview.session_type} Interview
+                  {interview.session_type === 'sd' ? 'System Design' : interview.session_type} Interview
                 </p>
               </div>
 
@@ -177,6 +170,7 @@ export function InterviewList({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.2, delay: 0.1 }}
+                  className="ml-auto"
                 >
                   <Button 
                     size="icon"
@@ -191,7 +185,7 @@ export function InterviewList({
                   </Button>
                 </motion.div>
               ) : (
-                <div className="text-xs text-muted-foreground text-right">
+                <div className="text-xs text-muted-foreground text-right ml-auto">
                   <div>
                     {new Date(interview.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </div>
@@ -205,7 +199,6 @@ export function InterviewList({
             </div>
           </motion.div>
         </AnimatePresence>
-        <div className={cn("h-1 w-full transition-colors duration-300", statusBorderColor)} />
       </div>
     );
   };
@@ -241,7 +234,7 @@ export function InterviewList({
         <div className="p-4 border-b border-gray-200/80 dark:border-gray-700/80">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg font-semibold text-foreground">
-              Interview Records
+              Transcript List
             </h2>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -257,14 +250,34 @@ export function InterviewList({
               onTabChange={(id) => setActiveTab(id as 'web' | 'phone')}
             />
             <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
-              <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectTrigger className="w-36 h-8 text-xs">
                 <SelectValue placeholder="Voice" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Voices</SelectItem>
+                <SelectItem value="all">
+                  <span>All Voices</span>
+                </SelectItem>
                 {Object.entries(VOICE_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>
-                    {config.displayName}
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-5 h-5">
+                        <AvatarImage 
+                          src={config.image} 
+                          alt={config.displayName}
+                          className="object-cover object-[center_25%]"
+                        />
+                        <AvatarFallback className="text-xs">
+                          {config.displayName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={cn(
+                         config.tier === 'premium' 
+                           ? "text-amber-600 dark:text-amber-400 font-medium" 
+                           : "text-foreground"
+                       )}>
+                         {config.displayName}
+                       </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

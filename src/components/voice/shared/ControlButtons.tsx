@@ -1,13 +1,7 @@
 import React from 'react';
-import { Mic, Square, MessageCircle, Zap, Loader2 } from 'lucide-react';
+import { Mic, MessageCircle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Custom Play Icon Component
-const PlayIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 12 12" className={className}>
-    <path fill="currentColor" d="M4.496 1.994A1 1 0 0 0 3 2.862v6.277a1 1 0 0 0 1.496.868l5.492-3.139a1 1 0 0 0 0-1.736L4.496 1.994Z"/>
-  </svg>
-);
 
 // Custom Stop Icon Component - Clean and minimalistic
 const StopIcon = ({ className }: { className?: string }) => (
@@ -23,14 +17,11 @@ interface ControlButtonsProps {
   selectedInterviewType?: string;
   onStartInterview: () => Promise<void>;
   onEndInterview: () => Promise<void>;
-  // Recording functionality
-  isRecording?: boolean;
+  // Microphone toggle functionality
+  isMicEnabled?: boolean;
   isSpeaking?: boolean;
-  isRecordingProcessing?: boolean;
-  enableVAD?: boolean;
   vadSupported?: boolean;
-  onStartRecording?: () => Promise<void>;
-  onStopRecording?: () => Promise<void>;
+  onToggleMic?: () => void;
   recordingError?: string | null;
   onDismissRecordingError?: () => void;
   // Chat toggle functionality
@@ -45,14 +36,11 @@ export default function ControlButtons({
   selectedInterviewType,
   onStartInterview,
   onEndInterview,
-  // Recording functionality
-  isRecording = false,
+  // Microphone toggle functionality
+  isMicEnabled = false,
   isSpeaking = false,
-  isRecordingProcessing = false,
-  enableVAD = true,
   vadSupported = false,
-  onStartRecording,
-  onStopRecording,
+  onToggleMic,
   recordingError,
   onDismissRecordingError,
   // Chat toggle functionality
@@ -93,10 +81,10 @@ export default function ControlButtons({
               <button
                 onClick={onStartInterview}
                 disabled={isProcessingAI || rateLimited}
-                className="w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
+                className="px-6 py-3 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
                 title="Start Interview"
               >
-                <PlayIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium group-hover:scale-110 transition-transform">Start Interview</span>
               </button>
             )}
           </div>
@@ -112,42 +100,33 @@ export default function ControlButtons({
           </div>
         )}
         
-        {/* Recording Toggle Button */}
-        {isInterviewActive && (
+        {/* Microphone Toggle Button */}
+        {isInterviewActive && onToggleMic && (
           <div className="relative">
             <button
-              onClick={isRecording ? onStopRecording : onStartRecording}
-              disabled={isProcessingAI || rateLimited || isRecordingProcessing}
+              onClick={onToggleMic}
+              disabled={isProcessingAI || rateLimited}
               className={cn(
-                "w-16 h-16 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group relative hover:scale-105",
-                isRecordingProcessing && "opacity-50 cursor-not-allowed"
+                "w-16 h-16 backdrop-blur-xl border rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group relative hover:scale-105",
+                isMicEnabled
+                  ? "bg-gray-300/60 hover:bg-gray-300/80 dark:bg-white/20 dark:hover:bg-white/30 border-gray-400/60 dark:border-white/30 text-gray-700 dark:text-white"
+                  : "bg-red-500/20 hover:bg-red-500/30 dark:bg-red-500/20 dark:hover:bg-red-500/30 border-red-500/40 dark:border-red-500/40 text-red-600 dark:text-red-400"
               )}
-              title={
-                isRecordingProcessing
-                  ? "Processing..."
-                  : isRecording
-                  ? isSpeaking
-                    ? "Speaking..."
-                    : "Listening..."
-                  : "Record"
-              }
+              title={isMicEnabled ? "Turn off microphone" : "Turn on microphone"}
             >
-              {isRecordingProcessing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isRecording ? (
-                <Square className="w-6 h-6 fill-current group-hover:scale-110 transition-transform" />
-              ) : (
-                <Mic className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              )}
+              <Mic className={cn(
+                "w-6 h-6 group-hover:scale-110 transition-transform",
+                !isMicEnabled && "line-through opacity-60"
+              )} />
             </button>
             
-            {/* Recording indicator */}
-            {isRecording && (
-              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full animate-pulse border-2 border-gray-400/60 dark:border-white/50 backdrop-blur-sm bg-gray-200/40 dark:bg-white/20" />
+            {/* Speaking indicator - only show when mic is enabled and speaking */}
+            {isMicEnabled && isSpeaking && (
+              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full animate-pulse border-2 border-green-400/60 dark:border-green-400/50 backdrop-blur-sm bg-green-200/40 dark:bg-green-400/20" />
             )}
             
-            {/* VAD indicator */}
-            {enableVAD && vadSupported && (
+            {/* VAD indicator - only show when VAD is supported */}
+            {vadSupported && (
               <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-gray-200/40 dark:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-gray-400/60 dark:border-white/50">
                 <Zap className="h-2.5 w-2.5 text-gray-700 dark:text-white" />
               </div>

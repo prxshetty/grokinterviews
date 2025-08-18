@@ -8,7 +8,7 @@ import { VoiceOption } from '@/types/voice.types';
 
 interface InterviewSession {
   id: string;
-  session_type: 'behavioral' | 'technical' | 'general';
+  session_type: 'behavioral' | 'technical' | 'custom' | 'sd';
   session_start: string;
   session_end: string | null;
   question_count: number;
@@ -88,7 +88,7 @@ interface CombinedInterview {
   type: 'web' | 'phone';
   date: string;
   status: string;
-  session_type: 'behavioral' | 'technical' | 'general';
+  session_type: 'behavioral' | 'technical' | 'custom' | 'sd';
   interview_mode: 'web' | 'phone';
   session_start?: string;
   session_end?: string | null;
@@ -358,12 +358,10 @@ export function useInterviewData() {
       const originalSession = sessions.find(session => session.id === interview.id);
       if (originalSession) {
         setSelectedSession(originalSession);
-        setSelectedPhoneCall(null);
-        if (interview.status === 'completed') {
-          fetchScore(interview.id);
-        } else {
-          setSelectedScore(null);
-        }
+          setSelectedPhoneCall(null);
+        // Always try to fetch score - let the API determine if one exists
+        // This fixes the issue where scores exist but is_completed is false
+        fetchScore(interview.id);
       }
     } else {
       // Find the original phone call from the phoneCalls array
