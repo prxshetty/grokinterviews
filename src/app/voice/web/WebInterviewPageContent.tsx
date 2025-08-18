@@ -216,12 +216,10 @@ export default function WebInterviewPageContent() {
       return; // Nothing to terminate
     }
 
-    console.log('🛑 Terminating interview due to error:', reason);
-
     try {
       await InterviewService.terminateInterview(session.id, reason, conversationHistoryRef.current);
     } catch (error) {
-      console.error('❌ Error calling termination API:', error);
+      // Silently handle termination API errors - the UI state will still be updated
     }
 
     // Force stop all audio operations immediately
@@ -256,7 +254,6 @@ export default function WebInterviewPageContent() {
       // Update sessionId if returned from API
       if (result.sessionId && !session.id) {
         // Note: This would need to be handled by the session hook
-        console.log('New session ID received:', result.sessionId);
       }
       
       // Check if interview is completed (has report)
@@ -302,7 +299,7 @@ export default function WebInterviewPageContent() {
       }
 
     } catch (error) {
-      console.error('Error in generateAIResponse:', error);
+      // Handle AI response generation errors
       
       const errorMessage = error?.toString() || '';
       
@@ -409,7 +406,6 @@ export default function WebInterviewPageContent() {
       
       if (canStart) {
         // Set the active interview type and config for follow-up questions
-        console.log('🎯 Starting interview with config:', JSON.stringify(customConfig, null, 2));
         setActiveInterviewType(sessionType as any);
         setActiveConfig(customConfig);
         
@@ -425,12 +421,10 @@ export default function WebInterviewPageContent() {
           // and that's what matters for the UI. The database storage via InterviewService is for historical purposes
           // and will be handled by the conversation API when the interview actually starts.
         } catch (error) {
-          console.error('Error creating session:', error);
           // Don't throw here - let the interview continue even if session creation fails
         }
       }
     } catch (error) {
-      console.error('Error in handleStartInterview:', error);
       // Reset states if something goes wrong
       setProcessingAI(false);
       setAutoStartRecording(false);
@@ -457,7 +451,6 @@ export default function WebInterviewPageContent() {
       setActiveInterviewType('behavioral');
       setActiveConfig(undefined);
     } catch (error) {
-      console.error('Error in handleEndInterview:', error);
       // Even if endSession fails, we should still reset the UI state
       resetVoiceControls();
       incrementAiResponseKey();
@@ -609,7 +602,6 @@ export default function WebInterviewPageContent() {
                  addToHistory('user', text);
                  await generateAIResponse(text, newHistory);
                } catch (error) {
-                 console.error('Error in onTranscriptionReceived:', error);
                  // Handle the error gracefully - the generateAIResponse already has its own error handling
                  // but this prevents unhandled promise rejections from bubbling up
                }
