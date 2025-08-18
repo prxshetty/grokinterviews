@@ -11,7 +11,7 @@ interface UseQuestionProgressProps {
   isExpanded: boolean;
   hasAnswer: boolean;
   onCompletionChange: ((questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void) | undefined;
-  userId?: string;
+  userId?: string | undefined;
 }
 
 interface UseQuestionProgressReturn {
