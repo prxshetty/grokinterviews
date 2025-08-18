@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/utils/supabase/client';
 import { UserPreferences, DEFAULT_USER_PREFERENCES } from '@/types/resources.types';
+import { useAuth } from '@/components/AuthProvider';
 
 interface UseUserPreferencesProps {
   isLoggedIn: boolean;
@@ -18,6 +18,7 @@ export function useUserPreferences({
   isLoggedIn, 
   userId 
 }: UseUserPreferencesProps): UseUserPreferencesReturn {
+  const { supabase } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_USER_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
