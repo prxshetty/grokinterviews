@@ -72,7 +72,8 @@ export function ResourceList({
     subcategoryId: subcategoryId || null
   });
 
-  const { isLoggedIn, user } = useAuth();
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
   
   const { preferences, loading: loadingPrefs } = useUserPreferences({
     isLoggedIn,

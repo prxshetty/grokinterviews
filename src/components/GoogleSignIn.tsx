@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/utils/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function GoogleSignIn() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { user, supabase } = useAuth();
 
   // Check if the user has completed Google sign-in
   useEffect(() => {
@@ -14,15 +15,6 @@ export default function GoogleSignIn() {
       // Check if we have a flag indicating a Google sign-in attempt
       const googleSignInAttempt = localStorage.getItem('googleSignInAttempt');
       if (!googleSignInAttempt) return;
-
-      // Check if the user is now logged in
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error) {
-        console.error('Error fetching user for Google Sign In check:', error);
-        // Optionally handle the error, e.g., by setting an error state
-        return;
-      }
 
       if (user) {
         console.log('Google sign-in completed successfully');
@@ -32,7 +24,7 @@ export default function GoogleSignIn() {
     };
 
     checkGoogleSignIn();
-  }, [router]);
+  }, [router, user]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
