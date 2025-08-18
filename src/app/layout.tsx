@@ -111,7 +111,7 @@ export default function RootLayout({
         GeistSans.variable,
         GeistMono.variable
       )}>
-        <TwentyFirstToolbar />
+        {process.env.NODE_ENV === 'development' && <TwentyFirstToolbar />}
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
