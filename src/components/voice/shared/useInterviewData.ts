@@ -164,6 +164,7 @@ export function useInterviewData() {
           metadata: item.vapiData,
           created_at: item.createdAt,
           updated_at: item.updatedAt,
+          voice_name: item.voiceName,
           conversationFlow: item.conversationFlow,
           vapiData: item.vapiData
         }));

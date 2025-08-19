@@ -3,7 +3,6 @@ import { InterviewType } from './InterviewAvatar';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 import TechnicalInterviewForm from './TechnicalInterviewForm';
 import SystemDesignForm from './SystemDesignForm';
-import CustomInterviewForm from './CustomInterviewForm';
 import BehaviorInterviewForm from './BehaviorInterviewForm';
 
 interface InterviewFeaturesProps {
@@ -35,10 +34,12 @@ export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
         return {
           title: 'System Design Interview',
         };
-      case 'custom':
+      // Commented out custom case - uncomment to restore custom interview option
+      /* case 'custom':
         return {
           title: 'Custom Interview',
         };
+      */
       default:
         return {
           title: 'Behavioral Interview',
@@ -66,15 +67,17 @@ export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
             disabled={isReadOnly}
           />
         );
-      case 'custom':
+      // Commented out custom case - uncomment to restore custom interview option
+      /* case 'custom':
         return (
           <CustomInterviewForm
             config={config}
             onConfigChange={onConfigChange}
             errors={errors}
-            disabled={false} // Custom form is never read-only
+            disabled={isReadOnly}
           />
         );
+      */
       case 'behavioral':
       default:
         return (
