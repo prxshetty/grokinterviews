@@ -1,6 +1,21 @@
 import { VAPI_CONFIG } from '@/config/vapi.config';
 
 // Types for VAPI API
+export interface VapiArtifactPlan {
+  recordingEnabled?: boolean;
+  recordingFormat?: string;
+  videoRecordingEnabled?: boolean;
+  pcapEnabled?: boolean;
+  pcapS3PathPrefix?: string;
+  transcriptPlan?: {
+    enabled?: boolean;
+    assistantName?: string;
+    userName?: string;
+  };
+  recordingPath?: string;
+  structuredOutputIds?: string[];
+}
+
 export interface VapiCall {
   id: string;
   status: 'queued' | 'ringing' | 'in-progress' | 'forwarding' | 'ended';
@@ -14,6 +29,7 @@ export interface VapiCall {
   messages?: VapiMessage[];
   analysis?: VapiAnalysis;
   artifact?: VapiArtifact;
+  artifactPlan?: VapiArtifactPlan;
   monitor?: {
     listenUrl?: string;
     controlUrl?: string;
@@ -37,9 +53,34 @@ export interface VapiAnalysis {
 
 export interface VapiArtifact {
   messages?: VapiMessage[];
-  recordingUrl?: string;
+  messagesOpenAIFormatted?: Array<{
+    content: string;
+    role: 'assistant' | 'user' | 'system' | 'function';
+  }>;
+  recording?: {
+    stereoUrl?: string;
+    videoUrl?: string;
+    videoRecordingStartDelaySeconds?: number;
+    mono?: {
+      combinedUrl?: string;
+      assistantUrl?: string;
+      customerUrl?: string;
+    };
+  };
   transcript?: string;
+  pcapUrl?: string;
+  logUrl?: string;
+  nodes?: Array<{
+    messages?: VapiMessage[];
+    nodeName?: string;
+    variableValues?: Record<string, any>;
+  }>;
+  variableValues?: Record<string, any>;
+  // Legacy fields (deprecated but still supported)
+  recordingUrl?: string;
+  stereoRecordingUrl?: string;
   videoRecordingUrl?: string;
+  videoRecordingStartDelaySeconds?: number;
 }
 
 export interface CreateCallRequest {
@@ -205,6 +246,92 @@ export class VapiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
+
+  /**
+   * Get call recordings and artifacts
+   */
+  async getCallRecordings(callId: string): Promise<{
+    success: boolean;
+    recordings?: {
+      stereoUrl?: string;
+      videoUrl?: string;
+      mono?: {
+        combinedUrl?: string;
+        assistantUrl?: string;
+        customerUrl?: string;
+      };
+    };
+    transcript?: string;
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`/api/voice/calls/${callId}/recordings`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        recordings: data.recordings,
+        transcript: data.transcript,
+      };
+    } catch (error) {
+      console.error('Error fetching call recordings:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      };
+    }
+  }
+
+  /**
+   * Get full call artifacts including messages, recordings, and analysis
+   */
+  async getCallArtifacts(callId: string): Promise<{
+    success: boolean;
+    artifacts?: VapiArtifact;
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`/api/voice/calls/${callId}/artifacts`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        artifacts: data.artifacts,
+      };
+    } catch (error) {
+      console.error('Error fetching call artifacts:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }

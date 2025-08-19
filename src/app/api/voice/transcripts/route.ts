@@ -138,7 +138,8 @@ export async function GET(request: NextRequest) {
        if (structuredData.weaknesses?.length) result.weaknesses = structuredData.weaknesses;
        if (structuredData.recommendations?.length) result.recommendations = structuredData.recommendations;
        if (call.endedAt) result.updatedAt = call.endedAt;
-       if (structuredData.voiceName) result.voiceName = structuredData.voiceName;
+       // Set voice name - use from structured data if available, otherwise default to Emily for phone calls
+       result.voiceName = structuredData.voiceName || 'Emily';
 
        return result;
     });
@@ -166,34 +167,6 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-async function fetchVapiCallData(callId: string): Promise<any> {
-  const apiKey = process.env.VAPI_API_KEY;
-  if (!apiKey) {
-    throw new Error('VAPI API key not configured');
-  }
-
-  const response = await fetch(`https://api.vapi.ai/call/${callId}`, {
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`VAPI API error: ${response.status}`);
-  }
-
-  const callData: VapiCall = await response.json();
-  
-  return {
-    messages: callData.messages || [],
-    cost: callData.cost,
-    endedReason: callData.endedReason,
-    analysis: callData.analysis,
-    artifact: callData.artifact
-  };
 }
 
 async function fetchVapiCallsList(limit: number = 10, page: number = 1): Promise<VapiCall[]> {

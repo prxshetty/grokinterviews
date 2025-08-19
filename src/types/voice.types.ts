@@ -1,4 +1,6 @@
-export type VoiceOption = 'Sophia' | 'Marcus' | 'Aoede' | 'Algieba';
+export type WebVoiceOption = 'Sophia' | 'Marcus' | 'Aoede' | 'Algieba';
+export type PhoneVoiceOption = 'Emily';
+export type VoiceOption = WebVoiceOption | PhoneVoiceOption;
 
 export interface VoiceConfig {
   technicalName: VoiceOption;
@@ -8,7 +10,7 @@ export interface VoiceConfig {
   image: string;
 }
 
-export const VOICE_CONFIG: Record<VoiceOption, VoiceConfig> = {
+export const WEB_VOICE_CONFIG: Record<WebVoiceOption, VoiceConfig> = {
   'Sophia': {
     technicalName: 'Sophia',
     displayName: 'Gia',
@@ -37,4 +39,20 @@ export const VOICE_CONFIG: Record<VoiceOption, VoiceConfig> = {
     tier: 'premium',
     image: '/images/male_sign.jpeg'
   }
+};
+
+export const PHONE_VOICE_CONFIG: Record<PhoneVoiceOption, VoiceConfig> = {
+  'Emily': {
+    technicalName: 'Emily',
+    displayName: 'Emily',
+    label: 'Emily',
+    tier: 'standard',
+    image: '/images/female_phone.png'
+  }
+};
+
+// Combined configuration for backward compatibility
+export const VOICE_CONFIG: Record<VoiceOption, VoiceConfig> = {
+  ...WEB_VOICE_CONFIG,
+  ...PHONE_VOICE_CONFIG
 };

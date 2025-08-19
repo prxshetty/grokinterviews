@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -17,7 +17,8 @@ export async function GET(
       );
     }
 
-    const callId = params.id;
+    const resolvedParams = await params;
+    const callId = resolvedParams.id;
     if (!callId) {
       return NextResponse.json(
         { error: 'Call ID is required' },

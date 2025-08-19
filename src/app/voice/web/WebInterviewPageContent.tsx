@@ -66,6 +66,18 @@ export default function WebInterviewPageContent() {
   
   // Interview type and custom configuration state
   const [selectedInterviewType, setSelectedInterviewType] = useState<InterviewType>('behavioral');
+  
+  // Filter out 'custom' from available interview types
+  // Uncomment the useEffect below to prevent selecting custom interview type
+  /*
+  useEffect(() => {
+    // If the selected type is 'custom', change it to 'behavioral'
+    if (selectedInterviewType === 'custom') {
+      setSelectedInterviewType('behavioral');
+    }
+  }, [selectedInterviewType]);
+  */
+  
   const [customConfig, setCustomConfig] = useState<InterviewModeConfig>({
     customTopics: '',
     questionFormat: '',

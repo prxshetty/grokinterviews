@@ -167,7 +167,8 @@ export async function POST(request: NextRequest) {
         weaknesses,
         recommendations,
         error_message: errorMessage,
-        metadata
+        metadata,
+        voice_name: 'Emily' // Default voice for phone calls
       })
       .select();
 
@@ -255,7 +256,8 @@ export async function PUT(request: NextRequest) {
         weaknesses,
         recommendations,
         error_message: errorMessage,
-        metadata
+        metadata,
+        voice_name: 'Emily' // Ensure voice_name is set for phone calls
       })
       .eq('vapi_call_id', vapi_call_id)
       .eq('user_id', userId) // Ensure user can only update their own calls

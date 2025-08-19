@@ -36,6 +36,10 @@ const avatarConfigs: Record<InterviewType, AvatarConfig> = {
   }
 };
 
+// Filter out 'custom' from available interview types
+// Uncomment the line below to restore custom interview option
+// const interviewTypes: InterviewType[] = ['behavioral', 'technical', 'system-design', 'custom'];
+
 interface InterviewAvatarProps {
   isInterviewActive: boolean;
   isPlayingTTS: boolean;
@@ -57,7 +61,11 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
     Object.keys(avatarConfigs).indexOf(selectedType)
   );
   
-  const interviewTypes = Object.keys(avatarConfigs) as InterviewType[];
+  // Filter out the custom interview type as it's still in progress
+  const interviewTypes = Object.keys(avatarConfigs).filter(type => type !== 'custom') as InterviewType[];
+  // Uncomment the line below and remove the line above to restore custom interview option
+  // const interviewTypes = ['behavioral', 'technical', 'system-design', 'custom'] as InterviewType[];
+  
   const currentType = interviewTypes[currentIndex] || selectedType;
   const currentConfig = avatarConfigs[currentType];
 

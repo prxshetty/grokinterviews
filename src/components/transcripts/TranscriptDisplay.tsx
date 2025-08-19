@@ -12,12 +12,12 @@ import {
   ChevronRight,
   Star,
   BarChart3,
-  Settings
 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
 import { cn } from '@/lib/utils';
-import { VOICE_CONFIG, VoiceOption } from '@/types/voice.types';
+import { WEB_VOICE_CONFIG, PHONE_VOICE_CONFIG, WebVoiceOption, PhoneVoiceOption } from '@/types/voice.types';
 import { getScoreColor } from '@/components/voice/shared/utils';
+import { MiniAudioPlayer } from '@/components/ui/MiniAudioPlayer';
 
 interface InterviewSession {
   id: string;
@@ -64,7 +64,7 @@ interface PhoneCall {
   }>;
   vapiData?: {
     messages?: Array<{
-      role: 'assistant' | 'user' | 'system' | 'function';
+      role: 'assistant' | 'user' | 'system' | 'function' | 'bot';
       message: string;
       time: number;
       endTime?: number;
@@ -104,7 +104,6 @@ interface TranscriptDisplayProps {
   loadingScore: boolean;
   activeTab: string;
   profile: any;
-
   onTabChange: (tab: string) => void;
 }
 
@@ -117,9 +116,6 @@ export function TranscriptDisplay({
   profile,
   onTabChange
 }: TranscriptDisplayProps) {
-
-
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -128,6 +124,20 @@ export function TranscriptDisplay({
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getVoiceAvatarUrl = (voiceName?: string, interviewType?: 'web' | 'phone') => {
+    if (!voiceName) return DEFAULT_AVATAR_URL;
+    
+    // Use appropriate voice config based on interview type
+    let voiceConfig;
+    if (interviewType === 'phone') {
+      voiceConfig = voiceName in PHONE_VOICE_CONFIG ? PHONE_VOICE_CONFIG[voiceName as PhoneVoiceOption] : null;
+    } else {
+      voiceConfig = voiceName in WEB_VOICE_CONFIG ? WEB_VOICE_CONFIG[voiceName as WebVoiceOption] : null;
+    }
+    
+    return voiceConfig?.image || DEFAULT_AVATAR_URL;
   };
 
   if (!selectedSession && !selectedPhoneCall) {
@@ -150,339 +160,327 @@ export function TranscriptDisplay({
 
   const isWebInterview = !!selectedSession;
   
-  const actualVoice = isWebInterview ? selectedSession?.voice_name : selectedPhoneCall?.voice_name;
-  
-  const displayVoice = actualVoice && (Object.keys(VOICE_CONFIG) as VoiceOption[]).includes(actualVoice as VoiceOption) ? VOICE_CONFIG[actualVoice as VoiceOption] : undefined;
-
   return (
     <div className="flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl border-0 shadow-sm flex flex-col">
       {/* Tab Navigation with Session Info */}
       <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
-          <TabNav
-            items={[
-              { id: 'transcript', label: 'Transcript' },
-              { id: 'analysis', label: 'Analysis' }
-            ]}
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-          />
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-4">
+            <TabNav
+              items={[
+                { id: 'transcript', label: 'Transcript' },
+                { id: 'analysis', label: 'Analysis' }
+              ]}
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+            />
+            
+            {/* Mini Audio Player for Phone Interviews */}
+            {selectedPhoneCall && (
+              <MiniAudioPlayer callId={selectedPhoneCall.vapi_call_id} />
+            )}
+          </div>
+          
+          {/* Session/Call Info */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              {formatDate(isWebInterview ? (selectedSession?.session_start || '') : (selectedPhoneCall?.created_at || ''))}
+              <span>
+                {formatDate(isWebInterview ? selectedSession!.session_start : selectedPhoneCall!.created_at)}
+              </span>
             </div>
-
+            
+            {isWebInterview && selectedSession?.interview_scores?.[0] && (
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
+                  getScoreColor(selectedSession.interview_scores[0].overall_score)
+                )}>
+                  <Star className="h-4 w-4" />
+                  <span>{selectedSession.interview_scores[0].overall_score}/10</span>
+                </div>
+              </div>
+            )}
+            
+            {!isWebInterview && selectedPhoneCall?.interview_score && (
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
+                  getScoreColor(selectedPhoneCall.interview_score)
+                )}>
+                  <Star className="h-4 w-4" />
+                  <span>{selectedPhoneCall.interview_score}/10</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
+
+
       {/* Content */}
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 overflow-hidden">
         {activeTab === 'transcript' && (
-          <div className="space-y-4">
+          <div className="h-full overflow-y-auto px-6 py-6">
             {isWebInterview ? (
-              // Web Interview Transcript
-              selectedSession!.transcripts && selectedSession!.transcripts.length > 0 ? (
-                selectedSession!.transcripts
-                  .sort((a, b) => a.conversation_order - b.conversation_order)
-                  .map((transcript) => (
-                    <div key={transcript.id} className="space-y-3">
-                      {transcript.interaction_type === 'ai_response' && (
-                        <div className="flex gap-3">
-                          <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage src={displayVoice?.image || '/ai-avatar.png'} alt="AI" className="object-cover object-[center_25%]" />
-                            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">AI</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4">
-                            <p className="text-sm text-foreground whitespace-pre-wrap">
-                              {transcript.transcript_text}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {transcript.interaction_type === 'user_response' && (
-                        <div className="flex gap-3 justify-end">
-                          <div className="flex-1 max-w-[80%] bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4">
-                            <p className="text-sm text-foreground whitespace-pre-wrap">
-                              {transcript.transcript_text}
-                            </p>
-                          </div>
-                          <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="You" />
-                            <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
-                              {profile?.full_name?.charAt(0) || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                      )}
-                    </div>
-                  ))
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No transcript available for this session.</p>
-                </div>
-              )
-            ) : (
-              // Phone Interview Transcript
-              selectedPhoneCall!.transcript_text ? (
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6">
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                    {selectedPhoneCall!.transcript_text}
-                  </p>
-                </div>
-              ) : selectedPhoneCall!.conversationFlow && selectedPhoneCall!.conversationFlow.length > 0 ? (
+              /* Web Interview Transcript */
+              <div className="space-y-6">       
                 <div className="space-y-4">
-                  {selectedPhoneCall!.conversationFlow
-                    .sort((a, b) => a.conversationOrder - b.conversationOrder)
-                    .map((flow) => (
-                      <div key={flow.id} className="space-y-3">
-                        <div className={cn(
-                          "flex gap-3",
-                          flow.interactionType === 'user_response' ? 'justify-end' : ''
-                        )}>
-                          {flow.interactionType === 'ai_response' && (
+                  {selectedSession?.transcripts
+                    ?.sort((a, b) => a.conversation_order - b.conversation_order)
+                    .map((transcript) => (
+                      <div key={transcript.id} className="space-y-3">
+                        {transcript.interaction_type === 'ai_response' && (
+                          <div className="flex gap-3">
                             <Avatar className="h-8 w-8 flex-shrink-0">
-                              <AvatarImage src={displayVoice?.image || '/ai-avatar.png'} alt="AI" className="object-cover object-[center_25%]" />
-                              <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">AI</AvatarFallback>
+                              <AvatarImage src={getVoiceAvatarUrl(transcript.voice_name || selectedSession?.voice_name, 'web')} alt="AI" />
+                              <AvatarFallback>AI</AvatarFallback>
                             </Avatar>
-                          )}
-                          
-                          <div className={cn(
-                            "flex-1 rounded-2xl p-4",
-                            flow.interactionType === 'ai_response' 
-                              ? "bg-blue-50 dark:bg-blue-900/20" 
-                              : "max-w-[80%] bg-gray-50 dark:bg-gray-700/50"
-                          )}>
-                            <p className="text-sm text-foreground whitespace-pre-wrap">
-                              {flow.transcriptText}
-                            </p>
+                            <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
+                              <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-wrap">
+                                {transcript.transcript_text}
+                              </p>
+                            </div>
                           </div>
-                          
-                          {flow.interactionType === 'user_response' && (
+                        )}
+                        
+                        {transcript.interaction_type === 'user_response' && (
+                          <div className="flex gap-3 justify-end">
+                            <div className="flex-1 max-w-[80%] bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
+                              <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+                                {transcript.transcript_text}
+                              </p>
+                            </div>
                             <Avatar className="h-8 w-8 flex-shrink-0">
-                              <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="You" />
-                              <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
+                              <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="User" />
+                              <AvatarFallback>
                                 {profile?.full_name?.charAt(0) || 'U'}
                               </AvatarFallback>
                             </Avatar>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No transcript available for this phone call.</p>
+              </div>
+            ) : (
+              /* Phone Call Transcript */
+              <div className="space-y-6">                
+                <div className="space-y-4">
+                  {/* Use VAPI messages if available, fallback to conversationFlow */}
+                  {selectedPhoneCall?.vapiData?.messages && selectedPhoneCall.vapiData.messages.length > 0 ? (
+                    selectedPhoneCall.vapiData.messages
+                      .filter(msg => msg.role === 'bot' || msg.role === 'user')
+                      .sort((a, b) => a.secondsFromStart - b.secondsFromStart)
+                      .map((message, index) => (
+                        <div key={`vapi-${index}`} className="space-y-3">
+                          {message.role === 'bot' && (
+                            <div className="flex gap-3">
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={getVoiceAvatarUrl(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
+                                <AvatarFallback>AI</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
+                                <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-wrap">
+                                  {message.message}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {message.role === 'user' && (
+                            <div className="flex gap-3 justify-end">
+                              <div className="flex-1 max-w-[80%] bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
+                                <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+                                  {message.message}
+                                </p>
+                              </div>
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="User" />
+                                <AvatarFallback>
+                                  {profile?.full_name?.charAt(0) || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                  ) : (
+                    /* Fallback to conversationFlow for older data */
+                    selectedPhoneCall?.conversationFlow
+                      ?.sort((a, b) => a.conversationOrder - b.conversationOrder)
+                      .map((flow) => (
+                        <div key={flow.id} className="space-y-3">
+                          {flow.interactionType === 'ai_response' && (
+                            <div className="flex gap-3">
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={getVoiceAvatarUrl(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
+                                <AvatarFallback>AI</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
+                                <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-wrap">
+                                  {flow.transcriptText}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {flow.interactionType === 'user_response' && (
+                            <div className="flex gap-3 justify-end">
+                              <div className="flex-1 max-w-[80%] bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
+                                <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+                                  {flow.transcriptText}
+                                </p>
+                              </div>
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="User" />
+                                <AvatarFallback>
+                                  {profile?.full_name?.charAt(0) || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                  )}
                 </div>
-              )
+              </div>
             )}
           </div>
         )}
 
         {activeTab === 'analysis' && (
-          <div className="space-y-6">
-            {isWebInterview ? (
-              // Web Interview Analysis
-              loadingScore ? (
-                <div className="flex items-center justify-center py-12">
-                  <LoadingSpinner size="md" text="Loading analysis..." />
-                </div>
-              ) : selectedScore ? (
-                <div className="space-y-6">
-                  {/* Overall Score */}
-                  <Card className="border-0 shadow-sm">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5" />
-                        Overall Score
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-4">
-                        <div className={cn("text-3xl font-bold", getScoreColor(selectedScore.overall_score, true))}>
-                          {selectedScore.overall_score}/10
-                        </div>
-                        <div className="flex-1">
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${(selectedScore.overall_score / 10) * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Strengths */}
-                  {selectedScore.strengths && selectedScore.strengths.length > 0 && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-green-600 dark:text-green-400">Strengths</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2">
-                          {selectedScore.strengths.map((strength, index) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <Star className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{strength}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Areas for Improvement */}
-                  {selectedScore.weaknesses && selectedScore.weaknesses.length > 0 && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-orange-600 dark:text-orange-400">Areas for Improvement</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2">
-                          {selectedScore.weaknesses.map((weakness, index) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <ChevronRight className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{weakness}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Detailed Feedback */}
-                  {selectedScore.detailed_feedback && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle>Detailed Feedback</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                          {selectedScore.detailed_feedback}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <BarChart3 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-sm font-medium mb-2">No Analysis Available</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Complete the interview to see your performance analysis.
-                  </p>
-                </div>
-              )
+          <div className="h-full overflow-y-auto px-6 py-6">
+            {loadingScore ? (
+              <div className="flex items-center justify-center h-64">
+                <LoadingSpinner size="lg" />
+              </div>
             ) : (
-              // Phone Interview Analysis
-              selectedPhoneCall!.analysis_summary || selectedPhoneCall!.interview_score ? (
-                <div className="space-y-6">
-                  {selectedPhoneCall!.interview_score && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2">
-                          <TrendingUp className="h-5 w-5" />
-                          Interview Score
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-4">
-                          <div className={cn("text-3xl font-bold", getScoreColor(selectedPhoneCall!.interview_score!, true))}>
-                            {selectedPhoneCall!.interview_score}/10
-                          </div>
-                          <div className="flex-1">
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                              <div 
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${(selectedPhoneCall!.interview_score! / 10) * 100}%` }}
-                              />
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-foreground">
+                  Interview Analysis
+                </h2>
+                
+                {(selectedScore || selectedPhoneCall?.analysis_summary) ? (
+                  <div className="grid gap-6">
+                    {/* Overall Score */}
+                    {(selectedScore?.overall_score || selectedPhoneCall?.interview_score) && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5" />
+                            Overall Score
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center gap-4">
+                            <div className={cn(
+                              "text-3xl font-bold",
+                              getScoreColor(selectedScore?.overall_score || selectedPhoneCall?.interview_score || 0).replace('bg-', 'text-').replace('/20', '')
+                            )}>
+                              {selectedScore?.overall_score || selectedPhoneCall?.interview_score}/10
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {selectedScore?.overall_score || selectedPhoneCall?.interview_score! >= 8 ? 'Excellent performance' :
+                               selectedScore?.overall_score || selectedPhoneCall?.interview_score! >= 6 ? 'Good performance' :
+                               selectedScore?.overall_score || selectedPhoneCall?.interview_score! >= 4 ? 'Average performance' :
+                               'Needs improvement'}
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {selectedPhoneCall!.analysis_summary && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle>Analysis Summary</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                          {selectedPhoneCall!.analysis_summary}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {selectedPhoneCall!.strengths && selectedPhoneCall!.strengths.length > 0 && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-green-600 dark:text-green-400">Strengths</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2">
-                          {selectedPhoneCall!.strengths.map((strength, index) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <Star className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{strength}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {selectedPhoneCall!.weaknesses && selectedPhoneCall!.weaknesses.length > 0 && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-orange-600 dark:text-orange-400">Areas for Improvement</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2">
-                          {selectedPhoneCall!.weaknesses.map((weakness, index) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <ChevronRight className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{weakness}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {selectedPhoneCall!.recommendations && selectedPhoneCall!.recommendations.length > 0 && (
-                    <Card className="border-0 shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle>Recommendations</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2">
-                          {selectedPhoneCall!.recommendations.map((recommendation, index) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <Settings className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{recommendation}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <BarChart3 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-sm font-medium mb-2">No Analysis Available</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Analysis data is not available for this phone interview.
-                  </p>
-                </div>
-              )
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {/* Strengths */}
+                    {(selectedScore?.strengths?.length || selectedPhoneCall?.strengths?.length) && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-green-700 dark:text-green-400">
+                            Strengths
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-2">
+                            {(selectedScore?.strengths || selectedPhoneCall?.strengths || []).map((strength, index) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <ChevronRight className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm">{strength}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {/* Areas for Improvement */}
+                    {(selectedScore?.weaknesses?.length || selectedPhoneCall?.weaknesses?.length) && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-amber-700 dark:text-amber-400">
+                            Areas for Improvement
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-2">
+                            {(selectedScore?.weaknesses || selectedPhoneCall?.weaknesses || []).map((weakness, index) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <ChevronRight className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm">{weakness}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {/* Recommendations */}
+                    {(selectedScore?.improvements?.length || selectedPhoneCall?.recommendations?.length) && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-blue-700 dark:text-blue-400">
+                            Recommendations
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-2">
+                            {(selectedScore?.improvements || selectedPhoneCall?.recommendations || []).map((improvement, index) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <ChevronRight className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm">{improvement}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {/* Detailed Feedback */}
+                    {(selectedScore?.detailed_feedback || selectedPhoneCall?.analysis_summary) && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Detailed Feedback</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {selectedScore?.detailed_feedback || selectedPhoneCall?.analysis_summary}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
+                      No Analysis Available
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Analysis will appear here once the interview is processed.
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

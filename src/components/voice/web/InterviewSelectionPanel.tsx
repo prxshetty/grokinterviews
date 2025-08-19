@@ -73,7 +73,8 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
             errors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
           />
         );
-      case 'custom':
+      // Commented out custom case - uncomment to restore custom interview option
+      /* case 'custom':
         return (
           <InterviewFeatures
             selectedType={selectedType}
@@ -82,6 +83,8 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
             errors={customConfigErrors || DEFAULT_CUSTOM_CONFIG_ERRORS}
           />
         );
+      */
+      // Remove the custom case but keep the default case for safety
       default:
         return (
           <InterviewFeatures
