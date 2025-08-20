@@ -11,7 +11,6 @@ interface TopicCardProps {
   };
   isActive: boolean;
   isMobile?: boolean; // Make this optional
-  style: React.CSSProperties;
   onClick: () => void;
 }
 
@@ -321,19 +320,12 @@ const getColorWithOpacity = (shade: string, opacity: number) => {
   return `${hexColor}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`;
 };
 
-export default function TopicCard({ topic, isActive, style, onClick }: TopicCardProps) {
+export default function TopicCard({ topic, isActive, onClick }: TopicCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const IconComponent = TechIcons[topic.title] || TechIcons.default;
 
   // The active card shouldn't have a hover effect, it's already highlighted
   const showHoverEffect = isHovered && !isActive;
-
-  // Calculate the transform style with hover effect
-  const transformStyle = showHoverEffect
-    ? `${style.transform?.toString() || ''} scale(1.05)`
-    : style.transform;
-
-  // Get the appropriate icon for this tech stack
-  const IconComponent = TechIcons[topic.title as keyof typeof TechIcons] || TechIcons['default'];
 
   return (
     <div
@@ -342,14 +334,10 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
         group relative flex-shrink-0 w-[70px] h-[130px] sm:w-[120px] sm:h-[180px] md:w-[160px] md:h-[220px] rounded-xl overflow-hidden
         transition-all duration-400 ease-[cubic-bezier(0.25,0.1,0.25,1)] cursor-pointer
         ${isActive ? 'z-10 shadow-xl' : 'z-0 shadow-lg'}
-        ${showHoverEffect ? 'z-20 shadow-xl' : ''}
+        ${showHoverEffect ? 'z-20 shadow-xl scale-105' : ''}
         backdrop-blur-md
         will-change-transform,opacity,box-shadow
       `}
-      style={{
-        ...style,
-        transform: transformStyle,
-      }}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -436,4 +424,4 @@ export default function TopicCard({ topic, isActive, style, onClick }: TopicCard
       </div>
     </div>
   );
-} 
+}
