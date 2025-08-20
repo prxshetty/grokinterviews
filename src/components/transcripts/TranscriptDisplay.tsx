@@ -186,29 +186,43 @@ export function TranscriptDisplay({
                   {selectedSession?.transcripts
                     ?.sort((a, b) => a.conversation_order - b.conversation_order)
                     .map((transcript) => (
-                      <div key={transcript.id} className="space-y-3">
+                      <div
+                        key={transcript.id}
+                        className={`flex gap-3 ${
+                          transcript.interaction_type === 'user_response' ? 'justify-end' : 'justify-start'
+                        }`}
+                      >
                         {transcript.interaction_type === 'ai_response' && (
-                          <div className="flex gap-3">
-                            <Avatar className="h-8 w-8 flex-shrink-0">
-                              <AvatarImage src={getVoiceAvatar(transcript.voice_name || selectedSession?.voice_name, 'web')} alt="AI" />
-                              <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
-                              <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-wrap">
-                                {transcript.transcript_text}
-                              </p>
-                            </div>
+                          <div className="flex-shrink-0">
+                            <img
+                              src={getVoiceAvatar(transcript.voice_name || selectedSession?.voice_name, 'web')}
+                              alt="AI"
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
                           </div>
                         )}
                         
+                        <div
+                           className={`max-w-xs lg:max-w-md px-4 py-2 ${
+                             transcript.interaction_type === 'user_response'
+                               ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                               : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                           }`}
+                         >
+                           <p className="text-sm whitespace-pre-wrap">{transcript.transcript_text}</p>
+                           <p className={`text-xs opacity-70 mt-2 ${
+                             transcript.interaction_type === 'user_response' ? 'text-right' : 'text-left'
+                           }`}>
+                             {new Date(transcript.created_at).toLocaleTimeString([], {
+                               hour: '2-digit',
+                               minute: '2-digit'
+                             })}
+                           </p>
+                         </div>
+                        
                         {transcript.interaction_type === 'user_response' && (
-                          <div className="flex gap-3 justify-end">
-                            <div className="flex-1 max-w-[80%] bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
-                              <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                                {transcript.transcript_text}
-                              </p>
-                            </div>
-                            <Avatar className="h-8 w-8 flex-shrink-0">
+                          <div className="flex-shrink-0">
+                            <Avatar className="h-8 w-8">
                               <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="User" />
                               <AvatarFallback>
                                 {profile?.full_name?.charAt(0) || 'U'}
@@ -230,29 +244,40 @@ export function TranscriptDisplay({
                       .filter(msg => msg.role === 'bot' || msg.role === 'user')
                       .sort((a, b) => a.secondsFromStart - b.secondsFromStart)
                       .map((message, index) => (
-                        <div key={`vapi-${index}`} className="space-y-3">
+                        <div
+                          key={`vapi-${index}`}
+                          className={`flex gap-3 ${
+                            message.role === 'user' ? 'justify-end' : 'justify-start'
+                          }`}
+                        >
                           {message.role === 'bot' && (
-                            <div className="flex gap-3">
-                              <Avatar className="h-8 w-8 flex-shrink-0">
-                                <AvatarImage src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
-                                <AvatarFallback>AI</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
-                                <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-wrap">
-                                  {message.message}
-                                </p>
-                              </div>
+                            <div className="flex-shrink-0">
+                              <img
+                                src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')}
+                                alt="AI"
+                                className="h-8 w-8 rounded-full object-cover"
+                              />
                             </div>
                           )}
                           
+                          <div
+                             className={`max-w-xs lg:max-w-md px-4 py-2 ${
+                               message.role === 'user'
+                                 ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                             }`}
+                           >
+                             <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                             <p className={`text-xs opacity-70 mt-2 ${
+                               message.role === 'user' ? 'text-right' : 'text-left'
+                             }`}>
+                               {Math.floor(message.secondsFromStart / 60)}:{String(Math.floor(message.secondsFromStart % 60)).padStart(2, '0')}
+                             </p>
+                           </div>
+                          
                           {message.role === 'user' && (
-                            <div className="flex gap-3 justify-end">
-                              <div className="flex-1 max-w-[80%] bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
-                                <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                                  {message.message}
-                                </p>
-                              </div>
-                              <Avatar className="h-8 w-8 flex-shrink-0">
+                            <div className="flex-shrink-0">
+                              <Avatar className="h-8 w-8">
                                 <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="User" />
                                 <AvatarFallback>
                                   {profile?.full_name?.charAt(0) || 'U'}
@@ -267,29 +292,43 @@ export function TranscriptDisplay({
                     selectedPhoneCall?.conversationFlow
                       ?.sort((a, b) => a.conversationOrder - b.conversationOrder)
                       .map((flow) => (
-                        <div key={flow.id} className="space-y-3">
+                        <div
+                          key={flow.id}
+                          className={`flex gap-3 ${
+                            flow.interactionType === 'user_response' ? 'justify-end' : 'justify-start'
+                          }`}
+                        >
                           {flow.interactionType === 'ai_response' && (
-                            <div className="flex gap-3">
-                              <Avatar className="h-8 w-8 flex-shrink-0">
-                                <AvatarImage src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
-                                <AvatarFallback>AI</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
-                                <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-wrap">
-                                  {flow.transcriptText}
-                                </p>
-                              </div>
+                            <div className="flex-shrink-0">
+                              <img
+                                src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')}
+                                alt="AI"
+                                className="h-8 w-8 rounded-full object-cover"
+                              />
                             </div>
                           )}
                           
+                          <div
+                             className={`max-w-xs lg:max-w-md px-4 py-2 ${
+                               flow.interactionType === 'user_response'
+                                 ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                             }`}
+                           >
+                             <p className="text-sm whitespace-pre-wrap">{flow.transcriptText}</p>
+                             <p className={`text-xs opacity-70 mt-2 ${
+                               flow.interactionType === 'user_response' ? 'text-right' : 'text-left'
+                             }`}>
+                               {new Date(flow.createdAt).toLocaleTimeString([], {
+                                 hour: '2-digit',
+                                 minute: '2-digit'
+                               })}
+                             </p>
+                           </div>
+                          
                           {flow.interactionType === 'user_response' && (
-                            <div className="flex gap-3 justify-end">
-                              <div className="flex-1 max-w-[80%] bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3">
-                                <p className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                                  {flow.transcriptText}
-                                </p>
-                              </div>
-                              <Avatar className="h-8 w-8 flex-shrink-0">
+                            <div className="flex-shrink-0">
+                              <Avatar className="h-8 w-8">
                                 <AvatarImage src={profile?.avatar_url || DEFAULT_AVATAR_URL} alt="User" />
                                 <AvatarFallback>
                                   {profile?.full_name?.charAt(0) || 'U'}
