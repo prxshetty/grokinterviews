@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
+import { Button1 } from '@/components/ui/button-1';
 import CompanyList from '@/components/home/CompanyList'
 
 export function HeroSection() {
@@ -57,23 +58,16 @@ export function HeroSection() {
 
                         {/* Action Buttons */}
                         <div className={`mt-8 sm:mt-10 flex flex-row items-center justify-center gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
-                            <div className="bg-foreground/10 rounded-[14px] border p-0.5 flex-1 sm:flex-none">
-                                <Button
-                                    asChild
-                                    size="lg"
-                                    className="w-full rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
-                                    <Link href="/topics">
-                                        <span className="text-nowrap">Start Learning</span>
-                                    </Link>
-                                </Button>
-                            </div>
+                            <Button1 href="/topics" className="w-full rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
+                                Start Learning
+                            </Button1>
                             <Button
                                 asChild
                                 size="lg"
                                 variant="ghost"
                                 className="flex-1 sm:flex-none rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
                                 <Link href="/dashboard">
-                                    <span className="text-nowrap">View Dashboard</span>
+                                    <span className="text-nowrap">View Interviews</span>
                                 </Link>
                             </Button>
                         </div>
