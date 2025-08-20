@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { quizTopics } from '@/data/quizTopics';
 import TopicCard from './TopicCard';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function TopicCarousel() {
   const [activeIndex, setActiveIndex] = useState(0); // Start with first card active
@@ -149,7 +150,7 @@ export default function TopicCarousel() {
             const arcHeight = isMobile ? 80 : 120; // Flatter arc on mobile
 
             // Calculate x position using linear distribution with increased spacing
-            const x = maxCards > 0 ? spacedRelativeIndex * (arcWidth / (maxCards * 2)) : 0;
+            const x = maxCards > 0 ? -spacedRelativeIndex * (arcWidth / (maxCards * 2)) : 0;
 
             // Calculate y position using a parabola: y = a * x^2
             // Where 'a' is calculated to make y = arcHeight when x = ±(arcWidth/2)
@@ -170,25 +171,29 @@ export default function TopicCarousel() {
             // No rotation for better readability
             const rotationDeg = 0;
 
-            // Calculate card style for positioning
-            const cardStyle: React.CSSProperties = {
-              transform: `translate(${x}px, ${adjustedY}px) rotate(${rotationDeg}deg) scale(${scale})`,
-              zIndex: zIndex,
-              opacity: isCardVisible ? (isActive ? 1 : isMobile ? 0.9 : 0.7 + ((1 - normalizedY) * 0.3)) : 0,
-              pointerEvents: isCardVisible ? 'auto' : 'none',
-            };
-
             return (
               <div
                 key={topic.id}
                 className="absolute top-0 left-1/2 -translate-x-1/2"
               >
-                <TopicCard
-                  topic={topic}
-                  isActive={isActive}
-                  style={cardStyle}
-                  onClick={() => setActiveIndex(index)}
-                />
+                <motion.div
+                  animate={{
+                    x: x,
+                    y: adjustedY,
+                    rotate: rotationDeg,
+                    scale: scale,
+                    opacity: isCardVisible ? (isActive ? 1 : isMobile ? 0.9 : 0.7 + ((1 - normalizedY) * 0.3)) : 0,
+                    zIndex: zIndex,
+                  }}
+                  transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                  style={{ pointerEvents: isCardVisible ? 'auto' : 'none' }}
+                >
+                  <TopicCard
+                    topic={topic}
+                    isActive={isActive}
+                    onClick={() => setActiveIndex(index)}
+                  />
+                </motion.div>
               </div>
             );
           })}
@@ -220,4 +225,4 @@ export default function TopicCarousel() {
       </div>
     </div>
   );
-} 
+}
