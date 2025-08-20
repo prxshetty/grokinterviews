@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { MessageSquare, User, Download } from 'lucide-react';
+import { MessageSquare, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { VoiceOption } from '@/types/voice.types';
 import { getVoiceDisplayName, getVoiceAvatarUrl, isVoicePremium, getAvailableVoices } from '@/utils/voiceUtils';
 
@@ -91,6 +91,7 @@ export function InterviewList({
 
 
 
+
   const formatDuration = (interview: CombinedInterview) => {
     if (interview.type === 'phone' && interview.call_duration) {
       const minutes = Math.floor(interview.call_duration / 60);
@@ -107,10 +108,11 @@ export function InterviewList({
     return null;
   };
 
+
+
   const renderInterviewItem = (interview: CombinedInterview) => {
     const isSelected = (selectedSession?.id === interview.id && interview.type === 'web') ||
                      (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
-    
 
     // Use utility functions for voice configuration
     const interviewerName = getVoiceDisplayName(interview.voice_name, interview.type);
@@ -121,83 +123,77 @@ export function InterviewList({
       <div
         key={`${interview.type}-${interview.id}`}
         className={cn(
-          "cursor-pointer transition-all duration-300 rounded-xl",
-          "bg-white/60 dark:bg-gray-800/60 shadow-sm border",
+          "group cursor-pointer transition-all duration-300 rounded-full relative",
+          "bg-gray-100/80 dark:bg-gray-800/80 shadow-sm border backdrop-blur-sm",
+          "hover:shadow-md hover:bg-gray-50/90 dark:hover:bg-gray-750/90",
           isSelected 
-            ? "border-blue-500/50 shadow-md"
-            : "border-gray-200/80 dark:border-gray-700/80 hover:border-gray-300/80 dark:hover:border-gray-600/80"
+            ? "border-blue-500/60 shadow-lg bg-blue-50/50 dark:bg-blue-900/20"
+            : "border-gray-200/60 dark:border-gray-700/60 hover:border-gray-300/80 dark:hover:border-gray-600/80"
         )}
         onClick={() => onSelectInterview(interview)}
       >
-        <AnimatePresence initial={false}>
-          <motion.div
-            key="content"
-            initial={{ height: 'auto' }}
-            animate={{ height: isSelected ? 80 : 72 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="p-3"
-          >
-            <div className="flex items-start gap-4">
-              <div className="relative flex-shrink-0">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage 
-                    src={interviewerImage} 
-                    alt={interviewerName} 
-                    className="object-cover object-[center_25%]" 
-                  />
-                  <AvatarFallback><User className="h-6 w-6" /></AvatarFallback>
-                </Avatar>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <p className={cn(
-                  "text-sm font-semibold truncate",
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <Avatar className="h-14 w-14 ring-2 ring-white/50 dark:ring-gray-700/50">
+                <AvatarImage 
+                  src={interviewerImage} 
+                  alt={interviewerName} 
+                  className="object-cover object-[center_25%]" 
+                />
+                <AvatarFallback className="bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                  <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1 min-w-0 mt-1 space-y-1">
+              {/* Title (Name) and Tag */}
+              <div className="flex items-center gap-2">
+                <h3 className={cn(
+                  "text-base font-medium truncate leading-tight",
                   isVoicePremium(interview.voice_name, interview.type)
                     ? "text-amber-600 dark:text-amber-400" 
-                    : "text-foreground"
+                    : "text-gray-900 dark:text-gray-100"
                 )}>
                   {interviewerName}
-                </p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {interview.session_type === 'sd' ? 'System Design' : interview.session_type} Interview
-                </p>
+                </h3>
+                <span className={cn(
+                  "inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide transition-colors flex-shrink-0 border",
+                  "bg-transparent text-gray-700 border-gray-300 dark:text-gray-300 dark:border-gray-600",
+                  interview.session_type === 'behavioral' && "bg-transparent text-blue-700 border-blue-300 dark:text-blue-300 dark:border-blue-600",
+                  interview.session_type === 'technical' && "bg-transparent text-purple-700 border-purple-300 dark:text-purple-300 dark:border-purple-600",
+                  interview.session_type === 'sd' && "bg-transparent text-red-700 border-red-300 dark:text-red-300 dark:border-red-600",
+                  interview.session_type === 'custom' && "bg-transparent text-amber-700 border-amber-300 dark:text-amber-300 dark:border-amber-600"
+                )}>
+                  {interview.session_type === 'sd' ? 'SYSTEM DESIGN' : interview.session_type.toUpperCase()}
+                </span>
               </div>
-
-              {isSelected ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2, delay: 0.1 }}
-                  className="ml-auto"
-                >
-                  <Button 
-                    size="icon"
-                    variant="outline"
-                    onClick={(e) => { 
-                      e.stopPropagation();
-                      onExport(interview);
-                    }}
-                    className="rounded-full h-9 w-9 bg-gray-100 dark:bg-gray-700"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              ) : (
-                <div className="text-xs text-muted-foreground text-right ml-auto">
-                  <div>
-                    {new Date(interview.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </div>
-                  {duration && (
-                    <div className="text-xs text-muted-foreground/70">
-                      {duration}
-                    </div>
-                  )}
-                </div>
-              )}
+              
+              {/* Subtitle (Date and Duration) */}
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <span>
+                  {new Date(interview.date).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+                {duration && (
+                  <>
+                    <span>•</span>
+                    <span>{duration}</span>
+                  </>
+                )}
+              </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+
+
+          </div>
+        </div>
       </div>
     );
   };
@@ -207,11 +203,11 @@ export function InterviewList({
     if (filtered.length === 0) return null;
 
     return (
-      <div key={title}>
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+      <div key={title} className="space-y-3">
+        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-1">
           {title}
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {filtered.map(renderInterviewItem)}
         </div>
       </div>
@@ -231,8 +227,8 @@ export function InterviewList({
     <div className="w-full max-w-sm mx-auto">
       <div className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm h-full flex flex-col">
         
-        
-        <div className="p-3">
+        {/* Header */}
+        <div className="p-4">
           <div className="flex items-center justify-between">
             <TabNav
               items={tabItems}
@@ -243,12 +239,12 @@ export function InterviewList({
               }}
             />
             <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
-              <SelectTrigger className="w-36 h-8 text-xs rounded-full">
+              <SelectTrigger className="w-36 h-8 text-xs rounded-full border-gray-300/60 dark:border-gray-600/60">
                 <SelectValue placeholder="Voice" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
                 <SelectItem value="all">
-                  <span>All Voices</span>
+                  <span className="font-medium">All Voices</span>
                 </SelectItem>
                 {/* Show appropriate voices based on active tab */}
                 {getAvailableVoices(activeTab).map((config) => (
@@ -267,7 +263,7 @@ export function InterviewList({
                       <span className={cn(
                          config.tier === 'premium' 
                            ? "text-amber-600 dark:text-amber-400 font-medium" 
-                           : "text-foreground"
+                           : "text-foreground font-medium"
                        )}>
                          {config.displayName}
                        </span>
@@ -279,12 +275,15 @@ export function InterviewList({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-5">
           {activeInterviews.length === 0 ? (
-            <div className="text-center py-12 px-4">
-              <MessageSquare className="h-10 w-10 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
-              <h3 className="text-sm font-medium text-foreground mb-1">No {activeTab} interviews</h3>
-              <p className="text-xs text-muted-foreground">
+            <div className="text-center py-16 px-4">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">No {activeTab} interviews</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                 Your recorded {activeTab} interviews will appear here.
               </p>
             </div>
