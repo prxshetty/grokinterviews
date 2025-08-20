@@ -136,7 +136,7 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
   }
 
   return (
-    <div className={cn('flex items-center gap-2 bg-transparent rounded-lg px-3 py-2', className)}>
+    <div className={cn('flex items-center gap-2 bg-transparent rounded-lg px-3 py-0.5', className)}>
       <audio ref={audioRef} src={audioUrl || undefined} preload="metadata" />
       
       {/* Play/Pause Button */}
