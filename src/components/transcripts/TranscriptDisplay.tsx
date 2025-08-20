@@ -6,11 +6,9 @@ import { TabNav } from '@/components/ui/tab-nav';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { 
-  Calendar, 
   TrendingUp, 
   Eye, 
   ChevronRight,
-  Star,
   BarChart3,
 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
@@ -116,16 +114,6 @@ export function TranscriptDisplay({
   profile,
   onTabChange
 }: TranscriptDisplayProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   // Use utility function for voice avatar URL with fallback to DEFAULT_AVATAR_URL
   const getVoiceAvatar = (voiceName?: string, interviewType?: 'web' | 'phone') => {
     const avatarUrl = getVoiceAvatarUrl(voiceName, interviewType);
