@@ -5,7 +5,7 @@ import { MessageSquare, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { TabNav } from '@/components/ui/tab-nav';
-import { Button } from '@/components/ui/button';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { VoiceOption } from '@/types/voice.types';
@@ -73,7 +73,6 @@ interface InterviewListProps {
   selectedSession: InterviewSession | null;
   selectedPhoneCall: PhoneCall | null;
   onSelectInterview: (interview: CombinedInterview) => void;
-  onExport: (interview: CombinedInterview) => void;
   voiceFilter: VoiceOption | 'all';
   onVoiceFilterChange: (value: VoiceOption | 'all') => void;
 }
@@ -83,7 +82,6 @@ export function InterviewList({
   selectedSession,
   selectedPhoneCall,
   onSelectInterview,
-  onExport,
   voiceFilter,
   onVoiceFilterChange,
 }: InterviewListProps) {

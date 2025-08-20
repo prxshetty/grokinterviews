@@ -11,8 +11,6 @@ export default function TranscriptsPage() {
   const { profile } = useAuth();
   const {
     loading,
-    sessions,
-    phoneCalls,
     voiceFilter,
     setVoiceFilter,
     groupedInterviews,
@@ -23,8 +21,6 @@ export default function TranscriptsPage() {
     activeTab,
     setActiveTab,
     handleSelectInterview,
-    exportSession,
-    exportPhoneTranscript
   } = useInterviewData();
 
   if (loading) {
@@ -57,19 +53,7 @@ export default function TranscriptsPage() {
               onSelectInterview={handleSelectInterview}
               voiceFilter={voiceFilter}
               onVoiceFilterChange={setVoiceFilter}
-              onExport={(interview) => {
-                if (interview.type === 'web') {
-                  const session = sessions.find(s => s.id === interview.id);
-                  if (session) {
-                    exportSession(session);
-                  }
-                } else {
-                  const phoneCall = phoneCalls.find(p => p.id === interview.id);
-                  if (phoneCall) {
-                    exportPhoneTranscript(phoneCall);
-                  }
-                }
-              }}
+              
             />
           </div>
 

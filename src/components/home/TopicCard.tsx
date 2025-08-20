@@ -15,6 +15,9 @@ interface TopicCardProps {
 }
 
 // SVG icon components for tech stacks
+// Define a type for the keys of TechIcons
+type TechIconKey = keyof typeof TechIcons;
+
 const TechIcons = {
   JavaScript: () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
@@ -322,7 +325,7 @@ const getColorWithOpacity = (shade: string, opacity: number) => {
 
 export default function TopicCard({ topic, isActive, onClick }: TopicCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const IconComponent = TechIcons[topic.title] || TechIcons.default;
+  const IconComponent = TechIcons[topic.title as TechIconKey] || TechIcons.default;
 
   // The active card shouldn't have a hover effect, it's already highlighted
   const showHoverEffect = isHovered && !isActive;
