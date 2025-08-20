@@ -240,10 +240,10 @@ export function InterviewList({
               onTabChange={(id) => setActiveTab(id as 'web' | 'phone')}
             />
             <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
-              <SelectTrigger className="w-36 h-8 text-xs">
+              <SelectTrigger className="w-36 h-8 text-xs rounded-full">
                 <SelectValue placeholder="Voice" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">
                   <span>All Voices</span>
                 </SelectItem>

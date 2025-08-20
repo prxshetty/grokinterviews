@@ -26,6 +26,21 @@ export async function GET(
       );
     }
 
+    // Verify user owns this call by checking the phone_calls table
+    const { data: phoneCall, error: phoneCallError } = await supabase
+      .from('phone_calls')
+      .select('id, user_id')
+      .eq('vapi_call_id', callId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (phoneCallError || !phoneCall) {
+      return NextResponse.json(
+        { error: 'Call not found or access denied' },
+        { status: 404 }
+      );
+    }
+
     // Get VAPI API key
     const vapiApiKey = process.env.VAPI_API_KEY;
     if (!vapiApiKey) {
