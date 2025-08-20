@@ -191,43 +191,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function fetchVapiCallsList(limit: number = 10, page: number = 1): Promise<VapiCall[]> {
-  const apiKey = process.env.VAPI_API_KEY;
-  if (!apiKey) {
-    throw new Error('VAPI API key not configured');
-  }
 
-  // VAPI uses limit and offset for pagination
-  const offset = (page - 1) * limit;
-  const url = new URL(`https://api.vapi.ai/call`);
-  url.searchParams.set('limit', limit.toString());
-  if (offset > 0) {
-    url.searchParams.set('offset', offset.toString());
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error('VAPI API error details:', {
-      status: response.status,
-      statusText: response.statusText,
-      error: errorData
-    });
-    throw new Error(`VAPI API error: ${response.status} - ${errorData.message || response.statusText}`);
-  }
-
-  const data = await response.json();
-  
-  // VAPI returns calls in a data array or directly as an array
-  return Array.isArray(data) ? data : (data.data || []);
-}
 
 async function fetchVapiCallDetails(callId: string): Promise<VapiCall | null> {
   const apiKey = process.env.VAPI_API_KEY;
