@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TranscriptHeader, InterviewList, TranscriptDisplay } from '@/components/transcripts';
+import { TranscriptHeader, TranscriptList, TranscriptDisplay } from '@/components/transcripts';
 import { useInterviewData } from '@/components/voice/shared/useInterviewData';
 import { useAuth } from '@/components/AuthProvider';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -50,7 +50,7 @@ export default function TranscriptsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Interview List */}
           <div className="lg:col-span-1">
-            <InterviewList
+            <TranscriptList
               groupedInterviews={groupedInterviews}
               selectedSession={selectedSession}
               selectedPhoneCall={selectedPhoneCall}
