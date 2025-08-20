@@ -15,7 +15,6 @@ export default function TranscriptsPage() {
     phoneCalls,
     voiceFilter,
     setVoiceFilter,
-    filteredInterviews,
     groupedInterviews,
     selectedSession,
     selectedPhoneCall,
@@ -52,7 +51,6 @@ export default function TranscriptsPage() {
           {/* Interview List */}
           <div className="lg:col-span-1">
             <InterviewList
-              filteredInterviews={filteredInterviews}
               groupedInterviews={groupedInterviews}
               selectedSession={selectedSession}
               selectedPhoneCall={selectedPhoneCall}

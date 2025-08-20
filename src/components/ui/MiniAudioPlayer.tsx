@@ -110,14 +110,14 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
   }
 
   return (
-    <div className={cn('flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-sm border', className)}>
+    <div className={cn('flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2', className)}>
       <audio ref={audioRef} src={audioUrl} preload="metadata" />
       
       {/* Play/Pause Button */}
       <button
         onClick={togglePlayPause}
         disabled={isLoading}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+        className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
       >
         {isLoading ? (
           <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -154,7 +154,7 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
       {/* Download Button */}
       <button
         onClick={handleDownload}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
         title="Download recording"
       >
         <Download className="w-4 h-4 text-gray-700 dark:text-gray-300" />

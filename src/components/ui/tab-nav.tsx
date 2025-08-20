@@ -137,7 +137,7 @@ const Tab = ({
   };
 
   // Mobile-first responsive classes with better touch targets and text sizing
-  const commonClassName = `relative block px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-xs font-normal transition-colors whitespace-nowrap min-w-0 ${
+  const commonClassName = `relative block px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-xs font-medium transition-colors whitespace-nowrap min-w-0 ${
     isUnderCursor || isActive
       ? 'text-white dark:text-black'
       : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
