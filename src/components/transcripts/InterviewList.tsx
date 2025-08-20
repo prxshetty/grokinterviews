@@ -8,7 +8,8 @@ import { TabNav } from '@/components/ui/tab-nav';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
-import { VoiceOption, WEB_VOICE_CONFIG, PHONE_VOICE_CONFIG, WebVoiceOption, PhoneVoiceOption } from '@/types/voice.types';
+import { VoiceOption } from '@/types/voice.types';
+import { getVoiceDisplayName, getVoiceAvatarUrl, isVoicePremium, getAvailableVoices } from '@/utils/voiceUtils';
 
 // Interfaces
 interface InterviewSession {
@@ -63,7 +64,6 @@ interface CombinedInterview {
 }
 
 interface InterviewListProps {
-  filteredInterviews: CombinedInterview[];
   groupedInterviews: {
     today: CombinedInterview[];
     yesterday: CombinedInterview[];
@@ -84,7 +84,6 @@ export function InterviewList({
   selectedPhoneCall,
   onSelectInterview,
   onExport,
-  filteredInterviews,
   voiceFilter,
   onVoiceFilterChange,
 }: InterviewListProps) {
@@ -113,20 +112,9 @@ export function InterviewList({
                      (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
     
 
-    // Use appropriate voice config based on interview type
-    const getVoiceConfig = () => {
-      if (!interview.voice_name) return null;
-      
-      if (interview.type === 'phone') {
-        return interview.voice_name in PHONE_VOICE_CONFIG ? PHONE_VOICE_CONFIG[interview.voice_name as PhoneVoiceOption] : null;
-      } else {
-        return interview.voice_name in WEB_VOICE_CONFIG ? WEB_VOICE_CONFIG[interview.voice_name as WebVoiceOption] : null;
-      }
-    };
-    
-    const interviewer = getVoiceConfig();
-    const interviewerName = interviewer ? interviewer.displayName : 'AI Interviewer';
-    const interviewerImage = interviewer ? interviewer.image : (interview.type === 'phone' ? '/images/female_phone.png' : '/images/female_default.png');
+    // Use utility functions for voice configuration
+    const interviewerName = getVoiceDisplayName(interview.voice_name, interview.type);
+    const interviewerImage = getVoiceAvatarUrl(interview.voice_name, interview.type);
     const duration = formatDuration(interview);
 
     return (
@@ -164,7 +152,7 @@ export function InterviewList({
               <div className="flex-1 min-w-0">
                 <p className={cn(
                   "text-sm font-semibold truncate",
-                  interviewer?.tier === 'premium' 
+                  isVoicePremium(interview.voice_name, interview.type)
                     ? "text-amber-600 dark:text-amber-400" 
                     : "text-foreground"
                 )}>
@@ -242,16 +230,7 @@ export function InterviewList({
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm h-full flex flex-col">
-        <div className="p-4 border-b border-gray-200/80 dark:border-gray-700/80">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-foreground">
-              Transcript List
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {filteredInterviews.length} total interviews
-          </p>
-        </div>
+        
         
         <div className="p-3">
           <div className="flex items-center justify-between">
@@ -269,54 +248,29 @@ export function InterviewList({
                   <span>All Voices</span>
                 </SelectItem>
                 {/* Show appropriate voices based on active tab */}
-                {activeTab === 'web' 
-                  ? Object.entries(WEB_VOICE_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-5 h-5">
-                            <AvatarImage 
-                              src={config.image} 
-                              alt={config.displayName}
-                              className="object-cover object-[center_25%]"
-                            />
-                            <AvatarFallback className="text-xs">
-                              {config.displayName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className={cn(
-                             config.tier === 'premium' 
-                               ? "text-amber-600 dark:text-amber-400 font-medium" 
-                               : "text-foreground"
-                           )}>
-                             {config.displayName}
-                           </span>
-                        </div>
-                      </SelectItem>
-                    ))
-                  : Object.entries(PHONE_VOICE_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-5 h-5">
-                            <AvatarImage 
-                              src={config.image} 
-                              alt={config.displayName}
-                              className="object-cover object-[center_25%]"
-                            />
-                            <AvatarFallback className="text-xs">
-                              {config.displayName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className={cn(
-                             config.tier === 'premium' 
-                               ? "text-amber-600 dark:text-amber-400 font-medium" 
-                               : "text-foreground"
-                           )}>
-                             {config.displayName}
-                           </span>
-                        </div>
-                      </SelectItem>
-                    ))
-                }
+                {getAvailableVoices(activeTab).map((config) => (
+                  <SelectItem key={config.technicalName} value={config.technicalName}>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-5 h-5">
+                        <AvatarImage 
+                          src={config.image} 
+                          alt={config.displayName}
+                          className="object-cover object-[center_25%]"
+                        />
+                        <AvatarFallback className="text-xs">
+                          {config.displayName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={cn(
+                         config.tier === 'premium' 
+                           ? "text-amber-600 dark:text-amber-400 font-medium" 
+                           : "text-foreground"
+                       )}>
+                         {config.displayName}
+                       </span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

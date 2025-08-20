@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
 import { cn } from '@/lib/utils';
-import { WEB_VOICE_CONFIG, PHONE_VOICE_CONFIG, WebVoiceOption, PhoneVoiceOption } from '@/types/voice.types';
+import { getVoiceAvatarUrl } from '@/utils/voiceUtils';
 import { getScoreColor } from '@/components/voice/shared/utils';
 import { MiniAudioPlayer } from '@/components/ui/MiniAudioPlayer';
 
@@ -126,18 +126,10 @@ export function TranscriptDisplay({
     });
   };
 
-  const getVoiceAvatarUrl = (voiceName?: string, interviewType?: 'web' | 'phone') => {
-    if (!voiceName) return DEFAULT_AVATAR_URL;
-    
-    // Use appropriate voice config based on interview type
-    let voiceConfig;
-    if (interviewType === 'phone') {
-      voiceConfig = voiceName in PHONE_VOICE_CONFIG ? PHONE_VOICE_CONFIG[voiceName as PhoneVoiceOption] : null;
-    } else {
-      voiceConfig = voiceName in WEB_VOICE_CONFIG ? WEB_VOICE_CONFIG[voiceName as WebVoiceOption] : null;
-    }
-    
-    return voiceConfig?.image || DEFAULT_AVATAR_URL;
+  // Use utility function for voice avatar URL with fallback to DEFAULT_AVATAR_URL
+  const getVoiceAvatar = (voiceName?: string, interviewType?: 'web' | 'phone') => {
+    const avatarUrl = getVoiceAvatarUrl(voiceName, interviewType);
+    return avatarUrl || DEFAULT_AVATAR_URL;
   };
 
   if (!selectedSession && !selectedPhoneCall) {
@@ -161,59 +153,23 @@ export function TranscriptDisplay({
   const isWebInterview = !!selectedSession;
   
   return (
-    <div className="flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl border-0 shadow-sm flex flex-col">
+    <div className="flex-1 bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm flex flex-col">
       {/* Tab Navigation with Session Info */}
       <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <TabNav
-              items={[
-                { id: 'transcript', label: 'Transcript' },
-                { id: 'analysis', label: 'Analysis' }
-              ]}
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-            />
-            
-            {/* Mini Audio Player for Phone Interviews */}
-            {selectedPhoneCall && (
-              <MiniAudioPlayer callId={selectedPhoneCall.vapi_call_id} />
-            )}
-          </div>
+          <TabNav
+            items={[
+              { id: 'transcript', label: 'Transcript' },
+              { id: 'analysis', label: 'Analysis' }
+            ]}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
           
-          {/* Session/Call Info */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>
-                {formatDate(isWebInterview ? selectedSession!.session_start : selectedPhoneCall!.created_at)}
-              </span>
-            </div>
-            
-            {isWebInterview && selectedSession?.interview_scores?.[0] && (
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
-                  getScoreColor(selectedSession.interview_scores[0].overall_score)
-                )}>
-                  <Star className="h-4 w-4" />
-                  <span>{selectedSession.interview_scores[0].overall_score}/10</span>
-                </div>
-              </div>
-            )}
-            
-            {!isWebInterview && selectedPhoneCall?.interview_score && (
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
-                  getScoreColor(selectedPhoneCall.interview_score)
-                )}>
-                  <Star className="h-4 w-4" />
-                  <span>{selectedPhoneCall.interview_score}/10</span>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Mini Audio Player for Phone Interviews */}
+          {selectedPhoneCall && (
+            <MiniAudioPlayer callId={selectedPhoneCall.vapi_call_id} />
+          )}
         </div>
       </div>
 
@@ -234,7 +190,7 @@ export function TranscriptDisplay({
                         {transcript.interaction_type === 'ai_response' && (
                           <div className="flex gap-3">
                             <Avatar className="h-8 w-8 flex-shrink-0">
-                              <AvatarImage src={getVoiceAvatarUrl(transcript.voice_name || selectedSession?.voice_name, 'web')} alt="AI" />
+                              <AvatarImage src={getVoiceAvatar(transcript.voice_name || selectedSession?.voice_name, 'web')} alt="AI" />
                               <AvatarFallback>AI</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
@@ -278,7 +234,7 @@ export function TranscriptDisplay({
                           {message.role === 'bot' && (
                             <div className="flex gap-3">
                               <Avatar className="h-8 w-8 flex-shrink-0">
-                                <AvatarImage src={getVoiceAvatarUrl(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
+                                <AvatarImage src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
                                 <AvatarFallback>AI</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
@@ -315,7 +271,7 @@ export function TranscriptDisplay({
                           {flow.interactionType === 'ai_response' && (
                             <div className="flex gap-3">
                               <Avatar className="h-8 w-8 flex-shrink-0">
-                                <AvatarImage src={getVoiceAvatarUrl(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
+                                <AvatarImage src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')} alt="AI" />
                                 <AvatarFallback>AI</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 rounded-2xl px-4 py-3">
