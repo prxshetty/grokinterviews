@@ -234,10 +234,13 @@ export function InterviewList({
         
         <div className="p-3">
           <div className="flex items-center justify-between">
-            <TabNav 
+            <TabNav
               items={tabItems}
               activeTab={activeTab}
-              onTabChange={(id) => setActiveTab(id as 'web' | 'phone')}
+              onTabChange={(id) => {
+                setActiveTab(id as 'web' | 'phone');
+                onVoiceFilterChange('all');
+              }}
             />
             <Select value={voiceFilter} onValueChange={onVoiceFilterChange}>
               <SelectTrigger className="w-36 h-8 text-xs rounded-full">
