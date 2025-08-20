@@ -188,75 +188,69 @@ export default function VoiceHeroSection({
                 </div>
               </div>
 
-              {/* Desktop: Show complex dual mockup */}
+              {/* Desktop: Show iMac mockup */}
               <div className={`hidden lg:block relative w-full max-w-4xl transition-all duration-700 delay-450 ${
                 isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
               }`}>
-                {/* Desktop Web Interview Window */}
-                <div className={`relative z-20 w-full max-w-2xl transition-all duration-700 delay-500 ${
+                {/* iMac Desktop Mockup */}
+                <div className={`relative z-20 w-full max-w-2xl mx-auto transition-all duration-700 delay-500 ${
                   isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                 }`}>
-                  {/* Stacked background windows for depth */}
-                  <div className="absolute -top-4 -left-4 w-full h-full bg-gradient-to-br from-blue-400/30 to-blue-500/30 rounded-lg backdrop-blur-sm border border-border/20 shadow-lg"></div>
-                  <div className="absolute -top-2 -left-2 w-full h-full bg-gradient-to-br from-green-400/20 to-green-500/20 rounded-lg backdrop-blur-sm border border-border/20 shadow-lg"></div>
-                  
-                  {/* Main desktop window */}
-                  <div className="relative bg-background/80 backdrop-blur-sm rounded-lg shadow-xl border border-border/30 overflow-hidden">
-                    {/* Window header */}
-                    <div className="bg-background/60 backdrop-blur-sm border-b border-border/30 px-4 py-3 flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      </div>
-                      <div className="text-sm text-muted-foreground hidden md:block">Desktop Web Interview Window</div>
-                      <div className="w-16"></div>
-                    </div>
-                    
-                    {/* Browser content */}
-                    <div className="p-4 lg:p-6 pb-8 lg:pb-12">
-                      {/* Search bar */}
-                      <div className="bg-background/70 backdrop-blur-sm rounded-lg p-3 mb-4 border border-border/20">
-                        <div className="flex items-center space-x-2">
-                          <Monitor className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Interview Practice</span>
-                        </div>
-                      </div>
-                      
-                      {/* Interview interface */}
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold">Grok Interviews</h3>
+                  {/* iMac Screen */}
+                  <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[16px] rounded-t-xl h-[294px] max-w-[512px]">
+                    <div className="rounded-xl overflow-hidden h-[262px] bg-gradient-to-br from-background to-background/90">
+                      {/* Screen Content */}
+                      <div className="h-full p-6 flex flex-col">
+                        {/* Browser Header */}
+                        <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span className="text-sm text-green-600">Live Interview</span>
+                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                           </div>
+                          <div className="text-xs text-muted-foreground">grokinterviews.com</div>
+                          <div className="w-12"></div>
                         </div>
                         
-                        {/* Interview Controls */}
-                        <div className="flex justify-center items-center space-x-6 lg:space-x-8 py-4 lg:py-6">
-                          <button className="w-12 h-12 lg:w-16 lg:h-16 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-200">
-                            <Mic className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700 dark:text-gray-300" />
-                          </button>
-                          <button className="w-12 h-12 lg:w-16 lg:h-16 bg-red-500/80 backdrop-blur-xl border border-red-400/50 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-200">
-                            <Video className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
-                          </button>
-                          <button className="w-12 h-12 lg:w-16 lg:h-16 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition-all duration-200">
-                            <MessageCircle className="w-5 h-5 lg:w-6 lg:h-6 text-gray-700 dark:text-gray-300" />
-                          </button>
-                        </div>
-                        
-                        {/* Live transcript preview */}
-                        <div className="bg-background/40 rounded-lg p-4 border border-border/20">
-                          <div className="text-xs text-muted-foreground mb-2">Live Transcript</div>
-                          <div className="text-sm space-y-1">
-                            <p><span className="font-medium">AI:</span> Tell me about your experience with React...</p>
-                            <p><span className="font-medium">You:</span> I've been working with React for...</p>
+                        {/* Interview Interface */}
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold">Grok Interviews</h3>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-xs text-green-600">Live</span>
+                            </div>
+                          </div>
+                          
+                          {/* Interview Controls */}
+                          <div className="flex justify-center items-center space-x-4 py-3">
+                            <button className="w-8 h-8 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200">
+                              <Mic className="w-3 h-3 text-gray-700 dark:text-gray-300" />
+                            </button>
+                            <button className="w-8 h-8 bg-red-500/80 backdrop-blur-xl border border-red-400/50 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200">
+                              <Video className="w-3 h-3 text-white" />
+                            </button>
+                            <button className="w-8 h-8 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200">
+                              <MessageCircle className="w-3 h-3 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          </div>
+                          
+                          {/* Live transcript preview */}
+                          <div className="bg-background/40 rounded-lg p-3 border border-border/20 flex-1">
+                            <div className="text-xs text-muted-foreground mb-2">Live Transcript</div>
+                            <div className="text-xs space-y-1">
+                              <p><span className="font-medium">AI:</span> Tell me about your experience with React...</p>
+                              <p><span className="font-medium">You:</span> I've been working with React for over 3 years...</p>
+                              <p><span className="font-medium">AI:</span> That's great! Can you walk me through...</p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                  {/* iMac Base */}
+                  <div className="relative mx-auto bg-gray-900 dark:bg-gray-700 rounded-b-xl h-[42px] max-w-[512px]"></div>
+                  <div className="relative mx-auto bg-gray-800 rounded-b-xl h-[95px] max-w-[142px]"></div>
                 </div>
 
                 {/* Phone Interview Mockup - Desktop only */}
