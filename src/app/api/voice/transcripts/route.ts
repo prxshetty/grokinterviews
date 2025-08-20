@@ -83,80 +83,102 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch calls directly from VAPI
-    const vapiCalls = await fetchVapiCallsList(limit, page);
-    
-    // Transform VAPI calls to our expected format
-    const enhancedCalls: TranscriptHistoryItem[] = vapiCalls.map((call: VapiCall) => {
-      // Extract transcript from messages or artifact
-      const transcript = call.artifact?.transcript || 
-        call.messages?.map(msg => `${msg.role}: ${msg.message}`).join('\n') || '';
-      
-      // Extract conversation flow from messages
-      const conversationFlow = call.messages?.map((msg, index) => ({
-        id: `${call.id}-${index}`,
-        interactionType: msg.role,
-        transcriptText: msg.message,
-        conversationOrder: index,
-        createdAt: new Date(msg.time * 1000).toISOString()
-      })) || [];
+    // Calculate pagination offset
+    const offset = (page - 1) * limit;
 
-      // Calculate call duration
-       const callDuration = call.startedAt && call.endedAt 
-         ? Math.floor((new Date(call.endedAt).getTime() - new Date(call.startedAt).getTime()) / 1000)
-         : undefined;
-
-       // Extract analysis data
-       const analysis = call.analysis;
-       const structuredData = analysis?.structuredData || {};
-
-       // Build vapiData object with only defined properties
-        const vapiData: any = {
-          messages: call.messages || []
-        };
-        if (call.cost !== undefined) vapiData.cost = call.cost;
-        if (call.endedReason) vapiData.endedReason = call.endedReason;
-        if (call.analysis) vapiData.analysis = call.analysis;
-
-        const result: TranscriptHistoryItem = {
-          id: call.id,
-          phoneNumber: 'N/A', // VAPI doesn't expose phone numbers in list calls
-          callStatus: call.status,
-          vapiCallId: call.id,
-          transcriptText: transcript,
-          createdAt: call.startedAt || new Date().toISOString(),
-          vapiData,
-          conversationFlow
-        };
-
-       // Add optional properties only if they have values
-       if (callDuration !== undefined) result.callDuration = callDuration;
-       if (call.artifact?.recordingUrl) result.audioRecordingUrl = call.artifact.recordingUrl;
-       if (analysis?.summary) result.analysisSummary = analysis.summary;
-       if (structuredData.interviewScore) result.interviewScore = structuredData.interviewScore;
-       if (structuredData.strengths?.length) result.strengths = structuredData.strengths;
-       if (structuredData.weaknesses?.length) result.weaknesses = structuredData.weaknesses;
-       if (structuredData.recommendations?.length) result.recommendations = structuredData.recommendations;
-       if (call.endedAt) result.updatedAt = call.endedAt;
-       // Set voice name - use from structured data if available, otherwise default to Emily for phone calls
-       result.voiceName = structuredData.voiceName || 'Emily';
-
-       return result;
-    });
+    // Build query for user's phone calls from database (RLS automatically filters by user_id)
+    let query = supabase
+      .from('phone_calls')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     // Apply status filter if provided
-    const filteredCalls = callStatus 
-      ? enhancedCalls.filter(call => call.callStatus === callStatus)
-      : enhancedCalls;
+    if (callStatus) {
+      query = query.eq('call_status', callStatus);
+    }
+
+    const { data: dbCalls, error: dbError, count } = await query;
+
+    if (dbError) {
+      console.error('❌ Database query error:', dbError);
+      return NextResponse.json(
+        { error: 'Failed to fetch call records' },
+        { status: 500 }
+      );
+    }
+
+    // Transform database calls and enrich with VAPI data
+    const enhancedCalls: TranscriptHistoryItem[] = await Promise.all(
+      (dbCalls || []).map(async (dbCall) => {
+        // Start with database data
+        const result: TranscriptHistoryItem = {
+          id: dbCall.id,
+          phoneNumber: dbCall.phone_number,
+          callStatus: dbCall.call_status,
+          callDuration: dbCall.call_duration,
+          vapiCallId: dbCall.vapi_call_id,
+          audioRecordingUrl: dbCall.audio_recording_url,
+          transcriptText: dbCall.transcript_text,
+          analysisSummary: dbCall.analysis_summary,
+          interviewScore: dbCall.interview_score,
+          strengths: dbCall.strengths,
+          weaknesses: dbCall.weaknesses,
+          recommendations: dbCall.recommendations,
+          createdAt: dbCall.created_at,
+          updatedAt: dbCall.updated_at,
+          voiceName: 'Emily' // Default for phone calls
+        };
+
+        // Enrich with VAPI data if vapi_call_id exists
+        if (dbCall.vapi_call_id) {
+          try {
+            const vapiData = await fetchVapiCallDetails(dbCall.vapi_call_id);
+            if (vapiData) {
+              // Update with VAPI data while preserving database data
+              if (vapiData.artifact?.recordingUrl && !result.audioRecordingUrl) {
+                result.audioRecordingUrl = vapiData.artifact.recordingUrl;
+              }
+              
+              // Extract conversation flow from VAPI messages
+              if (vapiData.messages) {
+                result.conversationFlow = vapiData.messages.map((msg, index) => ({
+                  id: `${dbCall.vapi_call_id}-${index}`,
+                  interactionType: msg.role,
+                  transcriptText: msg.message,
+                  conversationOrder: index,
+                  createdAt: new Date(msg.time * 1000).toISOString()
+                }));
+              }
+
+              // Add VAPI-specific data
+               const vapiDataObj: any = {
+                 messages: vapiData.messages || []
+               };
+               if (vapiData.cost !== undefined) vapiDataObj.cost = vapiData.cost;
+               if (vapiData.endedReason) vapiDataObj.endedReason = vapiData.endedReason;
+               if (vapiData.analysis) vapiDataObj.analysis = vapiData.analysis;
+               
+               result.vapiData = vapiDataObj;
+            }
+          } catch (vapiError) {
+            console.warn(`⚠️ Failed to fetch VAPI data for call ${dbCall.vapi_call_id}:`, vapiError);
+            // Continue without VAPI data - database data is still valid
+          }
+        }
+
+        return result;
+      })
+    );
 
     return NextResponse.json({
       success: true,
-      data: filteredCalls,
+      data: enhancedCalls,
       pagination: {
         page,
         limit,
-        total: filteredCalls.length,
-        totalPages: Math.ceil(filteredCalls.length / limit)
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit)
       }
     });
 
@@ -205,6 +227,36 @@ async function fetchVapiCallsList(limit: number = 10, page: number = 1): Promise
   
   // VAPI returns calls in a data array or directly as an array
   return Array.isArray(data) ? data : (data.data || []);
+}
+
+async function fetchVapiCallDetails(callId: string): Promise<VapiCall | null> {
+  const apiKey = process.env.VAPI_API_KEY;
+  if (!apiKey) {
+    throw new Error('VAPI API key not configured');
+  }
+
+  const response = await fetch(`https://api.vapi.ai/call/${callId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null; // Call not found in VAPI
+    }
+    const errorData = await response.json().catch(() => ({}));
+    console.error('VAPI API error details:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData
+    });
+    throw new Error(`VAPI API error: ${response.status} - ${errorData.message || response.statusText}`);
+  }
+
+  return await response.json();
 }
 
 export async function POST(request: NextRequest) {

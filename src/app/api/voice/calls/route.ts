@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { VAPI_CONFIG, VAPI_ENDPOINTS } from '@/config/vapi.config';
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -95,6 +96,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const apiKey = process.env.VAPI_API_KEY;
     
     if (!apiKey) {
@@ -111,6 +123,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Call ID is required' },
         { status: 400 }
+      );
+    }
+
+    // Verify user owns this call
+    const { data: phoneCall, error: dbError } = await supabase
+      .from('phone_calls')
+      .select('id')
+      .eq('vapi_call_id', callId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (dbError || !phoneCall) {
+      return NextResponse.json(
+        { error: 'Call not found or access denied' },
+        { status: 404 }
       );
     }
 
@@ -161,6 +188,17 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Check authentication
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const apiKey = process.env.VAPI_API_KEY;
     
     if (!apiKey) {
@@ -177,6 +215,21 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         { error: 'Call ID is required' },
         { status: 400 }
+      );
+    }
+
+    // Verify user owns this call
+    const { data: phoneCall, error: dbError } = await supabase
+      .from('phone_calls')
+      .select('id')
+      .eq('vapi_call_id', callId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (dbError || !phoneCall) {
+      return NextResponse.json(
+        { error: 'Call not found or access denied' },
+        { status: 404 }
       );
     }
 

@@ -16,6 +16,7 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  // Removed isDeleting state as delete functionality was removed
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -52,20 +53,42 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
     const handleEnded = () => setIsPlaying(false);
 
-    audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('ended', handleEnded);
 
     return () => {
-      audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
     };
   }, [audioUrl]);
+
+  useEffect(() => {
+    let animationFrameId: number | undefined;
+
+    const updateProgress = () => {
+      if (audioRef.current) {
+        setCurrentTime(audioRef.current.currentTime);
+        animationFrameId = requestAnimationFrame(updateProgress);
+      }
+    };
+
+    if (isPlaying) {
+      animationFrameId = requestAnimationFrame(updateProgress);
+    } else {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    }
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isPlaying]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;
@@ -99,32 +122,35 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
     }
   };
 
+  // Delete functionality removed to avoid overhead and complexity
+  // const handleDelete = async () => { ... };
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  if (!callId || !audioUrl) {
+  if (!callId) {
     return null;
   }
 
   return (
-    <div className={cn('flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2', className)}>
-      <audio ref={audioRef} src={audioUrl} preload="metadata" />
+    <div className={cn('flex items-center gap-2 bg-transparent rounded-lg px-3 py-2', className)}>
+      <audio ref={audioRef} src={audioUrl || undefined} preload="metadata" />
       
       {/* Play/Pause Button */}
       <button
         onClick={togglePlayPause}
-        disabled={isLoading}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+        disabled={isLoading || !audioUrl}
+        className="flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 disabled:opacity-50 group"
       >
         {isLoading ? (
           <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
         ) : isPlaying ? (
-          <Pause className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+          <Pause className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white transition-colors" />
         ) : (
-          <Play className="w-4 h-4 text-gray-700 dark:text-gray-300 ml-0.5" />
+          <Play className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white transition-colors ml-0.5" />
         )}
       </button>
 
@@ -140,10 +166,9 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
           max={duration || 0}
           value={currentTime}
           onChange={handleSeek}
-          className="flex-1 h-1 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
-          style={{
-            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #e5e7eb ${(currentTime / duration) * 100}%, #e5e7eb 100%)`
-          }}
+          disabled={isLoading || !audioUrl}
+          className="flex-1 h-1 bg-transparent rounded-lg appearance-none cursor-pointer slider"
+          style={{ '--progress': `${(duration > 0 ? (currentTime / duration) * 100 : 0)}%` } as React.CSSProperties}
         />
         
         <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -154,21 +179,27 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
       {/* Download Button */}
       <button
         onClick={handleDownload}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        disabled={isLoading || !audioUrl}
+        className="flex items-center justify-center w-8 h-8 rounded-full bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group"
         title="Download recording"
       >
-        <Download className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+        <Download className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-white transition-colors" />
       </button>
 
+      {/* Delete button removed to avoid overhead and complexity */}
+
       <style jsx>{`
+        .slider {
+          background: linear-gradient(to right, hsl(var(--foreground)) 0%, hsl(var(--foreground)) var(--progress), hsl(var(--muted)) var(--progress), hsl(var(--muted)) 100%);
+        }
         .slider::-webkit-slider-thumb {
           appearance: none;
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: hsl(var(--foreground));
           cursor: pointer;
-          border: 2px solid white;
+          border: 2px solid hsl(var(--background));
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
@@ -176,9 +207,9 @@ export function MiniAudioPlayer({ callId, className }: MiniAudioPlayerProps) {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: hsl(var(--foreground));
           cursor: pointer;
-          border: 2px solid white;
+          border: 2px solid hsl(var(--background));
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
       `}</style>
