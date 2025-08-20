@@ -143,7 +143,7 @@ export function TranscriptDisplay({
   return (
     <div className="flex-1 bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm flex flex-col">
       {/* Tab Navigation with Session Info */}
-      <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+      <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <TabNav
             items={[
