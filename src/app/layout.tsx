@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
 import { GeistSans, GeistMono } from 'geist/font';
+import { PPEditorialUltralight } from '@/fonts/pp-editorial';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
@@ -109,7 +110,8 @@ export default function RootLayout({
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased',
         GeistSans.variable,
-        GeistMono.variable
+        GeistMono.variable,
+        PPEditorialUltralight.variable
       )}>
         {process.env.NODE_ENV === 'development' && <TwentyFirstToolbar />}
         <ThemeProvider
