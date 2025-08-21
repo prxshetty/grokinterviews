@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Button1 } from '@/components/ui/button-1';
+import { WovenCanvas } from '@/components/ui/woven-canvas';
 
 
 export function HeroSection() {
@@ -21,8 +22,19 @@ export function HeroSection() {
     return (
         <>
             <div className="relative w-full overflow-hidden h-[calc(100dvh-4rem)]">
+                {/* Woven Canvas Background - positioned to the right */}
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute right-0 top-0 w-1/2 h-full overflow-hidden opacity-30">
+                        <WovenCanvas
+                            className="absolute inset-0"
+                            particleCount={25000}
+                            opacity={0.6}
+                            rotationSpeed={0.03}
+                        />
+                    </div>
+                </div>
                 {/* Consistent padding that matches navigation exactly */}
-                <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 w-full h-full flex items-end">
+                <div className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 md:px-6 w-full h-full flex items-end">
                     <div className="text-left max-w-4xl w-full pb-6 sm:pb-8 md:pb-10 ml-0 sm:ml-4 md:ml-8 lg:ml-12">
                         {/* Badge Section */}
                         <div className={`w-full flex justify-start transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
