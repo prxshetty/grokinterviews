@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { quizTopics } from '@/data/quizTopics';
 import TopicCard from './TopicCard';
 import Link from 'next/link';
@@ -46,28 +46,82 @@ export default function TopicCarousel() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check if mobile on mount and window resize
+  // Check if mobile on mount and window resize with throttling
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (cardContainerRef.current) {
-        setContainerWidth(cardContainerRef.current.offsetWidth);
-      }
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsMobile(window.innerWidth < 768);
+        if (cardContainerRef.current) {
+          setContainerWidth(cardContainerRef.current.offsetWidth);
+        }
+      }, 100); // Throttle resize events
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
+  // Memoize container width calculation
   useEffect(() => {
     if (isVisible && cardContainerRef.current) {
-      setContainerWidth(cardContainerRef.current.offsetWidth);
+      // Use requestAnimationFrame to avoid layout thrashing
+      requestAnimationFrame(() => {
+        if (cardContainerRef.current) {
+          setContainerWidth(cardContainerRef.current.offsetWidth);
+        }
+      });
     }
   }, [isVisible]);
+
+  // Memoize visible topics and card calculations
+  const visibleTopics = useMemo(() => quizTopics, []);
+  
+  const cardCalculations = useMemo(() => {
+    if (containerWidth === 0) return [];
+    
+    const visibleCards = isMobile ? 3 : 5;
+    const maxCards = Math.floor(visibleCards / 2);
+    const arcWidth = containerWidth * (isMobile ? 0.9 : 0.95);
+    const arcHeight = isMobile ? 80 : 120;
+    const spacingFactor = isMobile ? 0.6 : 0.8;
+    const a = arcWidth > 0 ? arcHeight / Math.pow(arcWidth / 2, 2) : 0;
+    
+    return visibleTopics.map((topic, index) => {
+      const totalCards = visibleTopics.length;
+      const relativeIndex = ((index - activeIndex) + totalCards) % totalCards;
+      const adjustedRelativeIndex = relativeIndex > totalCards / 2 ? relativeIndex - totalCards : relativeIndex;
+      const isCardVisible = Math.abs(adjustedRelativeIndex) <= maxCards;
+      const spacedRelativeIndex = adjustedRelativeIndex * spacingFactor;
+      const x = maxCards > 0 ? -spacedRelativeIndex * (arcWidth / (maxCards * 2)) : 0;
+      const y = a * Math.pow(x, 2);
+      const isActive = index === activeIndex;
+      const normalizedY = arcHeight > 0 ? y / arcHeight : 0;
+      const zIndex = Math.round((1 - normalizedY) * 100);
+      const adjustedY = isActive ? y - 20 : y;
+      const scale = isActive ? 1.1 : 0.9 + ((1 - normalizedY) * 0.1);
+      const opacity = isCardVisible ? (isActive ? 1 : isMobile ? 0.9 : 0.7 + ((1 - normalizedY) * 0.3)) : 0;
+      
+      return {
+        topic,
+        index,
+        x,
+        y: adjustedY,
+        scale,
+        opacity,
+        zIndex,
+        isActive,
+        isCardVisible
+      };
+    });
+  }, [containerWidth, isMobile, activeIndex, visibleTopics]);
 
   // Handle navigation to next card
   const handleNextCard = useCallback(() => {
@@ -87,8 +141,7 @@ export default function TopicCarousel() {
     );
   }
 
-  // Calculate visible topics
-  const visibleTopics = quizTopics;
+
 
   return (
     <div
@@ -126,77 +179,37 @@ export default function TopicCarousel() {
                opacity: isVisible ? 1 : 0,
                transform: isVisible ? 'translateY(0)' : 'translateY(40px)'
              }}>
-          {containerWidth > 0 && visibleTopics.map((topic, index) => {
-            // Calculate position in a perfect arc
-            const totalCards = visibleTopics.length;
-            const visibleCards = isMobile ? 3 : 5; // Show 3 cards on mobile, 5 on larger screens
-
-            // Calculate the index relative to the active card
-            const relativeIndex = ((index - activeIndex) + totalCards) % totalCards;
-            const adjustedRelativeIndex = relativeIndex > totalCards / 2 ? relativeIndex - totalCards : relativeIndex;
-
-            // Only show cards that are within the visible range
-            const isCardVisible = Math.abs(adjustedRelativeIndex) <= Math.floor(visibleCards / 2);
-
-            // Adjust spacing based on screen size
-            const spacingFactor = isMobile ? 0.6 : 0.8; // Wider spacing on mobile for 3 cards
-            const spacedRelativeIndex = adjustedRelativeIndex * spacingFactor;
-
-            // Calculate position on a perfect arc
-            const maxCards = Math.floor(visibleCards / 2);
-
-            // Arc parameters
-            const arcWidth = containerWidth * (isMobile ? 0.9 : 0.95); // Slightly less width on mobile
-            const arcHeight = isMobile ? 80 : 120; // Flatter arc on mobile
-
-            // Calculate x position using linear distribution with increased spacing
-            const x = maxCards > 0 ? -spacedRelativeIndex * (arcWidth / (maxCards * 2)) : 0;
-
-            // Calculate y position using a parabola: y = a * x^2
-            // Where 'a' is calculated to make y = arcHeight when x = ±(arcWidth/2)
-            // Using positive arcHeight to inverse the curve (curve upward)
-            const a = arcWidth > 0 ? arcHeight / Math.pow(arcWidth / 2, 2) : 0;
-            const y = a * Math.pow(x, 2);
-
-            const isActive = index === activeIndex;
-
-            // Calculate z-index and scale based on vertical position
-            const normalizedY = arcHeight > 0 ? y / arcHeight : 0; // Will be between 0 and 1
-            const zIndex = Math.round((1 - normalizedY) * 100); // Higher values for cards at the bottom of the arc
-
-            // Adjust y-position and scale for the active card to make it pop
-            const adjustedY = isActive ? y - 20 : y; // Raise active card
-            const scale = isActive ? 1.1 : 0.9 + ((1 - normalizedY) * 0.1); // Enlarge active card more
-
-            // No rotation for better readability
-            const rotationDeg = 0;
-
-            return (
-              <div
-                key={topic.id}
-                className="absolute top-0 left-1/2 -translate-x-1/2"
+          {cardCalculations.map(({ topic, index, x, y, scale, opacity, zIndex, isActive, isCardVisible }) => (
+            <div
+              key={topic.id}
+              className="absolute top-0 left-1/2 -translate-x-1/2"
+            >
+              <motion.div
+                animate={{
+                  x,
+                  y,
+                  scale,
+                  opacity,
+                  zIndex,
+                }}
+                transition={{ 
+                  type: 'tween', 
+                  duration: 0.4, 
+                  ease: 'easeOut'
+                }}
+                style={{ 
+                  pointerEvents: isCardVisible ? 'auto' : 'none',
+                  willChange: 'transform, opacity'
+                }}
               >
-                <motion.div
-                  animate={{
-                    x: x,
-                    y: adjustedY,
-                    rotate: rotationDeg,
-                    scale: scale,
-                    opacity: isCardVisible ? (isActive ? 1 : isMobile ? 0.9 : 0.7 + ((1 - normalizedY) * 0.3)) : 0,
-                    zIndex: zIndex,
-                  }}
-                  transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-                  style={{ pointerEvents: isCardVisible ? 'auto' : 'none' }}
-                >
-                  <TopicCard
-                    topic={topic}
-                    isActive={isActive}
-                    onClick={() => setActiveIndex(index)}
-                  />
-                </motion.div>
-              </div>
-            );
-          })}
+                <TopicCard
+                  topic={topic}
+                  isActive={isActive}
+                  onClick={() => setActiveIndex(index)}
+                />
+              </motion.div>
+            </div>
+          ))}
         </div>
 
         {/* Navigation arrows */}
