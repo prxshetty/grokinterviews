@@ -2,6 +2,7 @@
 
 import { HeroSection } from '@/components/ui/hero-section-1';
 import VoiceHeroSection from '@/components/ui/VoiceHeroSection';
+import CompanyList from '@/components/home/CompanyList';
 import { Suspense, lazy } from 'react';
 import { useScrollAnimation } from '@/hooks/ui';
 
@@ -123,9 +124,14 @@ function StatsSkeleton() {
 export default function HomePageClient() {
   return (
     <div className="min-h-[100dvh] w-full relative font-sans animate-fade-in">
-      {/* Hero Section with integrated CompanyList */}
+      {/* Hero Section */}
       <div>
         <HeroSection />
+      </div>
+
+      {/* Company List Section */}
+      <div className="mt-48 sm:mt-20 md:mt-24 lg:mt-32 w-full">
+        <CompanyList />
       </div>
 
       <div className="px-4 sm:px-6 md:px-8 lg:px-12">
