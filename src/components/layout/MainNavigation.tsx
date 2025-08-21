@@ -483,6 +483,11 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                   {user.email}
                                 </p>
                               </div>
+                              <StreakBadge 
+                                currentStreak={current_streak}
+                                highestStreak={highest_streak}
+                                isLoading={isLoading}
+                              />
                             </div>
                             
                             <div className="space-y-2">
