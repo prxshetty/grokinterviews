@@ -27,10 +27,10 @@ export function StreakBadge({ currentStreak, highestStreak, className, isLoading
           >
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
-              width="16" 
-              height="16" 
+              width="24" 
+              height="24" 
               className={cn(
-                "w-4 h-4 bi bi-fire",
+                "w-6 h-6 lg:w-5 lg:h-5 -mt-2 lg:mt-0 bi bi-fire",
                 currentStreak > 0 ? "animate-flicker" : "",
                 isLoading && "animate-pulse"
               )} 
