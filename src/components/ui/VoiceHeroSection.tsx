@@ -183,25 +183,22 @@ export default function VoiceHeroSection({
                 }`}>
                   <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[5px] sm:border-[6.67px] md:border-[8.33px] lg:border-[10px] rounded-[1.25rem] sm:rounded-[1.67rem] md:rounded-[2.08rem] lg:rounded-[2.5rem] h-[160px] sm:h-[213.33px] md:h-[266.67px] lg:h-[320px] w-[80px] sm:w-[106.67px] md:w-[133.33px] lg:w-[160px] xl:h-[380px] xl:w-[190px] shadow-xl">
                     <div className="w-[37px] h-[4.5px] sm:w-[49.33px] sm:h-[6px] md:w-[61.67px] md:h-[7.5px] lg:w-[74px] lg:h-[9px] bg-gray-800 top-0 rounded-b-[0.5rem] sm:rounded-b-[0.67rem] md:rounded-b-[0.83rem] lg:rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
-                    <div className="h-[11.5px] w-[0.75px] sm:h-[15.33px] sm:w-[1px] md:h-[19.17px] md:w-[1.25px] lg:h-[23px] lg:w-[1.5px] bg-gray-800 absolute -start-[-5px] sm:-start-[-6.67px] md:-start-[-8.33px] lg:-start-[-10px] top-[31px] sm:top-[41.33px] md:top-[51.67px] lg:top-[62px] rounded-s-[0.25rem] sm:rounded-s-[0.33rem] md:rounded-s-[0.42rem] lg:rounded-s-lg"></div>
-                    <div className="h-[11.5px] w-[0.75px] sm:h-[15.33px] sm:w-[1px] md:h-[19.17px] md:w-[1.25px] lg:h-[23px] lg:w-[1.5px] bg-gray-800 absolute -start-[-5px] sm:-start-[-6.67px] md:-start-[-8.33px] lg:-start-[-10px] top-[44.5px] sm:top-[59.33px] md:top-[74.17px] lg:top-[89px] rounded-s-[0.25rem] sm:rounded-s-[0.33rem] md:rounded-s-[0.42rem] lg:rounded-s-lg"></div>
-                    <div className="h-[11.5px] w-[0.75px] sm:h-[15.33px] sm:w-[1px] md:h-[19.17px] md:w-[1.25px] lg:h-[23px] lg:w-[1.5px] bg-gray-800 absolute -end-[-5px] sm:-end-[-6.67px] md:-end-[-8.33px] lg:-end-[-10px] top-[35.5px] sm:top-[47.33px] md:top-[59.17px] lg:top-[71px] rounded-es-[0.25rem] sm:rounded-es-[0.33rem] md:rounded-es-[0.42rem] lg:rounded-es-lg"></div>
                     <div className="rounded-[1rem] sm:rounded-[1.33rem] md:rounded-[1.67rem] lg:rounded-[2rem] overflow-hidden w-[70px] h-[150px] sm:w-[93.33px] sm:h-[200px] md:w-[116.67px] md:h-[250px] lg:w-[140px] lg:h-[300px] xl:w-[170px] xl:h-[351px] bg-white dark:bg-gray-800">
                       {/* Phone Status Bar */}
                       <div className="bg-white dark:bg-gray-950 px-2 sm:px-2.67 md:px-3.33 lg:px-4 xl:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 xl:py-4 flex justify-between items-center text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs xl:text-sm pt-4 sm:pt-5.33 md:pt-6.67 lg:pt-8 xl:pt-9">
-                        <span className="font-semibold text-black dark:text-white">{currentTime}</span>
+                        <span className="hidden sm:block font-semibold text-black dark:text-white">{currentTime}</span>
                         <div className="flex items-center space-x-0.5 sm:space-x-0.67 md:space-x-0.83 lg:space-x-1">
                           {/* Signal bars */}
-                          <div className="flex items-end space-x-0.25 sm:space-x-0.33 md:space-x-0.42 lg:space-x-0.5">
-                            <div className="w-0.5 h-0.5 sm:w-0.67 sm:h-0.67 md:w-0.83 md:h-0.83 lg:w-1 lg:h-1 bg-black dark:bg-white rounded-full"></div>
-                            <div className="w-0.5 h-1 sm:w-0.67 sm:h-1.33 md:w-0.83 md:h-1.67 lg:w-1 lg:h-2 bg-black dark:bg-white rounded-full"></div>
-                            <div className="w-0.5 h-1.5 sm:w-0.67 sm:h-2 md:w-0.83 md:h-2.5 lg:w-1 lg:h-3 bg-black dark:bg-white rounded-full"></div>
-                            <div className="w-0.5 h-2 sm:w-0.67 sm:h-2.67 md:w-0.83 md:h-3.33 lg:w-1 lg:h-4 bg-black dark:bg-white rounded-full"></div>
+                          <div className="flex items-end space-x-0.5 sm:space-x-1 md:space-x-1 lg:space-x-1">
+                            <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 md:w-1 md:h-1 lg:w-1 lg:h-1 bg-black dark:bg-white rounded-full"></div>
+                            <div className="w-0.5 h-1 sm:w-1 sm:h-1.5 md:w-1 md:h-2 lg:w-1 lg:h-2 bg-black dark:bg-white rounded-full"></div>
+                            <div className="w-0.5 h-1.5 sm:w-1 sm:h-2 md:w-1 md:h-2.5 lg:w-1 lg:h-3 bg-black dark:bg-white rounded-full"></div>
+                            <div className="w-0.5 h-2 sm:w-1 sm:h-2.5 md:w-1 md:h-3 lg:w-1 lg:h-4 bg-black dark:bg-white rounded-full"></div>
                           </div>
                           {/* Battery */}
-                          <div className="w-3 h-1.5 sm:w-4 sm:h-2 md:w-5 md:h-2.5 lg:w-6 lg:h-3 border border-black dark:border-white rounded-[0.25rem] sm:rounded-[0.33rem] md:rounded-[0.42rem] lg:rounded-sm relative">
-                            <div className="w-2.5 h-1.25 sm:w-3.33 sm:h-1.67 md:w-4.17 md:h-2.08 lg:w-5 lg:h-2.5 bg-green-500 rounded-[0.25rem] sm:rounded-[0.33rem] md:rounded-[0.42rem] lg:rounded-sm absolute left-0.125 sm:left-0.167 md:left-0.208 lg:left-0.25"></div>
-                            <div className="w-0.25 h-0.75 sm:w-0.33 sm:h-1 md:w-0.42 md:h-1.25 lg:w-0.5 lg:h-1.5 bg-black dark:bg-white rounded-r-[0.125rem] sm:rounded-r-[0.167rem] md:rounded-r-[0.208rem] lg:rounded-r-sm absolute top-0.25 sm:top-0.333 md:top-0.417 lg:top-0.5 -right-0.5 sm:-right-0.667 md:-right-0.833 lg:-right-1"></div>
+                          <div className="w-3 h-1.5 sm:w-4 sm:h-2 md:w-5 md:h-2.5 lg:w-6 lg:h-3 border border-black dark:border-white rounded-sm relative">
+                            <div className="w-2 h-1 sm:w-3 sm:h-1.5 md:w-4 md:h-2 lg:w-5 lg:h-2.5 bg-green-500 rounded-sm absolute left-0.5 sm:left-0 md:left-0 lg:left-0 top-0.5 sm:top-0 md:top-0 lg:top-0"></div>
+                            <div className="w-0.5 h-1 sm:w-0.5 sm:h-1 md:w-0.5 md:h-1.5 lg:w-0.5 lg:h-2 bg-black dark:bg-white rounded-r-sm absolute top-0.5 sm:top-0.5 md:top-0.5 lg:top-0.5 -right-0.5 sm:-right-0.5 md:-right-0.5 lg:-right-1"></div>
                           </div>
                         </div>
                       </div>
@@ -218,7 +215,7 @@ export default function VoiceHeroSection({
                         </div>
                         
                         {/* Call Controls */}
-                        <div className="flex justify-center items-center space-x-1 sm:space-x-1.33 md:space-x-1.67 lg:space-x-2 xl:space-x-3 pb-2 sm:pb-2.67 md:pb-3.33 lg:pb-4 xl:pb-12">
+                        <div className="flex justify-center items-center space-x-1 sm:space-x-1.33 md:space-x-1.67 lg:space-x-2 xl:space-x-3 pb-2 sm:pb-6 md:pb-6 lg:pb-14 xl:pb-12">
                           <button className="w-5 h-5 sm:w-6.67 sm:h-6.67 md:w-8.33 md:h-8.33 lg:w-10 lg:h-10 xl:w-9 xl:h-9 flex-shrink-0 aspect-square bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-200 ease-in-out">
                             <Mic className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 xl:w-4 xl:h-4 text-gray-700 dark:text-gray-300" />
                           </button>
