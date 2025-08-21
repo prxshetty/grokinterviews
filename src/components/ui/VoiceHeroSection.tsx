@@ -80,29 +80,30 @@ export default function VoiceHeroSection({
               <h1 className="text-3xl tracking-tight font-normal text-gray-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl">
                 <span className="block">{title}</span>
               </h1>
-              <p className="mt-4 text-base text-gray-500 dark:text-gray-300 sm:mt-6 sm:text-lg md:text-xl lg:text-xl max-w-xl mx-auto lg:mx-0">
-                {description}
-              </p>
               
-              {/* CTA Buttons - Hidden on mobile, shown on desktop */}
-              <div className={`mt-6 sm:mt-8 hidden lg:flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-center lg:justify-start transition-all duration-700 delay-300 ${
+              {/* CTA Buttons - Only visible on desktop */}
+              <div className={`mt-6 sm:mt-8 hidden lg:flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start transition-all duration-700 delay-300 ${
                 isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
               }`}>
                 <Link
                   href="/voice"
-                  className="inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-3xl text-white bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 touch-manipulation active:scale-95 sm:px-8 sm:py-4 sm:text-lg"
+                  className="inline-flex items-center justify-center px-4 py-2 text-base font-medium rounded-3xl text-white bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 touch-manipulation active:scale-95 lg:px-6 lg:py-3 sm:text-lg"
                 >
                   {primaryButtonText}
                 </Link>
                 {secondaryButtonText && (
                   <button
                     onClick={onSecondaryClick}
-                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-indigo-700 bg-indigo-100 hover:bg-indigo-200 dark:text-indigo-300 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 transition-all duration-300 touch-manipulation active:scale-95 sm:px-8 sm:py-4 sm:text-lg"
+                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-xl text-indigo-700 bg-indigo-100 hover:bg-indigo-200 dark:text-indigo-300 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 transition-all duration-300 touch-manipulation active:scale-95 lg:px-6 lg:py-3 sm:text-lg"
                   >
                     {secondaryButtonText}
                   </button>
                 )}
               </div>
+              
+              <p className={`mt-4 text-base text-gray-500 dark:text-gray-300 sm:mt-6 sm:text-lg md:text-xl lg:text-xl max-w-xl mx-auto lg:mx-0 hidden lg:block transition-all duration-700 delay-300 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                {description}
+              </p>
             </div>
           </div>
 
@@ -127,27 +128,28 @@ export default function VoiceHeroSection({
                       <div className="h-full p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col">
                         {/* Browser Header */}
                         <div className="flex items-center justify-between mb-2 sm:mb-3 md:mb-3 lg:mb-4">
+                          <div className="text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs text-muted-foreground">grokinterviews.org</div>
                           <div className="flex items-center space-x-1 sm:space-x-1 md:space-x-1.5 lg:space-x-2">
                             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 bg-red-500 rounded-full"></div>
                             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 bg-yellow-500 rounded-full"></div>
                             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 bg-green-500 rounded-full"></div>
                           </div>
-                          <div className="text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs text-muted-foreground">grokinterviews.com</div>
-                          <div className="w-6 sm:w-8 md:w-10 lg:w-12"></div>
                         </div>
                         
                         {/* Interview Interface */}
-                        <div className="flex-1 space-y-1.5 sm:space-y-2 md:space-y-2.5 lg:space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm font-semibold">Grok Interviews</h3>
-                            <div className="flex items-center space-x-0.5 sm:space-x-0.5 md:space-x-0.75 lg:space-x-1">
-                              <div className="w-0.75 h-0.75 sm:w-1 sm:h-1 md:w-1.25 md:h-1.25 lg:w-1.5 lg:h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs text-green-600">Live</span>
+                        <div className="flex-1 flex flex-col">
+                          <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-3 lg:mb-4">
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12">
+                              <img src="/techAI.svg" alt="Tech AI" className="w-full h-full" />
                             </div>
                           </div>
                           
-                          {/* Control Buttons */}
-                          <div className="flex justify-center items-center space-x-2 sm:space-x-2.5 md:space-x-3 lg:space-x-4 py-1.5 sm:py-2 md:py-2.5 lg:py-3">
+                          <div className="flex items-center justify-center mb-2 sm:mb-3 md:mb-3 lg:mb-4">
+                            <h3 className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm font-semibold">Grok Interviews</h3>
+                          </div>
+                          
+                          {/* Control Buttons - moved to bottom */}
+                          <div className="mt-auto flex justify-center items-center space-x-2 sm:space-x-2.5 md:space-x-3 lg:space-x-4 py-1.5 sm:py-2 md:py-2.5 lg:py-3">
                             <button className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-8 lg:h-8 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200">
                               <Mic className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 text-gray-700 dark:text-gray-300" />
                             </button>
@@ -157,16 +159,6 @@ export default function VoiceHeroSection({
                             <button className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-8 lg:h-8 bg-gray-200/40 dark:bg-gray-800/40 backdrop-blur-xl border border-gray-300/50 dark:border-gray-600/50 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all duration-200">
                               <MessageCircle className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 text-gray-700 dark:text-gray-300" />
                             </button>
-                          </div>
-                          
-                          {/* Live Transcript */}
-                          <div className="bg-background/40 rounded-lg p-1.5 sm:p-2 md:p-2.5 lg:p-3 border border-border/20 flex-1">
-                            <div className="text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs text-muted-foreground mb-1 sm:mb-1.5 md:mb-1.5 lg:mb-2">Live Transcript</div>
-                            <div className="text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs space-y-0.5 sm:space-y-0.5 md:space-y-0.75 lg:space-y-1">
-                              <p><span className="font-medium">AI:</span> Tell me about your experience with React...</p>
-                              <p><span className="font-medium">You:</span> I've been working with React for over 3 years...</p>
-                              <p><span className="font-medium">AI:</span> That's great! Can you walk me through...</p>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -181,13 +173,13 @@ export default function VoiceHeroSection({
                 <div className={`absolute bottom-0 right-0 z-30 transform translate-y-4 sm:translate-y-5 md:translate-y-7 lg:translate-y-8 transition-all duration-700 delay-600 ${
                   isInView ? 'opacity-100 translate-y-4 sm:translate-y-5 md:translate-y-7 lg:translate-y-8' : 'opacity-0 translate-y-6 sm:translate-y-7 md:translate-y-10 lg:translate-y-12'
                 }`}>
-                  <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[5px] sm:border-[6.67px] md:border-[8.33px] lg:border-[10px] rounded-[1.25rem] sm:rounded-[1.67rem] md:rounded-[2.08rem] lg:rounded-[2.5rem] h-[160px] sm:h-[213.33px] md:h-[266.67px] lg:h-[320px] w-[80px] sm:w-[106.67px] md:w-[133.33px] lg:w-[160px] xl:h-[380px] xl:w-[190px] shadow-xl">
-                    <div className="w-[37px] h-[4.5px] sm:w-[49.33px] sm:h-[6px] md:w-[61.67px] md:h-[7.5px] lg:w-[74px] lg:h-[9px] bg-gray-800 top-0 rounded-b-[0.5rem] sm:rounded-b-[0.67rem] md:rounded-b-[0.83rem] lg:rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
+                  <div className="relative mx-auto border-black dark:border-black bg-black border-[5px] sm:border-[6.67px] md:border-[8.33px] lg:border-[10px] rounded-[1.25rem] sm:rounded-[1.67rem] md:rounded-[2.08rem] lg:rounded-[2.5rem] h-[160px] sm:h-[213.33px] md:h-[266.67px] lg:h-[320px] w-[80px] sm:w-[106.67px] md:w-[133.33px] lg:w-[160px] xl:h-[380px] xl:w-[190px] shadow-xl">
+                    <div className="w-[37px] h-[4.5px] sm:w-[49.33px] sm:h-[6px] md:w-[61.67px] md:h-[7.5px] lg:w-[74px] lg:h-[9px] bg-black dark:bg-black top-0 rounded-b-[0.5rem] sm:rounded-b-[0.67rem] md:rounded-b-[0.83rem] lg:rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
                     <div className="rounded-[1rem] sm:rounded-[1.33rem] md:rounded-[1.67rem] lg:rounded-[2rem] overflow-hidden w-[70px] h-[150px] sm:w-[93.33px] sm:h-[200px] md:w-[116.67px] md:h-[250px] lg:w-[140px] lg:h-[300px] xl:w-[170px] xl:h-[351px] bg-white dark:bg-gray-800">
                       {/* Phone Status Bar */}
-                      <div className="bg-white dark:bg-gray-950 px-2 sm:px-2.67 md:px-3.33 lg:px-4 xl:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 xl:py-4 flex justify-between items-center text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs xl:text-sm pt-4 sm:pt-5.33 md:pt-6.67 lg:pt-8 xl:pt-9">
-                        <span className="hidden sm:block font-semibold text-black dark:text-white">{currentTime}</span>
-                        <div className="flex items-center space-x-0.5 sm:space-x-0.67 md:space-x-0.83 lg:space-x-1">
+                      <div className="bg-white dark:bg-gray-800 px-2 sm:px-2.67 md:px-3.33 lg:px-4 xl:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 xl:py-4 flex justify-between items-center text-[6px] sm:text-[8px] md:text-[10px] lg:text-xs xl:text-sm pt-4 sm:pt-5.33 md:pt-6.67 lg:pt-8 xl:pt-9">
+                          <span className="hidden sm:block font-semibold text-black dark:text-white">{currentTime}</span>
+                          <div className="flex items-center space-x-0.5 sm:space-x-0.67 md:space-x-0.83 lg:space-x-1 ml-auto">
                           {/* Signal bars */}
                           <div className="flex items-end space-x-0.5 sm:space-x-1 md:space-x-1 lg:space-x-1">
                             <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 md:w-1 md:h-1 lg:w-1 lg:h-1 bg-black dark:bg-white rounded-full"></div>
@@ -197,8 +189,8 @@ export default function VoiceHeroSection({
                           </div>
                           {/* Battery */}
                           <div className="w-3 h-1.5 sm:w-4 sm:h-2 md:w-5 md:h-2.5 lg:w-6 lg:h-3 border border-black dark:border-white rounded-sm relative">
-                            <div className="w-2 h-1 sm:w-3 sm:h-1.5 md:w-4 md:h-2 lg:w-5 lg:h-2.5 bg-green-500 rounded-sm absolute left-0.5 sm:left-0 md:left-0 lg:left-0 top-0.5 sm:top-0 md:top-0 lg:top-0"></div>
-                            <div className="w-0.5 h-1 sm:w-0.5 sm:h-1 md:w-0.5 md:h-1.5 lg:w-0.5 lg:h-2 bg-black dark:bg-white rounded-r-sm absolute top-0.5 sm:top-0.5 md:top-0.5 lg:top-0.5 -right-0.5 sm:-right-0.5 md:-right-0.5 lg:-right-1"></div>
+                            <div className="w-2 h-1 sm:w-3 sm:h-1.5 md:w-4 md:h-2 lg:w-5 lg:h-2.5 bg-green-500 rounded-sm absolute left-0 sm:left-0 md:left-0 lg:left-0 top-0 sm:top-0 md:top-0 lg:top-0"></div>
+                            <div className="w-0.5 sm:w-0.5 sm:h-1 md:w-0.5 md:h-1.5 lg:w-0.5 lg:h-2 bg-black dark:bg-white rounded-r-sm absolute top-0.5 sm:top-0.5 md:top-0.5 lg:top-0.5 -right-0.5 sm:-right-0.5 md:-right-0.5 lg:-right-1"></div>
                           </div>
                         </div>
                       </div>
@@ -215,7 +207,7 @@ export default function VoiceHeroSection({
                         </div>
                         
                         {/* Call Controls */}
-                        <div className="flex justify-center items-center space-x-1 sm:space-x-1.33 md:space-x-1.67 lg:space-x-2 xl:space-x-3 pb-2 sm:pb-6 md:pb-6 lg:pb-14 xl:pb-12">
+                        <div className="flex justify-center items-center space-x-1 sm:space-x-1.33 md:space-x-1.67 lg:space-x-2 xl:space-x-3 pb-4 sm:pb-8 md:pb-10 lg:pb-16 xl:pb-16 mb-4 sm:mb-6 md:mb-1 lg:mb-3 xl:mb-1">
                           <button className="w-5 h-5 sm:w-6.67 sm:h-6.67 md:w-8.33 md:h-8.33 lg:w-10 lg:h-10 xl:w-9 xl:h-9 flex-shrink-0 aspect-square bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-200 ease-in-out">
                             <Mic className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 xl:w-4 xl:h-4 text-gray-700 dark:text-gray-300" />
                           </button>
@@ -232,6 +224,33 @@ export default function VoiceHeroSection({
                 </div>
               </div>
             </div>
+          </div>
+          
+          {/* CTA Buttons - Only visible on mobile/tablet */}
+          <div className={`lg:hidden px-4 py-6 sm:px-6 sm:py-8 transition-all duration-700 delay-300 ${
+            isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto">
+              <Link
+                href="/voice"
+                className="inline-flex items-center justify-center px-4 py-2 text-base font-medium rounded-3xl text-white bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 touch-manipulation active:scale-95 sm:px-6 sm:py-3 sm:text-lg"
+              >
+                {primaryButtonText}
+              </Link>
+              {secondaryButtonText && (
+                <button
+                  onClick={onSecondaryClick}
+                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-xl text-indigo-700 bg-indigo-100 hover:bg-indigo-200 dark:text-indigo-300 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 transition-all duration-300 touch-manipulation active:scale-95 sm:px-6 sm:py-3 sm:text-lg"
+                >
+                  {secondaryButtonText}
+                </button>
+              )}
+            </div>
+            
+            {/* Description below buttons for mobile */}
+            <p className="mt-4 text-base text-gray-500 dark:text-gray-300 sm:mt-6 sm:text-lg text-center max-w-xl mx-auto hidden">
+              {description}
+            </p>
           </div>
         </div>
       </div>
