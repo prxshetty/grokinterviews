@@ -85,6 +85,18 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+        editorial: ['var(--font-pp-editorial)', 'Playfair Display', 'Georgia', 'serif'],
+      },
+      fontWeight: {
+        ultralight: '200',
+        extralight: '200',
+        light: '300',
+        normal: '400',
+        medium: '500',
+        semibold: '600',
+        bold: '700',
+        extrabold: '800',
+        black: '900',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
