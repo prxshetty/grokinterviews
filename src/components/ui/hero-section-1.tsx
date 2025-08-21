@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Button1 } from '@/components/ui/button-1';
-import CompanyList from '@/components/home/CompanyList'
+
 
 export function HeroSection() {
     const [isReady, setIsReady] = useState(false);
@@ -75,11 +75,8 @@ export function HeroSection() {
                     </div>
                 </div>
                 
-                {/* Company List Integration - Outside constrained containers */}
-                <div className={`mt-48 sm:mt-20 md:mt-24 lg:mt-32 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '400ms' }}>
-                    <CompanyList />
-                </div>
+
             </div>
         </>
     )
-} 
+}
