@@ -334,7 +334,7 @@ export default function TopicCard({ topic, isActive, onClick }: TopicCardProps) 
     <div
       key={topic.id}
       className={`
-        group relative flex-shrink-0 w-[70px] h-[130px] sm:w-[120px] sm:h-[180px] md:w-[160px] md:h-[220px] rounded-xl overflow-hidden
+        group relative flex-shrink-0 w-[90px] h-[130px] sm:w-[120px] sm:h-[180px] md:w-[160px] md:h-[220px] rounded-xl overflow-hidden
         transition-all duration-400 ease-[cubic-bezier(0.25,0.1,0.25,1)] cursor-pointer
         ${isActive ? 'z-10 shadow-xl' : 'z-0 shadow-lg'}
         ${showHoverEffect ? 'z-20 shadow-xl scale-105' : ''}
