@@ -62,9 +62,6 @@ function ExploreTopicsSection() {
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
       }`}
     >
-      <h2 className="text-2xl md:text-3xl mb-8 text-center font-normal">
-        Explore Topics
-      </h2>
       <div className="mx-[-1rem] sm:mx-[-1.5rem] md:mx-[-2rem] lg:mx-[-3rem] -mt-4 overflow-x-hidden">
         <Suspense fallback={<TopicCarouselSkeleton />}>
           <TopicCarousel />
@@ -129,14 +126,14 @@ export default function HomePageClient() {
         <HeroSection />
       </div>
 
-      {/* Company List Section */}
-      <div className="mt-48 sm:mt-20 md:mt-24 lg:mt-32 w-full">
-        <CompanyList />
-      </div>
-
       <div className="px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Topic Carousel Section - Lazy loaded */}
         <ExploreTopicsSection />
+      </div>
+
+      {/* Company List Section */}
+      <div className="mt-48 sm:mt-20 md:mt-24 lg:mt-32 w-full">
+        <CompanyList />
       </div>
 
       {/* Stats Section - Lazy loaded */}
@@ -149,12 +146,12 @@ export default function HomePageClient() {
       {/* Voice Hero Section */}
       <div className="mt-28 sm:mt-24 md:mt-24 mb-16 sm:mb-20 md:mb-24">
         <VoiceHeroSection 
-          title="Master Your Verbal Communication"
-          description="Experience realistic interview scenarios with our AI-powered voice interview platform. Practice on web or phone for the most authentic preparation."
+          title="Smarter Conversations, Simplified."
+          description="Seamlessly connect through the web or a real-time AI voice call—wherever you are."
           primaryButtonText="Start Voice Interview"
         />
       </div>
-
+      
       <div className="px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Feature Section - Lazy loaded */}
         <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
