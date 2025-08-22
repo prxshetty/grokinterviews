@@ -22,14 +22,14 @@ export function HeroSection() {
     return (
         <>
             <div className="relative w-full overflow-hidden h-[calc(100dvh-4rem)]">
-                {/* Woven Canvas Background - positioned to the right */}
+                {/* Woven Canvas Background - positioned to the right and scaled up */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute right-0 top-0 w-1/2 h-full overflow-hidden opacity-30">
+                    <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-30">
                         <WovenCanvas
-                            className="absolute inset-0"
+                            className="absolute inset-0 scale-105"
                             particleCount={25000}
                             opacity={0.6}
-                            rotationSpeed={0.03}
+                            rotationSpeed={0.01}
                         />
                     </div>
                 </div>
