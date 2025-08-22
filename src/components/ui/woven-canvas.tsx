@@ -46,8 +46,6 @@ export function WovenCanvas({
     mountRef.current.appendChild(renderer.domElement);
 
     const mouse = new THREE.Vector2(0, 0);
-    const clock = new THREE.Clock();
-
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     // --- Woven Silk Particle System ---
@@ -114,9 +112,7 @@ export function WovenCanvas({
     window.addEventListener('mousemove', handleMouseMove);
 
     const animate = () => {
-        requestAnimationFrame(animate);
-        const elapsedTime = clock.getElapsedTime();
-        
+        requestAnimationFrame(animate);        
         const mouseWorld = new THREE.Vector3(mouse.x * 3, mouse.y * 3, 0);
 
         if (positions && originalPositions && velocities) {

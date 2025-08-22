@@ -157,7 +157,7 @@ export default function ResourceCarousel() {
                   key={index}
                   className="flex flex-col items-center justify-center mx-1.5 sm:mx-2 md:mx-3 lg:mx-4 xl:mx-5 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28 opacity-0 flex-shrink-0"
                 >
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 xl:w-20 xl:h-20 mb-1 sm:mb-2" />
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 mb-2 sm:mb-3" />
                 </div>
               ))}
             </div>
@@ -172,11 +172,6 @@ export default function ResourceCarousel() {
       ref={ref}
       className={`mt-12 sm:mt-16 md:mt-20 transition-all duration-1000 w-full ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
-      <div className="relative m-auto px-3 sm:px-4 md:px-6 mb-6 sm:mb-8 w-full">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-normal text-center">
-          Curated Resources for Engineers
-        </h2>
-      </div>
       <div className="group w-full overflow-hidden relative">
         {/* Gradient masks removed for cleaner look */}
         <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
@@ -198,11 +193,11 @@ export default function ResourceCarousel() {
             {[...resources, ...resources].map((resource, index) => (
               <div
                 key={`${resource.name}-${index}`}
-                className="flex flex-col items-center justify-center mx-1.5 sm:mx-2 md:mx-3 lg:mx-4 xl:mx-5 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"
+                className="flex flex-col items-center justify-center mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 w-16 sm:w-20 md:w-24 lg:w-28 xl:w-32 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"
               >
                 {/* Logo container - Fixed sizing for perfect fit */}
-                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 xl:w-20 xl:h-20 transform transition-transform duration-300 ease-in-out mb-1 sm:mb-2 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
-                  <Image
+                <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 transform transition-transform duration-300 ease-in-out mb-2 sm:mb-3 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
+                   <Image
                     src={resource.logo}
                     alt={`${resource.name} Logo`}
                     className={`${resource.className} max-h-[80%] max-w-[80%] object-contain`}
