@@ -23,12 +23,26 @@ export function WovenCanvas({
   useEffect(() => {
     if (!mountRef.current) return;
 
+    // Get container dimensions
+    const containerRect = mountRef.current.getBoundingClientRect();
+    const containerWidth = containerRect.width || window.innerWidth;
+    const containerHeight = containerRect.height || window.innerHeight;
+
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, containerWidth / containerHeight, 0.1, 1000);
     camera.position.z = 5;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(containerWidth, containerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    
+    // Ensure canvas respects container boundaries
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    
     mountRef.current.appendChild(renderer.domElement);
 
     const mouse = new THREE.Vector2(0, 0);
@@ -87,8 +101,15 @@ export function WovenCanvas({
     scene.add(points);
 
     const handleMouseMove = (event: MouseEvent) => {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        const containerRect = mountRef.current?.getBoundingClientRect();
+        if (!containerRect) return;
+        
+        // Calculate mouse position relative to the container
+        const relativeX = event.clientX - containerRect.left;
+        const relativeY = event.clientY - containerRect.top;
+        
+        mouse.x = (relativeX / containerRect.width) * 2 - 1;
+        mouse.y = -(relativeY / containerRect.height) * 2 + 1;
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -138,21 +159,36 @@ export function WovenCanvas({
             positionAttribute.needsUpdate = true;
         }
 
-        points.rotation.y = elapsedTime * rotationSpeed;
+        // points.rotation.y = elapsedTime * rotationSpeed; // Rotation disabled
         renderer.render(scene, camera);
     };
     animate();
 
     const handleResize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+        if (!mountRef.current) return;
+        const containerRect = mountRef.current.getBoundingClientRect();
+        const containerWidth = containerRect.width || window.innerWidth;
+        const containerHeight = containerRect.height || window.innerHeight;
+        
+        camera.aspect = containerWidth / containerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(containerWidth, containerHeight);
     };
     window.addEventListener('resize', handleResize);
+    
+    // Use ResizeObserver to handle container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    
+    if (mountRef.current) {
+      resizeObserver.observe(mountRef.current);
+    }
 
     return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('mousemove', handleMouseMove);
+        resizeObserver.disconnect();
         if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
             mountRef.current.removeChild(renderer.domElement);
         }
