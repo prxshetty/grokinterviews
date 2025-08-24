@@ -3,24 +3,9 @@ topics/*
 .trae/
 .mcp.json
 .cursor
-PROJECT_WIDE_OPTIMIZATION_PLAN.md
-TODOIST.md
-NOTES.md
-REFACTOR_TOPIC_SERVICES.md
-DEPLOYMENT.md
-RESEARCH_ARTICLE_ENHANCEMENT_PLAN.md
-DB_Design.md
-PERFORMANCE-OPTIMIZATION-PLAN.md
-SECURITY-PLAN.md
-backend_api.md
-sql-commands.md.backup
-sql-commands.md
-RATE_LIMITING.md
-TODO.md
+*.md
 scripts/
-PROJECT_WIDE_OPTIMIZATION_PLAN.md
-OPTIMIZATION_SUMMARY.md
-PERFORMANCE_OPTIMIZATIONS.md
+*.sql
 # dependencies
 /node_modules
 /.pnp
