@@ -502,7 +502,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                               </SheetClose>
                               <SheetClose asChild>
                                 <Link
-                                  href="/dashboard/bookmarks"
+                                  href="/bookmarks"
                                   className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                                 >
                                   <Bookmark className="mr-2 h-4 w-4" />
@@ -625,7 +625,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href="/dashboard/bookmarks" className="flex items-center">
+                          <Link href="/bookmarks" className="flex items-center">
                             <Bookmark className="mr-2 h-4 w-4" />
                             Bookmarks
                           </Link>

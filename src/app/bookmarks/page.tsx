@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { LoadingSpinner } from '@/components/ui';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Tag, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TabNav } from '@/components/ui/tab-nav';
@@ -120,8 +120,7 @@ const BookmarkCard = ({ bookmark }: { bookmark: Bookmark }) => {
     );
 };
 
-
-export default function BookmarksPage() {
+function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,3 +229,5 @@ export default function BookmarksPage() {
     </div>
   );
 }
+
+export default BookmarksPage;
