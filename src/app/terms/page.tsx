@@ -89,7 +89,6 @@ export default function TermsOfService() {
             <li style={liStyle}>AI-powered personalized answers and recommendations</li>
             <li style={liStyle}>Progress tracking and analytics</li>
             <li style={liStyle}>Bookmark and study planning features</li>
-            <li style={liStyle}>User dashboard and activity monitoring</li>
           </ul>
         </section>
 

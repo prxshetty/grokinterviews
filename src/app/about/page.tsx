@@ -55,10 +55,10 @@ export default function AboutPage() {
           {/* Header Section */}
           <header className="mb-16 md:mb-24 text-left">
             <div className="max-w-3xl">
-              <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-light tracking-wide">
+              <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-editorial font-extralight tracking-wide">
                 About Us
               </h2>
-              <h1 className="text-5xl md:text-7xl mt-2 font-light tracking-tight leading-tight text-black dark:text-white">
+              <h1 className="text-5xl md:text-7xl mt-2 font-editorial font-extralight tracking-[-1.8px] leading-[110%] text-black dark:text-white">
                 GrokInterviews
               </h1>
             </div>
@@ -66,7 +66,7 @@ export default function AboutPage() {
 
           {/* Our Mission Section */}
           <section className="mb-16 md:mb-24 max-w-3xl">
-            <h2 className="text-3xl md:text-4xl font-normal text-black dark:text-white mb-6">
+            <h2 className="text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white mb-6">
               Our Mission
             </h2>
             <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -92,7 +92,7 @@ export default function AboutPage() {
           {/* Contact Section */}
           <section id="contact-form" className="max-w-3xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-4xl font-light mb-4">Let's Have a Chat</h2>
+              <h2 className="text-4xl font-editorial font-extralight mb-4">Let's Have a Chat</h2>
               <p className="text-gray-600 dark:text-gray-400">
                 Questions about our platform, features, or just want to say hello? We're here to help
               </p>

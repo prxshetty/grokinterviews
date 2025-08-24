@@ -32,12 +32,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     href: '/voice',
     authRequired: false
   },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    href: '/dashboard',
-    authRequired: true
-  },
+
   {
     id: 'about',
     label: 'About',

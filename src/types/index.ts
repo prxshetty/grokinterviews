@@ -1,6 +1,6 @@
 // Central type exports
 export * from './hooks.types';
-export * from './dashboard.types';
+
 export * from './database.types';
 export * from './forms.types';
 export * from './voice.types';
