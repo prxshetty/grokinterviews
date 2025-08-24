@@ -12,39 +12,39 @@ function Feature() {
     () => [
       {
         title: "66,361 Questions",
-        description: "Interview Questions - Across comprehensive domains",
+        description: "Master any interview with AI-curated questions from real hiring managers",
       },
       {
-        title: "2926601 Resources",
-        description: "Learning Resources - Curated from top platforms",
+        title: "2,926,601 Resources",
+        description: "Your personal learning concierge - handpicked from industry leaders",
       },
       {
-        title: "1462500 Websites",
-        description: "Website Resources - Articles, blogs, and tutorials",
+        title: "1,462,500 Websites",
+        description: "Turn browsing into breakthrough insights with expert-curated content",
       },
       {
-        title: "162400 Images",
-        description: "Visual Learning - Diagrams, charts, and infographics",
+        title: "162,400 Images",
+        description: "Visualize complex concepts with stunning diagrams that stick",
       },
       {
-        title: "612360 Videos",
-        description: "Video Content - YouTube tutorials and lectures",
+        title: "612,360 Videos",
+        description: "Learn from the best - exclusive tutorials from tech titans",
       },
       {
-        title: "617000 Books",
-        description: "Book References - Technical books and documentation",
+        title: "617,000 Books",
+        description: "Distill decades of expertise into your interview-ready toolkit",
       },
       {
-        title: "413000 Papers",
-        description: "Research Papers - Academic papers and preprints",
+        title: "413,000 Papers",
+        description: "Stay ahead with cutting-edge research that interviewers crave",
       },
       {
         title: "2,015 Topics",
-        description: "Technical Topics - Organized learning paths",
+        description: "Navigate your tech journey with crystal-clear learning pathways",
       },
       {
         title: "13,272 Categories",
-        description: "Question Categories - Structured by domain"
+        description: "Dominate every domain with precision-targeted preparation"
       }
     ],
     []
@@ -52,27 +52,27 @@ function Feature() {
 
   // Gradient colors for each card
   const gradientColors = [
-    'from-blue-500/10 via-cyan-500/5 to-teal-500/10', // Blue to teal
-    'from-purple-500/10 via-pink-500/5 to-rose-500/10', // Purple to rose
-    'from-emerald-500/10 via-green-500/5 to-lime-500/10', // Emerald to lime
-    'from-orange-500/10 via-amber-500/5 to-yellow-500/10', // Orange to yellow
-    'from-indigo-500/10 via-violet-500/5 to-purple-500/10', // Indigo to purple
-    'from-red-500/10 via-pink-500/5 to-purple-500/10', // Red to purple
-    'from-cyan-500/10 via-blue-500/5 to-indigo-500/10', // Cyan to indigo
-    'from-teal-500/10 via-emerald-500/5 to-green-500/10', // Teal to green
-    'from-amber-500/10 via-orange-500/5 to-red-500/10', // Amber to red
+    'from-blue-500/15 via-cyan-500/10 to-teal-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.1),transparent_50%)]', // Blue to teal with bento
+    'from-purple-500/15 via-pink-500/10 to-rose-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.1),transparent_50%)]', // Purple to rose with bento
+    'from-emerald-500/15 via-green-500/10 to-lime-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1),transparent_50%)]', // Emerald to lime with bento
+    'from-orange-500/15 via-amber-500/10 to-yellow-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.1),transparent_50%)]', // Orange to yellow with bento
+    'from-indigo-500/15 via-violet-500/10 to-purple-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.1),transparent_50%)]', // Indigo to purple with bento
+    'from-red-500/15 via-pink-500/10 to-purple-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.1),transparent_50%)]', // Red to purple with bento
+    'from-cyan-500/15 via-blue-500/10 to-indigo-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.1),transparent_50%)]', // Cyan to indigo with bento
+    'from-teal-500/15 via-emerald-500/10 to-green-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.1),transparent_50%)]', // Teal to green with bento
+    'from-amber-500/15 via-orange-500/10 to-red-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.1),transparent_50%)]', // Amber to red with bento
   ];
 
   const darkGradientColors = [
-    'dark:from-blue-500/15 dark:via-cyan-500/8 dark:to-teal-500/15',
-    'dark:from-purple-500/15 dark:via-pink-500/8 dark:to-rose-500/15',
-    'dark:from-emerald-500/15 dark:via-green-500/8 dark:to-lime-500/15',
-    'dark:from-orange-500/15 dark:via-amber-500/8 dark:to-yellow-500/15',
-    'dark:from-indigo-500/15 dark:via-violet-500/8 dark:to-purple-500/15',
-    'dark:from-red-500/15 dark:via-pink-500/8 dark:to-purple-500/15',
-    'dark:from-cyan-500/15 dark:via-blue-500/8 dark:to-indigo-500/15',
-    'dark:from-teal-500/15 dark:via-emerald-500/8 dark:to-green-500/15',
-    'dark:from-amber-500/15 dark:via-orange-500/8 dark:to-red-500/15',
+    'dark:from-blue-500/20 dark:via-cyan-500/15 dark:to-teal-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.15),transparent_50%)]',
+    'dark:from-purple-500/20 dark:via-pink-500/15 dark:to-rose-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.15),transparent_50%)]',
+    'dark:from-emerald-500/20 dark:via-green-500/15 dark:to-lime-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.15),transparent_50%)]',
+    'dark:from-orange-500/20 dark:via-amber-500/15 dark:to-yellow-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.15),transparent_50%)]',
+    'dark:from-indigo-500/20 dark:via-violet-500/15 dark:to-purple-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.15),transparent_50%)]',
+    'dark:from-red-500/20 dark:via-pink-500/15 dark:to-purple-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.15),transparent_50%)]',
+    'dark:from-cyan-500/20 dark:via-blue-500/15 dark:to-indigo-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.15),transparent_50%)]',
+    'dark:from-teal-500/20 dark:via-emerald-500/15 dark:to-green-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.15),transparent_50%)]',
+    'dark:from-amber-500/20 dark:via-orange-500/15 dark:to-red-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_50%)]',
   ];
 
   const hoverGradientColors = [
@@ -142,19 +142,19 @@ function Feature() {
                     className="flex justify-center"
                   >
                     <CardSpotlight
-                      className={`group relative h-[380px] w-[340px] sm:h-[420px] sm:w-[380px] rounded-2xl bg-gradient-to-br ${feature.gradientColor} ${feature.darkGradientColor} backdrop-blur-2xl border border-white/[0.08] dark:border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)] p-0 before:absolute before:inset-0 before:bg-gradient-to-br ${feature.hoverGradientColor} before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-500 after:absolute after:inset-0 after:bg-white/[0.02] dark:after:bg-white/[0.05] after:backdrop-blur-sm after:rounded-2xl`}
+                      className={`group relative h-[380px] w-[340px] sm:h-[420px] sm:w-[380px] rounded-2xl bg-gradient-to-br ${feature.gradientColor} ${feature.darkGradientColor} backdrop-blur-2xl border border-white/[0.08] dark:border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)] p-0 before:absolute before:inset-0 before:bg-gradient-to-br ${feature.hoverGradientColor} before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-500 after:absolute after:inset-0 after:bg-white/[0.02] dark:after:bg-white/[0.05] after:backdrop-blur-sm after:rounded-2xl after:bg-[linear-gradient(to_right,transparent_0%,rgba(255,255,255,0.02)_50%,transparent_100%)] after:bg-[length:200%_1px] after:bg-no-repeat after:opacity-30`}
                       radius={200}
                       color="#ffffff20"
                     >
                       {/* Content */}
-                      <div className="relative z-20 h-full flex flex-col p-8 overflow-visible">
+                      <div className="relative z-20 h-full flex flex-col p-10 sm:p-12 overflow-visible">
                         
                         {/* Header section */}
                         <div className="flex-1 flex flex-col justify-center items-center text-center space-y-6 overflow-visible">
                           
                           {/* Main metric display */}
                           <div className="relative">
-                            <div className="text-4xl sm:text-5xl font-light text-foreground leading-tight tracking-tight pt-6">
+                            <div className="text-3xl sm:text-5xl font-light text-foreground leading-tight tracking-tight pt-8">
                               {(feature.title || '').split(' ').map((word, wordIndex) => {
                                 const isNumber = /^[\d.,]+/.test(word);
                                 if (isNumber) {
@@ -172,7 +172,7 @@ function Feature() {
                                         stiffness: 200,
                                         damping: 20
                                       }}
-                                      className="font-editorial font-extralight bg-gradient-to-br from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent"
+                                      className="font-sans font-normal bg-gradient-to-br from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent"
                                     >
                                       {word.replace(/[^\d.,]/g, '')}
                                     </motion.div>
@@ -208,7 +208,7 @@ function Feature() {
                                 delay: 0.1,
                                 ease: "easeOut"
                               }}
-                              className="absolute inset-0 text-4xl sm:text-5xl font-editorial font-extralight blur-lg bg-gradient-to-br from-blue-500 to-purple-500 bg-clip-text text-transparent -z-10 pt-6"
+                              className="absolute inset-0 text-4xl sm:text-5xl font-sans font-normal blur-lg bg-gradient-to-br from-blue-500 to-purple-500 bg-clip-text text-transparent -z-10 pt-8"
                             >
                               {(feature.title || '').split(' ')[0]}
                             </motion.div>

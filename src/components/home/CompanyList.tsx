@@ -233,7 +233,7 @@ export default function ResourceCarousel() {
 
 
           {/* Row 1: All companies scrolling left */}
-          <div className="flex whitespace-nowrap animate-scroll-left w-max">
+          <div className="flex whitespace-nowrap animate-scroll-left w-max mb-1 sm:mb-2">
             {/* Duplicate resources for infinite scroll effect */}
             {[...resources, ...resources].map((resource, index) => (
               <div
@@ -262,8 +262,8 @@ export default function ResourceCarousel() {
 
           {/* Row 2: Half companies scrolling right */}
           <div className="flex whitespace-nowrap animate-scroll-right w-max">
-            {/* Use half the resources for second row */}
-            {[...resources.slice(0, Math.ceil(resources.length / 2)), ...resources.slice(0, Math.ceil(resources.length / 2))].map((resource, index) => (
+            {/* Use half the resources for second row, starting from the middle */}
+            {[...resources.slice(Math.ceil(resources.length / 2)), ...resources.slice(Math.ceil(resources.length / 2))].map((resource, index) => (
               <div
                 key={`${resource.name}-row2-${index}`}
                 className="flex flex-col items-center justify-center mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-10 w-20 sm:w-24 md:w-28 lg:w-32 xl:w-36 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"

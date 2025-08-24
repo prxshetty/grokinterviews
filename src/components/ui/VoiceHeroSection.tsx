@@ -84,7 +84,7 @@ function VoiceHeroSection({
             <div className="max-w-4xl mx-auto">
               <h1 className="text-3xl font-editorial font-light leading-[110%] tracking-[-1.8px] text-gray-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
                 <span className="block">
-                  <span className="italic font-light">Smarter</span> Conversations, Simplified.
+                  <span className="italic">Smarter</span> Conversations, Simplified.
                 </span>
               </h1>
               
@@ -94,11 +94,13 @@ function VoiceHeroSection({
             </div>
           </div>
 
-          {/* WorldMap Section */}
-          <div className={`relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 scale-[0.85] ${
+          {/* WorldMap Section - Full width with negative margins for end-to-end */}
+          <div className={`relative w-full max-w-7xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            <WorldMap {...worldMapProps} />
+            <div className="mx-auto max-w-full">
+              <WorldMap {...worldMapProps} />
+            </div>
           </div>
 
 
