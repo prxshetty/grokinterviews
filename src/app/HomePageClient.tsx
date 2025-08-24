@@ -3,7 +3,8 @@
 import { HeroSection } from '@/components/ui/hero-section-1';
 import CompanyList from '@/components/home/CompanyList';
 import { Suspense, lazy } from 'react';
-import { useScrollAnimation } from '@/hooks/ui';
+import { useCentralizedIntersection } from '@/hooks/ui';
+
 
 // Lazy load non-critical components that are below the fold
 const StatsSection = lazy(() => import('@/components/home/StatsSection'));
@@ -63,9 +64,13 @@ function VoiceHeroSkeleton() {
   );
 }
 
-// ExploreTopicsSection component with scroll animations
+// ExploreTopicsSection component with centralized scroll animations
 function ExploreTopicsSection() {
-  const { ref, isVisible, mounted } = useScrollAnimation();
+  const { ref, isVisible, mounted } = useCentralizedIntersection({
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px',
+    once: true
+  });
 
   if (!mounted) {
     return (

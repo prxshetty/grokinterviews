@@ -12,6 +12,7 @@ import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
 import { Suspense } from 'react';
 
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -128,6 +129,7 @@ export default function RootLayout({
               <SpeedInsights />
               <Analytics />
             </Suspense>
+
           </AuthProvider>
         </ThemeProvider>
       </body>

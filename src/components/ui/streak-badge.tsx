@@ -19,7 +19,6 @@ export function StreakBadge({ currentStreak, highestStreak, className, isLoading
             className={cn(
               "inline-flex items-center gap-1 px-2 py-1 text-sm font-medium rounded-full",
               "text-orange-600 dark:text-orange-400",
-              "border border-orange-200/50 dark:border-orange-500/20",
               "hover:from-orange-500/20 hover:to-red-500/20 transition-colors",
               isLoading && "opacity-70",
               className
@@ -57,7 +56,7 @@ export function StreakBadge({ currentStreak, highestStreak, className, isLoading
                  fill={currentStreak > 0 ? "#ffcc02" : "#d1d5db"}
                />
             </svg>
-            <span className={cn(isLoading && "animate-pulse")}>{currentStreak}</span>
+            <span className={cn( isLoading && "animate-pulse")}>{currentStreak}</span>
           </div>
         </TooltipTrigger>
         <TooltipContent 

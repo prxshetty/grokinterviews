@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { BentoCard } from "@/components/ui/bento-card";
 import { highlightedStats } from './content';
+import { useCentralizedIntersection } from '@/hooks/ui/use-centralized-intersection';
 
 // Note: We're using curated stats for the minimalist design
 // Original data is available but not currently displayed
@@ -23,33 +24,35 @@ const statsData = highlightedStats.map((stat, index) => ({
 }));
 
 export default function StatsSection() {
-  const [isInView, setIsInView] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry && entry.isIntersecting) {
-          setIsInView(true);
-          // Once animation is triggered, we can disconnect the observer
-          observer.disconnect();
-        }
-      },
-      {
-        threshold: 0.1, // Trigger when 10% of the component is visible
-        rootMargin: '0px 0px -50px 0px' // Start animation slightly before fully visible
-      }
+  const { ref: sectionRef, isVisible: isInView, mounted } = useCentralizedIntersection({
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px',
+    once: true
+  });
+
+  // Show loading skeleton during SSR
+  if (!mounted) {
+    return (
+      <div className="w-full py-12 sm:py-16 md:py-24 font-sans opacity-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grow h-full gap-0 w-full px-4 sm:px-6 lg:px-8">
+          {statsData.map((_, index) => {
+            let className = "";
+            if (index === 0) className = "sm:col-span-2 lg:col-span-2";
+            if (index === 5) className = "sm:col-span-2 lg:col-span-3";
+            
+            return (
+              <div key={index} className={`${className} p-6 sm:p-8 md:p-12 animate-pulse`}>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-4"></div>
+                <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
+  }
 
   return (
     <div 
