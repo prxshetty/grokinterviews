@@ -82,7 +82,7 @@ function VoiceHeroSection({
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
             <div className="max-w-4xl mx-auto">
-              <h1 className="text-3xl font-editorial font-extralight leading-[110%] tracking-[-1.8px] text-gray-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
+              <h1 className="text-3xl font-editorial font-light leading-[110%] tracking-[-1.8px] text-gray-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
                 <span className="block">
                   <span className="italic">Smarter</span> Conversations, Simplified.
                 </span>

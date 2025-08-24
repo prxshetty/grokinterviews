@@ -126,11 +126,11 @@ function Feature() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-center gap-8 lg:gap-12">
           <div className="flex flex-col gap-4 text-center">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-editorial font-extralight leading-[110%] tracking-[-1.8px] px-4">
-              Transform <span className="italic">Your Interview Game</span> with AI Precision
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-editorial font-light leading-[110%] tracking-[-1.8px] px-4">
+              Interview <span className="italic">prep </span>that actually works
             </h2>
             <p className="mt-4 sm:mt-6 max-w-3xl mx-auto text-balance text-sm sm:text-base md:text-lg text-muted-foreground px-4">
-              Master FAANG-level questions with 3.6M+ resources at your fingertips
+              Your 24/7 interview coach powered by artificial intelligence
             </p>
           </div>
           <div className="relative w-full pt-8 lg:pt-12">
@@ -142,7 +142,7 @@ function Feature() {
                     className="flex justify-center"
                   >
                     <CardSpotlight
-                      className={`group relative h-[460px] w-[340px] sm:h-[500px] sm:w-[380px] rounded-2xl bg-gradient-to-br ${feature.gradientColor} ${feature.darkGradientColor} backdrop-blur-2xl border border-white/[0.08] dark:border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)] p-0 before:absolute before:inset-0 before:bg-gradient-to-br ${feature.hoverGradientColor} before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-500 after:absolute after:inset-0 after:bg-white/[0.02] dark:after:bg-white/[0.05] after:backdrop-blur-sm after:rounded-2xl`}
+                      className={`group relative h-[380px] w-[340px] sm:h-[420px] sm:w-[380px] rounded-2xl bg-gradient-to-br ${feature.gradientColor} ${feature.darkGradientColor} backdrop-blur-2xl border border-white/[0.08] dark:border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)] p-0 before:absolute before:inset-0 before:bg-gradient-to-br ${feature.hoverGradientColor} before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-500 after:absolute after:inset-0 after:bg-white/[0.02] dark:after:bg-white/[0.05] after:backdrop-blur-sm after:rounded-2xl`}
                       radius={200}
                       color="#ffffff20"
                     >
