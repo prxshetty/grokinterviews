@@ -596,7 +596,7 @@ export default function CategoryDetailView({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl dark:text-white">
+            <h1 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl dark:text-white">
               {subtopicDetails.label}
             </h1>
           </div>
@@ -623,7 +623,7 @@ export default function CategoryDetailView({
             {Object.entries(questionsByCategory).map(([catId, category], index) => (
               <div key={catId} id={`category-${catId}`} className="mb-8">
                 <div className="flex flex-row justify-between items-center mb-3 gap-2">
-                  <h2 className="text-2xl sm:text-3xl font-light tracking-tight md:text-2xl dark:text-white truncate flex-1 min-w-0">{category.name}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-editorial font-extralight tracking-tight md:text-2xl dark:text-white truncate flex-1 min-w-0">{category.name}</h2>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
                       {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
@@ -670,7 +670,7 @@ export default function CategoryDetailView({
         ) : memoizedFilteredQuestions.length > 0 ? (
           // Fallback to simple question list if no category info
           <div className="pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20">
-            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl lg:text-4xl xl:text-5xl mb-6">Questions</h2>
+            <h2 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl lg:text-4xl xl:text-5xl mb-6">Questions</h2>
             <Accordion 
               type="single" 
               collapsible 
@@ -723,7 +723,7 @@ export default function CategoryDetailView({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl text-gray-900 dark:text-white">
+          <h1 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl text-gray-900 dark:text-white">
             {categoryDetails?.label}
           </h1>
         </div>
@@ -768,7 +768,7 @@ export default function CategoryDetailView({
       {hasQuestions && (
         <div className="mt-6 pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2 text-gray-900 dark:text-white">
-            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl lg:text-4xl xl:text-5xl">Questions</h2>
+            <h2 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl lg:text-4xl xl:text-5xl">Questions</h2>
             <div className="flex items-center justify-end gap-3 w-full">
               {/* Removed category progress display */}
               {/* Mobile FloatingSettings */}
