@@ -1,7 +1,6 @@
 'use client';
 
 import { HeroSection } from '@/components/ui/hero-section-1';
-import VoiceHeroSection from '@/components/ui/VoiceHeroSection';
 import CompanyList from '@/components/home/CompanyList';
 import { Suspense, lazy } from 'react';
 import { useScrollAnimation } from '@/hooks/ui';
@@ -10,6 +9,7 @@ import { useScrollAnimation } from '@/hooks/ui';
 const StatsSection = lazy(() => import('@/components/home/StatsSection'));
 const TopicCarousel = lazy(() => import('@/components/home/TopicCarousel'));
 const FeatureSection = lazy(() => import('@/components/home/FeatureSection').then(module => ({ default: module.FeatureSection })));
+const VoiceHeroSection = lazy(() => import('@/components/ui/VoiceHeroSection'));
 
 function TopicCarouselSkeleton() {
   return (
@@ -37,6 +37,26 @@ function FeatureSkeleton() {
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VoiceHeroSkeleton() {
+  return (
+    <div className="relative bg-transparent overflow-hidden min-h-[80vh] flex flex-col animate-pulse">
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="flex flex-col items-center justify-center min-h-[80vh] py-4 sm:py-6 md:py-8 lg:py-12">
+          <div className="relative z-10 px-4 sm:px-6 md:px-8 text-center">
+            <div className="max-w-4xl mx-auto">
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mx-auto"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mx-auto mt-6"></div>
+            </div>
+          </div>
+          <div className="relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12">
+            <div className="w-full aspect-[2/1] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -145,10 +165,12 @@ export default function HomePageClient() {
 
       {/* Voice Hero Section */}
       <div className="mt-28 sm:mt-24 md:mt-24 mb-16 sm:mb-20 md:mb-24">
-        <VoiceHeroSection 
-          title="Smarter Conversations, Simplified."
-          description="Seamlessly connect through the web or a real-time AI voice call—wherever you are."
-        />
+        <Suspense fallback={<VoiceHeroSkeleton />}>
+          <VoiceHeroSection 
+            title="Smarter Conversations, Simplified."
+            description="Seamlessly connect through the web or a real-time AI voice call—wherever you are."
+          />
+        </Suspense>
       </div>
       
       <div className="px-4 sm:px-6 md:px-8 lg:px-12">
