@@ -87,7 +87,7 @@ export default function VoiceHeroSection({
           </div>
 
           {/* WorldMap Section */}
-          <div className={`relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 ${
+          <div className={`relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 scale-[0.85] ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
             <WorldMap 
