@@ -7,8 +7,14 @@ const SpeedInsights = lazy(() => import("@vercel/speed-insights/next").then(modu
 const Analytics = lazy(() => import("@vercel/analytics/react").then(module => ({ default: module.Analytics })));
 import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
-import { GeistSans } from 'geist/font';
+import { Manrope } from 'next/font/google'
 import { PPEditorialUltralight } from '@/fonts/pp-editorial';
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-manrope',
+});
 import { ThemeProvider } from '@/components/theme-provider';
 import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
@@ -112,7 +118,7 @@ export default function RootLayout({
       </head>
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased',
-        GeistSans.variable,
+        manrope.variable,
         PPEditorialUltralight.variable
       )}>
         {process.env.NODE_ENV === 'development' && <TwentyFirstToolbar />}

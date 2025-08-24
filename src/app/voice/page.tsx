@@ -102,7 +102,7 @@ export default function VoicePage() {
       <div className="container mx-auto px-4 py-8 min-h-[600px]">
         <div className="space-y-6 w-full">
           <div className="text-center space-y-2">
-            <h2 className="text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-tight">
+            <h2 className="font-editorial text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight leading-tight">
               Choose Your Interview Mode
             </h2>
             <p className="mx-auto max-w-2xl text-balance text-sm sm:text-base md:text-lg text-muted-foreground">
@@ -131,10 +131,10 @@ export default function VoicePage() {
                       sizes="(max-width: 768px) 100vw, 50vw"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-center items-center text-white text-center p-4 md:p-6">
-                      <h3 className="text-2xl md:text-3xl font-normal mb-2 md:mb-3">
+                      <h3 className="font-editorial text-2xl md:text-3xl font-extralight mb-2 md:mb-3">
                         {mode.title}
                       </h3>
-                      <p className="text-sm md:text-base opacity-90">
+                      <p className="font-pp-editorial text-sm md:text-base opacity-90">
                         {mode.subtitle}
                       </p>
                       {mode.id === 'phone' && (
@@ -151,7 +151,7 @@ export default function VoicePage() {
                   <div className="relative flex-1 p-4 md:p-9 flex flex-col h-full">
                     <div className="flex-grow">
                       {/* Recommended badge */}
-                      <div className="inline-block px-3 md:px-4 py-1 md:py-2 text-xs md:text-sm font-medium rounded-full mb-4 md:mb-6 bg-muted text-muted-foreground">
+                      <div className="font-editorial inline-block px-3 md:px-4 py-1 md:py-2 text-xs md:text-sm font-extralight rounded-full mb-4 md:mb-6 bg-muted text-muted-foreground">
                         {mode.recommended}
                       </div>
 
@@ -206,8 +206,6 @@ export default function VoicePage() {
 
           {/* Additional info */}
           <div className="text-center text-sm text-muted-foreground space-y-1">
-            <p>Both modes provide the same high-quality behavioral interview practice.</p>
-            <p>You can switch between modes anytime to try different experiences.</p>
             <p>International phone interview support coming soon.</p>
           </div>
         </div>

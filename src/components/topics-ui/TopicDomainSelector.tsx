@@ -202,7 +202,7 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
   return (
     <div className={cn("w-full max-w-7xl mx-auto", className)}>
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-light text-gray-900 dark:text-gray-100 mb-6">
+        <h1 className="font-editorial text-4xl md:text-5xl font-extralight text-gray-900 dark:text-gray-100 mb-6">
           Choose Your Learning Path
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
@@ -290,4 +290,4 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
       </div>
     </div>
   );
-} 
+}
