@@ -26,7 +26,7 @@ const Faq3 = ({
     <section className="py-32">
       <div className="container space-y-16">
         <div className="mx-auto flex max-w-3xl flex-col text-left md:text-center">
-          <h2 className="mb-6 text-3xl md:text-4xl font-normal text-black dark:text-white">
+          <h2 className="mb-6 text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white">
             {heading}
           </h2>
           <p className="text-muted-foreground lg:text-lg">{description}</p>
@@ -57,4 +57,4 @@ const Faq3 = ({
   );
 };
 
-export { Faq3 }; 
+export { Faq3 };

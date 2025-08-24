@@ -34,7 +34,7 @@ function SignInForm() {
     }
   }, [router]); // Empty dependency array - runs only once on mount
 
-  // Redirect to dashboard if user exists
+  // Redirect to topics if user exists
   useEffect(() => {
     if (user) {
       // PRODUCTION FIX: Use window.location.href for more reliable redirect
