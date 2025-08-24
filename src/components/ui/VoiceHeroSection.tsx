@@ -1,22 +1,15 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { WorldMap } from './map';
 
 interface VoiceHeroSectionProps {
   title: string;
   description: string;
-  primaryButtonText: string;
-  secondaryButtonText?: string;
-  onPrimaryClick?: () => void;
-  onSecondaryClick?: () => void;
 }
 
 export default function VoiceHeroSection({
-  description,
-  primaryButtonText
+  description
 }: VoiceHeroSectionProps) {
   const [isInView, setIsInView] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -93,31 +86,17 @@ export default function VoiceHeroSection({
             </div>
           </div>
 
-          {/* WorldMap Section with hover effect */}
-          <div className={`group relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 ${
+          {/* WorldMap Section */}
+          <div className={`relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            {/* Hover overlay with button */}
-            <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
-              <Link
-                href="/voice"
-                className="block text-sm sm:text-base duration-150 hover:opacity-75 bg-white/30 dark:bg-black/30 px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200 dark:border-gray-700 backdrop-blur-sm font-medium"
-              >
-                <span>{primaryButtonText}</span>
-                <ChevronRight className="ml-2 inline-block size-4" />
-              </Link>
-            </div>
-            
-            {/* WorldMap with blur on hover */}
-            <div className="transition-all duration-500 group-hover:blur-sm">
-              <WorldMap 
-                dots={mapDots}
-                lineColor="#0ea5e9"
-                showLabels={true}
-                animationDuration={2}
-                loop={true}
-              />
-            </div>
+            <WorldMap 
+              dots={mapDots}
+              lineColor="#0ea5e9"
+              showLabels={true}
+              animationDuration={2}
+              loop={true}
+            />
           </div>
 
 
