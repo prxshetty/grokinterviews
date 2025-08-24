@@ -5,87 +5,83 @@ import { quizTopics } from '@/data/quizTopics';
 import TopicCard from './TopicCard';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useCentralizedIntersection } from '@/hooks/ui/use-centralized-intersection';
 
 export default function TopicCarousel() {
   const [activeIndex, setActiveIndex] = useState(0); // Start with first card active
   const [isMobile, setIsMobile] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
   const cardContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  // Set mounted state after component mounts and setup intersection observer
-  useEffect(() => {
-    setIsMounted(true);
+  // Use centralized intersection observer
+  const { ref: sectionRef, isVisible, mounted: isMounted } = useCentralizedIntersection({
+    threshold: 0.2,
+    rootMargin: '0px',
+    once: true
+  });
 
-    // Use a small delay to ensure the component is fully rendered
-    const timer = setTimeout(() => {
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          // When the section is 20% visible, trigger the animation
-          if (entry && entry.isIntersecting) {
-            setIsVisible(true);
-            observer.unobserve(entry.target);
-          }
-        },
-        { threshold: 0.2 } // Trigger when 20% of the element is visible
-      );
-
-      if (sectionRef.current) {
-        observer.observe(sectionRef.current);
-      }
-
-      return () => {
-        if (sectionRef.current) {
-          observer.unobserve(sectionRef.current);
-        }
-      };
-    }, 100); // Small delay to ensure DOM is ready
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Check if mobile on mount and window resize with throttling
+  // Optimized resize handling with ResizeObserver and throttling
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let resizeObserver: ResizeObserver | null = null;
     
-    const handleResize = () => {
+    const updateDimensions = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         setIsMobile(window.innerWidth < 768);
         if (cardContainerRef.current) {
           setContainerWidth(cardContainerRef.current.offsetWidth);
         }
-      }, 100); // Throttle resize events
+      }, 100);
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize, { passive: true });
+    // Initial setup
+    updateDimensions();
+    
+    // Use ResizeObserver for container width changes (more efficient)
+    if (cardContainerRef.current && 'ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const { width } = entry.contentRect;
+          setContainerWidth(width);
+        }
+      });
+      resizeObserver.observe(cardContainerRef.current);
+    }
+
+    // Fallback to window resize for mobile detection
+    const handleWindowResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleWindowResize, { passive: true });
 
     return () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', handleWindowResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
     };
   }, []);
 
-  // Memoize container width calculation
+  // Update container width when component becomes visible
   useEffect(() => {
-    if (isVisible && cardContainerRef.current) {
-      // Use requestAnimationFrame to avoid layout thrashing
+    if (isVisible && cardContainerRef.current && containerWidth === 0) {
       requestAnimationFrame(() => {
         if (cardContainerRef.current) {
           setContainerWidth(cardContainerRef.current.offsetWidth);
         }
       });
     }
-  }, [isVisible]);
+  }, [isVisible, containerWidth]);
 
-  // Memoize visible topics and card calculations
+  // Memoize visible topics and arc configuration
   const visibleTopics = useMemo(() => quizTopics, []);
   
-  const cardCalculations = useMemo(() => {
-    if (containerWidth === 0) return [];
+  // Memoize arc configuration to avoid recalculation
+  const arcConfig = useMemo(() => {
+    if (containerWidth === 0) return null;
     
     const visibleCards = isMobile ? 3 : 5;
     const maxCards = Math.floor(visibleCards / 2);
@@ -93,6 +89,21 @@ export default function TopicCarousel() {
     const arcHeight = isMobile ? 80 : 120;
     const spacingFactor = isMobile ? 0.6 : 0.8;
     const a = arcWidth > 0 ? arcHeight / Math.pow(arcWidth / 2, 2) : 0;
+    
+    return {
+      visibleCards,
+      maxCards,
+      arcWidth,
+      arcHeight,
+      spacingFactor,
+      a
+    };
+  }, [containerWidth, isMobile]);
+  
+  const cardCalculations = useMemo(() => {
+    if (!arcConfig) return [];
+    
+    const { maxCards, arcWidth, arcHeight, spacingFactor, a } = arcConfig;
     
     return visibleTopics.map((topic, index) => {
       const totalCards = visibleTopics.length;
@@ -121,11 +132,20 @@ export default function TopicCarousel() {
         isCardVisible
       };
     });
-  }, [containerWidth, isMobile, activeIndex, visibleTopics]);
+  }, [arcConfig, activeIndex, visibleTopics, isMobile]);
 
-  // Handle navigation to next card
+  // Optimized navigation handlers
   const handleNextCard = useCallback(() => {
-    setActiveIndex((prevIndex) => (prevIndex + 1) % quizTopics.length);
+    setActiveIndex((prevIndex) => (prevIndex + 1) % visibleTopics.length);
+  }, [visibleTopics.length]);
+  
+  const handlePrevCard = useCallback(() => {
+    setActiveIndex((prevIndex) => (prevIndex - 1 + visibleTopics.length) % visibleTopics.length);
+  }, [visibleTopics.length]);
+  
+  // Memoized card click handler to prevent unnecessary re-renders
+  const handleCardClick = useCallback((index: number) => {
+    setActiveIndex(index);
   }, []);
 
   // If not mounted yet, render a simplified version to avoid hydration issues
@@ -163,7 +183,7 @@ export default function TopicCarousel() {
           <h2 className="text-2xl md:text-3xl font-editorial font-extralight leading-[110%] tracking-[-1.8px] mb-2"><span className="italic">Maestro</span> of Interviews</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 max-w-xs mx-auto mb-4">
             AI Agents at your service.<br/>
-            You decide your conceirge.<br/>
+            You decide your concierge.<br/>
           </p>
           <Link href="/topics" className="mt-2 px-6 py-2 bg-gray-900 dark:bg-white/10 text-white text-sm rounded-full hover:bg-black dark:hover:bg-white/20 transition-all duration-300 shadow-md border border-gray-700/50 dark:border-white/20 inline-block">
             Browse Topics
@@ -205,7 +225,7 @@ export default function TopicCarousel() {
                 <TopicCard
                   topic={topic}
                   isActive={isActive}
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => handleCardClick(index)}
                 />
               </motion.div>
             </div>
@@ -219,7 +239,7 @@ export default function TopicCarousel() {
                opacity: isVisible ? 1 : 0
              }}>
           <button
-            onClick={() => setActiveIndex((prevIndex) => (prevIndex - 1 + visibleTopics.length) % visibleTopics.length)}
+            onClick={handlePrevCard}
             className="w-10 h-10 md:w-12 md:h-12 bg-gray-900/90 dark:bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black dark:hover:bg-black/60 transition-all duration-300 shadow-lg border border-gray-700/50 dark:border-white/10"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

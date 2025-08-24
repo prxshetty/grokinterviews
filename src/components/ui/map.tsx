@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DottedMap from "dotted-map";
 import Image from "next/image";
@@ -18,6 +18,11 @@ interface MapProps {
   loop?: boolean;
 }
 
+// Cache the map instance globally to prevent recreation
+let cachedMap: DottedMap | null = null;
+let cachedLightSvg: string | null = null;
+let cachedDarkSvg: string | null = null;
+
 export function WorldMap({ 
   dots = [], 
   lineColor = "#0ea5e9",
@@ -27,48 +32,89 @@ export function WorldMap({
 }: MapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const map = useMemo(
-    () => new DottedMap({ height: 100, grid: "diagonal" }),
-    []
-  );
+  // Create map instance only once
+  const map = useMemo(() => {
+    if (!cachedMap) {
+      cachedMap = new DottedMap({ height: 100, grid: "diagonal" });
+    }
+    return cachedMap;
+  }, []);
 
-  const svgMap = useMemo(
-    () => map.getSVG({
+  // Cache SVG maps for both themes to prevent regeneration
+  const svgMap = useMemo(() => {
+    if (!mounted) return "";
+    
+    const isDark = resolvedTheme === "dark" || theme === "dark";
+    
+    if (isDark && cachedDarkSvg) {
+      return cachedDarkSvg;
+    }
+    if (!isDark && cachedLightSvg) {
+      return cachedLightSvg;
+    }
+    
+    const svg = map.getSVG({
       radius: 0.22,
-      color: theme === "dark" ? "#FFFFFF" : "#000000",
+      color: isDark ? "#FFFFFF" : "#000000",
       shape: "circle",
       backgroundColor: "transparent",
-    }),
-    [map, theme]
-  );
+    });
+    
+    if (isDark) {
+      cachedDarkSvg = svg;
+    } else {
+      cachedLightSvg = svg;
+    }
+    
+    return svg;
+  }, [map, mounted, resolvedTheme, theme]);
 
-  const projectPoint = (lat: number, lng: number) => {
+  // Memoize projection function to avoid recreation
+  const projectPoint = useCallback((lat: number, lng: number) => {
     const x = (lng + 180) * (800 / 360);
     const y = (90 - lat) * (400 / 180);
     return { x, y };
-  };
+  }, []);
 
-  const createCurvedPath = (
+  const createCurvedPath = useCallback((
     start: { x: number; y: number },
     end: { x: number; y: number }
   ) => {
     const midX = (start.x + end.x) / 2;
     const midY = Math.min(start.y, end.y) - 50;
     return `M ${start.x} ${start.y} Q ${midX} ${midY} ${end.x} ${end.y}`;
-  };
+  }, []);
 
-  // Calculate animation timing
-  const staggerDelay = 0.3;
-  const totalAnimationTime = dots.length * staggerDelay + animationDuration;
-  const pauseTime = 2; // Pause for 2 seconds when all paths are drawn
-  const fullCycleDuration = totalAnimationTime + pauseTime;
+  // Memoize animation timing calculations
+  const animationConfig = useMemo(() => {
+    const staggerDelay = 0.3;
+    const totalAnimationTime = dots.length * staggerDelay + animationDuration;
+    const pauseTime = 2;
+    const fullCycleDuration = totalAnimationTime + pauseTime;
+    
+    return {
+      staggerDelay,
+      totalAnimationTime,
+      pauseTime,
+      fullCycleDuration
+    };
+  }, [dots.length, animationDuration]);
+
+  // Memoize projected points to avoid recalculation
+  const projectedDots = useMemo(() => {
+    return dots.map(dot => ({
+      ...dot,
+      startPoint: projectPoint(dot.start.lat, dot.start.lng),
+      endPoint: projectPoint(dot.end.lat, dot.end.lng)
+    }));
+  }, [dots, projectPoint]);
 
   return (
     <div className="w-full aspect-[2/1] md:aspect-[2.5/1] lg:aspect-[2/1] bg-transparent rounded-lg relative font-sans overflow-hidden">
@@ -88,6 +134,11 @@ export function WorldMap({
         viewBox="0 0 800 400"
         className="w-full h-full absolute inset-0 pointer-events-auto select-none"
         preserveAspectRatio="xMidYMid meet"
+        style={{
+          willChange: 'auto',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden'
+        }}
       >
         <defs>
           <linearGradient id="path-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -107,14 +158,13 @@ export function WorldMap({
           </filter>
         </defs>
 
-        {dots.map((dot, i) => {
-          const startPoint = projectPoint(dot.start.lat, dot.start.lng);
-          const endPoint = projectPoint(dot.end.lat, dot.end.lng);
+        {projectedDots.map((dot, i) => {
+          const { startPoint, endPoint } = dot;
           
           // Calculate keyframe times for this specific path
-          const startTime = (i * staggerDelay) / fullCycleDuration;
-          const endTime = (i * staggerDelay + animationDuration) / fullCycleDuration;
-          const resetTime = totalAnimationTime / fullCycleDuration;
+          const startTime = (i * animationConfig.staggerDelay) / animationConfig.fullCycleDuration;
+          const endTime = (i * animationConfig.staggerDelay + animationDuration) / animationConfig.fullCycleDuration;
+          const resetTime = animationConfig.totalAnimationTime / animationConfig.fullCycleDuration;
           
           return (
             <g key={`path-group-${i}`}>
@@ -130,15 +180,19 @@ export function WorldMap({
                   pathLength: 1
                 }}
                 transition={loop ? {
-                  duration: fullCycleDuration,
+                  duration: animationConfig.fullCycleDuration,
                   times: [0, startTime, endTime, resetTime, 1],
                   ease: "easeInOut",
                   repeat: Infinity,
                   repeatDelay: 0,
                 } : {
                   duration: animationDuration,
-                  delay: i * staggerDelay,
+                  delay: i * animationConfig.staggerDelay,
                   ease: "easeInOut",
+                }}
+                style={{
+                  willChange: 'auto',
+                  transform: 'translateZ(0)'
                 }}
               />
               
@@ -153,7 +207,7 @@ export function WorldMap({
                     cy: [startPoint.y, startPoint.y, endPoint.y, endPoint.y, startPoint.y],
                   }}
                   transition={{
-                    duration: fullCycleDuration,
+                    duration: animationConfig.fullCycleDuration,
                     times: [0, startTime, endTime, resetTime, 1],
                     ease: "easeInOut",
                     repeat: Infinity,
@@ -165,9 +219,8 @@ export function WorldMap({
           );
         })}
 
-        {dots.map((dot, i) => {
-          const startPoint = projectPoint(dot.start.lat, dot.start.lng);
-          const endPoint = projectPoint(dot.end.lat, dot.end.lng);
+        {projectedDots.map((dot, i) => {
+          const { startPoint, endPoint } = dot;
           
           return (
             <g key={`points-group-${i}`}>
@@ -177,8 +230,9 @@ export function WorldMap({
                   onHoverStart={() => setHoveredLocation(dot.start.label || `Location ${i}`)}
                   onHoverEnd={() => setHoveredLocation(null)}
                   className="cursor-pointer"
-                  whileHover={{ scale: 1.2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+                  style={{ transformOrigin: `${startPoint.x}px ${startPoint.y}px` }}
                 >
                   <circle
                     cx={startPoint.x}
@@ -188,38 +242,33 @@ export function WorldMap({
                     filter="url(#glow)"
                     className="drop-shadow-lg"
                   />
-                  <circle
+                  <motion.circle
                     cx={startPoint.x}
                     cy={startPoint.y}
                     r="2"
                     fill={lineColor}
-                    opacity="0.5"
-                  >
-                    <animate
-                      attributeName="r"
-                      from="2"
-                      to="12"
-                      dur="2s"
-                      begin="0s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="opacity"
-                      from="0.6"
-                      to="0"
-                      dur="2s"
-                      begin="0s"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
+                    initial={{ scale: 1, opacity: 0.6 }}
+                    animate={{
+                      scale: [1, 6, 1],
+                      opacity: [0.6, 0, 0.6]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      times: [0, 0.5, 1]
+                    }}
+                    style={{ transformOrigin: `${startPoint.x}px ${startPoint.y}px` }}
+                  />
                 </motion.g>
                 
                 {showLabels && dot.start.label && (
                   <motion.g
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 * i + 0.3, duration: 0.5 }}
+                    transition={{ delay: 0.5 * i + 0.3, duration: 0.5, ease: "easeOut" }}
                     className="pointer-events-none"
+                    style={{ willChange: 'transform, opacity' }}
                   >
                     <foreignObject
                       x={startPoint.x - 50}
@@ -244,8 +293,9 @@ export function WorldMap({
                   onHoverStart={() => setHoveredLocation(dot.end.label || `Destination ${i}`)}
                   onHoverEnd={() => setHoveredLocation(null)}
                   className="cursor-pointer"
-                  whileHover={{ scale: 1.2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+                  style={{ transformOrigin: `${endPoint.x}px ${endPoint.y}px` }}
                 >
                   <circle
                     cx={endPoint.x}
@@ -255,38 +305,34 @@ export function WorldMap({
                     filter="url(#glow)"
                     className="drop-shadow-lg"
                   />
-                  <circle
+                  <motion.circle
                     cx={endPoint.x}
                     cy={endPoint.y}
                     r="2"
                     fill={lineColor}
-                    opacity="0.5"
-                  >
-                    <animate
-                      attributeName="r"
-                      from="2"
-                      to="12"
-                      dur="2s"
-                      begin="0.5s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="opacity"
-                      from="0.6"
-                      to="0"
-                      dur="2s"
-                      begin="0.5s"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
+                    initial={{ scale: 1, opacity: 0.6 }}
+                    animate={{
+                      scale: [1, 6, 1],
+                      opacity: [0.6, 0, 0.6]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      times: [0, 0.5, 1],
+                      delay: 0.5
+                    }}
+                    style={{ transformOrigin: `${endPoint.x}px ${endPoint.y}px` }}
+                  />
                 </motion.g>
                 
                 {showLabels && dot.end.label && (
                   <motion.g
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 * i + 0.5, duration: 0.5 }}
+                    transition={{ delay: 0.5 * i + 0.5, duration: 0.5, ease: "easeOut" }}
                     className="pointer-events-none"
+                    style={{ willChange: 'transform, opacity' }}
                   >
                     <foreignObject
                       x={endPoint.x - 50}

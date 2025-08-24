@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Button1 } from '@/components/ui/button-1';
-import { WovenCanvas } from '@/components/ui/woven-canvas';
+
+const WovenCanvas = lazy(() => import('@/components/ui/woven-canvas').then(module => ({ default: module.WovenCanvas })));
 
 
 export function HeroSection() {
@@ -24,13 +25,15 @@ export function HeroSection() {
             <div className="relative w-full overflow-hidden h-[calc(100dvh-4rem)]">
                 {/* Woven Canvas Background - positioned to the right and scaled up */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-30">
-                        <WovenCanvas
-                            className="absolute inset-0 scale-105"
-                            particleCount={25000}
-                            opacity={0.6}
-                            rotationSpeed={0.01}
-                        />
+                    <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-60">
+                        <Suspense fallback={null}>
+                            <WovenCanvas
+                                className="absolute inset-0 scale-105"
+                                particleCount={25000}
+                                opacity={0.6}
+                                rotationSpeed={0.01}
+                            />
+                        </Suspense>
                     </div>
                 </div>
                 {/* Consistent padding that matches navigation exactly */}

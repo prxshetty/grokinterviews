@@ -573,6 +573,13 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
               <div className="hidden lg:flex lg:items-center lg:space-x-4">
                 {user ? (
                   <>
+                    {!error && (
+                      <StreakBadge
+                        currentStreak={current_streak}
+                        highestStreak={highest_streak}
+                        isLoading={isLoading}
+                      />
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center space-x-1.5 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors group">
@@ -642,14 +649,6 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                         </div>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    {!error && (
-                      <StreakBadge
-                        currentStreak={current_streak}
-                        highestStreak={highest_streak}
-                        isLoading={isLoading}
-                        className="ml-2"
-                      />
-                    )}
                   </>
                 ) : (
                   <div className="flex items-center space-x-2">
