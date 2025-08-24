@@ -8,6 +8,7 @@ const Analytics = lazy(() => import("@vercel/analytics/react").then(module => ({
 import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
 import { GeistSans } from 'geist/font';
+import { PPEditorialUltralight } from '@/fonts/pp-editorial';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
@@ -111,7 +112,8 @@ export default function RootLayout({
       </head>
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased',
-        GeistSans.variable
+        GeistSans.variable,
+        PPEditorialUltralight.variable
       )}>
         {process.env.NODE_ENV === 'development' && <TwentyFirstToolbar />}
         <ThemeProvider

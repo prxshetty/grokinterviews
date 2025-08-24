@@ -180,7 +180,7 @@ export default function TopicCarousel() {
                opacity: isVisible ? 1 : 0,
                transform: isVisible ? 'translateY(0)' : 'translateY(30px)'
              }}>
-          <h2 className="text-2xl md:text-3xl font-editorial font-extralight leading-[110%] tracking-[-1.8px] mb-2"><span className="italic">Maestro</span> of Interviews</h2>
+          <h2 className="text-2xl md:text-3xl font-editorial font-light leading-[110%] tracking-[-1.8px] mb-2"><span className="italic font-extralight">Maestro</span> of Interviews</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300 max-w-xs mx-auto mb-4">
             AI Agents at your service.<br/>
             You decide your concierge.<br/>
