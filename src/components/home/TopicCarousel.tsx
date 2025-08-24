@@ -233,7 +233,7 @@ export default function TopicCarousel() {
         </div>
 
         {/* Navigation arrows */}
-        <div className="absolute bottom-0 w-full flex justify-between px-4 md:px-8 z-20 mb-32 md:mb-36 transition-all duration-1000"
+        <div className="absolute bottom-0 w-full flex justify-between px-8 md:px-16 z-20 mb-32 md:mb-36 transition-all duration-1000"
              style={{
                transitionDelay: `${isVisible ? 900 : 0}ms`,
                opacity: isVisible ? 1 : 0

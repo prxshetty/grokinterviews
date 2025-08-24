@@ -133,7 +133,9 @@ export default function ResourceCarousel() {
       }
       
       .animate-scroll-left:hover,
-      .animate-scroll-right:hover {
+      .animate-scroll-right:hover,
+      .group:hover .animate-scroll-left,
+      .group:hover .animate-scroll-right {
         animation-play-state: paused;
       }
       
@@ -227,7 +229,7 @@ export default function ResourceCarousel() {
           </Link>
         </div>
         {/* Container with padding to ensure smooth transition */}
-        <div className="relative py-3 sm:py-4 md:py-6 w-full overflow-hidden">
+        <div className="relative py-3 sm:py-4 md:py-6 w-full overflow-hidden group-hover:backdrop-blur-lg transition-all duration-300">
 
 
           {/* Row 1: All companies scrolling left */}

@@ -1,12 +1,13 @@
 import './globals.css';
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from 'next';
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/react";
+import { lazy } from 'react';
+
+const SpeedInsights = lazy(() => import("@vercel/speed-insights/next").then(module => ({ default: module.SpeedInsights })));
+const Analytics = lazy(() => import("@vercel/analytics/react").then(module => ({ default: module.Analytics })));
 import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
-import { GeistSans, GeistMono } from 'geist/font';
-import { PPEditorialUltralight } from '@/fonts/pp-editorial';
+import { GeistSans } from 'geist/font';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
@@ -110,9 +111,7 @@ export default function RootLayout({
       </head>
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased',
-        GeistSans.variable,
-        GeistMono.variable,
-        PPEditorialUltralight.variable
+        GeistSans.variable
       )}>
         {process.env.NODE_ENV === 'development' && <TwentyFirstToolbar />}
         <ThemeProvider
