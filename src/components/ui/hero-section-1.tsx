@@ -10,28 +10,20 @@ const WovenCanvas = lazy(() => import('@/components/ui/woven-canvas').then(modul
 
 export function HeroSection() {
     const [isReady, setIsReady] = useState(false);
-    const [canvasReady, setCanvasReady] = useState(false);
     
     useEffect(() => {
-        // Show content immediately
+        // Load everything together
         setIsReady(true);
-        
-        // Load canvas after a delay to prevent hanging
-        const canvasTimer = setTimeout(() => {
-            setCanvasReady(true);
-        }, 500);
-        
-        return () => clearTimeout(canvasTimer);
     }, []);
     
     return (
         <>
             <div className="relative w-full overflow-hidden h-[calc(100dvh-4rem)]">
-                {/* Woven Canvas Background - loaded after content */}
+                {/* Woven Canvas Background - loaded together with content */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-60">
                         <Suspense fallback={null}>
-                            {canvasReady && (
+                            {isReady && (
                                 <WovenCanvas
                                     className="absolute inset-0 scale-105"
                                     particleCount={5000}
