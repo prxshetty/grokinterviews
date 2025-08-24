@@ -148,7 +148,6 @@ export default function HomePageClient() {
         <VoiceHeroSection 
           title="Smarter Conversations, Simplified."
           description="Seamlessly connect through the web or a real-time AI voice call—wherever you are."
-          primaryButtonText="Start Voice Interview"
         />
       </div>
       
