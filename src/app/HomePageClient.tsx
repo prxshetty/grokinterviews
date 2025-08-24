@@ -143,12 +143,6 @@ export default function HomePageClient() {
         <CompanyList />
       </div>
 
-      {/* Feature Section - Lazy loaded */}
-      <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
-        <Suspense fallback={<FeatureSkeleton />}>
-          <FeatureSection />
-        </Suspense>
-      </div>
 
       {/* Voice Hero Section */}
       <div className="mt-28 sm:mt-24 md:mt-24 mb-16 sm:mb-20 md:mb-24">
@@ -159,7 +153,13 @@ export default function HomePageClient() {
           />
         </Suspense>
       </div>
-      
+            {/* Feature Section - Lazy loaded */}
+      <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
+        <Suspense fallback={<FeatureSkeleton />}>
+          <FeatureSection />
+        </Suspense>
+        
+      </div>
 
       {/* Testimonials Section - Hidden for now */}
       {/* <TestimonialsSection /> */}

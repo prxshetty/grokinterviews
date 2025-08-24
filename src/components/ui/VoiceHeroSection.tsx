@@ -78,7 +78,7 @@ function VoiceHeroSection({
         <div className="flex flex-col items-center justify-center min-h-[80vh] py-4 sm:py-6 md:py-8 lg:py-12">
           
           {/* Text Content Section - Centered */}
-          <div className={`relative z-10 px-4 sm:px-6 md:px-8 text-center transition-all duration-700 delay-150 ${
+          <div className={`relative z-10 text-center transition-all duration-700 delay-150 ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
             <div className="max-w-4xl mx-auto">
