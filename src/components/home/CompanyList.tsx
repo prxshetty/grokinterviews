@@ -209,8 +209,8 @@ export default function ResourceCarousel() {
     >
       {/* Title and Subtitle Section */}
       <div className="text-center mb-8 sm:mb-12 md:mb-16 px-3 sm:px-4 md:px-6">
-        <h2 className="text-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-editorial font-extralight leading-[110%] tracking-[-1.8px] mb-4 sm:mb-6">
-          Powered by <span className="italic">Millions</span> of Resources
+        <h2 className="text-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-editorial font-light leading-[110%] tracking-[-1.8px] mb-4 sm:mb-6">
+          Powered by <span className="italic font-extralight">Millions</span> of Resources
         </h2>
         <p className="max-w-2xl mx-auto text-balance text-sm sm:text-base md:text-lg text-muted-foreground">
           Our AI aggregates knowledge from top platforms, research papers, and developer communities to provide you with comprehensive interview preparation.

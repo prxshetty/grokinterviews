@@ -345,7 +345,7 @@ export default function TopicCard({ topic, isActive, onClick }: TopicCardProps) 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Base background - dark in both modes */}
+      {/* Base background - dark in light mode, white in dark mode */}
       <div className="absolute inset-0 bg-gray-900 dark:bg-black transition-all duration-300"></div>
 
       {/* Colored overlay with gradient */}

@@ -60,8 +60,8 @@ export function HeroSection() {
                         </div>
                 
                         {/* Main Heading */}
-                        <h1 className={`mt-6 sm:mt-8 text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-editorial font-extralight leading-[110%] tracking-[-1.8px] w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
-                            Your <span className="italic">Complete</span> Platform for Interviews
+                        <h1 className={`mt-6 sm:mt-8 text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-editorial font-light leading-[110%] tracking-[-1.8px] w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
+                            Your <span className="italic font-extralight">Complete</span> Platform for Interviews
                         </h1>
                         
                         {/* Description */}
