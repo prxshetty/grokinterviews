@@ -15,36 +15,36 @@ function Feature() {
         description: "Interview Questions - Across comprehensive domains",
       },
       {
-        title: "13000+ Hours",
-        description: "Hours of Prep Content - Curated video tutorials and lectures",
+        title: "2926601 Resources",
+        description: "Learning Resources - Curated from top platforms",
       },
       {
-        title: "3.6M+ Resources",
-        description: "Learning Resources - YouTube videos, research papers, PDFs",
+        title: "1462500 Websites",
+        description: "Website Resources - Articles, blogs, and tutorials",
       },
       {
-        title: "50000+ Questions",
-        description: "Interview Questions - Across 5 comprehensive domains",
+        title: "162400 Images",
+        description: "Visual Learning - Diagrams, charts, and infographics",
       },
       {
-        title: "762000+ References",
+        title: "612360 Videos",
+        description: "Video Content - YouTube tutorials and lectures",
+      },
+      {
+        title: "617000 Books",
         description: "Book References - Technical books and documentation",
       },
       {
-        title: "508000+ Papers",
+        title: "413000 Papers",
         description: "Research Papers - Academic papers and preprints",
       },
       {
-        title: "0.6s Response",
-        description: "Fastest Response Time - AI-powered answer generation",
+        title: "2,015 Topics",
+        description: "Technical Topics - Organized learning paths",
       },
       {
-        title: "307000 Keywords",
-        description: "Unique Keywords & Tags",
-      },
-      {
-        title: "535000+ Words",
-        description: "Estimated Words in Questions",
+        title: "13,272 Categories",
+        description: "Question Categories - Structured by domain"
       }
     ],
     []
