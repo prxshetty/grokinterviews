@@ -150,7 +150,7 @@ function TopicCategoryGridComponent({
     return (
       <div className="text-center py-10 px-4 pt-24 sm:pt-28 md:pt-32">
         {showDomainTitle && domain && (
-          <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl mb-6 text-left text-gray-800 dark:text-gray-200">
+          <h2 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl mb-6 text-left text-gray-800 dark:text-gray-200">
             {getDisplayDomainName(domain)}
           </h2>
         )}
@@ -175,7 +175,7 @@ function TopicCategoryGridComponent({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <h2 className="text-3xl sm:text-4xl font-light tracking-tight md:text-5xl text-left text-gray-800 dark:text-gray-200">
+            <h2 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl text-left text-gray-800 dark:text-gray-200">
               {getDisplayDomainName(domain)}
             </h2>
           </div>
