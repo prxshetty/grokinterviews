@@ -146,18 +146,20 @@ export default function ResourceCarousel() {
   if (!mounted) {
     return (
       <div className="mt-12 sm:mt-16 md:mt-20 transition-all duration-1000 w-full">
-        <div className="relative m-auto px-3 sm:px-4 md:px-6 mb-6 sm:mb-8 w-full">
-          <div className="h-8 w-64 mx-auto opacity-0" /> {/* Invisible title placeholder */}
+        {/* Title and Subtitle Placeholder */}
+        <div className="text-center mb-8 sm:mb-12 md:mb-16 px-3 sm:px-4 md:px-6">
+          <div className="h-8 sm:h-10 md:h-12 lg:h-14 w-64 sm:w-80 md:w-96 mx-auto opacity-0 mb-4 sm:mb-6" /> {/* Invisible title placeholder */}
+          <div className="h-4 sm:h-5 md:h-6 w-48 sm:w-64 md:w-80 mx-auto opacity-0" /> {/* Invisible subtitle placeholder */}
         </div>
         <div className="group w-full overflow-hidden relative max-w-[100vw]">
-          <div className="relative py-1 sm:py-2 w-full overflow-hidden">
+          <div className="relative py-3 sm:py-4 md:py-6 w-full overflow-hidden">
             <div className="flex whitespace-nowrap">
               {[...Array(14)].map((_, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center justify-center mx-1.5 sm:mx-2 md:mx-3 lg:mx-4 xl:mx-5 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28 opacity-0 flex-shrink-0"
+                  className="flex flex-col items-center justify-center mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 w-16 sm:w-20 md:w-24 lg:w-28 xl:w-32 opacity-0 flex-shrink-0"
                 >
-                  <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 mb-2 sm:mb-3" />
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 mb-3 sm:mb-4" />
                 </div>
               ))}
             </div>
@@ -172,6 +174,16 @@ export default function ResourceCarousel() {
       ref={ref}
       className={`mt-12 sm:mt-16 md:mt-20 transition-all duration-1000 w-full ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
+      {/* Title and Subtitle Section */}
+      <div className="text-center mb-8 sm:mb-12 md:mb-16 px-3 sm:px-4 md:px-6">
+        <h2 className="text-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-editorial font-extralight leading-[110%] tracking-[-1.8px] mb-4 sm:mb-6">
+          Powered by <span className="italic">Millions</span> of Resources
+        </h2>
+        <p className="max-w-2xl mx-auto text-balance text-sm sm:text-base md:text-lg text-muted-foreground">
+          Our AI aggregates knowledge from top platforms, research papers, and developer communities to provide you with comprehensive interview preparation.
+        </p>
+      </div>
+      
       <div className="group w-full overflow-hidden relative">
         {/* Gradient masks removed for cleaner look */}
         <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
@@ -184,7 +196,7 @@ export default function ResourceCarousel() {
           </Link>
         </div>
         {/* Container with padding to ensure smooth transition */}
-        <div className="relative py-1 sm:py-2 w-full overflow-hidden">
+        <div className="relative py-3 sm:py-4 md:py-6 w-full overflow-hidden">
 
 
           {/* Main carousel with animation */}
@@ -193,22 +205,22 @@ export default function ResourceCarousel() {
             {[...resources, ...resources].map((resource, index) => (
               <div
                 key={`${resource.name}-${index}`}
-                className="flex flex-col items-center justify-center mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 w-16 sm:w-20 md:w-24 lg:w-28 xl:w-32 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"
+                className="flex flex-col items-center justify-center mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-10 w-20 sm:w-24 md:w-28 lg:w-32 xl:w-36 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"
               >
                 {/* Logo container - Fixed sizing for perfect fit */}
-                <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 transform transition-transform duration-300 ease-in-out mb-2 sm:mb-3 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 transform transition-transform duration-300 ease-in-out mb-3 sm:mb-4 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
                    <Image
                     src={resource.logo}
                     alt={`${resource.name} Logo`}
-                    className={`${resource.className} max-h-[80%] max-w-[80%] object-contain`}
-                    width={80}
-                    height={80}
+                    className={`${resource.className} max-h-[70%] max-w-[70%] object-contain`}
+                    width={120}
+                    height={120}
                     unoptimized
                     priority={index < resources.length} // Prioritize first set for LCP
                   />
                 </div>
                 {/* Description tooltip */}
-                <div className="absolute top-full mt-1 sm:mt-2 left-1/2 transform -translate-x-1/2 bg-black/80 dark:bg-white/80 text-white dark:text-black text-[10px] sm:text-xs px-2 py-0.5 sm:py-1 rounded opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 backdrop-blur-sm">
+                <div className="absolute top-full mt-2 sm:mt-3 left-1/2 transform -translate-x-1/2 bg-black/80 dark:bg-white/80 text-white dark:text-black text-xs sm:text-sm px-3 py-1 sm:py-1.5 rounded opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 backdrop-blur-sm">
                   {resource.description}
                 </div>
               </div>
