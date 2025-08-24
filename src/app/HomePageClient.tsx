@@ -7,7 +7,6 @@ import { useCentralizedIntersection } from '@/hooks/ui';
 
 
 // Lazy load non-critical components that are below the fold
-const StatsSection = lazy(() => import('@/components/home/StatsSection'));
 const TopicCarousel = lazy(() => import('@/components/home/TopicCarousel'));
 const FeatureSection = lazy(() => import('@/components/home/FeatureSection').then(module => ({ default: module.FeatureSection })));
 const VoiceHeroSection = lazy(() => import('@/components/ui/VoiceHeroSection'));
@@ -98,22 +97,7 @@ function ExploreTopicsSection() {
 
 
 // Loading skeleton components
-function StatsSkeleton() {
-  return (
-    <div className="py-16 animate-pulse">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="text-center">
-              <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded w-16 mx-auto mb-4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mx-auto"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 
 // TestimonialsSection component with scroll animations
@@ -151,20 +135,18 @@ export default function HomePageClient() {
         <HeroSection />
       </div>
 
-      <div className="px-4 sm:px-6 md:px-8 lg:px-12">
-        {/* Topic Carousel Section - Lazy loaded */}
-        <ExploreTopicsSection />
-      </div>
+      {/* Topic Carousel Section - Lazy loaded */}
+      <ExploreTopicsSection />
 
       {/* Company List Section */}
       <div className="mt-48 sm:mt-20 md:mt-24 lg:mt-32 w-full">
         <CompanyList />
       </div>
 
-      {/* Stats Section - Lazy loaded */}
-      <div className="mt-12 sm:mt-16 md:mt-24">
-        <Suspense fallback={<StatsSkeleton />}>
-          <StatsSection />
+      {/* Feature Section - Lazy loaded */}
+      <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
+        <Suspense fallback={<FeatureSkeleton />}>
+          <FeatureSection />
         </Suspense>
       </div>
 
@@ -178,14 +160,6 @@ export default function HomePageClient() {
         </Suspense>
       </div>
       
-      <div className="px-4 sm:px-6 md:px-8 lg:px-12">
-        {/* Feature Section - Lazy loaded */}
-        <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
-          <Suspense fallback={<FeatureSkeleton />}>
-            <FeatureSection />
-          </Suspense>
-        </div>
-      </div>
 
       {/* Testimonials Section - Hidden for now */}
       {/* <TestimonialsSection /> */}
