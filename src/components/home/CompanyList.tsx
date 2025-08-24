@@ -100,14 +100,19 @@ export default function ResourceCarousel() {
     // Add animation styles dynamically
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes scroll {
+      @keyframes scroll-left {
         0% { transform: translateX(0); }
         100% { transform: translateX(-50%); }
       }
       
-      .animate-scroll-smooth {
+      @keyframes scroll-right {
+        0% { transform: translateX(-50%); }
+        100% { transform: translateX(0); }
+      }
+      
+      .animate-scroll-left {
         display: flex;
-        animation: scroll 40s linear infinite;
+        animation: scroll-left 40s linear infinite;
         will-change: transform;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
@@ -116,19 +121,33 @@ export default function ResourceCarousel() {
         min-width: 100%;
       }
       
-      .animate-scroll-smooth:hover {
+      .animate-scroll-right {
+        display: flex;
+        animation: scroll-right 40s linear infinite;
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translate3d(0, 0, 0);
+        contain: content;
+        min-width: 100%;
+      }
+      
+      .animate-scroll-left:hover,
+      .animate-scroll-right:hover {
         animation-play-state: paused;
       }
       
       @media (max-width: 640px) {
-        .animate-scroll-smooth {
-          animation: scroll 60s linear infinite;
+        .animate-scroll-left,
+        .animate-scroll-right {
+          animation-duration: 60s;
         }
       }
       
       @media (max-width: 768px) {
-        .animate-scroll-smooth {
-          animation: scroll 50s linear infinite;
+        .animate-scroll-left,
+        .animate-scroll-right {
+          animation-duration: 50s;
         }
       }
     `;
@@ -152,11 +171,23 @@ export default function ResourceCarousel() {
           <div className="h-4 sm:h-5 md:h-6 w-48 sm:w-64 md:w-80 mx-auto opacity-0" /> {/* Invisible subtitle placeholder */}
         </div>
         <div className="group w-full overflow-hidden relative max-w-[100vw]">
-          <div className="relative py-3 sm:py-4 md:py-6 w-full overflow-hidden">
-            <div className="flex whitespace-nowrap">
+          <div className="relative py-2 sm:py-3 w-full overflow-hidden">
+            {/* Row 1 skeleton */}
+            <div className="flex whitespace-nowrap mb-0 sm:mb-3">
               {[...Array(14)].map((_, index) => (
                 <div
-                  key={index}
+                  key={`row1-${index}`}
+                  className="flex flex-col items-center justify-center mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 w-16 sm:w-20 md:w-24 lg:w-28 xl:w-32 opacity-0 flex-shrink-0"
+                >
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 mb-3 sm:mb-4" />
+                </div>
+              ))}
+            </div>
+            {/* Row 2 skeleton */}
+            <div className="flex whitespace-nowrap">
+              {[...Array(7)].map((_, index) => (
+                <div
+                  key={`row2-${index}`}
                   className="flex flex-col items-center justify-center mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 w-16 sm:w-20 md:w-24 lg:w-28 xl:w-32 opacity-0 flex-shrink-0"
                 >
                   <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 mb-3 sm:mb-4" />
@@ -199,12 +230,12 @@ export default function ResourceCarousel() {
         <div className="relative py-3 sm:py-4 md:py-6 w-full overflow-hidden">
 
 
-          {/* Main carousel with animation */}
-          <div className="flex whitespace-nowrap animate-scroll-smooth w-max">
+          {/* Row 1: All companies scrolling left */}
+          <div className="flex whitespace-nowrap animate-scroll-left w-max">
             {/* Duplicate resources for infinite scroll effect */}
             {[...resources, ...resources].map((resource, index) => (
               <div
-                key={`${resource.name}-${index}`}
+                key={`${resource.name}-row1-${index}`}
                 className="flex flex-col items-center justify-center mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-10 w-20 sm:w-24 md:w-28 lg:w-32 xl:w-36 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"
               >
                 {/* Logo container - Fixed sizing for perfect fit */}
@@ -217,6 +248,33 @@ export default function ResourceCarousel() {
                     height={120}
                     unoptimized
                     priority={index < resources.length} // Prioritize first set for LCP
+                  />
+                </div>
+                {/* Description tooltip */}
+                <div className="absolute top-full mt-2 sm:mt-3 left-1/2 transform -translate-x-1/2 bg-black/80 dark:bg-white/80 text-white dark:text-black text-xs sm:text-sm px-3 py-1 sm:py-1.5 rounded opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 backdrop-blur-sm">
+                  {resource.description}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Row 2: Half companies scrolling right */}
+          <div className="flex whitespace-nowrap animate-scroll-right w-max">
+            {/* Use half the resources for second row */}
+            {[...resources.slice(0, Math.ceil(resources.length / 2)), ...resources.slice(0, Math.ceil(resources.length / 2))].map((resource, index) => (
+              <div
+                key={`${resource.name}-row2-${index}`}
+                className="flex flex-col items-center justify-center mx-3 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-10 w-20 sm:w-24 md:w-28 lg:w-32 xl:w-36 opacity-80 hover:opacity-100 transition-all duration-300 group/item flex-shrink-0"
+              >
+                {/* Logo container - Fixed sizing for perfect fit */}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 transform transition-transform duration-300 ease-in-out mb-3 sm:mb-4 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
+                   <Image
+                    src={resource.logo}
+                    alt={`${resource.name} Logo`}
+                    className={`${resource.className} max-h-[70%] max-w-[70%] object-contain`}
+                    width={120}
+                    height={120}
+                    unoptimized
                   />
                 </div>
                 {/* Description tooltip */}
