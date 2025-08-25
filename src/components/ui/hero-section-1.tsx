@@ -1,29 +1,46 @@
 'use client';
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useCentralizedIntersection } from '@/hooks/ui'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Button1 } from '@/components/ui/button-1';
 
-const WovenCanvas = lazy(() => import('@/components/ui/woven-canvas').then(module => ({ default: module.WovenCanvas })));
+import { WovenCanvas } from '@/components/ui/woven-canvas'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 
 export function HeroSection() {
-    const [isReady, setIsReady] = useState(false);
-    
+    const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({ threshold: 0.1, rootMargin: '0px', once: true })
+    const [showCanvas, setShowCanvas] = useState(false)
+
+    // Defer heavy canvas initialization until browser is idle or after short delay
     useEffect(() => {
-        // Load everything together
-        setIsReady(true);
-    }, []);
+        const start = () => setShowCanvas(true)
+        if (typeof window !== 'undefined') {
+            // Use requestIdleCallback if available to avoid blocking render
+            // Fallback to timeout for browsers that don\'t support it
+            // @ts-ignore
+            const ric = window.requestIdleCallback as typeof window.requestIdleCallback | undefined
+            if (ric) ric(start, { timeout: 1000 })
+            else setTimeout(start, 500)
+        }
+    }, [])
+    const isReady = mounted;
+    const heroReady = isReady && showCanvas && isVisible;
     
     return (
         <>
-            <div className="relative w-full overflow-hidden h-[calc(100dvh-4rem)]">
+            <div ref={sectionRef} className="relative w-full overflow-hidden h-[calc(100svh-4rem)]">
+                {!heroReady && (
+                    <div className="absolute inset-0 flex items-center justify-center z-20 bg-background/60 backdrop-blur-sm">
+                        <LoadingSpinner size="lg" color="muted" centered={true} />
+                    </div>
+                )}
                 {/* Woven Canvas Background - loaded together with content */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-60">
-                        <Suspense fallback={null}>
-                            {isReady && (
+                        {showCanvas && isVisible && (
                                 <WovenCanvas
                                     className="absolute inset-0 scale-105"
                                     particleCount={5000}
@@ -31,7 +48,6 @@ export function HeroSection() {
                                     rotationSpeed={0.01}
                                 />
                             )}
-                        </Suspense>
                     </div>
                 </div>
                 {/* Consistent padding that matches navigation exactly */}

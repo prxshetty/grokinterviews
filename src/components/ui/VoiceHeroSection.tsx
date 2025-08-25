@@ -1,7 +1,10 @@
 'use client';
 
-import { useMemo, memo } from 'react';
-import { WorldMap } from './map';
+import { useMemo, memo, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+
+const WorldMap = dynamic(() => import('./map').then(mod => mod.WorldMap), { ssr: false });
 import { useCentralizedIntersection } from '@/hooks/ui/use-centralized-intersection';
 
 interface VoiceHeroSectionProps {
@@ -17,6 +20,23 @@ function VoiceHeroSection({
     rootMargin: '0px 0px -50px 0px',
     once: true
   });
+
+  const [showMap, setShowMap] = useState(false);
+
+  useEffect(() => {
+    function start() { setShowMap(true) }
+
+    // Guard against SSR
+    if (typeof window === 'undefined') return
+
+    if ('requestIdleCallback' in window) {
+      ;(window as any).requestIdleCallback(start, { timeout: 1000 })
+      return undefined
+    }
+
+    const id = setTimeout(start, 500)
+    return () => clearTimeout(id)
+  }, []);
 
   // Memoize sample data for WorldMap to prevent unnecessary re-renders
   const mapDots = useMemo(() => [
@@ -69,7 +89,7 @@ function VoiceHeroSection({
   return (
     <div 
       ref={sectionRef}
-      className={`relative bg-transparent overflow-hidden min-h-[80vh] flex flex-col transition-all duration-700 ${
+      className={`relative bg-transparent overflow-hidden min-h-[80vh] flex flex-col transition-all duration-700 delay-700 ${
         isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
@@ -98,7 +118,7 @@ function VoiceHeroSection({
           <div className={`relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 scale-[0.85] ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            <WorldMap {...worldMapProps} />
+            {showMap ? <WorldMap {...worldMapProps} /> : <LoadingSpinner size="lg" color="muted" centered={true} />}
           </div>
 
 

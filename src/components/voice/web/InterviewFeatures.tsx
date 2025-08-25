@@ -96,7 +96,7 @@ export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
   return (
     <div className="mb-8 font-sans">
       <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl pp-editorial text-foreground mb-4 tracking-tight">
+        <h1 className="text-4xl md:text-5xl font-editorial font-light text-foreground mb-4 tracking-tight">
           {content.title}
         </h1>
       </div>
