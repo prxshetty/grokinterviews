@@ -38,7 +38,7 @@ export function TranscriptHeader({
   return (
     <div className="mb-8">
       <div className="flex items-start justify-between mb-3">
-        <h1 className="text-4xl font-light text-foreground tracking-tight">
+        <h1 className="text-4xl font-editorial font-light text-foreground tracking-tight">
           {title}
         </h1>
 

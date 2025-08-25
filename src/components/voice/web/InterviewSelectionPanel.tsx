@@ -98,7 +98,7 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
   };
 
   return (
-    <div className="flex flex-col gap-8 items-center">
+    <div className="font-pp-editorial font-light flex flex-col gap-8 items-center">
       {/* Top Section: AI Avatar with Carousel */}
       <div className="flex flex-col items-center">
         <InterviewAvatar
