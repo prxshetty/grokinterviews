@@ -159,7 +159,7 @@ function BookmarksPage() {
 
   return (
     <div className="min-h-screen bg-transparent text-foreground">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 pt-20 sm:pt-24 md:pt-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         <header className="mb-8 md:mb-12">
           <h1 className="text-3xl sm:text-4xl font-editorial font-light font-normal leading-tight text-gray-900 dark:text-gray-100">
             Your Bookmarks
@@ -181,12 +181,16 @@ function BookmarksPage() {
                 </div>
                 <div className="w-full sm:w-auto">
                     <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectTrigger className="w-full sm:w-auto h-8 text-xs rounded-full border-gray-300/60 dark:border-gray-600/60 [&_svg]:size-3">
                             <SelectValue placeholder="Sort by..." />
                         </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="desc">Newest First</SelectItem>
-                            <SelectItem value="asc">Oldest First</SelectItem>
+                        <SelectContent className="rounded-xl">
+                            <SelectItem value="desc">
+                                <span className="font-medium">Newest</span>
+                            </SelectItem>
+                            <SelectItem value="asc">
+                                <span className="font-medium">Oldest</span>
+                            </SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
