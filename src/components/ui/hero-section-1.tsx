@@ -21,8 +21,12 @@ const WovenCanvas = dynamic(
 
 
 export function HeroSection() {
-    // Observe visibility continuously to unmount canvas when section leaves viewport
-    const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({ threshold: 0.1, rootMargin: '0px' })
+    // Observe visibility with optimized settings for scroll performance
+    const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({ 
+        threshold: 0.1, 
+        rootMargin: '100px',
+        once: false
+    })
     const [showCanvas, setShowCanvas] = useState(false)
 
     // Defer heavy canvas initialization until browser is idle or after short delay
