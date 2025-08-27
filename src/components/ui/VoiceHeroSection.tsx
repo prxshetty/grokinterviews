@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo, memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
-const WorldMap = dynamic(() => import('./map').then(mod => mod.WorldMap), { ssr: false });
+const Globe = dynamic(() => import('./globe'), { ssr: false });
 import { useCentralizedIntersection } from '@/hooks/ui/use-centralized-intersection';
 
 interface VoiceHeroSectionProps {
@@ -38,34 +38,7 @@ function VoiceHeroSection({
     return () => clearTimeout(id)
   }, []);
 
-  // Memoize sample data for WorldMap to prevent unnecessary re-renders
-  const mapDots = useMemo(() => [
-    {
-      start: { lat: 40.7128, lng: -74.0060, label: "New York" },
-      end: { lat: 51.5074, lng: -0.1278, label: "London" }
-    },
-    {
-      start: { lat: 37.7749, lng: -122.4194, label: "San Francisco" },
-      end: { lat: 35.6762, lng: 139.6503, label: "Tokyo" }
-    },
-    {
-      start: { lat: 52.5200, lng: 13.4050, label: "Berlin" },
-      end: { lat: -33.8688, lng: 151.2093, label: "Sydney" }
-    },
-    {
-      start: { lat: 19.0760, lng: 72.8777, label: "Mumbai" },
-      end: { lat: 1.3521, lng: 103.8198, label: "Singapore" }
-    }
-  ], []);
 
-  // Memoize WorldMap props to prevent unnecessary re-renders
-  const worldMapProps = useMemo(() => ({
-    dots: mapDots,
-    lineColor: "#0ea5e9",
-    showLabels: true,
-    animationDuration: 2,
-    loop: true
-  }), [mapDots]);
 
   // Show loading state during SSR
   if (!mounted) {
@@ -94,33 +67,34 @@ function VoiceHeroSection({
       }`}
     >
       <div className="max-w-7xl mx-auto w-full">
-        {/* Centered content layout */}
-        <div className="flex flex-col items-center justify-center min-h-[80vh] py-4 sm:py-6 md:py-8 lg:py-12">
+        {/* Split layout - Text left, Globe right */}
+        <div className="flex flex-col lg:flex-row items-center justify-between min-h-[80vh] py-4 sm:py-6 md:py-8 lg:py-12">
           
-          {/* Text Content Section - Centered */}
-          <div className={`relative z-10 text-center transition-all duration-700 delay-150 ${
+          {/* Text Content Section - Left Side with matching padding */}
+          <div className={`relative z-10 text-center lg:text-left lg:flex-1 lg:pr-8 px-3 sm:px-4 md:px-6 ml-0 sm:ml-4 md:ml-8 lg:ml-12 transition-all duration-700 delay-150 ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-2xl lg:max-w-none">
               <h1 className="text-3xl font-editorial font-light leading-[110%] tracking-[-1.8px] text-gray-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
                 <span className="block">
                   <span className="italic">Smarter</span> Conversations, Simplified.
                 </span>
               </h1>
               
-              <p className={`mt-4 text-base text-gray-500 dark:text-gray-300 sm:mt-6 sm:text-lg md:text-xl lg:text-xl max-w-2xl mx-auto transition-all duration-700 delay-300 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <p className={`mt-4 text-base text-gray-500 dark:text-gray-300 sm:mt-6 sm:text-lg md:text-xl lg:text-xl max-w-xl transition-all duration-700 delay-300 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                 {description}
               </p>
             </div>
           </div>
 
-          {/* WorldMap Section */}
-          <div className={`relative w-full max-w-6xl mt-6 sm:mt-8 md:mt-10 lg:mt-12 transition-all duration-700 delay-450 scale-[0.85] ${
+          {/* Globe Section - Right Side */}
+          <div className={`relative lg:flex-1 mt-6 sm:mt-8 md:mt-10 lg:mt-0 lg:pl-8 px-3 sm:px-4 md:px-6 mr-0 sm:mr-4 md:mr-8 lg:mr-12 transition-all duration-700 delay-450 ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
-            {showMap ? <WorldMap {...worldMapProps} /> : <LoadingSpinner size="lg" color="muted" centered={true} />}
+            <div className="flex justify-center lg:justify-end">
+              {showMap ? <Globe /> : <LoadingSpinner size="lg" color="muted" centered={true} />}
+            </div>
           </div>
-
 
         </div>
       </div>
