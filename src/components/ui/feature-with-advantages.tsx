@@ -50,17 +50,17 @@ function Feature() {
     []
   );
 
-  // Gradient colors for each card
+  // Gradient colors for each card - increased opacity for light mode
   const gradientColors = [
-    'from-blue-500/15 via-cyan-500/10 to-teal-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.1),transparent_50%)]', // Blue to teal with bento
-    'from-purple-500/15 via-pink-500/10 to-rose-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.1),transparent_50%)]', // Purple to rose with bento
-    'from-emerald-500/15 via-green-500/10 to-lime-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1),transparent_50%)]', // Emerald to lime with bento
-    'from-orange-500/15 via-amber-500/10 to-yellow-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.1),transparent_50%)]', // Orange to yellow with bento
-    'from-indigo-500/15 via-violet-500/10 to-purple-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.1),transparent_50%)]', // Indigo to purple with bento
-    'from-red-500/15 via-pink-500/10 to-purple-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.1),transparent_50%)]', // Red to purple with bento
-    'from-cyan-500/15 via-blue-500/10 to-indigo-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.1),transparent_50%)]', // Cyan to indigo with bento
-    'from-teal-500/15 via-emerald-500/10 to-green-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.1),transparent_50%)]', // Teal to green with bento
-    'from-amber-500/15 via-orange-500/10 to-red-500/15 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.1),transparent_50%)]', // Amber to red with bento
+    'from-blue-500/20 via-cyan-500/15 to-teal-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.15),transparent_50%)]', // Blue to teal with bento
+    'from-purple-500/20 via-pink-500/15 to-rose-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.15),transparent_50%)]', // Purple to rose with bento
+    'from-emerald-500/20 via-green-500/15 to-lime-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.15),transparent_50%)]', // Emerald to lime with bento
+    'from-orange-500/20 via-amber-500/15 to-yellow-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.15),transparent_50%)]', // Orange to yellow with bento
+    'from-indigo-500/20 via-violet-500/15 to-purple-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.15),transparent_50%)]', // Indigo to purple with bento
+    'from-red-500/20 via-pink-500/15 to-purple-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.15),transparent_50%)]', // Red to purple with bento
+    'from-cyan-500/20 via-blue-500/15 to-indigo-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.15),transparent_50%)]', // Cyan to indigo with bento
+    'from-teal-500/20 via-emerald-500/15 to-green-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.15),transparent_50%)]', // Teal to green with bento
+    'from-amber-500/20 via-orange-500/15 to-red-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_50%)]', // Amber to red with bento
   ];
 
   const darkGradientColors = [
