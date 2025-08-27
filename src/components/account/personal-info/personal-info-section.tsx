@@ -3,6 +3,7 @@
 import { Input } from '@/components/ui'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useImagePreloader } from '@/hooks'
+import Image from 'next/image'
 import { DEFAULT_AVATAR_URL } from '@/config'
 import type { ReactElement } from 'react'; // Import ReactElement
 
@@ -44,9 +45,13 @@ export function PersonalInfoSection({
               className="object-cover"
             />
             <AvatarFallback className="bg-transparent overflow-hidden">
-              <img
+              <Image
                 src={DEFAULT_AVATAR_URL}
                 alt="Default Avatar"
+                width={128}
+                height={128}
+                loading="lazy"
+                sizes="(max-width: 640px) 96px, (max-width: 1024px) 112px, 128px"
                 className="w-full h-full object-cover"
               />
             </AvatarFallback>

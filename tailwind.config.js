@@ -84,7 +84,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['var(--font-manrope)', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+        mono: ['Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
         editorial: ['var(--font-pp-editorial)', 'Playfair Display', 'Georgia', 'serif'],
       },
       fontWeight: {
@@ -270,7 +270,6 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
     addVariablesForColors,
   ],
 }

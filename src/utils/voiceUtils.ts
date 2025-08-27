@@ -30,7 +30,7 @@ export function getVoiceAvatarUrl(voiceName?: string, interviewType?: 'web' | 'p
   }
   
   // Fallback logic based on interview type
-  return interviewType === 'phone' ? '/images/female_phone.png' : '/images/female_default.png';
+  return interviewType === 'phone' ? '/images/female_phone.webp' : '/images/female_default.webp';
 }
 
 /**

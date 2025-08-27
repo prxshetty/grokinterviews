@@ -4,6 +4,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
 import { VoiceOption, VOICE_CONFIG } from '@/types/voice.types';
+import Image from 'next/image';
 
 
 
@@ -92,10 +93,14 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
           >
             {transcript.interaction_type === 'ai_response' && (
               <div className="flex-shrink-0">
-                <img
+                <Image
                   src={voiceConfig?.image || '/ai-avatar.png'}
                   alt={voiceConfig?.label || 'AI'}
                   className="h-8 w-8 rounded-full object-cover"
+                  width={32}
+                  height={32}
+                  loading="lazy"
+                  sizes="32px"
                 />
               </div>
             )}
@@ -132,10 +137,14 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
         {isLoadingTranscripts && (
           <div className="flex justify-start gap-3">
             <div className="flex-shrink-0">
-              <img
+              <Image
                 src={voiceConfig?.image || '/ai-avatar.png'}
                 alt={voiceConfig?.label || 'AI'}
                 className="h-8 w-8 rounded-full object-cover"
+                width={32}
+                height={32}
+                loading="lazy"
+                sizes="32px"
               />
             </div>
             <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-2xl">

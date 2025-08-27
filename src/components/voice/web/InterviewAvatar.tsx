@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 type InterviewType = 'behavioral' | 'technical' | 'system-design' | 'custom';
 
@@ -123,9 +124,14 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
                 : 'scale-125'
             : 'scale-100'
         }`}>
-          <img 
+          <Image 
             src={currentConfig.src} 
             alt={currentConfig.alt} 
+            width={192}
+            height={192}
+            loading="eager"
+            priority
+            sizes="(max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
             className={`w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain transition-all duration-300 ${
               isInterviewActive 
                 ? isPlayingTTS 

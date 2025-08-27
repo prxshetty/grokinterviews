@@ -164,7 +164,7 @@ const Tab = ({
           {item.label}
         </Link>
       ) : (
-        <button onClick={handleClick} className={commonClassName}>
+        <button onClick={handleClick} className={commonClassName} aria-label={item.label}>
           {item.label}
         </button>
       )}
@@ -184,4 +184,4 @@ const Cursor = ({ position }: { position: { left: number; width: number; opacity
       }}
     />
   );
-}; 
+};

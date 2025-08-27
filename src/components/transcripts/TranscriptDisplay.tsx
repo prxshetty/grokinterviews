@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -182,10 +183,14 @@ export function TranscriptDisplay({
                       >
                         {transcript.interaction_type === 'ai_response' && (
                           <div className="flex-shrink-0">
-                            <img
+                            <Image
                               src={getVoiceAvatar(transcript.voice_name || selectedSession?.voice_name, 'web')}
                               alt="AI"
                               className="h-8 w-8 rounded-full object-cover"
+                              width={32}
+                              height={32}
+                              loading="lazy"
+                              sizes="32px"
                             />
                           </div>
                         )}
@@ -240,10 +245,14 @@ export function TranscriptDisplay({
                         >
                           {message.role === 'bot' && (
                             <div className="flex-shrink-0">
-                              <img
+                              <Image
                                 src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')}
                                 alt="AI"
                                 className="h-8 w-8 rounded-full object-cover"
+                                width={32}
+                                height={32}
+                                loading="lazy"
+                                sizes="32px"
                               />
                             </div>
                           )}
@@ -288,10 +297,14 @@ export function TranscriptDisplay({
                         >
                           {flow.interactionType === 'ai_response' && (
                             <div className="flex-shrink-0">
-                              <img
+                              <Image
                                 src={getVoiceAvatar(selectedPhoneCall?.voice_name, 'phone')}
                                 alt="AI"
                                 className="h-8 w-8 rounded-full object-cover"
+                                width={32}
+                                height={32}
+                                loading="lazy"
+                                sizes="32px"
                               />
                             </div>
                           )}

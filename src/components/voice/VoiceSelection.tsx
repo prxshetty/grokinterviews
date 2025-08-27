@@ -1,6 +1,7 @@
 'use client';
 import { cn } from '@/lib/utils';
 import { VOICE_CONFIG } from '@/types/voice.types';
+import Image from 'next/image';
 
 type VoiceType = 'male' | 'female' | 'premium-male' | 'premium-female';
 
@@ -65,7 +66,15 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
                   : "border-primary bg-primary/5 shadow-md"
                 : "border-border bg-card hover:border-gray-400"
             )}>
-              <img src={voice.image} alt={voice.name} className="w-full h-full object-cover object-[center_25%]" />
+              <Image
+                src={voice.image}
+                alt={voice.name}
+                className="w-full h-full object-cover object-[center_25%]"
+                width={64}
+                height={64}
+                loading="lazy"
+                sizes="64px"
+              />
             </div>
             
             {/* Voice Info */}

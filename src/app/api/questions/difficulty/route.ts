@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'no-store', // Don't cache these results as they're filtered by domain
+          'Cache-Control': 'no-store', // Don't cache these results as they're filtered by domain and user-specific
         },
       }
     );
