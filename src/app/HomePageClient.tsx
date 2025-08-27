@@ -87,9 +87,13 @@ function ExploreTopicsSection() {
       }`}
     >
       <div className="mx-[-1rem] sm:mx-[-1.5rem] md:mx-[-2rem] lg:mx-[-3rem] -mt-4 overflow-x-hidden">
-        <Suspense fallback={<TopicCarouselSkeleton />}>
-          <TopicCarousel />
-        </Suspense>
+        {isVisible ? (
+          <Suspense fallback={<TopicCarouselSkeleton />}>
+            <TopicCarousel />
+          </Suspense>
+        ) : (
+          <TopicCarouselSkeleton />
+        )}
       </div>
     </div>
   );
@@ -127,6 +131,39 @@ function ExploreTopicsSection() {
 //   );
 // }
 
+function FeatureSectionWrapper() {
+  const { ref, isVisible, mounted } = useCentralizedIntersection({
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px',
+    once: true
+  })
+
+  if (!mounted) {
+    return (
+      <div className="mt-0 mb-16 sm:mb-20 md:mb-24 opacity-0">
+        <FeatureSkeleton />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`mt-0 mb-16 sm:mb-20 md:mb-24 transition-all duration-1000 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+      }`}
+    >
+      {isVisible ? (
+        <Suspense fallback={<FeatureSkeleton />}>
+          <FeatureSection />
+        </Suspense>
+      ) : (
+        <FeatureSkeleton />
+      )}
+    </div>
+  )
+}
+
 export default function HomePageClient() {
   return (
     <div className="min-h-[100dvh] w-full relative font-sans animate-fade-in">
@@ -153,13 +190,8 @@ export default function HomePageClient() {
           />
         </Suspense>
       </div>
-            {/* Feature Section - Lazy loaded */}
-      <div className="mt-0 mb-16 sm:mb-20 md:mb-24">
-        <Suspense fallback={<FeatureSkeleton />}>
-          <FeatureSection />
-        </Suspense>
-        
-      </div>
+      {/* Feature Section - Lazy loaded */}
+      <FeatureSectionWrapper />
 
       {/* Testimonials Section - Hidden for now */}
       {/* <TestimonialsSection /> */}

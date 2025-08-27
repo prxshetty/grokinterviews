@@ -16,28 +16,28 @@ export const WEB_VOICE_CONFIG: Record<WebVoiceOption, VoiceConfig> = {
     displayName: 'Gia',
     label: 'Sophia',
     tier: 'standard',
-    image: '/images/female_default.png'
+    image: '/images/female_default.webp'
   },
   'Marcus': {
     technicalName: 'Marcus',
     displayName: 'George',
     label: 'Marcus',
     tier: 'standard',
-    image: '/images/male_default.png'
+    image: '/images/male_default.webp'
   },
   'Aoede': {
     technicalName: 'Aoede',
     displayName: 'Gianna',
     label: 'Aoede',
     tier: 'premium',
-    image: '/images/female_sign.jpeg'
+    image: '/images/female_sign.webp'
   },
   'Algieba': {
     technicalName: 'Algieba',
     displayName: 'Gideon',
     label: 'Algieba',
     tier: 'premium',
-    image: '/images/male_sign.jpeg'
+    image: '/images/male_sign.webp'
   }
 };
 
@@ -47,7 +47,7 @@ export const PHONE_VOICE_CONFIG: Record<PhoneVoiceOption, VoiceConfig> = {
     displayName: 'Emily',
     label: 'Emily',
     tier: 'standard',
-    image: '/images/female_phone.png'
+    image: '/images/female_phone.webp'
   }
 };
 

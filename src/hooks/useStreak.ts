@@ -126,7 +126,7 @@ export function useStreak(isAuthenticated: boolean = true, userId?: string) {
       const response = await fetch('/api/user/streak', {
         cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'max-age=60' // Cache streak data for 1 minute
         }
       });
       

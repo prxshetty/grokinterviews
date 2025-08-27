@@ -582,7 +582,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center space-x-1.5 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors group">
+                        <button aria-label="User menu" className="flex items-center space-x-1.5 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors group">
                           <Avatar className="h-8 w-8">
                             <AvatarImage 
                               src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL} 

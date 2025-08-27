@@ -41,7 +41,7 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
   /language-(\w+)/.exec(className || '');
 
   return (
-    <div className="relative group my-4 not-prose">
+    <div className="relative group my-4">
       <pre className="p-4 rounded-lg overflow-auto bg-gray-100 dark:bg-gray-800">
         {isClient && (
           <button
@@ -197,7 +197,7 @@ export function AnswerDisplay({
               />
             </div>
           </div>
-          <div className="prose prose-sm dark:prose-invert max-w-none p-4 flex-1">
+          <div className="max-w-none p-4 flex-1 text-sm text-gray-800 dark:text-gray-200">
             <ReactMarkdown
               components={{
                 ...defaultMarkdownComponents,

@@ -6,17 +6,33 @@ import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Button1 } from '@/components/ui/button-1';
 
-import { WovenCanvas } from '@/components/ui/woven-canvas'
+import dynamic from 'next/dynamic'
+
+// Dynamically load the heavy WovenCanvas to keep the initial JS bundle lean
+import type { ComponentType } from 'react'
+
+const WovenCanvas = dynamic(
+  () => import('@/components/ui/woven-canvas').then(mod => ({ default: mod.WovenCanvas })),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+) as ComponentType<any>
 
 
 export function HeroSection() {
     // Observe visibility continuously to unmount canvas when section leaves viewport
     const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({ threshold: 0.1, rootMargin: '0px' })
     const [showCanvas, setShowCanvas] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
+    const prefersReducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
 
     // Defer heavy canvas initialization until browser is idle or after short delay
     useEffect(() => {
-        const start = () => setShowCanvas(true)
+        const start = () => {
+            setShowCanvas(true)
+            setIsMobile(window.innerWidth < 768)
+        }
         if (typeof window !== 'undefined') {
             // Use requestIdleCallback if available to avoid blocking render
             // Fallback to timeout for browsers that don\'t support it
@@ -33,11 +49,11 @@ export function HeroSection() {
                 {/* Woven Canvas Background - loaded together with content */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-60">
-                        {showCanvas && isVisible && (
+                        {showCanvas && isVisible && !prefersReducedMotion && (
                                 <WovenCanvas
                                     className="absolute inset-0 scale-105"
-                                    particleCount={5000}
-                                    opacity={0.6}
+                                    particleCount={isMobile ? 1200 : 2500}
+                                    opacity={0.5}
                                     rotationSpeed={0.01}
                                 />
                             )}
@@ -80,7 +96,7 @@ export function HeroSection() {
 
                         {/* Action Buttons */}
                         <div className={`mt-8 sm:mt-10 flex flex-row items-center justify-start gap-3 sm:gap-4 w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '300ms' }}>
-                            <Button1 href="/topics" className="w-full rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
+                            <Button1 href="/topics" aria-label="Start Learning" className="w-full rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
                                 Start Learning
                             </Button1>
                             <Button

@@ -1,10 +1,8 @@
 import './globals.css';
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from 'next';
-import { lazy } from 'react';
-
-const SpeedInsights = lazy(() => import("@vercel/speed-insights/next").then(module => ({ default: module.SpeedInsights })));
-const Analytics = lazy(() => import("@vercel/analytics/react").then(module => ({ default: module.Analytics })));
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AuthProvider } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
 import { Manrope } from 'next/font/google'
@@ -18,7 +16,6 @@ const manrope = Manrope({
 import { ThemeProvider } from '@/components/theme-provider';
 import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
-import { Suspense } from 'react';
 
 
 export const viewport: Viewport = {
@@ -94,7 +91,7 @@ export default function RootLayout({
       <head>
         {/* Critical Resource Hints for LCP Optimization */}
         
-        {/* Font loading is handled automatically by Next.js and geist/font package */}
+        {/* Font loading is handled automatically by Next.js */}
         
         {/* Preconnect to external domains for faster loading */}
         <link rel="preconnect" href="https://upload.wikimedia.org" />
@@ -111,6 +108,7 @@ export default function RootLayout({
         <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
         
         {/* Performance hints */}
+<meta name="description" content="Ace your tech interviews with an AI-enhanced platform. 3.6M+ resources, 50K+ questions across AI, Web Dev, System Design, DSA, and ML." />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -132,10 +130,8 @@ export default function RootLayout({
               {children}
             </ConditionalLayout>
             <Toaster />
-            <Suspense fallback={null}>
-              <SpeedInsights />
-              <Analytics />
-            </Suspense>
+            <SpeedInsights />
+            <Analytics />
 
           </AuthProvider>
         </ThemeProvider>

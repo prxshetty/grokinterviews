@@ -1,9 +1,14 @@
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Performance optimizations
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+
+  // Generate source maps for client bundles to improve debugging and eliminate “missing source map” warnings
+  productionBrowserSourceMaps: true,
 
   
   // Temporarily disable ESLint during builds (re-enable after console cleanup)
@@ -19,7 +24,8 @@ const nextConfig = {
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-sheet',
       '@radix-ui/react-avatar',
-      'sonner'
+      'sonner',
+      'lodash'
     ],
   },
   
@@ -84,6 +90,12 @@ const nextConfig = {
         hostname: 'upload.wikimedia.org',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'html.tailus.io',
+        port: '',
+        pathname: '/**'
       }
     ],
   },
@@ -106,12 +118,28 @@ const nextConfig = {
             chunks: 'all',
             priority: 10,
           },
+          // Deduplicate lodash into single shared chunk
+          lodash: {
+            test: /[\\/]node_modules[\\/]lodash[\\/]/,
+            name: 'lodash',
+            chunks: 'all',
+            priority: 22,
+            reuseExistingChunk: true,
+          },
           // Separate UI library chunks
           ui: {
             test: /[\\/]node_modules[\\/](@radix-ui|lucide-react|framer-motion)[\\/]/,
             name: 'ui-libs',
             chunks: 'all',
             priority: 20,
+          },
+          // Deduplicate tr46 mappingTable to prevent multiple copies
+          tr46: {
+            test: /[\\/]node_modules[\\/].*tr46[\\/]/,
+            name: 'tr46-shared',
+            chunks: 'all',
+            priority: 30,
+            reuseExistingChunk: true,
           },
           // Common chunks
           common: {
@@ -127,7 +155,6 @@ const nextConfig = {
     
     // Add bundle analyzer in development
     if (process.env.ANALYZE === 'true') {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
       config.plugins.push(
         new BundleAnalyzerPlugin({
           analyzerMode: 'server',

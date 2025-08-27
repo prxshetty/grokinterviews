@@ -74,7 +74,7 @@ export default function VoicePage() {
       title: 'Web Interview',
       subtitle: 'Practice on your computer',
       icon: Laptop,
-      image: '/images/webcall.jpg',
+      image: '/images/webcall.webp',
       features: [
         { icon: Zap, text: 'Instant start' },
         { icon: Clock, text: 'Real-time feedback' },
@@ -87,7 +87,7 @@ export default function VoicePage() {
       title: 'Phone Interview',
       subtitle: 'Receive a real phone call',
       icon: Phone,
-      image: '/images/phonecall.jpg',
+      image: '/images/phonecall.webp',
       features: [
         { icon: Phone, text: 'Real phone call' },
         { icon: Shield, text: 'Authentic experience' },

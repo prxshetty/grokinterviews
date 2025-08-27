@@ -248,8 +248,9 @@ export default function ResourceCarousel() {
                     className={`${resource.className} max-h-[70%] max-w-[70%] object-contain`}
                     width={120}
                     height={120}
-                    unoptimized
-                    priority={index < resources.length} // Prioritize first set for LCP
+                    loading={index < 6 ? "eager" : "lazy"}
+                    sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, (max-width: 1024px) 112px, (max-width: 1280px) 128px, 144px"
+                    priority={index < 6} // Prioritize first 6 logos for LCP
                   />
                 </div>
                 {/* Description tooltip */}
@@ -276,7 +277,8 @@ export default function ResourceCarousel() {
                     className={`${resource.className} max-h-[70%] max-w-[70%] object-contain`}
                     width={120}
                     height={120}
-                    unoptimized
+                    loading="lazy"
+                    sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, (max-width: 1024px) 112px, (max-width: 1280px) 128px, 144px"
                   />
                 </div>
                 {/* Description tooltip */}

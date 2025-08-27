@@ -28,7 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const initializedRef = useRef(false);
-
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
     // Only log in development
     if (process.env.NODE_ENV === 'development') {
