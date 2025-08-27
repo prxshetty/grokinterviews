@@ -20,17 +20,15 @@ type TechIconKey = keyof typeof TechIcons;
 
 const TechIcons = {
   JavaScript: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path fill="#F7DF1E" d="M100 0H0v100h100z"/><path fill="#000" d="M67.175 78.125c2.014 3.29 4.634 5.707 9.27 5.707 3.893 0 6.38-1.946 6.38-4.635 0-3.222-2.555-4.364-6.84-6.238l-2.35-1.008c-6.781-2.89-11.286-6.508-11.286-14.159 0-7.047 5.37-12.413 13.762-12.413 5.975 0 10.27 2.08 13.365 7.524l-7.317 4.699c-1.612-2.89-3.35-4.027-6.048-4.027-2.752 0-4.497 1.746-4.497 4.027 0 2.819 1.746 3.96 5.778 5.706l2.35 1.006c7.983 3.424 12.491 6.915 12.491 14.762 0 8.46-6.646 13.096-15.571 13.096-8.727 0-14.365-4.16-17.124-9.61zm-33.196.815c1.477 2.619 2.82 4.833 6.048 4.833 3.087 0 5.035-1.208 5.035-5.905V45.916h9.397v32.08c0 9.73-5.705 14.158-14.032 14.158-7.524 0-11.881-3.894-14.097-8.583z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#F7DF1E" className="w-6 h-6"><path fill="#000" d="M19.875 12.75c-0.375 0.75-0.875 1.375-1.75 1.375c-0.75 0-1.25-0.5-1.25-1.25c0-0.875 0.625-1.25 1.375-1.625l0.375-0.125c1.125-0.5 2-1.125 2-2.5c0-1.5-1.125-2.625-2.875-2.625c-1.25 0-2.125 0.625-2.75 2l1.25 0.75c0.375-0.75 0.75-1.125 1.5-1.125c0.75 0 1.25 0.375 1.25 1c0 0.75-0.5 1-1.625 1.5l-0.375 0.125c-1.375 0.625-2.125 1.375-2.125 2.875c0 1.5 1.125 2.5 2.875 2.5c1.25 0 2.25-0.5 3-2l-1.25-0.75zm-5.5 0.5c-0.5 0.875-1 1.625-2.125 1.625c-1.125 0-1.875-0.875-1.875-2.125v-5.875h-1.75v6c0 2.5 1.5 3.625 3.625 3.625c1.875 0 2.875-1 3.375-2.375l-1.875-0.875z"/>
     </svg>
   ),
   React: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="-11.5 -10.23174 23 20.46348" fill="none" stroke="currentColor" strokeWidth="1" className="w-6 h-6">
-      <circle cx="0" cy="0" r="2.05" fill="currentColor"/>
-      <g stroke="currentColor">
-        <ellipse rx="11" ry="4.2"/>
-        <ellipse rx="11" ry="4.2" transform="rotate(60)"/>
-        <ellipse rx="11" ry="4.2" transform="rotate(120)"/>
-      </g>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+      <circle cx="12" cy="12" r="2" fill="currentColor"/>
+      <ellipse cx="12" cy="12" rx="11" ry="4.2" stroke="currentColor"/>
+      <ellipse cx="12" cy="12" rx="11" ry="4.2" stroke="currentColor" transform="rotate(60 12 12)"/>
+      <ellipse cx="12" cy="12" rx="11" ry="4.2" stroke="currentColor" transform="rotate(120 12 12)"/>
     </svg>
   ),
   TypeScript: () => (
