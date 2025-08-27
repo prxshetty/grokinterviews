@@ -11,7 +11,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 
 export function HeroSection() {
-    const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({ threshold: 0.1, rootMargin: '0px', once: true })
+    // Observe visibility continuously to unmount canvas when section leaves viewport
+    const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({ threshold: 0.1, rootMargin: '0px' })
     const [showCanvas, setShowCanvas] = useState(false)
 
     // Defer heavy canvas initialization until browser is idle or after short delay
