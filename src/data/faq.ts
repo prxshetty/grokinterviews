@@ -44,4 +44,28 @@ export const GROK_INTERVIEW_FAQ_ITEMS: FaqItem[] = [
     answer:
       'We are exploring exciting updates such as voice interviews, Duolingo-style roadmaps for every domain, both typed and voice-based quizzes, streak tracking, and a dedicated section for coding questions with virtual machines for live testing and much more. These features will be prioritized if the platform gains traction!',
   },
+  {
+    id: 'faq-grok-voice-1',
+    question: 'What\'s the difference between web voice and phone voice interviews?',
+    answer:
+      'Web voice interviews run directly in your browser using your computer\'s microphone and speakers, offering instant feedback and visual interface. Phone voice interviews simulate real phone calls to your actual phone number, providing a more authentic interview experience. Web interviews are available globally, while phone interviews are currently US-only.',
+  },
+  {
+    id: 'faq-grok-voice-3',
+    question: 'Are there any usage limits for voice interviews?',
+    answer:
+      'Free users get 5 voice interview sessions per month (both web and phone combined). Each session has a question limit of 5. Extended session duration and unlimited interviews are planned for future release.',
+  },
+  {
+    id: 'faq-grok-voice-4',
+    question: 'How can I extend my voice interview limits?',
+    answer:
+      'Currently, voice interview limits reset weekly while phone interviews are just 1 per month per account. We\'re working on offering additional voice and phone interviews, extended sessions, and priority access to new voice features. Join our waitlist to be notified when these features launch!',
+  },
+  {
+    id: 'faq-grok-voice-7',
+    question: 'Is my voice data stored or shared?',
+    answer:
+      'Your voice data is not stored or shared in web interviews but is analyzed and recorded in real-time for phone interviews. ',
+  },
 ];
