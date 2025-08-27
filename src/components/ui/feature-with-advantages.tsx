@@ -50,29 +50,17 @@ function Feature() {
     []
   );
 
-  // Gradient colors for each card - increased opacity for light mode
+  // Radial gradient bento backgrounds for both light and dark modes
   const gradientColors = [
-    'from-blue-500/20 via-cyan-500/15 to-teal-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.15),transparent_50%)]', // Blue to teal with bento
-    'from-purple-500/20 via-pink-500/15 to-rose-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.15),transparent_50%)]', // Purple to rose with bento
-    'from-emerald-500/20 via-green-500/15 to-lime-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.15),transparent_50%)]', // Emerald to lime with bento
-    'from-orange-500/20 via-amber-500/15 to-yellow-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.15),transparent_50%)]', // Orange to yellow with bento
-    'from-indigo-500/20 via-violet-500/15 to-purple-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.15),transparent_50%)]', // Indigo to purple with bento
-    'from-red-500/20 via-pink-500/15 to-purple-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.15),transparent_50%)]', // Red to purple with bento
-    'from-cyan-500/20 via-blue-500/15 to-indigo-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.15),transparent_50%)]', // Cyan to indigo with bento
-    'from-teal-500/20 via-emerald-500/15 to-green-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.15),transparent_50%)]', // Teal to green with bento
-    'from-amber-500/20 via-orange-500/15 to-red-500/20 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_50%)]', // Amber to red with bento
-  ];
-
-  const darkGradientColors = [
-    'dark:from-blue-500/20 dark:via-cyan-500/15 dark:to-teal-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.15),transparent_50%)]',
-    'dark:from-purple-500/20 dark:via-pink-500/15 dark:to-rose-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.15),transparent_50%)]',
-    'dark:from-emerald-500/20 dark:via-green-500/15 dark:to-lime-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.15),transparent_50%)]',
-    'dark:from-orange-500/20 dark:via-amber-500/15 dark:to-yellow-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.15),transparent_50%)]',
-    'dark:from-indigo-500/20 dark:via-violet-500/15 dark:to-purple-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.15),transparent_50%)]',
-    'dark:from-red-500/20 dark:via-pink-500/15 dark:to-purple-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.15),transparent_50%)]',
-    'dark:from-cyan-500/20 dark:via-blue-500/15 dark:to-indigo-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.15),transparent_50%)]',
-    'dark:from-teal-500/20 dark:via-emerald-500/15 dark:to-green-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.15),transparent_50%)]',
-    'dark:from-amber-500/20 dark:via-orange-500/15 dark:to-red-500/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(147,51,234,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(249,115,22,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(79,70,229,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(6,182,212,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(20,184,166,0.15),transparent_50%)]',
+    'bg-white/5 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_50%)] dark:bg-slate-900/20 dark:bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.15),transparent_50%)]',
   ];
 
   const hoverGradientColors = [
@@ -97,12 +85,11 @@ function Feature() {
         ...features[index], 
         displayIndex: i,
         gradientColor: gradientColors[colorIndex],
-        darkGradientColor: darkGradientColors[colorIndex],
         hoverGradientColor: hoverGradientColors[colorIndex]
       });
     }
     return visible;
-  }, [features, currentFeatureIndex, gradientColors, darkGradientColors, hoverGradientColors]);
+  }, [features, currentFeatureIndex, gradientColors, hoverGradientColors]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -142,7 +129,7 @@ function Feature() {
                     className="flex justify-center"
                   >
                     <CardSpotlight
-                      className={`group relative h-[380px] w-[340px] sm:h-[420px] sm:w-[380px] rounded-2xl bg-gradient-to-br ${feature.gradientColor} ${feature.darkGradientColor} backdrop-blur-2xl border border-white/[0.08] dark:border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)] p-0 before:absolute before:inset-0 before:bg-gradient-to-br ${feature.hoverGradientColor} before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-500 after:absolute after:inset-0 after:bg-white/[0.02] dark:after:bg-white/[0.05] after:backdrop-blur-sm after:rounded-2xl after:bg-[linear-gradient(to_right,transparent_0%,rgba(255,255,255,0.02)_50%,transparent_100%)] after:bg-[length:200%_1px] after:bg-no-repeat after:opacity-30`}
+                      className={`group relative h-[380px] w-[340px] sm:h-[420px] sm:w-[380px] rounded-2xl ${feature.gradientColor} backdrop-blur-2xl border border-white/[0.08] dark:border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)] p-0 before:absolute before:inset-0 before:bg-gradient-to-br ${feature.hoverGradientColor} before:opacity-0 hover:before:opacity-100 before:transition-all before:duration-500 after:absolute after:inset-0 after:bg-white/[0.02] dark:after:bg-white/[0.05] after:backdrop-blur-sm after:rounded-2xl after:bg-[linear-gradient(to_right,transparent_0%,rgba(255,255,255,0.02)_50%,transparent_100%)] after:bg-[length:200%_1px] after:bg-no-repeat after:opacity-30`}
                       radius={200}
                       color="#ffffff20"
                     >

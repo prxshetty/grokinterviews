@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Button1 } from '@/components/ui/button-1';
 
 import { WovenCanvas } from '@/components/ui/woven-canvas'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 
 export function HeroSection() {
@@ -27,17 +26,10 @@ export function HeroSection() {
             else setTimeout(start, 500)
         }
     }, [])
-    const isReady = mounted;
-    const heroReady = isReady && showCanvas && isVisible;
-    
+    const isReady = mounted;    
     return (
         <>
             <div ref={sectionRef} className="relative w-full overflow-hidden h-[calc(100svh-4rem)]">
-                {!heroReady && (
-                    <div className="absolute inset-0 flex items-center justify-center z-20 bg-background/60 backdrop-blur-sm">
-                        <LoadingSpinner size="lg" color="muted" centered={true} />
-                    </div>
-                )}
                 {/* Woven Canvas Background - loaded together with content */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-60">
