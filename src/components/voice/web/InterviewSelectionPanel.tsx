@@ -112,7 +112,7 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
       </div>
       
       {/* Bottom Section: Interview Configuration Forms */}
-      <div className="w-full max-w-2xl">
+      <div className="w-full">
         {renderInterviewForm()}
       </div>
     </div>
