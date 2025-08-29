@@ -244,8 +244,10 @@ export function InterviewList({
                 <SelectItem value="all">
                   <span className="font-medium">All Voices</span>
                 </SelectItem>
-                {/* Show appropriate voices based on active tab */}
-                {getAvailableVoices(activeTab).map((config) => (
+                {/* Show appropriate voices based on active tab - excluding premium */}
+                {getAvailableVoices(activeTab)
+                  .filter(config => config.tier !== 'premium')
+                  .map((config) => (
                   <SelectItem key={config.technicalName} value={config.technicalName}>
                     <div className="flex items-center gap-2">
                       <Avatar className="w-5 h-5">
@@ -258,13 +260,9 @@ export function InterviewList({
                           {config.displayName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className={cn(
-                         config.tier === 'premium' 
-                           ? "text-amber-600 dark:text-amber-400 font-medium" 
-                           : "text-foreground font-medium"
-                       )}>
-                         {config.displayName}
-                       </span>
+                      <span className="text-foreground font-medium">
+                        {config.displayName}
+                      </span>
                     </div>
                   </SelectItem>
                 ))}
