@@ -13,18 +13,18 @@ interface VoiceSelectionProps {
 
 export function VoiceSelection({ selectedVoice, onVoiceChange, className }: VoiceSelectionProps) {
   const allVoices = [
-    {
-      id: 'premium-male' as const,
-      name: VOICE_CONFIG.Algieba.displayName,
-      tier: VOICE_CONFIG.Algieba.tier,
-      image: VOICE_CONFIG.Algieba.image,
-    },
-    {
-      id: 'premium-female' as const,
-      name: VOICE_CONFIG.Aoede.displayName,
-      tier: VOICE_CONFIG.Aoede.tier,
-      image: VOICE_CONFIG.Aoede.image,
-    },
+    // {
+    //   id: 'premium-male' as const,
+    //   name: VOICE_CONFIG.Algieba.displayName,
+    //   tier: VOICE_CONFIG.Algieba.tier,
+    //   image: VOICE_CONFIG.Algieba.image,
+    // },
+    // {
+    //   id: 'premium-female' as const,
+    //   name: VOICE_CONFIG.Aoede.displayName,
+    //   tier: VOICE_CONFIG.Aoede.tier,
+    //   image: VOICE_CONFIG.Aoede.image,
+    // },
     {
       id: 'male' as const,
       name: VOICE_CONFIG.Marcus.displayName,
