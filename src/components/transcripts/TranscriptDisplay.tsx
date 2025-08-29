@@ -352,7 +352,7 @@ export function TranscriptDisplay({
             {/* Development Note */}
             <div className="mb-4 p-4 bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg">
               <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                🚧 In Development — Analysis features are being refined and may change.
+                Analysis features are being refined and may change. Expect updates in the next release.
               </p>
             </div>
             {loadingScore ? (
