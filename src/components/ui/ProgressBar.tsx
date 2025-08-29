@@ -33,19 +33,30 @@ export default function ProgressBar({
   // For display, if progress is very small but > 0, set a minimum width to make it visible
   const displayWidth = (safeProgress > 0 && safeProgress < 2) ? 2 : safeProgress;
   
-  const progressColor = 'bg-gray-900 dark:bg-gray-100';
+  const progressColor = 'bg-foreground';
 
   return (
     <div className={`flex items-center w-full ${className}`}>
-      <div className={`flex-grow bg-transparent border border-gray-300 dark:border-gray-600 rounded-full overflow-hidden ${heightClass}`}>
+      <div className={`flex-grow bg-muted rounded-full overflow-hidden ${heightClass} relative`}>
         <div
-          className={`${progressColor} rounded-full transition-all duration-300 ease-out`}
+          className={`${progressColor} rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${displayWidth}%`, height: '100%' }}
         ></div>
+        {/* Progress indicator dot */}
+        {safeProgress > 0 && (
+          <div 
+            className="absolute w-3 h-3 bg-foreground rounded-full border-2 border-background transition-all duration-500 ease-out"
+            style={{ 
+              left: `${displayWidth}%`,
+              top: '50%',
+              transform: 'translateX(-50%) translateY(-50%)'
+            }}
+          />
+        )}
       </div>
 
       {showText && (
-        <div className="ml-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        <div className="ml-2 text-xs text-muted-foreground whitespace-nowrap">
           {completed !== undefined && total !== undefined ? (
             <span>{completed}/{total}</span>
           ) : (

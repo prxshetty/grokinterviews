@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { Copy, Check, AlertCircle, RotateCw, MessageSquare } from 'lucide-react';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { CopyButton } from './CopyButton';
+
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useIsTabletOrSmaller } from '@/hooks/ui';
 import remarkGfm from 'remark-gfm';
@@ -189,14 +189,7 @@ export function AnswerDisplay({
             </div>
           )}
           
-          <div className="relative">
-            <div className="absolute top-2 right-2 z-10">
-              <CopyButton 
-                textToCopy={answerText}
-                className="h-8 w-8 flex items-center justify-center bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 shadow-sm"
-              />
-            </div>
-          </div>
+          
           <div className="max-w-none p-4 flex-1 text-sm text-gray-800 dark:text-gray-200">
             <ReactMarkdown
               components={{

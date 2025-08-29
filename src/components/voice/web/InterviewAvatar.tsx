@@ -61,6 +61,7 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
   const [currentIndex, setCurrentIndex] = useState<number>(
     Object.keys(avatarConfigs).indexOf(selectedType)
   );
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Filter out the custom interview type as it's still in progress
   const interviewTypes = Object.keys(avatarConfigs).filter(type => type !== 'custom') as InterviewType[];
@@ -71,43 +72,61 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
   const currentConfig = avatarConfigs[currentType];
 
   const handlePrevious = () => {
-    const newIndex = (currentIndex - 1 + interviewTypes.length) % interviewTypes.length;
-    setCurrentIndex(newIndex);
-    const newType = interviewTypes[newIndex];
-    if (newType) {
-      onTypeChange?.(newType);
-    }
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      const newIndex = (currentIndex - 1 + interviewTypes.length) % interviewTypes.length;
+      setCurrentIndex(newIndex);
+      const newType = interviewTypes[newIndex];
+      if (newType) {
+        onTypeChange?.(newType);
+      }
+      setTimeout(() => setIsTransitioning(false), 100);
+    }, 150);
   };
 
   const handleNext = () => {
-    const newIndex = (currentIndex + 1) % interviewTypes.length;
-    setCurrentIndex(newIndex);
-    const newType = interviewTypes[newIndex];
-    if (newType) {
-      onTypeChange?.(newType);
-    }
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      const newIndex = (currentIndex + 1) % interviewTypes.length;
+      setCurrentIndex(newIndex);
+      const newType = interviewTypes[newIndex];
+      if (newType) {
+        onTypeChange?.(newType);
+      }
+      setTimeout(() => setIsTransitioning(false), 100);
+    }, 150);
   };
 
   return (
-    <div className="flex justify-center mb-8 pt-8">
+    <div className="flex justify-center mb-4 pt-4">
       <div className="relative">
         {/* Carousel Navigation - Only show when interview is not active */}
         {!isInterviewActive && (
           <>
             <button
               onClick={handlePrevious}
-              className="absolute left-[-160px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
+              disabled={isTransitioning}
+              className={`absolute left-[-80px] md:left-[-160px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center border-none bg-transparent hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95 ${
+                isTransitioning ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <svg className="w-4 h-4 text-gray-900 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             
             <button
               onClick={handleNext}
-              className="absolute right-[-160px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
+              disabled={isTransitioning}
+              className={`absolute right-[-80px] md:right-[-160px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center border-none bg-transparent hover:bg-muted transition-all duration-200 hover:scale-110 active:scale-95 ${
+                isTransitioning ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <svg className="w-4 h-4 text-gray-900 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -124,29 +143,35 @@ export const InterviewAvatar: React.FC<InterviewAvatarProps> = ({
                 : 'scale-125'
             : 'scale-100'
         }`}>
-          <Image 
-            src={currentConfig.src} 
-            alt={currentConfig.alt} 
-            width={192}
-            height={192}
-            loading="eager"
-            priority
-            sizes="(max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
-            className={`w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain transition-all duration-300 ${
-              isInterviewActive 
-                ? isPlayingTTS 
-                  ? '' 
-                  : isRecordingActive && isSpeakingDetected 
+          <div className={`transition-all duration-300 ease-out ${
+            isTransitioning 
+              ? 'opacity-0 scale-75 rotate-12' 
+              : 'opacity-100 scale-100 rotate-0'
+          }`}>
+            <Image 
+              src={currentConfig.src} 
+              alt={currentConfig.alt} 
+              width={240}
+              height={240}
+              loading="eager"
+              priority
+              sizes="(max-width: 768px) 160px, (max-width: 1024px) 208px, 240px"
+              className={`w-40 h-40 md:w-52 md:h-52 lg:w-60 lg:h-60 object-contain transition-all duration-300 ${
+                isInterviewActive 
+                  ? isPlayingTTS 
                     ? '' 
-                    : isRecordingActive 
+                    : isRecordingActive && isSpeakingDetected 
                       ? '' 
-                      : 'opacity-50'
-                : ''
-            }`}
-            style={{
-              animationDuration: isInterviewActive && !isPlayingTTS && !isRecordingActive ? '3s' : undefined
-            }}
-          />
+                      : isRecordingActive 
+                        ? '' 
+                        : 'opacity-50'
+                  : ''
+              }`}
+              style={{
+                animationDuration: isInterviewActive && !isPlayingTTS && !isRecordingActive ? '3s' : undefined
+              }}
+            />
+          </div>
         </div>
         
         {/* Dynamic Glow Effect - Only visible during interview */}

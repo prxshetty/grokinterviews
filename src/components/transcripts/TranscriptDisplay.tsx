@@ -2,10 +2,13 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+// add reusable report components
+import { TranscriptReport } from '@/components/transcripts/TranscriptReport';
+import { AnalysisCard } from '@/components/transcripts/AnalysisCard';
+import { DetailedFeedbackCard } from '@/components/transcripts/DetailedFeedbackCard';
 import { 
   TrendingUp, 
   Eye, 
@@ -13,9 +16,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
-import { cn } from '@/lib/utils';
 import { getVoiceAvatarUrl } from '@/utils/voiceUtils';
-import { getScoreColor } from '@/components/voice/shared/utils';
 import { MiniAudioPlayer } from '@/components/ui/MiniAudioPlayer';
 
 interface InterviewSession {
@@ -348,6 +349,12 @@ export function TranscriptDisplay({
 
         {activeTab === 'analysis' && (
           <div className="h-full overflow-y-auto px-6 py-6">
+            {/* Development Note */}
+            <div className="mb-4 p-4 bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg">
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                🚧 In Development — Analysis features are being refined and may change.
+              </p>
+            </div>
             {loadingScore ? (
               <div className="flex items-center justify-center h-64">
                 <LoadingSpinner size="lg" />
@@ -361,109 +368,40 @@ export function TranscriptDisplay({
                 {(selectedScore || selectedPhoneCall?.analysis_summary) ? (
                   <div className="grid gap-6">
                     {/* Overall Score */}
-                    {(selectedScore?.overall_score || selectedPhoneCall?.interview_score) && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5" />
-                            Overall Score
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center gap-4">
-                            <div className={cn(
-                              "text-3xl font-bold",
-                              getScoreColor(selectedScore?.overall_score || selectedPhoneCall?.interview_score || 0).replace('bg-', 'text-').replace('/20', '')
-                            )}>
-                              {selectedScore?.overall_score || selectedPhoneCall?.interview_score}/10
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {selectedScore?.overall_score || selectedPhoneCall?.interview_score! >= 8 ? 'Excellent performance' :
-                               selectedScore?.overall_score || selectedPhoneCall?.interview_score! >= 6 ? 'Good performance' :
-                               selectedScore?.overall_score || selectedPhoneCall?.interview_score! >= 4 ? 'Average performance' :
-                               'Needs improvement'}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                    
+                    <TranscriptReport
+                      score={(selectedScore?.overall_score ?? selectedPhoneCall?.interview_score) || 0}
+                    />
+
                     {/* Strengths */}
-                    {(selectedScore?.strengths?.length || selectedPhoneCall?.strengths?.length) && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-green-700 dark:text-green-400">
-                            Strengths
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-2">
-                            {(selectedScore?.strengths || selectedPhoneCall?.strengths || []).map((strength, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <ChevronRight className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-sm">{strength}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    )}
-                    
+                    <AnalysisCard
+                      title="Strengths"
+                      items={selectedScore?.strengths ?? selectedPhoneCall?.strengths ?? []}
+                      icon={<TrendingUp className="h-5 w-5" />}
+                      colorClassName="text-green-600 dark:text-green-400"
+                    />
+
                     {/* Areas for Improvement */}
-                    {(selectedScore?.weaknesses?.length || selectedPhoneCall?.weaknesses?.length) && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-amber-700 dark:text-amber-400">
-                            Areas for Improvement
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-2">
-                            {(selectedScore?.weaknesses || selectedPhoneCall?.weaknesses || []).map((weakness, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <ChevronRight className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-sm">{weakness}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    )}
-                    
+                    <AnalysisCard
+                      title="Areas for Improvement"
+                      items={selectedScore?.weaknesses ?? selectedPhoneCall?.weaknesses ?? []}
+                      icon={<ChevronRight className="h-5 w-5" />}
+                      colorClassName="text-amber-600 dark:text-amber-400"
+                    />
+
                     {/* Recommendations */}
-                    {(selectedScore?.improvements?.length || selectedPhoneCall?.recommendations?.length) && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-blue-700 dark:text-blue-400">
-                            Recommendations
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-2">
-                            {(selectedScore?.improvements || selectedPhoneCall?.recommendations || []).map((improvement, index) => (
-                              <li key={index} className="flex items-start gap-2">
-                                <ChevronRight className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-sm">{improvement}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    )}
-                    
+                    <AnalysisCard
+                      title="Recommendations"
+                      items={selectedScore?.improvements ?? selectedPhoneCall?.recommendations ?? []}
+                      icon={<ChevronRight className="h-5 w-5" />}
+                      colorClassName="text-blue-600 dark:text-blue-400"
+                    />
+
                     {/* Detailed Feedback */}
-                    {(selectedScore?.detailed_feedback || selectedPhoneCall?.analysis_summary) && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Detailed Feedback</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                            {selectedScore?.detailed_feedback || selectedPhoneCall?.analysis_summary}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
+                    <DetailedFeedbackCard
+                      title="Detailed Feedback"
+                      feedback={selectedScore?.detailed_feedback ?? selectedPhoneCall?.analysis_summary ?? ''}
+                      icon={<Eye className="h-5 w-5" />}
+                    />
                   </div>
                 ) : (
                   <div className="text-center py-12">

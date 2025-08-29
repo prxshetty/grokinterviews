@@ -1,6 +1,6 @@
 import React from 'react';
-import { CheckCircle, TrendingUp, Target, Lightbulb } from 'lucide-react';
-import { getScoreColor } from '@/components/voice/shared/utils';
+import { useRouter } from 'next/navigation';
+import { Play } from 'lucide-react';
 
 interface InterviewReportProps {
   report: {
@@ -15,45 +15,16 @@ interface InterviewReportProps {
 }
 
 export default function InterviewReport({ report }: InterviewReportProps) {
-  // Add debug logging to help identify data structure issues
-  console.log('InterviewReport received data:', {
-    report,
-    type: typeof report,
-    keys: report ? Object.keys(report) : 'null',
-    overall_score: report?.overall_score,
-    overall_score_type: typeof report?.overall_score
-  });
+  const router = useRouter();
   
-  // Add null/undefined checks
+  // Handle null/undefined report
   if (!report) {
-    console.warn('InterviewReport: No report data provided');
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">No report data available</p>
-          <p className="text-sm text-gray-500 mt-2">The interview report could not be loaded.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Validate required fields with more detailed error handling
-  if (typeof report.overall_score !== 'number' || isNaN(report.overall_score)) {
-    console.warn('InterviewReport: Invalid or missing overall_score:', {
-      value: report.overall_score,
-      type: typeof report.overall_score,
-      isNaN: isNaN(report.overall_score as any)
-    });
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Invalid report data structure</p>
-          <p className="text-sm text-gray-500 mt-2">The interview score could not be parsed correctly.</p>
-          {process.env.NODE_ENV === 'development' && (
-            <pre className="text-xs text-left mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded overflow-auto">
-              {JSON.stringify(report, null, 2)}
-            </pre>
-          )}
+      <div className="w-full max-w-[380px] md:max-w-[500px] lg:max-w-[700px] mx-auto">
+        <div className="rounded-3xl border border-border bg-background p-4 shadow-[0_8px_30px_rgba(0,0,0,0.24)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+          <div className="text-center">
+            <p className="text-muted-foreground text-sm">No report data available</p>
+          </div>
         </div>
       </div>
     );
@@ -61,116 +32,62 @@ export default function InterviewReport({ report }: InterviewReportProps) {
 
   // Ensure score is within valid range (1-10)
   const normalizedScore = Math.max(1, Math.min(10, Math.round(report.overall_score)));
-  if (normalizedScore !== report.overall_score) {
-    console.warn(`InterviewReport: Score ${report.overall_score} normalized to ${normalizedScore}`);
-  }
 
-  const getScoreBgColor = (score: number) => {
-    if (score >= 8) return 'bg-green-100 dark:bg-green-900/20';
-    if (score >= 6) return 'bg-yellow-100 dark:bg-yellow-900/20';
-    return 'bg-red-100 dark:bg-red-900/20';
+
+
+  const handleViewAnalysis = () => {
+    router.push('/transcripts');
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center mb-4">
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center ${getScoreBgColor(normalizedScore)}`}>
-            <span className={`text-3xl font-bold ${getScoreColor(normalizedScore)}`}>
-              {normalizedScore}/10
-            </span>
-          </div>
-        </div>
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Interview Assessment Complete
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
-          Here's your detailed performance analysis
-        </p>
-      </div>
+    <div className="w-full max-w-[340px] mx-auto">
+      <button 
+        onClick={handleViewAnalysis}
+        className="w-full rounded-2xl border border-border bg-background p-1 shadow-[0_4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-all duration-300 hover:bg-muted/50 hover:border-muted-foreground/30"
+        title="View Analysis"
+      >
+        <div className="flex items-center justify-between p-1">
+          {/* Score Display - Left Side */}
+          <div className="flex items-center gap-1.5">
+            {/* Score Circle - Smaller */}
+            <div className="relative w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  fill="none"
+                  className="text-muted-foreground/20"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(normalizedScore / 10) * 251.2} 251.2`}
+                  className="text-primary"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-light text-foreground">{normalizedScore}</span>
+              </div>
+            </div>
 
-      {/* Summary */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-          <CheckCircle className="w-6 h-6 mr-2 text-blue-600" />
-          Summary
-        </h3>
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {report.summary || report.detailed_feedback || 'No detailed feedback available for this interview.'}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-8 mb-8">
-        {/* Strengths */}
-        <div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <TrendingUp className="w-6 h-6 mr-2 text-green-600" />
-            Strengths
-          </h3>
-          <div className="space-y-3">
-            {(() => {
-              const strengthsList = report.strengths || [];
-              if (strengthsList.length === 0) {
-                return <p className="text-gray-500 dark:text-gray-400">No specific strengths identified in this interview.</p>;
-              }
-              return strengthsList.map((strength, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-gray-700 dark:text-gray-300">{strength}</p>
-                </div>
-              ));
-            })()}
+            {/* Report Text */}
+            <div className="text-left">
+              <p className="text-sm font-medium text-foreground">View detailed analysis</p>
+            </div>
           </div>
-        </div>
 
-        {/* Areas for Improvement */}
-        <div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <Target className="w-6 h-6 mr-2 text-orange-600" />
-            Areas for Improvement
-          </h3>
-          <div className="space-y-3">
-            {(() => {
-              const weaknessesList = report.weaknesses || [];
-              if (weaknessesList.length === 0) {
-                return <p className="text-gray-500 dark:text-gray-400">No specific areas for improvement identified.</p>;
-              }
-              return weaknessesList.map((weakness, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-gray-700 dark:text-gray-300">{weakness}</p>
-                </div>
-              ));
-            })()}
-          </div>
+          {/* Icon - Right Side */}
+          <Play className="h-4 w-4 text-muted-foreground" />
         </div>
-      </div>
-
-      {/* Recommendations */}
-      <div>
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-          <Lightbulb className="w-6 h-6 mr-2 text-purple-600" />
-          Recommendations
-        </h3>
-        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6">
-          <div className="space-y-3">
-            {(() => {
-              const recommendationsList = report.recommendations || report.improvements || [];
-              if (recommendationsList.length === 0) {
-                return <p className="text-gray-500 dark:text-gray-400">No specific recommendations available for this interview.</p>;
-              }
-              return recommendationsList.map((recommendation, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <p className="text-gray-700 dark:text-gray-300">{recommendation}</p>
-                </div>
-              ));
-            })()}
-          </div>
-        </div>
-      </div>
+      </button>
     </div>
   );
 }

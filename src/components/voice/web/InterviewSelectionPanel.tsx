@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { InterviewAvatar, InterviewType } from './InterviewAvatar'
 import { InterviewModeConfig } from '@/app/api/voice/types'
 import TechnicalInterviewForm from './TechnicalInterviewForm'
@@ -43,6 +43,26 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
   onCustomConfigChange,
   customConfigErrors,
 }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [previousType, setPreviousType] = useState(selectedType);
+
+  // Track when the type changes to trigger animations
+  useEffect(() => {
+    if (previousType !== selectedType) {
+      setPreviousType(selectedType);
+      setIsVisible(false);
+      const timer = setTimeout(() => setIsVisible(true), 60);
+      return () => clearTimeout(timer);
+    }
+    return;
+  }, [selectedType]);
+
+  // Initial animation on mount
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Memoize the callback to prevent re-renders
   const stableOnCustomConfigChange = useMemo(
     () => onCustomConfigChange || (() => {}),
@@ -62,9 +82,25 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
 
     switch (selectedType) {
       case 'technical':
-        return <TechnicalInterviewForm {...commonProps} />
+        return (
+          <TechnicalInterviewForm
+            {...commonProps}
+            isInterviewActive={isInterviewActive}
+            isProcessingAI={isProcessingAI}
+            rateLimited={rateLimited}
+            onStartInterview={onStartInterview}
+          />
+        )
       case 'system-design':
-        return <SystemDesignForm {...commonProps} />
+        return (
+          <SystemDesignForm
+            {...commonProps}
+            isInterviewActive={isInterviewActive}
+            isProcessingAI={isProcessingAI}
+            rateLimited={rateLimited}
+            onStartInterview={onStartInterview}
+          />
+        )
       case 'behavioral':
       default:
         return (
@@ -80,9 +116,11 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
   }
 
   return (
-    <div className="font-pp-editorial font-light flex flex-col gap-8 items-center">
+    <div className="font-pp-editorial font-light flex flex-col gap-4 items-center w-full pt-20 md:pt-24">
       {/* Top Section: AI Avatar with Carousel */}
-      <div className="flex flex-col items-center">
+      <div className={`flex flex-col items-center transition-all duration-500 ease-out ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}>
         <InterviewAvatar
           isInterviewActive={isInterviewActive}
           isPlayingTTS={isPlayingTTS}
@@ -93,8 +131,35 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
         />
       </div>
       
+      {/* Interview Title */}
+      {!isInterviewActive && (
+        <div
+          key={selectedType}
+          className={`transition-all duration-700 ease-out transform-gpu ${
+            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+          }`}
+          style={{ transitionDelay: isVisible ? '150ms' : '0ms' }}>
+          <h2 className="font-editorial font-light text-3xl md:text-4xl text-center mt-2 transform">
+            {(() => {
+              switch (selectedType) {
+                case 'technical':
+                  return 'Technical Interview'
+                case 'system-design':
+                  return 'System Design Interview'
+                case 'behavioral':
+                default:
+                  return 'Behavioral Interview'
+              }
+            })()}
+          </h2>
+        </div>
+      )}
+
       {/* Bottom Section: Interview Configuration Forms */}
-      <div className="w-full">
+      <div className={`w-full transition-all duration-700 ease-out ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+      style={{ transitionDelay: isVisible ? '200ms' : '0ms' }}>
         {renderInterviewForm()}
       </div>
     </div>

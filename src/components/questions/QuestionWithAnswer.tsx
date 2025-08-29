@@ -2,7 +2,7 @@
 
 import { useState, useRef, memo, useMemo, Suspense } from 'react';
 import React from 'react';
-import { ChevronUp, Eye, EyeOff } from 'lucide-react';
+import { ChevronUp, Eye, EyeOff, Copy, Check } from 'lucide-react';
 
 // Import custom hooks
 import { useQuestionAnswer, useQuestionProgress, useQuestionBookmark, useQuestionView } from '@/hooks/questions';
@@ -91,6 +91,7 @@ function QuestionWithAnswerComponent({
 }: QuestionWithAnswerProps) {
   const [isExpandedState, setIsExpandedState] = useState(isOpen || false);
   const [isResourcesVisible, setIsResourcesVisible] = useState(true);
+  const [isCopied, setIsCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('answer'); // 'answer' or 'resources'
   const answerRef = useRef<HTMLDivElement | null>(null);
   const isTabletOrSmaller = useIsTabletOrSmaller();
@@ -156,6 +157,19 @@ function QuestionWithAnswerComponent({
   React.useEffect(() => {
     setIsExpandedState(isOpen || false);
   }, [isOpen]);
+
+  const answerTextForCopy = (hasPredefinedAnswer ? question.answer_text : generatedAnswer) ?? '';
+
+  const handleCopy = async () => {
+    if (!answerTextForCopy) return;
+    try {
+        await navigator.clipboard.writeText(answerTextForCopy);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+    }
+  };
 
   // Tab navigation items for mobile
   const tabItems = [
@@ -378,22 +392,41 @@ function QuestionWithAnswerComponent({
         {/* Desktop Controls - Only show on desktop when expanded */}
         {!isTabletOrSmaller && isExpandedState && onRequestClose && (
           <div className="mt-4 flex justify-between items-center">
-            <button
-              onClick={() => setIsResourcesVisible(!isResourcesVisible)}
-              className="flex items-center text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-colors duration-150 h-8"
-            >
-              {isResourcesVisible ? (
-                <>
-                  <EyeOff className="mr-1 h-3.5 w-3.5" />
-                  Hide Resources
-                </>
-              ) : (
-                <>
-                  <Eye className="mr-1 h-3.5 w-3.5" />
-                  Show Resources
-                </>
-              )}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIsResourcesVisible(!isResourcesVisible)}
+                className="flex items-center text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-colors duration-150 h-8"
+              >
+                {isResourcesVisible ? (
+                  <>
+                    <EyeOff className="mr-1 h-3.5 w-3.5" />
+                    Hide Resources
+                  </>
+                ) : (
+                  <>
+                    <Eye className="mr-1 h-3.5 w-3.5" />
+                    Show Resources
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleCopy}
+                disabled={!answerTextForCopy}
+                className="flex items-center text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-colors duration-150 h-8"
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="mr-1 h-3.5 w-3.5" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-1 h-3.5 w-3.5" />
+                    Copy Answer
+                  </>
+                )}
+              </button>
+            </div>
             <button
               onClick={onRequestClose}
               className="flex items-center text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition-colors duration-150 h-8"

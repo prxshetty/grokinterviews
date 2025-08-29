@@ -77,8 +77,10 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
           ...prev,
           id: newSessionId,
           isActive: true,
+          isCompleted: false,
           conversationHistory: [],
           currentQuestion: dynamicWelcomeMessage,
+          interviewReport: null,
         }));
         
         return newSessionId;
