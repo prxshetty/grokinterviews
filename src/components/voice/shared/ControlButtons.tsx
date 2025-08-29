@@ -14,8 +14,6 @@ interface ControlButtonsProps {
   isInterviewActive: boolean;
   isProcessingAI: boolean;
   rateLimited: boolean;
-  selectedInterviewType?: string;
-  onStartInterview: () => Promise<void>;
   onEndInterview: () => Promise<void>;
   // Microphone toggle functionality
   isMicEnabled?: boolean;
@@ -33,8 +31,6 @@ export default function ControlButtons({
   isInterviewActive,
   isProcessingAI,
   rateLimited,
-  selectedInterviewType,
-  onStartInterview,
   onEndInterview,
   // Microphone toggle functionality
   isMicEnabled = false,
@@ -67,28 +63,9 @@ export default function ControlButtons({
         </div>
       )}
 
-      {/* Control Buttons - Individual Spacing */}
-      <div className="flex items-center justify-center space-x-8">
-        {!isInterviewActive ? (
-          <div className="relative">
-            {selectedInterviewType === 'custom' ? (
-              <div className="px-6 py-3 backdrop-blur-xl bg-gray-200/40 dark:bg-white/10 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-xs font-medium">Coming Soon</div>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={onStartInterview}
-                disabled={isProcessingAI || rateLimited}
-                className="px-6 py-3 backdrop-blur-xl bg-gray-200/40 hover:bg-gray-200/60 disabled:bg-gray-300/50 dark:bg-white/10 dark:hover:bg-white/20 border border-gray-300/50 dark:border-white/20 text-gray-700 dark:text-white rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center group hover:scale-105"
-                title="Start Interview"
-              >
-                <span className="text-sm font-medium group-hover:scale-110 transition-transform">Start Interview</span>
-              </button>
-            )}
-          </div>
-        ) : (
+      {/* Control Buttons - Only show during interview */}
+      {isInterviewActive && (
+        <div className="flex items-center justify-center space-x-8">
           <div className="relative">
             <button
               onClick={onEndInterview}
@@ -98,10 +75,9 @@ export default function ControlButtons({
               <StopIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </button>
           </div>
-        )}
-        
-        {/* Microphone Toggle Button */}
-        {isInterviewActive && onToggleMic && (
+          
+          {/* Microphone Toggle Button */}
+          {onToggleMic && (
           <div className="relative">
             <button
               onClick={onToggleMic}
@@ -133,9 +109,9 @@ export default function ControlButtons({
             )}
           </div>
         )}
-        
-        {/* Chat Toggle Button */}
-        {isInterviewActive && onToggleChat && (
+          
+          {/* Chat Toggle Button */}
+          {onToggleChat && (
           <div className="relative">
             <button
               onClick={onToggleChat}
@@ -151,7 +127,8 @@ export default function ControlButtons({
             </button>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

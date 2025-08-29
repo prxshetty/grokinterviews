@@ -60,6 +60,25 @@ export default function WebInterviewPageContent() {
 
   // Local component state
   const [selectedVoice, setSelectedVoice] = useState<VoiceOption>('Sophia');
+  // Track whether avatar images are fully loaded before rendering page
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  // Preload avatar images to avoid late rendering and layout shifts
+  useEffect(() => {
+    const imageUrls = ['/behavior.svg', '/techAI.svg', '/sdAI.svg', '/customAI.svg'];
+    let loadedCount = 0;
+
+    imageUrls.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = img.onerror = () => {
+        loadedCount += 1;
+        if (loadedCount === imageUrls.length) {
+          setImagesLoaded(true);
+        }
+      };
+    });
+  }, []);
   const [showChat, setShowChat] = useState(true);
   const [allTranscripts, setAllTranscripts] = useState<Array<{id: string, session_id: string, transcript_text: string, interaction_type: 'user_response' | 'ai_response', created_at: string, conversation_order: number}>>([]);
   const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
@@ -486,7 +505,7 @@ export default function WebInterviewPageContent() {
     }
   }, [user, loading]);
 
-  if (loading) {
+  if (loading || !imagesLoaded) {
     return (
       <div className="min-h-screen">
         <LoadingSpinner 
@@ -511,7 +530,7 @@ export default function WebInterviewPageContent() {
       isPlayingTTS={voiceState.isPlayingTTS}
     >
       <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-2">
+        <div className="px-4 py-2">
           <InterviewHeader onBackToModeSelector={handleBackToModeSelector} />
 
           {!session.isActive && !session.isCompleted && (

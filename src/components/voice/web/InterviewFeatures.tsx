@@ -101,9 +101,7 @@ export const InterviewFeatures: React.FC<InterviewFeaturesProps> = ({
         </h1>
       </div>
       
-      <div className="w-full bg-gradient-to-br from-slate-100/80 to-slate-200/60 dark:from-slate-800/80 dark:to-slate-900/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-200/50 dark:border-slate-700/50 relative overflow-hidden">
         {renderInterviewForm()}
-      </div>
     </div>
   );
 };
