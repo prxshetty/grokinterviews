@@ -201,6 +201,12 @@ export function AnswerDisplay({
             <ReactMarkdown
               components={{
                 ...defaultMarkdownComponents,
+                h1: (props) => <h1 className="text-2xl font-bold mt-6 mb-4" {...props} />,
+                h2: (props) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
+                h3: (props) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
+                h4: (props) => <h4 className="font-bold mt-3 mb-1" {...props} />,
+                h5: (props) => <h5 className="font-bold mt-2" {...props} />,
+                h6: (props) => <h6 className="font-bold mt-1" {...props} />,
                 code: CodeBlock,
                 pre: ({ children }) => <>{children}</>, // Let CodeBlock handle the pre element
                 p: ({ children, ...props }) => {
@@ -230,7 +236,7 @@ export function AnswerDisplay({
                     return <div {...props}>{children}</div>;
                   }
                   
-                  return <p {...props}>{children}</p>;
+                  return <p className="mb-4" {...props}>{children}</p>;
                 },
                 a: (props) => (
                   <a 
