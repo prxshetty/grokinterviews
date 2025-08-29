@@ -10,7 +10,6 @@ import { TranscriptReport } from '@/components/transcripts/TranscriptReport';
 import { AnalysisCard } from '@/components/transcripts/AnalysisCard';
 import { DetailedFeedbackCard } from '@/components/transcripts/DetailedFeedbackCard';
 import { 
-  InfoIcon,
   TrendingUp, 
   Eye, 
   ChevronRight,
