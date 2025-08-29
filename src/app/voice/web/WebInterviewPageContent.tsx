@@ -546,6 +546,9 @@ export default function WebInterviewPageContent() {
                   customConfig={interviewConfig}
                   onCustomConfigChange={handleInterviewConfigChange}
                   customConfigErrors={interviewConfigErrors}
+                  isProcessingAI={voiceState.isProcessingAI}
+                  rateLimited={rateLimitState.isRateLimited}
+                  onStartInterview={handleStartInterview}
                 />
               </div>
             </div>
@@ -563,6 +566,9 @@ export default function WebInterviewPageContent() {
                 customConfig={interviewConfig}
                 onCustomConfigChange={handleInterviewConfigChange}
                 customConfigErrors={interviewConfigErrors}
+                isProcessingAI={voiceState.isProcessingAI}
+                rateLimited={rateLimitState.isRateLimited}
+                onStartInterview={handleStartInterview}
               />
             </div>
           )}
