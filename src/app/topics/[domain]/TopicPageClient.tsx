@@ -314,7 +314,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
       <div className="min-h-screen bg-transparent">
         <div className="container mx-auto px-4 py-8">
           <ErrorBoundary>
-            {!isLoading.sections && showTopicGrid && (
+            {showTopicGrid && (
               <TopicCategoryGrid
                 items={topicCategories}
                 onSelectItem={handleCategorySelect}

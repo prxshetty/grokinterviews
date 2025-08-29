@@ -8,7 +8,6 @@ export { default as InterviewContent } from './InterviewContent'
 // UI components
 export { default as InterviewHeader } from './InterviewHeader'
 export { default as InterviewAvatar, type InterviewType } from './InterviewAvatar'
-export { default as InterviewFeatures } from './InterviewFeatures'
 export { default as InterviewSelectionPanel } from './InterviewSelectionPanel'
 
 export { default as TechnicalInterviewForm } from './TechnicalInterviewForm'
