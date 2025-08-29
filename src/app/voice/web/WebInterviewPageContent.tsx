@@ -31,16 +31,15 @@ import {
 import { InterviewService, type TerminationReason } from '@/services/interviewService';
 
 const getBehavioralDefaults = (): InterviewModeConfig => ({
-  industry: 'Technology',
+  industry: '',
   targetRole: '',
   minYearsExperience: 0,
   maxYearsExperience: 5
 });
 
 const getTechnicalDefaults = (): InterviewModeConfig => ({
-  programmingLanguage: 'JavaScript', // Default that matches TechnicalInterviewForm fallback
-  focusAreas: ['Data Structures', 'Algorithms'], // Default that matches TechnicalInterviewForm fallback  
-  difficulty: 'Medium'
+  programmingLanguage: '',
+  focusAreas: []
 });
 
 const getSystemDesignDefaults = (): InterviewModeConfig => ({
@@ -372,6 +371,9 @@ export default function WebInterviewPageContent() {
   const handleInterviewTypeChange = useCallback((type: InterviewType) => {
     setSelectedInterviewType(type);
     setInterviewConfigErrors({});
+    // Clear previous interview report when switching types
+    setInterviewReport(null);
+    setSessionCompleted(false);
     let defaults: InterviewModeConfig;
     switch (type) {
       case 'behavioral':
@@ -424,6 +426,12 @@ export default function WebInterviewPageContent() {
       if (selectedInterviewType === 'custom' && !validateInterviewConfig()) {
         return;
       }
+
+      // Before starting interview, reset chat and state
+      setShowChat(true);
+      setAllTranscripts([]);
+      // Clear any previous conversation history
+      await endSession(); // Ensure previous session state cleared
 
       if (voicePlayerRef.current) {
         voicePlayerRef.current.stopPlayback();
@@ -634,7 +642,6 @@ export default function WebInterviewPageContent() {
             isProcessingAI={voiceState.isProcessingAI}
             rateLimited={rateLimitState.isRateLimited}
             selectedInterviewType={selectedInterviewType}
-            onStartInterview={handleStartInterview}
             onEndInterview={handleEndInterview}
             isMicEnabled={isMicEnabled}
             isSpeaking={voiceState.isSpeakingDetected}

@@ -68,7 +68,7 @@ function VoiceHeroSection({
     >
       <div className="max-w-7xl mx-auto w-full">
         {/* Split layout - Text left, Globe right */}
-        <div className="flex flex-col lg:flex-row items-center justify-between min-h-[80vh] py-4 sm:py-6 md:py-8 lg:py-12">
+        <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between min-h-[80vh] py-12">
           
           {/* Text Content Section - Left Side with matching padding */}
           <div className={`relative z-10 text-center lg:text-left lg:flex-1 lg:pr-8 px-3 sm:px-4 md:px-6 ml-0 sm:ml-4 md:ml-8 lg:ml-12 transition-all duration-700 delay-150 ${

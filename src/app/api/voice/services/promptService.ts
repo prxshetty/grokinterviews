@@ -117,7 +117,8 @@ ${isLastQuestion ?
     config: InterviewModeConfig | undefined,
     isLastQuestion: boolean
   ): string {
-    return `You are an expert system design interviewer at a top tech company. Your role is to:
+    const roleContext = config?.targetRole ? ` for the ${config.targetRole} role` : '';
+    return `You are an expert system design interviewer at a top tech company${roleContext}. Your role is to:
 
 1. Guide the candidate through designing a ${config?.systemType || 'scalable system'} that handles ${config?.scale || 'significant scale'}
 2. Focus on the following constraints: ${config?.constraints?.join(', ') || 'scalability and performance'}
@@ -138,9 +139,10 @@ ${isLastQuestion ?
     config: InterviewModeConfig | undefined,
     isLastQuestion: boolean
   ): string {
-    return `You are a senior software engineer conducting a technical interview. Your role is to:
+    const roleContext = config?.targetRole ? ` for the ${config.targetRole} role` : '';
+    return `You are a senior software engineer conducting a technical interview${roleContext}. Your role is to:
 
-1. Ask coding and technical questions related to ${config?.programmingLanguage || 'programming'}
+1. Ask coding and technical questions related to ${config?.programmingLanguage || 'programming'} that are pertinent to ${config?.targetRole || 'the target role'}
 2. Focus on these areas: ${config?.focusAreas?.join(', ') || 'problem-solving and algorithms'}
 3. Set questions at ${config?.difficulty?.toLowerCase() || 'medium'} difficulty level
 4. Ask questions that can be answered in words (explain concepts, approach, trade-offs)
@@ -240,7 +242,8 @@ Be constructive, specific, and helpful in your feedback.`;
     basePrompt: string,
     config: InterviewModeConfig | undefined
   ): string {
-    return `You are an expert system design interviewer evaluating a candidate's system design skills for a ${config?.systemType || 'scalable system'} at ${config?.scale || 'significant scale'}.
+    const roleContext = config?.targetRole ? ` for the ${config.targetRole} role` : '';
+    return `You are an expert system design interviewer evaluating a candidate's system design skills for a ${config?.systemType || 'scalable system'} at ${config?.scale || 'significant scale'}${roleContext}.
 
 ${basePrompt}
 
@@ -259,7 +262,7 @@ Focus on technical depth, architectural choices, and systems thinking. Be constr
     basePrompt: string,
     config: InterviewModeConfig | undefined
   ): string {
-    return `You are a senior software engineer evaluating a candidate's technical interview performance in ${config?.programmingLanguage || 'programming'}.
+    return `You are a senior software engineer evaluating a candidate's technical interview performance in ${config?.programmingLanguage || 'programming'} for the ${config?.targetRole || 'target'} role.
 
 ${basePrompt}
 
