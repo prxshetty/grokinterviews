@@ -10,6 +10,7 @@ import { TranscriptReport } from '@/components/transcripts/TranscriptReport';
 import { AnalysisCard } from '@/components/transcripts/AnalysisCard';
 import { DetailedFeedbackCard } from '@/components/transcripts/DetailedFeedbackCard';
 import { 
+  InfoIcon,
   TrendingUp, 
   Eye, 
   ChevronRight,
@@ -197,7 +198,7 @@ export function TranscriptDisplay({
                         )}
                         
                         <div
-                           className={`max-w-xs lg:max-w-md px-4 py-2 ${
+                           className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${
                              transcript.interaction_type === 'user_response'
                                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
@@ -259,7 +260,7 @@ export function TranscriptDisplay({
                           )}
                           
                           <div
-                             className={`max-w-xs lg:max-w-md px-4 py-2 ${
+                             className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${
                                message.role === 'user'
                                  ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
                                  : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
@@ -311,7 +312,7 @@ export function TranscriptDisplay({
                           )}
                           
                           <div
-                             className={`max-w-xs lg:max-w-md px-4 py-2 ${
+                             className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${
                                flow.interactionType === 'user_response'
                                  ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
                                  : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
@@ -349,59 +350,57 @@ export function TranscriptDisplay({
 
         {activeTab === 'analysis' && (
           <div className="h-full overflow-y-auto px-6 py-6">
-            {/* Development Note */}
-            <div className="mb-4 p-4 bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg">
-              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                Analysis features are being refined and may change. Expect updates in the next release.
-              </p>
-            </div>
             {loadingScore ? (
               <div className="flex items-center justify-center h-64">
                 <LoadingSpinner size="lg" />
               </div>
             ) : (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-foreground">
-                  Interview Analysis
-                </h2>
                 
                 {(selectedScore || selectedPhoneCall?.analysis_summary) ? (
-                  <div className="grid gap-6">
-                    {/* Overall Score */}
-                    <TranscriptReport
-                      score={(selectedScore?.overall_score ?? selectedPhoneCall?.interview_score) || 0}
-                    />
+                  <div className="space-y-6">
+                    {/* First Row - Overall Score and Recommendations */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div>
+                        <TranscriptReport
+                          score={(selectedScore?.overall_score ?? selectedPhoneCall?.interview_score) || 0}
+                        />
+                      </div>
+                      <div>
+                        <AnalysisCard
+                          title="Recommendations"
+                          items={selectedScore?.improvements ?? selectedPhoneCall?.recommendations ?? []}
+                          icon={<ChevronRight className="h-5 w-5" />}
+                          colorClassName="text-blue-600 dark:text-blue-400"
+                        />
+                      </div>
+                    </div>
 
-                    {/* Strengths */}
-                    <AnalysisCard
-                      title="Strengths"
-                      items={selectedScore?.strengths ?? selectedPhoneCall?.strengths ?? []}
-                      icon={<TrendingUp className="h-5 w-5" />}
-                      colorClassName="text-green-600 dark:text-green-400"
-                    />
+                    {/* Second Row - Strengths and Areas for Improvement */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <AnalysisCard
+                        title="Strengths"
+                        items={selectedScore?.strengths ?? selectedPhoneCall?.strengths ?? []}
+                        icon={<TrendingUp className="h-5 w-5" />}
+                        colorClassName="text-green-600 dark:text-green-400"
+                      />
+                      
+                      <AnalysisCard
+                        title="Areas for Improvement"
+                        items={selectedScore?.weaknesses ?? selectedPhoneCall?.weaknesses ?? []}
+                        icon={<ChevronRight className="h-5 w-5" />}
+                        colorClassName="text-amber-600 dark:text-amber-400"
+                      />
+                    </div>
 
-                    {/* Areas for Improvement */}
-                    <AnalysisCard
-                      title="Areas for Improvement"
-                      items={selectedScore?.weaknesses ?? selectedPhoneCall?.weaknesses ?? []}
-                      icon={<ChevronRight className="h-5 w-5" />}
-                      colorClassName="text-amber-600 dark:text-amber-400"
-                    />
-
-                    {/* Recommendations */}
-                    <AnalysisCard
-                      title="Recommendations"
-                      items={selectedScore?.improvements ?? selectedPhoneCall?.recommendations ?? []}
-                      icon={<ChevronRight className="h-5 w-5" />}
-                      colorClassName="text-blue-600 dark:text-blue-400"
-                    />
-
-                    {/* Detailed Feedback */}
-                    <DetailedFeedbackCard
-                      title="Detailed Feedback"
-                      feedback={selectedScore?.detailed_feedback ?? selectedPhoneCall?.analysis_summary ?? ''}
-                      icon={<Eye className="h-5 w-5" />}
-                    />
+                    {/* Detailed Feedback - Full Width */}
+                    <div className="w-full">
+                      <DetailedFeedbackCard
+                        title="Detailed Feedback"
+                        feedback={selectedScore?.detailed_feedback ?? selectedPhoneCall?.analysis_summary ?? ''}
+                        icon={<Eye className="h-5 w-5" />}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-12">
