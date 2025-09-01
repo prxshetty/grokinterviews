@@ -99,7 +99,7 @@ function VoiceHeroSection({
         </div>
         
         {/* Stats Section - Below everything */}
-        <div className={`mt-0 sm:mt-2 md:mt-4 lg:mt-6 px-3 sm:px-4 md:px-6 lg:px-12 transition-all duration-700 delay-600 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <div className={`mt-4 pt-12 px-3 sm:px-4 md:px-6 lg:px-12 transition-all duration-700 delay-600 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 w-full">
             <div className="text-center">
               <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">99.9%</div>
@@ -111,11 +111,11 @@ function VoiceHeroSection({
             </div>
             <div className="text-center">
               <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">10+</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">AI Tools</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">AI Features</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">500K+</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active Users</div>
+              <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">~0.67s</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Phone Response Time</div>
             </div>
           </div>
         </div>

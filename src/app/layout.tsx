@@ -14,7 +14,6 @@ const manrope = Manrope({
   variable: '--font-manrope',
 });
 import { ThemeProvider } from '@/components/theme-provider';
-import { TwentyFirstToolbar } from '@21st-extension/toolbar-next';
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout';
 
 
@@ -119,7 +118,6 @@ export default function RootLayout({
         manrope.variable,
         PPEditorialUltralight.variable
       )}>
-        {process.env.NODE_ENV === 'development' && <TwentyFirstToolbar />}
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
