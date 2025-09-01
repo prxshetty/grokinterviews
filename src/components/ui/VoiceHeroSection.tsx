@@ -62,13 +62,13 @@ function VoiceHeroSection({
   return (
     <div 
       ref={sectionRef}
-      className={`relative bg-transparent overflow-hidden min-h-[80vh] flex flex-col transition-all duration-700 delay-700 ${
+      className={`relative bg-transparent overflow-hidden flex flex-col transition-all duration-700 delay-700 ${
         isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
       <div className="max-w-7xl mx-auto w-full">
         {/* Split layout - Text left, Globe right */}
-        <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between min-h-[80vh] py-12">
+        <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between pt-2 pb-0 lg:pb-1">
           
           {/* Text Content Section - Left Side with matching padding */}
           <div className={`relative z-10 text-center lg:text-left lg:flex-1 lg:pr-8 px-3 sm:px-4 md:px-6 ml-0 sm:ml-4 md:ml-8 lg:ml-12 transition-all duration-700 delay-150 ${
@@ -88,7 +88,7 @@ function VoiceHeroSection({
           </div>
 
           {/* Globe Section - Right Side */}
-          <div className={`relative lg:flex-1 mt-6 sm:mt-8 md:mt-10 lg:mt-0 lg:pl-8 px-3 sm:px-4 md:px-6 mr-0 sm:mr-4 md:mr-8 lg:mr-12 transition-all duration-700 delay-450 ${
+          <div className={`relative lg:flex-1 mt-4 sm:mt-6 md:mt-8 lg:mt-0 lg:pl-8 px-3 sm:px-4 md:px-6 mr-0 sm:mr-4 md:mr-8 lg:mr-12 transition-all duration-700 delay-450 ${
             isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}>
             <div className="flex justify-center lg:justify-end">
@@ -96,6 +96,28 @@ function VoiceHeroSection({
             </div>
           </div>
 
+        </div>
+        
+        {/* Stats Section - Below everything */}
+        <div className={`mt-0 sm:mt-2 md:mt-4 lg:mt-6 px-3 sm:px-4 md:px-6 lg:px-12 transition-all duration-700 delay-600 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 w-full">
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">99.9%</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Uptime Guarantee</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">24/7</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Support Available</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">10+</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">AI Tools</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white">500K+</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active Users</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
