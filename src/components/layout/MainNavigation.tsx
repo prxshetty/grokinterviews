@@ -26,7 +26,8 @@ import {
 } from '@/components/ui/sheet';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 import { Logo } from '@/components/ui/Logo';
-import { MAIN_NAV_TOPICS, DEFAULT_AVATAR_URL, MAIN_NAV_ITEMS } from '@/config';
+import { DEFAULT_AVATAR_URL, MAIN_NAV_ITEMS } from '@/config';
+import { getDomainLabel } from '@/config/domain.constants';
 import { cn } from '@/lib/utils';
 import { useStreak } from '@/hooks/useStreak';
 import { StreakBadge } from '@/components/ui/streak-badge';
@@ -268,9 +269,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
     prevStreakRef.current = { current: current_streak, highest: highest_streak };
   }, [user, current_streak, highest_streak, isLoading, error]);
 
-  // Memoize navigation topics and domain extraction for performance
-  const displayedNavTopics = useMemo(() => MAIN_NAV_TOPICS, []);
-  
+
   const extractDomainFromPath = useCallback((path: string, section: 'topics') => {
     const parts = path.split('/');
     if (parts.length >= 3 && parts[1] === section) {
@@ -282,10 +281,8 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
   // Memoize current domain calculation
   const currentDomainLabel = useMemo(() => {
     const domain = extractDomainFromPath(pathname, 'topics');
-    return domain ? 
-      displayedNavTopics.find(topic => topic.id === domain)?.label || 'Topics' : 
-      'Topics';
-  }, [pathname, displayedNavTopics, extractDomainFromPath]);
+    return domain ? getDomainLabel(domain) : 'Topics';
+  }, [pathname, extractDomainFromPath]);
 
   const handleTopicsLinkClick = useCallback(() => {
     setIsMobileMenuOpen(false);

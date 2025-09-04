@@ -1,16 +1,16 @@
+import { DOMAIN_OPTIONS } from './domain.constants';
+
 export interface NavTopic {
   id: string;
   label: string;
   abbreviation: string;
 }
 
-export const MAIN_NAV_TOPICS: NavTopic[] = [
-  { id: 'ml', label: 'Machine Learning', abbreviation: 'ML' },
-  { id: 'ai', label: 'Artificial Intelligence', abbreviation: 'AI' },
-  { id: 'webdev', label: 'Web Development', abbreviation: 'Web Development' },
-  { id: 'sdesign', label: 'System Design', abbreviation: 'System Design' },
-  { id: 'dsa', label: 'Data Structures & Algorithms', abbreviation: 'DSA' },
-]; 
+export const MAIN_NAV_TOPICS: NavTopic[] = DOMAIN_OPTIONS.map(domain => ({
+  id: domain.id,
+  label: domain.label,
+  abbreviation: domain.label.split(' ').map(word => word[0]).join('').toUpperCase()
+})); 
 
 export interface NavItem {
   id: string;
