@@ -648,3 +648,27 @@ button {
     border-radius: 75%;
   }
 }
+
+/* Overlay scrollbar to prevent layout-shift on load */
+@supports (overflow: overlay) {
+  html {
+    overflow-y: overlay; /* draw scrollbar over content instead of resizing */
+  }
+}
+
+/* Firefox – slimmer bar so width change is negligible */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+}
+
+/* WebKit browsers – optional styling */
+body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+}
