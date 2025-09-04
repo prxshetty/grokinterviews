@@ -2,6 +2,7 @@
  
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { VALID_DOMAINS } from '@/config/domain.constants';
 
 type Props = {
   children: React.ReactNode;
@@ -14,8 +15,7 @@ export default async function DomainLayout({ children, params }: Props) {
   const domain = decodeURIComponent((await params).domain);
   
   // Domain validation - ensure only valid domains can be accessed
-  const validDomains = ['dsa', 'ml', 'webdev', 'ai', 'sdesign'];
-  if (!validDomains.includes(domain)) {
+  if (!VALID_DOMAINS.includes(domain)) {
     notFound();
   }
   
@@ -28,12 +28,6 @@ export default async function DomainLayout({ children, params }: Props) {
 
 // Generate static paths for common domains
 export function generateStaticParams() {
-  // Generate all domains except 'ml' to avoid it being the default
-  return [
-    { domain: 'ai' },
-    { domain: 'webdev' },
-    { domain: 'sdesign' },
-    { domain: 'dsa' },
-    { domain: 'ml' }, // ML stays in the list but isn't first
-  ];
-} 
+  // Generate all valid domains
+  return VALID_DOMAINS.map(domain => ({ domain }));
+}

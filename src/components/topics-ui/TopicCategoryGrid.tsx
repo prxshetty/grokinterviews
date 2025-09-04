@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { IconHover3D } from '@/components/ui';
 import styles from './TopicCategoryGrid.module.css';
 import { LoadingSpinner } from '@/components/ui';
+import { getDomainLabel } from '@/config/domain.constants';
 
 interface DisplayItem {
   id: string;
@@ -110,20 +111,10 @@ function TopicCategoryGridComponent({
     };
   }, []);
 
-  // Define a mapping for domain abbreviations to full names
-  const domainNameMap: Record<string, string> = {
-    ai: 'Artificial Intelligence',
-    ml: 'Machine Learning',
-    'web-dev': 'Web Development',
-    'system-design': 'System Design',
-    dsa: 'Data Structures and Algorithms',
-  };
-
   // Helper function to get the display name for the domain
   const getDisplayDomainName = (domainKey: string): string => {
-    const lowerDomainKey = domainKey.toLowerCase();
-    return domainNameMap[lowerDomainKey] || domainKey.charAt(0).toUpperCase() + domainKey.slice(1);
-  };
+    return getDomainLabel(domainKey);
+ };
 
   // Display loading or error state if applicable
   if (isLoading) {
