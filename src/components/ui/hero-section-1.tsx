@@ -103,7 +103,7 @@ export function HeroSection() {
                                 size="lg"
                                 variant="ghost"
                                 className="flex-1 sm:flex-none rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
-                                <Link href="/topics">
+                                <Link href="/voice">
                                     <span className="text-nowrap">View Interviews</span>
                                 </Link>
                             </Button>
