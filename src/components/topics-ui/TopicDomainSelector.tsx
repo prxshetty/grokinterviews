@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import {Users, BookOpen, FolderOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import {Users, BookOpen, FolderOpen } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { LoadingSpinner } from '@/components/ui';
 
 interface DomainStats {
   sections: number;
@@ -187,6 +188,7 @@ function getGradientClasses(domainId: string) {
 
 export default function TopicDomainSelector({ className }: TopicDomainSelectorProps) {
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -202,13 +204,30 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
   }, [pathname]);
 
   const handleDomainSelect = (domain: string) => {
+    setIsNavigating(true);
     setSelectedDomain(domain);
     router.push(`/topics/${domain}`);
   };
 
   // If a domain is already selected, don't show the selector
-  if (selectedDomain) {
+  if (selectedDomain && !isNavigating) {
     return null;
+  }
+
+  // Show loading state during navigation
+  if (isNavigating) {
+    return (
+      <div className={cn("w-full max-w-7xl mx-auto", className)}>
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner 
+            size="lg" 
+            color="primary" 
+            text="Loading topics..." 
+            centered={true}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
