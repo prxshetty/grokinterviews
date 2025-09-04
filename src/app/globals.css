@@ -668,7 +668,27 @@ body::-webkit-scrollbar {
   height: 8px;
 }
 
-body::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
+/* Base thumb style with transition */
+html::-webkit-scrollbar-thumb {
   border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+/* Hidden state – fully transparent */
+html.scrollbar-hidden::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
+/* Visible state */
+html:not(.scrollbar-hidden)::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Hidden scrollbar state applied by ScrollbarController */
+html.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+}
+html.scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
