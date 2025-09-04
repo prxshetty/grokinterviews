@@ -105,9 +105,6 @@ export default function VoicePage() {
             <h2 className="font-editorial text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight leading-tight">
               Choose Your Interview Mode
             </h2>
-            <p className="mx-auto max-w-2xl text-balance text-sm sm:text-base md:text-lg text-muted-foreground">
-              Select how you'd like to practice your behavioral interview
-            </p>
           </div>
 
           <div className="flex flex-col md:flex-row w-full gap-6">
