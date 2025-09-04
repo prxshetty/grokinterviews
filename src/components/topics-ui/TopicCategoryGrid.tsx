@@ -1,20 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import React, { useState, memo, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { IconHover3D } from '@/components/ui';
 import styles from './TopicCategoryGrid.module.css';
 import { LoadingSpinner } from '@/components/ui';
 import { getDomainLabel } from '@/config/domain.constants';
-
-interface DisplayItem {
-  id: string;
-  label: string;
-  display_order?: number;
-}
-
-// Define the possible levels this grid can represent
-type HierarchyLevel = 'section' | 'topic' | 'category';
+import { useResponsive } from '@/hooks/ui/useResponsive';
+import type { DisplayItem } from '@/types/topics';
+export type HierarchyLevel = 'section' | 'topic' | 'category';
 
 interface TopicCategoryGridProps {
   items?: DisplayItem[];
@@ -47,9 +41,7 @@ function TopicCategoryGridComponent({
   const router = useRouter();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
-  const [isLaptop, setIsLaptop] = useState(false);
+  const { isMobile, isTablet, isLaptop } = useResponsive();
 
   // Memoize the base items to avoid recalculating on every render
   const baseItems = useMemo(() => {
@@ -90,26 +82,7 @@ function TopicCategoryGridComponent({
     }
   }, [onSelectItem, onSelectCategory, level, expandedItemId, basePath, router]);
 
-  // Setup device detection
-  useEffect(() => {
-    // Check device type
-    const checkDeviceType = () => {
-      const width = window.innerWidth;
-      setIsMobile(width < 640);
-      setIsTablet(width >= 640 && width < 1024);
-      setIsLaptop(width >= 1024 && width < 1280);
-    };
-    
-    // Initial check
-    checkDeviceType();
-    
-    // Add resize listener
-    window.addEventListener('resize', checkDeviceType);
 
-    return () => {
-      window.removeEventListener('resize', checkDeviceType);
-    };
-  }, []);
 
   // Helper function to get the display name for the domain
   const getDisplayDomainName = (domainKey: string): string => {

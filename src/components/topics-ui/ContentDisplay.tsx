@@ -8,58 +8,7 @@ import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView, TopicCategoryGrid } from '@/components/topics-ui';
 import { LoadingSpinner } from '@/components/ui';
 import { useAuth } from '@/components/AuthProvider';
-
-// Import necessary types
-interface QuestionType {
-  id: number;
-  question_text: string;
-  answer_text?: string | null;
-  keywords?: string[] | string | null;
-  difficulty?: string | null;
-  category_id?: number | null;
-  topic_id?: number | null;
-  created_at?: string;
-  categories?: {
-    id: number;
-    name: string;
-    topic_id: number;
-    topics?: {
-      id: number;
-      name: string;
-      domain: string;
-    }
-  };
-}
-
-type CategoryItem = {
-  id: string;
-  label: string;
-};
-
-type TopicItem = {
-  id?: string;
-  label: string;
-  content?: string;
-  questions?: QuestionType[];
-  categoryId?: number;
-  subtopicId?: number;
-  subtopics?: Record<string, TopicItem>;
-  isGenerated?: boolean;
-};
-
-interface SubtopicProgress {
-  completionPercentage: number;
-  questionsCompleted: number;
-  totalQuestions: number;
-  categoriesCompleted: number;
-  totalCategories: number;
-}
-
-interface CategoryProgress {
-  questionsCompleted: number;
-  totalQuestions: number;
-  completionPercentage: number;
-}
+import type { QuestionType, TopicItem, CategoryItem, SubtopicProgress, CategoryProgress } from '@/types/topics';
 
 interface ContentDisplayProps {
   selectedTopic: string | null;

@@ -1,4 +1,3 @@
-export * from './domain-illustrations'
 export { default as TopicCategoryGrid } from './TopicCategoryGrid'
 export { default as ContentDisplay } from './ContentDisplay'
 export { default as CategoryDetailView } from './CategoryDetailView'

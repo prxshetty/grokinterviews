@@ -132,13 +132,6 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
 
                     {/* Main content */}
                     <div className="text-center">
-                      {/* Difficulty badge */}
-                      <div className="mb-2">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-300">
-                          {domain.stats.difficulty}
-                        </span>
-                      </div>
-
                       {/* Title */}
                       <h3 className="text-base font-semibold text-foreground mb-1 leading-tight">
                         {domain.label}
