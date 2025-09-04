@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { getNextGroqApiKey } from '@/utils/groqApi';
 
-// Initialize Groq client
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY_0 || process.env.GROQ_API_KEY,
-});
+// Groq client will be initialized per request with rotated API key
 
 // Audio file validation function
 function validateAudioFile(uint8Array: Uint8Array, fileType: string): boolean {
@@ -153,6 +151,17 @@ export async function POST(request: NextRequest) {
       size: audioBuffer.byteLength
     });
 
+    // Initialize Groq client with rotated API key
+    const apiKey = await getNextGroqApiKey();
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'Groq API key unavailable' },
+        { status: 500 }
+      );
+    }
+    
+    const groq = new Groq({ apiKey });
+    
     // Call Groq Whisper API - WebM is officially supported according to docs
     let transcription: any = null;
     
