@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { createClient } from '@/utils/supabase/server';
+import { getNextGroqApiKey } from '@/utils/groqApi';
 import { checkRateLimit as checkUserRateLimit } from '@/utils/rateLimiting';
 import { PromptService } from '../services/promptService';
 import { InterviewMode, InterviewModeConfig, PromptContext } from '../types';
 
-// Initialize Groq client (reuse existing API key management)
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY_0 || process.env.GROQ_API_KEY,
-});
+
 
 interface ConversationMessage {
   type: 'ai' | 'user';
@@ -37,6 +35,10 @@ async function generateInterviewScore(
     .join('\n\n');
 
   const scoringPrompt = PromptService.createScoringPrompt(sessionType, config, userResponses);
+
+  const apiKey = await getNextGroqApiKey();
+  if (!apiKey) throw new Error('Groq API key unavailable');
+  const groq = new Groq({ apiKey });
 
   const completion = await groq.chat.completions.create({
     messages: [{ role: 'user', content: scoringPrompt }],
@@ -186,6 +188,10 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = PromptService.createSystemPrompt(promptContext);
     const startTime = Date.now();
+
+    const apiKey = await getNextGroqApiKey();
+    if (!apiKey) throw new Error('Groq API key unavailable');
+    const groq = new Groq({ apiKey });
 
     // Call Groq LLM for AI response
     const chatCompletion = await groq.chat.completions.create({
