@@ -17,7 +17,7 @@ import {
   QuestionType,
   CategoryItem,
   TopicItem
-} from '@/types/topic-page.types';
+} from '@/types/topics';
 
 // Component props interface
 interface TopicPageClientProps {

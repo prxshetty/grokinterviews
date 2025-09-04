@@ -24,6 +24,12 @@ export interface CategoryItem {
   label: string;
 }
 
+export interface DisplayItem {
+  id: string;
+  label: string;
+  display_order?: number;
+}
+
 export interface SubtopicListItem {
   id: number; // Was topic.id, which is number
   label: string;
@@ -38,7 +44,7 @@ export interface TopicItem {
   questions?: QuestionType[];
   categoryId?: number;
   subtopicId?: number;
-  subtopics?: SubtopicListItem[]; // Corrected to array
+  subtopics?: Record<string, any>;
   isGenerated?: boolean;
 }
 
@@ -63,4 +69,25 @@ export interface ProgressData {
   subtopicsCompleted?: number;
   partiallyCompletedSubtopics?: number;
   totalSubtopics?: number;
-} 
+}
+
+export interface CategoryResponse {
+  id: number;
+  topic_id: number;
+  name: string;
+  description?: string;
+  created_at: string;
+  questions?: QuestionType[];
+}
+
+export interface TopicResponse {
+  topic: {
+    id: number;
+    name: string;
+    section_name: string;
+    created_at: string;
+    domain: string;
+    description?: string;
+  };
+  categories: CategoryResponse[];
+}

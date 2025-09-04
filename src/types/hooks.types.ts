@@ -1,26 +1,5 @@
 // Hook-related type definitions
-export interface Resource {
-  id: number;
-  question_id: number | null;
-  type: string | null;
-  title: string | null;
-  url: string | null;
-  description: string | null;
-  created_at: string;
-  relevance_score?: number | null;
-  previewUrl?: string | null;
-  duration?: string | null;
-  videoId?: string | null;
-}
-
-export interface UserPreferences {
-  use_youtube_sources?: boolean;
-  use_pdf_sources?: boolean;
-  use_paper_sources?: boolean;
-  use_website_sources?: boolean;
-  use_book_sources?: boolean;
-  use_image_sources?: boolean;
-}
+import type { Resource, UserPreferences } from './resources.types';
 
 // Question Answer Hook Types
 export interface UseQuestionAnswerProps {

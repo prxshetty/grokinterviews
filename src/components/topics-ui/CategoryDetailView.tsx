@@ -11,7 +11,7 @@ import TopicCategoryGrid from './TopicCategoryGrid';
 import FloatingSettings from './FloatingSettings';
 
 // Imported shared types
-import { QuestionType } from '@/types/topics';
+import { QuestionType, TopicItem, DisplayItem, TopicResponse } from '@/types/topics';
 // Removed progress-related type imports
 
 // Animation variants that don't use transforms
@@ -23,27 +23,6 @@ const fadeInVariants: Variants = {
   }
 };
 
-// Local type definition for DisplayItem (mimicking TopicCategoryGrid.tsx)
-interface DisplayItem {
-  id: string;
-  label: string;
-}
-
-// Local types that remain (or are specific to this component's internal API handling)
-// Type definitions for component-specific data structures or direct API response shapes
-// not covered by shared types.
-// Restoring TopicItem definition
-type TopicItem = {
-  id?: string;
-  label: string;
-  content?: string;
-  questions?: QuestionType[];
-  categoryId?: number;
-  subtopicId?: number;
-  subtopics?: Record<string, TopicItem>; // Allows for nested TopicItems
-  isGenerated?: boolean;
-};
-
 interface CategoryDetailViewProps {
   categoryId: string;
   categoryDetails: TopicItem | null;
@@ -53,28 +32,6 @@ interface CategoryDetailViewProps {
   domain?: string;
   onBackToMainCategories?: () => void;
   // Removed progress-related props
-}
-
-// Types for API response structure specific to handleSubtopicSelect
-interface CategoryResponse {
-  id: number;
-  topic_id: number;
-  name: string;
-  description?: string;
-  created_at: string;
-  questions?: QuestionType[];
-}
-
-interface TopicResponse {
-  topic: {
-    id: number;
-    name: string;
-    section_name: string;
-    created_at: string;
-    domain: string;
-    description?: string;
-  };
-  categories: CategoryResponse[];
 }
 
 export default function CategoryDetailView({
