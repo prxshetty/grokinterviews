@@ -18,23 +18,6 @@ interface Resource {
 type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown';
 type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 
-const apiKeys: string[] = [];
-const numApiKeysEnv = process.env.NUM_GROQ_API_KEYS;
-const numApiKeys = numApiKeysEnv ? parseInt(numApiKeysEnv, 10) : 0;
-
-console.log(`🔑 API Key Configuration: NUM_GROQ_API_KEYS=${numApiKeys}`);
-
-if (numApiKeys > 0) {
-  for (let i = 0; i < numApiKeys; i++) {
-    const key = process.env[`GROQ_API_KEY_${i}`];
-    if (key) {
-      apiKeys.push(key);
-    } else {
-      console.warn(`generate-answer: GROQ_API_KEY_${i} not set.`);
-    }
-  }
-}
-
 
 
 export async function POST(request: Request) {
