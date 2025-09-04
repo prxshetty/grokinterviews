@@ -63,7 +63,7 @@ export function TabNav({
     <div className={`flex items-start ${className}`}>
       <div className="w-full overflow-x-auto hide-scrollbar">
         <ul
-          className="relative flex w-fit rounded-full bg-gray-100 dark:bg-gray-800"
+          className="relative flex w-fit rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
           onMouseLeave={() => {
             setActiveTabPosition();
           }}
