@@ -130,7 +130,24 @@ export default function RootLayout({
             <Toaster />
             <SpeedInsights />
             <Analytics />
-
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+(function(){
+  const root = document.documentElement;
+  root.classList.add('scrollbar-hidden');
+  let hideTimer;
+  function show(){
+    clearTimeout(hideTimer);
+    root.classList.remove('scrollbar-hidden');
+    hideTimer = setTimeout(() => root.classList.add('scrollbar-hidden'), 1200);
+  }
+  window.addEventListener('wheel', show, { passive: true });
+  window.addEventListener('scroll', show, { passive: true });
+})();
+                `,
+              }}
+            />
           </AuthProvider>
         </ThemeProvider>
       </body>
