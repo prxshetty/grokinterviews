@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { useTheme } from 'next-themes';
+import { useThemeAnimation } from '@space-man/react-theme-animation'
 
 const themes = [
   {
@@ -29,8 +29,8 @@ export type ThemeSwitcherProps = {
 };
 
 export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { theme, toggleTheme, ref } = useThemeAnimation()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true);
@@ -42,20 +42,23 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
 
   return (
     <div
+      ref={ref as React.Ref<HTMLDivElement>}
       className={cn(
         'relative flex h-8 items-center rounded-full bg-transparent p-1 ring-1 ring-border/50',
         className
       )}
+      role="toolbar"
+      aria-label="Theme switcher"
     >
       {themes.map(({ key, icon: Icon, label }) => {
-        const isActive = theme === key;
+        const isActive = theme === key
 
         return (
           <button
             type="button"
             key={key}
             className="relative h-6 w-6 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors"
-            onClick={() => setTheme(key)}
+            onClick={() => toggleTheme()}
             aria-label={label}
           >
             {isActive && (
@@ -75,8 +78,8 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
             />
 
           </button>
-        );
+        )
       })}
     </div>
-  );
-};
+  )
+}

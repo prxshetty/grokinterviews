@@ -112,6 +112,26 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
         // Fetch personalized welcome message
         const welcomeMessage = await fetchWelcomeMessage(sessionType, config);
         
+        // Store the welcome message in transcripts for conversation order 0
+        try {
+          await fetch('/api/voice/store-conversation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sessionId: newSessionId,
+              transcriptText: welcomeMessage,
+              interactionType: 'ai_response',
+              conversationOrder: 0,
+              sessionType,
+              voiceName,
+            }),
+          })
+        } catch (error) {
+          console.error('Error storing welcome transcript:', error)
+        }
+        
         setSession(prev => ({
           ...prev,
           id: newSessionId,
