@@ -58,6 +58,29 @@ export class PromptService {
     }
   }
 
+  static createWelcomePrompt(userName?: string, sessionType?: InterviewMode): string {
+    const name = userName || 'there'
+    const type = sessionType || 'behavioral'
+    
+    const typeContext = {
+      behavioral: 'behavioral interview',
+      technical: 'technical interview',
+      sd: 'system design interview',
+      custom: 'specialized interview'
+    }[type]
+
+    return `You are acting as a friendly HR representative conducting a mock ${typeContext}.  
+Your goal is to generate a warm, professional, and encouraging welcome message for the candidate.  
+
+Guidelines for your response:  
+- Greet the candidate by name: "${name}"  
+- Clearly state that this is a practice ${typeContext} session  
+- Set expectations (you’ll be asking questions, giving follow-ups, etc.)  
+- Offer quick preparation tips (e.g., STAR method, clarity, thinking aloud)  
+- Keep the tone approachable, supportive, and professional  
+- End by asking about their background and what brings them to this interview today`
+  }
+
   private static getBaseInstructions(
     currentQuestionCount: number,
     isLastQuestion: boolean,
