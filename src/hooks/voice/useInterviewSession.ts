@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 
 export interface InterviewSession {
@@ -21,7 +21,7 @@ export interface UseInterviewSessionReturn {
   setSessionCompleted: (completed: boolean) => void;
 }
 
-// Utility function to generate dynamic welcome messages
+// Utility function to generate dynamic welcome messages (fallback)
 const generateWelcomeMessage = (sessionType: string, config?: InterviewModeConfig): string => {
   const baseGreeting = "Welcome to your";
   
@@ -48,15 +48,52 @@ const generateWelcomeMessage = (sessionType: string, config?: InterviewModeConfi
   }
 };
 
+// Async function to fetch personalized welcome message from API
+const fetchWelcomeMessage = async (sessionType: string, config?: InterviewModeConfig): Promise<string> => {
+  try {
+    const params = new URLSearchParams({
+      sessionType,
+      ...(config && { config: encodeURIComponent(JSON.stringify(config)) })
+    });
+    
+    const response = await fetch(`/api/voice/conversation?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      return result.welcomeMessage;
+    }
+    
+    // Fallback to hardcoded message if API fails
+    console.warn('Failed to fetch welcome message, using fallback:', response.status);
+    return generateWelcomeMessage(sessionType, config);
+    
+  } catch (error) {
+    console.error('Error fetching welcome message:', error);
+    return generateWelcomeMessage(sessionType, config);
+  }
+};
+
 export const useInterviewSession = (): UseInterviewSessionReturn => {
   const [session, setSession] = useState<InterviewSession>({
     id: null,
     isActive: false,
     isCompleted: false,
     conversationHistory: [],
-    currentQuestion: generateWelcomeMessage('behavioral'), // Default to behavioral
+    currentQuestion: "Loading welcome message...", // Initial loading state
     interviewReport: null,
   });
+
+  // Initialize welcome message on mount
+  useEffect(() => {
+    fetchWelcomeMessage('behavioral').then(welcomeMessage => {
+      setSession(prev => ({ ...prev, currentQuestion: welcomeMessage }));
+    });
+  }, []);
 
   const createSession = useCallback(async (sessionType: string, voiceName?: string, config?: InterviewModeConfig): Promise<string | null> => {
     try {
@@ -71,7 +108,29 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
       if (response.ok) {
         const result = await response.json();
         const newSessionId = result.session.id;
-        const dynamicWelcomeMessage = generateWelcomeMessage(sessionType, config);
+        
+        // Fetch personalized welcome message
+        const welcomeMessage = await fetchWelcomeMessage(sessionType, config);
+        
+        // Store the welcome message in transcripts for conversation order 0
+        try {
+          await fetch('/api/voice/store-conversation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sessionId: newSessionId,
+              transcriptText: welcomeMessage,
+              interactionType: 'ai_response',
+              conversationOrder: 0,
+              sessionType,
+              voiceName,
+            }),
+          })
+        } catch (error) {
+          console.error('Error storing welcome transcript:', error)
+        }
         
         setSession(prev => ({
           ...prev,
@@ -79,7 +138,7 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
           isActive: true,
           isCompleted: false,
           conversationHistory: [],
-          currentQuestion: dynamicWelcomeMessage,
+          currentQuestion: welcomeMessage,
           interviewReport: null,
         }));
         
@@ -109,6 +168,9 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
       }
     }
 
+    // Reset to default welcome message
+    const welcomeMessage = await fetchWelcomeMessage('behavioral');
+    
     setSession(prev => ({
       ...prev,
       id: null,
@@ -116,7 +178,7 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
       isCompleted: false,
       conversationHistory: [],
       interviewReport: null,
-      currentQuestion: generateWelcomeMessage('behavioral'), // Reset to default behavioral
+      currentQuestion: welcomeMessage,
     }));
   }, [session.id]);
 
