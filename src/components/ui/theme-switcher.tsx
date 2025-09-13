@@ -29,7 +29,7 @@ export type ThemeSwitcherProps = {
 };
 
 export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
-  const { theme, toggleTheme, ref } = useThemeAnimation()
+  const { theme, setTheme, ref } = useThemeAnimation()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
             type="button"
             key={key}
             className="relative h-6 w-6 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors"
-            onClick={() => toggleTheme()}
+            onClick={() => setTheme(key as 'system' | 'light' | 'dark')}
             aria-label={label}
           >
             {isActive && (
