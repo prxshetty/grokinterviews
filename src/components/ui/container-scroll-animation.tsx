@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
 import { useScroll, useTransform, motion, MotionValue, AnimatePresence } from "framer-motion";
-import { useTheme } from "next-themes";
+import { useSpacemanTheme } from "@space-man/react-theme-animation";
 import { useCentralizedIntersection } from "@/hooks/ui/use-centralized-intersection";
 
 export const ContainerScroll = ({
@@ -17,7 +17,7 @@ export const ContainerScroll = ({
   });
   const [isMobile, setIsMobile] = React.useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { resolvedTheme } = useTheme();
+  const { theme } = useSpacemanTheme();
   const [mounted, setMounted] = useState(false);
 
   // Filter images for mobile to show only domain and voice
@@ -78,7 +78,7 @@ export const ContainerScroll = ({
 
   const getCurrentImageSrc = (image: { src: string; srcDark?: string; alt: string }) => {
     if (!mounted) return image.src;
-    const isDark = resolvedTheme === 'dark';
+    const isDark = theme === 'dark';
     return isDark && image.srcDark ? image.srcDark : image.src;
   };
 
