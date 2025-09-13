@@ -34,6 +34,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-three/fiber": "^9.3.0",
     "@ricky0123/vad-web": "^0.0.24",
+    "@space-man/react-theme-animation": "^1.1.1",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "@tanstack/react-table": "^8.21.3",

@@ -402,10 +402,78 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Handle unsupported methods
-export async function GET() {
-  return NextResponse.json(
-    { error: 'Method not allowed. Use POST to continue conversation.' },
-    { status: 405 }
-  );
+// Handle GET requests for welcome message generation
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const sessionType = searchParams.get('sessionType') || 'behavioral';
+  const configParam = searchParams.get('config');
+  
+  let config: InterviewModeConfig | undefined;
+  try {
+    config = configParam ? JSON.parse(decodeURIComponent(configParam)) : undefined;
+  } catch {
+    config = undefined;
+  }
+
+  try {
+      // Get user name from auth if available
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      let userName: string | undefined;
+      if (user?.user_metadata?.full_name) {
+        userName = user.user_metadata.full_name;
+      } else if (user?.user_metadata?.name) {
+        userName = user.user_metadata.name;
+      }
+
+      // Create welcome prompt with personalized name
+      const welcomePrompt = PromptService.createWelcomePrompt(userName, sessionType as InterviewMode);
+
+    const apiKey = await getNextGroqApiKey();
+    if (!apiKey) throw new Error('Groq API key unavailable');
+    const groq = new Groq({ apiKey });
+
+    const completion = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: welcomePrompt }],
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.7,
+      max_tokens: 200,
+    });
+
+    const welcomeMessage = completion.choices[0]?.message?.content?.trim();
+
+    if (!welcomeMessage) {
+      throw new Error('No welcome message generated from AI');
+    }
+
+    return NextResponse.json({
+      success: true,
+      welcomeMessage,
+      sessionType,
+      config
+    });
+
+  } catch (error: any) {
+    console.error('❌ Welcome message generation error:', error);
+
+    if (error instanceof Groq.APIError) {
+      return NextResponse.json(
+        { 
+          error: 'Welcome message generation failed', 
+          details: error.message,
+          type: 'groq_api_error'
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { 
+        error: 'Internal server error during welcome message generation',
+        details: error.message 
+      },
+      { status: 500 }
+    );
+  }
 }
