@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { useThemeAnimation } from '@space-man/react-theme-animation'
+import { useSpacemanTheme } from '@space-man/react-theme-animation'
 
 const themes = [
   {
@@ -29,7 +29,7 @@ export type ThemeSwitcherProps = {
 };
 
 export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
-  const { theme, setTheme, ref } = useThemeAnimation()
+  const { theme, switchThemeFromElement } = useSpacemanTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -42,7 +42,6 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
 
   return (
     <div
-      ref={ref as React.Ref<HTMLDivElement>}
       className={cn(
         'relative flex h-8 items-center rounded-full bg-transparent p-1 ring-1 ring-border/50',
         className
@@ -58,7 +57,9 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
             type="button"
             key={key}
             className="relative h-6 w-6 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors"
-            onClick={() => setTheme(key as 'system' | 'light' | 'dark')}
+            onClick={(event) => {
+              switchThemeFromElement(key as 'system' | 'light' | 'dark', event.currentTarget)
+            }}
             aria-label={label}
           >
             {isActive && (
