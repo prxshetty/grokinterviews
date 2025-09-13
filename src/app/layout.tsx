@@ -100,8 +100,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://vercel-analytics.com" />
         <link rel="dns-prefetch" href="https://img.youtube.com" />
         
-        {/* Preload critical CSS */}
-        <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
+        {/* Preload critical CSS - removed problematic hardcoded CSS link */}
         
         {/* Performance hints */}
 <meta name="description" content="Ace your tech interviews with an AI-enhanced platform. 3.6M+ resources, 50K+ questions across AI, Web Dev, System Design, DSA, and ML." />
