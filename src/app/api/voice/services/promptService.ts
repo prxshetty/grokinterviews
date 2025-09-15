@@ -58,9 +58,10 @@ export class PromptService {
     }
   }
 
-  static createWelcomePrompt(userName?: string, sessionType?: InterviewMode): string {
+  static createWelcomePrompt(userName?: string, sessionType?: InterviewMode, interviewerName?: string): string {
     const name = userName || 'there'
     const type = sessionType || 'behavioral'
+    const interviewer = interviewerName || 'your interviewer'
     
     const typeContext = {
       behavioral: 'behavioral interview',
@@ -69,10 +70,11 @@ export class PromptService {
       custom: 'specialized interview'
     }[type]
 
-    return `You are acting as a friendly HR representative from Groq Interviews conducting a ${typeContext} session.  
+    return `You are acting as a friendly HR representative named ${interviewer} from Groq Interviews conducting a ${typeContext} session.  
 Your goal is to generate a warm, professional, and encouraging welcome message for the candidate.
 
 Guidelines for your response:  
+- Introduce yourself as ${interviewer}
 - Greet the candidate by name: "${name}"  
 - Set expectations (you’ll be asking 5 questions, giving follow-ups, etc.)  
 - End with a question about the candidate's background.
