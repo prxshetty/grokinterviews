@@ -49,11 +49,12 @@ const generateWelcomeMessage = (sessionType: string, config?: InterviewModeConfi
 };
 
 // Async function to fetch personalized welcome message from API
-const fetchWelcomeMessage = async (sessionType: string, config?: InterviewModeConfig): Promise<string> => {
+const fetchWelcomeMessage = async (sessionType: string, config?: InterviewModeConfig, voice?: string): Promise<string> => {
   try {
     const params = new URLSearchParams({
       sessionType,
-      ...(config && { config: encodeURIComponent(JSON.stringify(config)) })
+      ...(config && { config: encodeURIComponent(JSON.stringify(config)) }),
+      ...(voice && { voice })
     });
     
     const response = await fetch(`/api/voice/conversation?${params.toString()}`, {
@@ -90,7 +91,7 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
 
   // Initialize welcome message on mount
   useEffect(() => {
-    fetchWelcomeMessage('behavioral').then(welcomeMessage => {
+    fetchWelcomeMessage('behavioral', undefined, undefined).then(welcomeMessage => {
       setSession(prev => ({ ...prev, currentQuestion: welcomeMessage }));
     });
   }, []);
@@ -110,7 +111,7 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
         const newSessionId = result.session.id;
         
         // Fetch personalized welcome message
-        const welcomeMessage = await fetchWelcomeMessage(sessionType, config);
+        const welcomeMessage = await fetchWelcomeMessage(sessionType, config, voiceName);
         
         // Store the welcome message in transcripts for conversation order 0
         try {
@@ -169,7 +170,7 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
     }
 
     // Reset to default welcome message
-    const welcomeMessage = await fetchWelcomeMessage('behavioral');
+    const welcomeMessage = await fetchWelcomeMessage('behavioral', undefined, undefined);
     
     setSession(prev => ({
       ...prev,

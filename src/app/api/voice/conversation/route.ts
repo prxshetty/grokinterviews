@@ -5,6 +5,7 @@ import { getNextGroqApiKey } from '@/utils/groqApi';
 import { checkRateLimit as checkUserRateLimit } from '@/utils/rateLimiting';
 import { PromptService } from '../services/promptService';
 import { InterviewMode, InterviewModeConfig, PromptContext } from '../types';
+import { VOICE_CONFIG, VoiceOption } from '@/types/voice.types';
 
 
 
@@ -407,6 +408,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const sessionType = searchParams.get('sessionType') || 'behavioral';
   const configParam = searchParams.get('config');
+  const voiceParam = searchParams.get('voice');
   
   let config: InterviewModeConfig | undefined;
   try {
@@ -427,8 +429,14 @@ export async function GET(request: NextRequest) {
         userName = user.user_metadata.name;
       }
 
-      // Create welcome prompt with personalized name
-      const welcomePrompt = PromptService.createWelcomePrompt(userName, sessionType as InterviewMode);
+      // Get interviewer name from voice configuration
+      let interviewerName: string | undefined;
+      if (voiceParam && VOICE_CONFIG[voiceParam as VoiceOption]) {
+        interviewerName = VOICE_CONFIG[voiceParam as VoiceOption].displayName;
+      }
+
+      // Create welcome prompt with personalized name and interviewer
+      const welcomePrompt = PromptService.createWelcomePrompt(userName, sessionType as InterviewMode, interviewerName);
 
     const apiKey = await getNextGroqApiKey();
     if (!apiKey) throw new Error('Groq API key unavailable');
