@@ -413,6 +413,13 @@ export default function CategoryDetailView({
     }
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [selectedDifficulty, searchParams, pathname, router]);
+
+  const handleClearDifficulty = useCallback(() => {
+    setSelectedDifficulty(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('difficulty');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
   
   const handleCompletionChange = useCallback(async (
     questionId: number, 
@@ -511,6 +518,7 @@ export default function CategoryDetailView({
               <FloatingSettings
                 selectedDifficulty={selectedDifficulty || null}
                 onSelectDifficulty={handleDifficultySelect}
+                onClear={handleClearDifficulty}
               />
             )}
           </div>
@@ -539,6 +547,7 @@ export default function CategoryDetailView({
                         <FloatingSettings
                           selectedDifficulty={selectedDifficulty || null}
                           onSelectDifficulty={handleDifficultySelect}
+                          onClear={handleClearDifficulty}
                         />
                       </div>
                     )}
@@ -638,6 +647,7 @@ export default function CategoryDetailView({
             <FloatingSettings
               selectedDifficulty={selectedDifficulty || null}
               onSelectDifficulty={handleDifficultySelect}
+              onClear={handleClearDifficulty}
             />
           )}
         </div>
@@ -682,6 +692,7 @@ export default function CategoryDetailView({
                   <FloatingSettings
                     selectedDifficulty={selectedDifficulty || null}
                     onSelectDifficulty={handleDifficultySelect}
+                    onClear={handleClearDifficulty}
                   />
                 </div>
               )}
