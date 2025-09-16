@@ -12,7 +12,6 @@ import FloatingSettings from './FloatingSettings';
 
 // Imported shared types
 import { QuestionType, TopicItem, DisplayItem, TopicResponse } from '@/types/topics';
-// Removed progress-related type imports
 
 // Animation variants that don't use transforms
 const fadeInVariants: Variants = {
@@ -31,7 +30,6 @@ interface CategoryDetailViewProps {
   onDifficultyChange?: (difficulty: string | null) => void;
   domain?: string;
   onBackToMainCategories?: () => void;
-  // Removed progress-related props
 }
 
 export default function CategoryDetailView({
@@ -46,12 +44,12 @@ export default function CategoryDetailView({
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   
   // Set user ID on questionCache when user changes
   useEffect(() => {
     questionCache.setUserId(user?.id);
   }, [user?.id]);
-  const searchParams = useSearchParams();
   
   // Local state for UI elements
   const [isLoading, setIsLoading] = useState(false);
@@ -62,19 +60,14 @@ export default function CategoryDetailView({
   });
   const [subtopicDetails, setSubtopicDetails] = useState<TopicItem | null>(null);
   
-  // Removed progress-related state variables
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
   const [isSubtopicProgressLoading, ] = useState(false);
   
   // Local state to store bookmark status
   const [bookmarkStatus, setBookmarkStatus] = useState<Record<number, boolean>>({});
-  
-  // TODO: PERSISTENT LINTER ERROR - The isBookmarked prop in QuestionWithAnswer components
-  // is causing "Type 'boolean | undefined' is not assignable to type 'boolean'" errors
-  // despite multiple attempts to fix with ??, !!, === true, etc. This may require:
-  // 1. Reviewing QuestionWithAnswer component's prop types
-  // 2. Checking if bookmarkStatus state initialization is correct
-  // 3. Investigating if there's a TypeScript config issue with exactOptionalPropertyTypes
+
+  // Local state for difficulty to handle filtering entirely on the client
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(() => searchParams.get('difficulty'));
   
   // State for Accordion: stores the value (questionId.toString()) of the currently open item.
   const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(
@@ -101,15 +94,15 @@ export default function CategoryDetailView({
       : categoryDetails?.questions || [];
   }, [selectedSubtopic, subtopicDetails?.questions, categoryDetails?.questions]);
 
-  // Memoize the filtered questions calculation
+  // Memoize the filtered questions calculation using local state
   const memoizedFilteredQuestions = useMemo(() => {
     if (!questionsToFilter || questionsToFilter.length === 0) return [];
     
-    if (propSelectedDifficulty) {
-      return questionsToFilter.filter((q: QuestionType) => q.difficulty === propSelectedDifficulty);
+    if (selectedDifficulty) {
+      return questionsToFilter.filter((q: QuestionType) => q.difficulty === selectedDifficulty);
     }
     return questionsToFilter;
-  }, [questionsToFilter, propSelectedDifficulty]);
+  }, [questionsToFilter, selectedDifficulty]);
 
   // Memoize the expensive questionsByCategory grouping operation
   const questionsByCategory = useMemo(() => {
@@ -149,7 +142,6 @@ export default function CategoryDetailView({
           id,
           label: subtopic.label,
         };
-        // Removed progress property
         return item;
       });
   }, [categoryDetails?.subtopics]);
@@ -163,8 +155,6 @@ export default function CategoryDetailView({
   const handleBookmarkChangeFromQuestion = useCallback((
     questionId: number, 
     newStatus: boolean
-    // topicId?: number, // topicId and categoryId are not strictly needed here if we only update bookmark icon
-    // categoryIdFromQuestion?: number 
   ) => {
     setBookmarkStatus(prevStatus => ({
       ...prevStatus,
@@ -172,12 +162,9 @@ export default function CategoryDetailView({
     }));
   }, []);
 
-  // Removed progress-related useEffect hooks
-
   // Fetch bookmark status for each question (progress tracking disabled)
   const fetchBookmarkStatus = async (questions: QuestionType[]) => {
     const bookmarkStatus: Record<number, boolean> = {};
-    // Progress tracking disabled - return empty bookmark status
     questions.forEach((question) => {
       bookmarkStatus[question.id] = false;
     });
@@ -191,15 +178,11 @@ export default function CategoryDetailView({
 
     const fetchProgressAndBookmarks = async () => {
       try {
-        // Removed progress fetching logic
-        
-        // Update completed questions tracking from cache
         const questions = memoizedFilteredQuestions;
         const questionIds = questions.map(q => q.id);
         
         if (questionIds.length > 0) {
           try {
-            // Get completion status from cache
             const completedResults = questionIds.map(id => questionCache.isQuestionCompleted(id));
             
             if (!signal.aborted) {
@@ -218,7 +201,6 @@ export default function CategoryDetailView({
           setCompletedQuestions({});
         }
 
-        // Fetch bookmark status for questions
         const newBookmarkStatus = await fetchBookmarkStatus(questions);
         if (!signal.aborted) {
           setBookmarkStatus(newBookmarkStatus);
@@ -226,7 +208,7 @@ export default function CategoryDetailView({
 
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
-          // console.error('Error in fetchProgressAndBookmarks:', error); // Example of logging if needed
+          // console.error('Error in fetchProgressAndBookmarks:', error);
         }
       }
     };
@@ -243,14 +225,12 @@ export default function CategoryDetailView({
     try {
       setIsLoading(true);
       
-      // Fetch the subtopic details
       const topicNumericId = parseInt(topicId.replace('topic-', ''));
       if (isNaN(topicNumericId)) {
         setIsLoading(false);
         return;
       }
       
-      // Use 'topicId' parameter as expected by the API endpoint
       const response = await fetch(`/api/topics/topic-details?topicId=${topicNumericId}`);
       if (!response.ok) {
         const errorData = await response.text();
@@ -259,12 +239,11 @@ export default function CategoryDetailView({
       
       const data: TopicResponse = await response.json();
       
-      // Format the response into the expected TopicItem structure
       if (data && data.topic) {
         const formattedSubtopic: TopicItem = {
           id: topicId,
           label: data.topic.name,
-          content: data.topic.description || '', // Use description as content
+          content: data.topic.description || '',
           questions: data.categories && data.categories.length > 0 
             ? data.categories.flatMap(cat => (cat.questions || []).map(q => ({
                 ...q,
@@ -279,12 +258,12 @@ export default function CategoryDetailView({
         };
         
         setSubtopicDetails(formattedSubtopic);
-        setOpenQuestionId(undefined); // Close any previously open question
+        setOpenQuestionId(undefined);
       } else {
-        // console.error('Invalid subtopic data structure:', data); // Example of logging if needed
+        // console.error('Invalid subtopic data structure:', data);
       }
-    } catch { // This catch correctly has no 'error' parameter as it's unused.
-      // console.error('Error fetching subtopic details:', error); // Example of logging if needed
+    } catch { 
+      // console.error('Error fetching subtopic details:', error);
     } finally {
       setIsLoading(false);
     }
@@ -299,19 +278,15 @@ export default function CategoryDetailView({
 
   // Auto-scroll to question or category section when question is highlighted from URL
   useEffect(() => {
-    // Only attempt scroll when we have data loaded and a highlighted question
-    // Also check if scroll effects are allowed and we haven't already handled this question ID
     if (highlightedQuestionId && 
         (memoizedFilteredQuestions.length > 0 || (hasGroupedQuestions && Object.keys(questionsByCategory).length > 0)) &&
         allowScrollEffect &&
         handledQuestionId !== highlightedQuestionId) {
       
       const performStagedScroll = () => {
-        // Stage 1: Find the scroll target (question or category section)
         let scrollTarget = null;
         let isQuestionElement = false;
         
-        // Try to find the question element first
         const possibleQuestionSelectors = [
           `[data-value="${highlightedQuestionId}"]`,
           `[value="${highlightedQuestionId}"]`,
@@ -327,7 +302,6 @@ export default function CategoryDetailView({
           }
         }
         
-        // Fallback: find category section
         if (!scrollTarget && hasGroupedQuestions && Object.keys(questionsByCategory).length > 0) {
           const categoryIdFromUrl = searchParams.get('categoryId');
           
@@ -342,25 +316,17 @@ export default function CategoryDetailView({
         }
         
         if (scrollTarget) {
-          // Stage 1: Scroll to position the element optimally in viewport
-          const navHeight = 64; // pt-16 = 64px from MainNavigation
-          const additionalOffset = 20; // Extra spacing for better visual positioning
-          
+          const navHeight = 64;
+          const additionalOffset = 20;
           const elementRect = scrollTarget.getBoundingClientRect();
-          
-          // For question elements, position the question trigger (header) at the top
-          // For category sections, position at the top with some padding
           let scrollPosition;
           
           if (isQuestionElement) {
-            // Position question header at the top of viewport (just below nav)
             scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
           } else {
-            // For category sections, ensure they're well-positioned at top
             scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
           }
           
-          // Ensure we don't scroll past the beginning of the page
           scrollPosition = Math.max(0, scrollPosition);
           
           window.scrollTo({
@@ -368,15 +334,10 @@ export default function CategoryDetailView({
             behavior: 'smooth'
           });
           
-          // Stage 2: After scroll completes and 0.5s delay, open the accordion
           setTimeout(() => {
             setOpenQuestionId(highlightedQuestionId.toString());
-            
-            // Mark this question ID as handled to prevent re-opening
             setHandledQuestionId(highlightedQuestionId);
             
-            // Stage 3: After opening, fine-tune the scroll position if needed
-            // This handles the case where opening changes the layout significantly
             setTimeout(() => {
               const updatedElement = isQuestionElement 
                 ? document.querySelector(`[data-value="${highlightedQuestionId}"]`)
@@ -384,7 +345,6 @@ export default function CategoryDetailView({
                 
               if (updatedElement) {
                 const updatedRect = updatedElement.getBoundingClientRect();
-                // Only adjust if the element moved significantly out of view
                 if (updatedRect.top < navHeight || updatedRect.top > navHeight + 100) {
                   const adjustedPosition = window.scrollY + updatedRect.top - navHeight - additionalOffset;
                   window.scrollTo({
@@ -393,15 +353,12 @@ export default function CategoryDetailView({
                   });
                 }
               }
-            }, 300); // Allow accordion animation to complete
+            }, 300);
           }, 500);
         }
       };
 
-      // Try immediately first
       performStagedScroll();
-      
-      // Retry after delay to handle async rendering
       setTimeout(performStagedScroll, 800);
     }
   }, [highlightedQuestionId, hasGroupedQuestions, questionsByCategory, searchParams, memoizedFilteredQuestions, allowScrollEffect, handledQuestionId]);
@@ -409,13 +366,11 @@ export default function CategoryDetailView({
   // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
   const handleBackToMainCategories = useCallback(() => {
     if (onBackToMainCategories) {
-      // Use the parent's handler which properly resets state
       onBackToMainCategories();
     } else {
-      // Fallback to URL manipulation (original implementation)
       const searchParams = new URLSearchParams(window.location.search);
       searchParams.delete('category');
-      searchParams.delete('q'); // Clear question ID when going back
+      searchParams.delete('q');
       const newUrl = `${pathname}?${searchParams.toString()}`;
       router.push(newUrl);
     }
@@ -423,72 +378,66 @@ export default function CategoryDetailView({
 
   // Handle subtopic selection
   const handleSubtopicSelect = useCallback(async (topicId: string) => {
-    // Update URL first
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.set('subtopic', topicId);
-    newSearchParams.delete('q'); // Clear question ID when selecting subtopic
+    newSearchParams.delete('q');
     router.push(`${pathname}?${newSearchParams.toString()}`);
     
-    // Update state and load details
     setSelectedSubtopic(topicId);
     await loadSubtopicDetails(topicId);
   }, [searchParams, router, pathname, loadSubtopicDetails]);
 
   // Handle back to category from subtopic
   const handleBackToCategory = useCallback(() => {
-    // Update URL first
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete('subtopic');
-    newSearchParams.delete('q'); // Clear question ID when going back
+    newSearchParams.delete('q');
     router.push(`${pathname}?${newSearchParams.toString()}`);
     
     setSelectedSubtopic(null);
     setSubtopicDetails(null);
-    setOpenQuestionId(undefined); // Close any open question when navigating
+    setOpenQuestionId(undefined);
   }, [searchParams, router, pathname]);
 
-  // Handle difficulty selection from FloatingSettings
+  // Handle difficulty selection locally
   const handleDifficultySelect = useCallback((difficulty: string) => {
-    if (!onDifficultyChange) return;
-    
-    // If current difficulty is clicked again, clear the filter (toggle off)
-    // Otherwise, set the new difficulty
-    const newDifficulty = propSelectedDifficulty === difficulty ? null : difficulty;
-    onDifficultyChange(newDifficulty);
-  }, [propSelectedDifficulty, onDifficultyChange]);
+    const newDifficulty = selectedDifficulty === difficulty ? null : difficulty;
+    setSelectedDifficulty(newDifficulty);
+
+    // Update URL manually to keep it in sync, without triggering parent fetches
+    const params = new URLSearchParams(searchParams.toString());
+    if (newDifficulty) {
+      params.set('difficulty', newDifficulty);
+    } else {
+      params.delete('difficulty');
+    }
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [selectedDifficulty, searchParams, pathname, router]);
   
   const handleCompletionChange = useCallback(async (
     questionId: number, 
     status: boolean,
-    // Add topicId and categoryId of the question that changed
     _changedQuestionTopicId?: number, 
     _changedQuestionCategoryId?: number
   ) => {
     setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
 
-    // Invalidate streak cache when a question is completed
     if (status && typeof window !== 'undefined' && window.invalidateStreakCache) {
       window.invalidateStreakCache();
     }
-
-    // No need for database delays since we're using local cache
-    // Progress is automatically updated via the cache service
-  }, [setCompletedQuestions]); // Remove unused dependencies
+  }, [setCompletedQuestions]);
 
   // Handler for Accordion's onValueChange
   const handleOpenQuestionChange = useCallback((value: string) => {
     setOpenQuestionId(value);
     
-    // Temporarily disable scroll effects to prevent interference
     setAllowScrollEffect(false);
     setTimeout(() => setAllowScrollEffect(true), 1000);
     
-    // If a question is opened, update URL for shareability, but only if not clearing
     if (value) {
       const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set('q', value); // q for question id
+      newSearchParams.set('q', value);
       
-      // Find the category ID for this question and add it to URL
       const questionId = parseInt(value);
       if (questionId && hasGroupedQuestions) {
         const categoryEntry = Object.entries(questionsByCategory).find(([_, category]) =>
@@ -502,7 +451,6 @@ export default function CategoryDetailView({
       
       router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
     } else {
-      // If accordion is closed (value is empty for single collapsible)
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete('q');
       newSearchParams.delete('categoryId');
@@ -559,9 +507,9 @@ export default function CategoryDetailView({
           </div>
           {/* FloatingSettings */}
           <div className="flex items-center gap-2">
-            {subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
+            {subtopicDetails.questions && subtopicDetails.questions.length > 0 && (
               <FloatingSettings
-                selectedDifficulty={propSelectedDifficulty || null}
+                selectedDifficulty={selectedDifficulty || null}
                 onSelectDifficulty={handleDifficultySelect}
               />
             )}
@@ -586,10 +534,10 @@ export default function CategoryDetailView({
                       {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
                     </span>
                     {/* Mobile FloatingSettings - only show on first category */}
-                    {index === 0 && subtopicDetails.questions && subtopicDetails.questions.length > 0 && onDifficultyChange && (
+                    {index === 0 && subtopicDetails.questions && subtopicDetails.questions.length > 0 && (
                       <div className="sm:hidden">
                         <FloatingSettings
-                          selectedDifficulty={propSelectedDifficulty || null}
+                          selectedDifficulty={selectedDifficulty || null}
                           onSelectDifficulty={handleDifficultySelect}
                         />
                       </div>
@@ -652,7 +600,7 @@ export default function CategoryDetailView({
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500 dark:text-gray-300">
-            <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this topic.'}</p>
+            <p>{selectedDifficulty ? `No ${selectedDifficulty} questions available.` : 'No questions available for this topic.'}</p>
           </div>
         )}
       </motion.div>
@@ -686,9 +634,9 @@ export default function CategoryDetailView({
         </div>
         {/* FloatingSettings */}
         <div className="flex items-center gap-2">
-          {hasQuestions && onDifficultyChange && (
+          {hasQuestions && (
             <FloatingSettings
-              selectedDifficulty={propSelectedDifficulty || null}
+              selectedDifficulty={selectedDifficulty || null}
               onSelectDifficulty={handleDifficultySelect}
             />
           )}
@@ -729,10 +677,10 @@ export default function CategoryDetailView({
             <div className="flex items-center justify-end gap-3 w-full">
               {/* Removed category progress display */}
               {/* Mobile FloatingSettings */}
-              {hasQuestions && onDifficultyChange && (
+              {hasQuestions && (
                 <div className="sm:hidden ml-auto">
                   <FloatingSettings
-                    selectedDifficulty={propSelectedDifficulty || null}
+                    selectedDifficulty={selectedDifficulty || null}
                     onSelectDifficulty={handleDifficultySelect}
                   />
                 </div>
@@ -764,7 +712,7 @@ export default function CategoryDetailView({
             </Accordion>
           ) : (
             <div className="text-center py-8 text-gray-500 dark:text-gray-300">
-              <p>{propSelectedDifficulty ? `No ${propSelectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
+              <p>{selectedDifficulty ? `No ${selectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
             </div>
           )}
         </div>

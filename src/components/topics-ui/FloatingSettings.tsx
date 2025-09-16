@@ -51,13 +51,17 @@ export default function FloatingSettings({
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
         <DropdownMenuRadioGroup value={selectedDifficulty ?? ''} onValueChange={onSelectDifficulty}>
-          {['Beginner', 'Intermediate', 'Advanced'].map((d) => (
+          {[
+            { label: 'Beginner', value: 'beginner' },
+            { label: 'Intermediate', value: 'intermediate' },
+            { label: 'Advanced', value: 'advanced' },
+          ].map((d) => (
             <DropdownMenuRadioItem
-              key={d}
-              value={d.toLowerCase()}
+              key={d.value}
+              value={d.value}
               className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10"
             >
-              <span>{d}</span>
+              <span>{d.label}</span>
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
