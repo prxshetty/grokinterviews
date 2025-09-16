@@ -288,26 +288,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     }
   }, [selectedCategory, topicCategories, loadCategoryDetails]);
 
-  // Load difficulty questions when difficulty is selected from URL
-  useEffect(() => {
-    if (selectedDifficulty) {
-      const loadDifficultyQuestions = async () => {
-        setIsLoading(prev => ({ ...prev, difficultyQuestions: true }));
-        try {
-          const response = await fetch(`/api/questions/difficulty?difficulty=${selectedDifficulty}&domain=${domain}`);
-          if (!response.ok) throw new Error(`Failed to fetch difficulty questions: ${response.statusText}`);
-          const questions = await response.json();
-          setDifficultyQuestions(questions);
-        } catch (error) {
-          console.error('Error loading difficulty questions:', error);
-          setDifficultyQuestions([]);
-        } finally {
-          setIsLoading(prev => ({ ...prev, difficultyQuestions: false }));
-        }
-      };
-      loadDifficultyQuestions();
-    }
-  }, [selectedDifficulty, domain]);
+  // This useEffect was removed as fetching questions by difficulty is now handled by client-side filtering.
 
   return (
     <TopicDataProvider>

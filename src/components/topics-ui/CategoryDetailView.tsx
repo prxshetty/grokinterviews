@@ -36,8 +36,6 @@ export default function CategoryDetailView({
   categoryId,
   categoryDetails,
   highlightedQuestionId,
-  selectedDifficulty: propSelectedDifficulty,
-  onDifficultyChange,
   domain,
   onBackToMainCategories,
 }: CategoryDetailViewProps) {
