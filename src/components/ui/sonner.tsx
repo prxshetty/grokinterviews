@@ -52,9 +52,10 @@ const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
-      gap={8}
+      gap={12}
       visibleToasts={4}
       position="bottom-right"
+      expand={true}
       {...otherProps}
     />
   )

@@ -61,6 +61,8 @@ export function TurnstileComponent({
         action={action}
         theme={theme}
         size={size}
+        retry="auto"
+        refreshExpired="auto"
       />
     </div>
   );
