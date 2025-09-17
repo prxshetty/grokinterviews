@@ -161,6 +161,7 @@ export default function CategoryDetailView({
   // Fetch bookmark status for each question (progress tracking disabled)
   const fetchBookmarkStatus = async (questions: QuestionType[]) => {
     const bookmarkStatus: Record<number, boolean> = {};
+    // Initialize all questions as not bookmarked - let individual components handle their own state
     questions.forEach((question) => {
       bookmarkStatus[question.id] = false;
     });

@@ -7,7 +7,6 @@ import { Pagination, Accordion } from '@/components/ui';
 import { QuestionWithAnswer } from '@/components/questions';
 import { CategoryDetailView, TopicCategoryGrid } from '@/components/topics-ui';
 import { LoadingSpinner } from '@/components/ui';
-import { useAuth } from '@/components/AuthProvider';
 import type { QuestionType, TopicItem, CategoryItem, SubtopicProgress, CategoryProgress } from '@/types/topics';
 
 interface ContentDisplayProps {
@@ -54,17 +53,12 @@ export default function ContentDisplay({
   domain,
   highlightedQuestionId,
   clearDifficultyFilter,
-  onDifficultyChange,
   onBackToMainCategories,
   subtopicProgressData: _subtopicProgressData,
   categoryProgressData: _categoryProgressData,
   currentSubtopicProgress: _currentSubtopicProgress,
 }: ContentDisplayProps) {
-  const { user, supabase } = useAuth();
   const pathname = usePathname();
-
-  // State for bookmarked questions
-  const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<number>>(new Set());
   
   // State for Accordion: stores the value (questionId.toString()) of the currently open item.
   const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(
@@ -83,50 +77,8 @@ export default function ContentDisplay({
     }
   }, [highlightedQuestionId, selectedCategory, selectedDifficulty]);
 
-  // Fetch bookmarks when difficultyQuestions change or user changes
-  useEffect(() => {
-    const fetchUserAndBookmarks = async () => {
-      if (user && difficultyQuestions.length > 0) {
-        const questionIds = difficultyQuestions.map(q => q.id);
-        try {
-          const { data: bookmarksData, error } = await supabase
-            .from('user_bookmarks')
-            .select('question_id')
-            .eq('user_id', user.id)
-            .in('question_id', questionIds);
-
-          if (error) {
-            setBookmarkedQuestions(new Set()); // Reset on error
-            return;
-          }
-          setBookmarkedQuestions(new Set(bookmarksData.map(b => b.question_id)));
-        } catch {
-          setBookmarkedQuestions(new Set()); // Reset on error
-        }
-      } else {
-        setBookmarkedQuestions(new Set()); // Clear if no user or no questions
-      }
-    };
-
-    if (difficultyQuestions.length > 0) { // Only fetch if there are questions to check
-        fetchUserAndBookmarks();
-    } else {
-        setBookmarkedQuestions(new Set()); // Ensure bookmarks are cleared if questions are cleared
-    }
-  }, [difficultyQuestions, user, supabase]);
-
-  // Handler for bookmark changes from QuestionWithAnswer
-  const handleBookmarkChange = (questionId: number, newStatus: boolean) => {
-    setBookmarkedQuestions(prev => {
-      const newSet = new Set(prev);
-      if (newStatus) {
-        newSet.add(questionId);
-      } else {
-        newSet.delete(questionId);
-      }
-      return newSet;
-    });
-  };
+  // Remove redundant bookmark fetching - let individual components handle their own state
+  // This eliminates duplicate API calls and state management conflicts
 
   // Handler for Accordion's onValueChange
   const handleOpenQuestionChange = (value: string) => {
@@ -199,8 +151,7 @@ export default function ContentDisplay({
                   <QuestionWithAnswer
                     key={question.id}
                     question={question}
-                    isBookmarked={bookmarkedQuestions.has(question.id)}
-                    onBookmarkStatusChange={handleBookmarkChange}
+                    isBookmarked={false} // Let individual components handle their own bookmark state
                     isOpen={openQuestionId === question.id.toString()}
                     onRequestClose={() => handleOpenQuestionChange("")}
                   />
@@ -237,12 +188,6 @@ export default function ContentDisplay({
 
     if (highlightedQuestionId !== undefined) {
       categoryDetailViewProps.highlightedQuestionId = highlightedQuestionId;
-    }
-    if (selectedDifficulty !== undefined) {
-      categoryDetailViewProps.selectedDifficulty = selectedDifficulty;
-    }
-    if (onDifficultyChange !== undefined) {
-      categoryDetailViewProps.onDifficultyChange = onDifficultyChange;
     }
     if (domain !== undefined) {
       categoryDetailViewProps.domain = domain;
