@@ -74,6 +74,7 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
                 height={64}
                 loading="lazy"
                 sizes="64px"
+                draggable={false}
               />
             </div>
             
