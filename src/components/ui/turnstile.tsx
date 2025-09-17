@@ -1,7 +1,13 @@
 'use client';
 
-import Turnstile from 'react-turnstile';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Turnstile to prevent SSR issues
+const Turnstile = dynamic(() => import('react-turnstile'), {
+  ssr: false,
+  loading: () => <div className="h-16 w-full animate-pulse bg-gray-200 rounded" />
+});
 
 interface TurnstileComponentProps {
   onVerify: (token: string) => void;
@@ -23,6 +29,12 @@ export function TurnstileComponent({
   className = ''
 }: TurnstileComponentProps) {
   const turnstileRef = useRef<HTMLDivElement>(null!);
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure we're on the client side to prevent hydration mismatches
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleVerify = useCallback((token: string) => {
     console.log('Turnstile verification successful');
@@ -48,6 +60,11 @@ export function TurnstileComponent({
   if (!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
     console.warn('Turnstile site key not configured');
     return null;
+  }
+
+  // Don't render until we're on the client side
+  if (!isClient) {
+    return <div className={`h-16 w-full animate-pulse bg-gray-200 rounded ${className}`} />;
   }
 
   return (

@@ -88,14 +88,17 @@ export default function RootLayout({
         {/* Critical Resource Hints for LCP Optimization */}
         
         {/* Font loading is handled automatically by Next.js */}
-d        
-        {/* Preconnect to external domains for faster loading - only for resources actually used */}
+        
+        {/* Preconnect to external domains for faster loading */}
+        <link rel="preconnect" href="https://upload.wikimedia.org" />
+        <link rel="preconnect" href="https://html.tailus.io" />
         <link rel="preconnect" href="https://lh3.googleusercontent.com" />
         <link rel="preconnect" href="https://avatars.githubusercontent.com" />
         
         {/* DNS prefetch for analytics and external services */}
         <link rel="dns-prefetch" href="https://vitals.vercel-analytics.com" />
         <link rel="dns-prefetch" href="https://vercel-analytics.com" />
+        <link rel="dns-prefetch" href="https://img.youtube.com" />
         
         {/* Preload critical CSS - removed problematic hardcoded CSS link */}
         
