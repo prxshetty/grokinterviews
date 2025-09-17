@@ -212,7 +212,7 @@ function AccountPageContent() {
           onClick={saveChanges}
           isLoading={saving}
           buttonText="Save Changes"
-          className="bg-emerald-500 hover:bg-emerald-600 text-black dark:text-white border-none focus:ring-emerald-400 px-3.5 py-1.5 text-sm"
+          className="bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white border-none focus:ring-emerald-400 dark:focus:ring-emerald-500 px-3.5 py-1.5 text-sm"
         >
           Save Changes
         </DemoButton>
