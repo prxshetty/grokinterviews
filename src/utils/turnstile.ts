@@ -63,8 +63,9 @@ export async function validateTurnstileToken(
       };
     }
 
-    // Optional: Validate expected action
-    if (expectedAction && result.action !== expectedAction) {
+    // Optional: Validate expected action (skip for test keys)
+    const isTestKey = secretKey === '1x0000000000000000000000000000000AA';
+    if (expectedAction && result.action !== expectedAction && !isTestKey) {
       console.error('Turnstile action mismatch:', {
         expected: expectedAction,
         received: result.action
