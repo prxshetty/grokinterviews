@@ -54,15 +54,7 @@ export async function validateTurnstileToken(
 
     const result: TurnstileValidationResponse = await response.json();
 
-    // Log hostname for debugging
-    console.log('Turnstile validation response:', {
-      success: result.success,
-      hostname: result.hostname,
-      errorCodes: result['error-codes']
-    });
-
     if (!result.success) {
-      console.error('Turnstile validation failed:', result['error-codes']);
       return {
         success: false,
         error: 'Bot protection verification failed',
@@ -73,10 +65,6 @@ export async function validateTurnstileToken(
     // Optional: Validate expected action (skip for test keys)
     const isTestKey = secretKey === '1x0000000000000000000000000000000AA';
     if (expectedAction && result.action !== expectedAction && !isTestKey) {
-      console.error('Turnstile action mismatch:', {
-        expected: expectedAction,
-        received: result.action
-      });
       return {
         success: false,
         error: 'Invalid verification context'
@@ -85,11 +73,7 @@ export async function validateTurnstileToken(
 
     // Validate hostname for production (skip for test keys)
     if (!isTestKey && result.hostname && result.hostname !== 'grokinterviews.org') {
-      console.warn('Turnstile hostname mismatch:', {
-        expected: 'grokinterviews.org',
-        received: result.hostname
-      });
-      // Don't fail validation for hostname mismatch, just log it
+      // Don't fail validation for hostname mismatch, just continue
     }
 
     return {

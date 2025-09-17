@@ -37,18 +37,15 @@ export function TurnstileComponent({
   }, []);
 
   const handleVerify = useCallback((token: string) => {
-    console.log('Turnstile verification successful');
     onVerify(token);
   }, [onVerify]);
 
   const handleError = useCallback((error?: Error | any) => {
     const errorMessage = error?.message || 'Turnstile verification failed';
-    console.error('Turnstile error:', errorMessage);
     onError?.(errorMessage);
   }, [onError]);
 
   const handleExpire = useCallback(() => {
-    console.warn('Turnstile token expired');
     onExpire?.();
   }, [onExpire]);
 
@@ -58,7 +55,6 @@ export function TurnstileComponent({
   }
 
   if (!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
-    console.warn('Turnstile site key not configured');
     return null;
   }
 
