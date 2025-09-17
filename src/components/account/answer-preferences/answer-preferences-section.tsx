@@ -41,7 +41,7 @@ type ContentSourceKey = Extract<keyof AccountFormData, `use_${string}_sources`>;
 const contentSources: ReadonlyArray<{ id: ContentSourceKey; name: string; tag: string; description: string }> = [
   { id: 'use_youtube_sources', name: 'YouTube', tag: 'Relevant videos', description: 'Videos based on keywords' },
   { id: 'use_pdf_sources', name: 'PDF', tag: 'Documents', description: 'Notes from Reddit, blogs, drives' },
-  { id: 'use_paper_sources', name: 'Papers', tag: 'Beta', description: 'Academic research papers' },
+  { id: 'use_paper_sources', name: 'Papers', tag: 'Academic', description: 'Academic research papers' },
   { id: 'use_website_sources', name: 'Websites', tag: 'Articles', description: 'Relevant web articles' },
   { id: 'use_book_sources', name: 'Books', tag: 'References', description: 'Amazon book links' },
   { id: 'use_image_sources', name: 'Illustrations', tag: 'Diagrams', description: 'Articles with diagrams & illustrations' }
