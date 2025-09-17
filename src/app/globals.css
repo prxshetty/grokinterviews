@@ -19,7 +19,6 @@ canvas {
 }
 
 .sonner-glassy-toast {
-  z-index: 10001 !important;
   margin-bottom: 8px !important;
   position: relative !important;
 }
