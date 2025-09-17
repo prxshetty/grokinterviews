@@ -226,11 +226,6 @@ export default function InterviewContent({
           <InterviewReport report={interviewReport} />
         </div>
       )}
-      
-      {/* Debug: Show completion state */}
-      <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded opacity-50">
-        isCompleted: {isCompleted.toString()}, hasReport: {!!interviewReport}
-      </div>
     </div>
   );
 }
