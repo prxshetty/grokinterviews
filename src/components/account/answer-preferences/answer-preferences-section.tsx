@@ -5,7 +5,10 @@ import type { AccountFormData, AnswerFormat, AnswerDepth } from '@/app/account/t
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
@@ -112,13 +115,13 @@ export function AnswerPreferencesSection({
             <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3 lg:mb-4">Answer Format</h3>
             <div className="mb-4 lg:mb-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Format Style</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              <div className="flex flex-wrap gap-3 mt-2">
                 {answerFormats.map((format) => {
                   const isSelected = formData.preferred_answer_format === format.id
                   return (
                     <div
                       key={format.id}
-                      className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-3 lg:p-4 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors`}
+                      className={`relative rounded-lg border-2 ${isSelected ? 'border-black dark:border-white' : 'border-gray-200 dark:border-gray-700'} p-2 lg:p-3 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors flex-1 min-w-0`}
                       onClick={() => {
                         setFormData(prev => ({
                           ...prev,
@@ -128,14 +131,14 @@ export function AnswerPreferencesSection({
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm lg:text-base font-medium text-gray-900 dark:text-white">{format.name}</h4>
-                          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
+                          <h4 className="text-xs lg:text-sm font-medium text-gray-900 dark:text-white truncate">{format.name}</h4>
+                          <span className="inline-block mt-1 px-1.5 py-0.5 text-xs font-medium rounded-full border border-gray-800 dark:border-gray-200 text-gray-800 dark:text-gray-200 bg-transparent">
                             {format.tag}
                           </span>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center flex-shrink-0 ml-2`}>
+                        <div className={`w-4 h-4 lg:w-5 lg:h-5 rounded-full border ${isSelected ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center flex-shrink-0 ml-1 lg:ml-2`}>
                           {isSelected && (
-                            <svg className="w-3 h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <svg className="w-2 h-2 lg:w-3 lg:h-3 text-white dark:text-black" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
                             </svg>
                           )}
@@ -218,26 +221,31 @@ export function AnswerPreferencesSection({
                   <DropdownMenuContent 
                     align="end" 
                     sideOffset={8}
-                    className="w-40 bg-white/80 dark:bg-black/80 backdrop-blur-md border border-border/50 shadow-lg rounded-lg overflow-hidden p-1.5 mt-1"
+                    className="w-48 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md backdrop-blur-md"
                   >
-                    {(['brief', 'standard', 'comprehensive'] as AnswerDepth[]).map((depth) => (
-                      <DropdownMenuItem
-                        key={depth}
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            preferred_answer_depth: depth
-                          }));
-                        }}
-                        className={`px-2 py-1.5 text-sm rounded-md cursor-pointer font-normal transition-colors capitalize ${
-                          formData.preferred_answer_depth === depth
-                            ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100' 
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100'
-                        }`}
-                      >
-                        {depth}
-                      </DropdownMenuItem>
-                    ))}
+                    <DropdownMenuLabel className="text-gray-900 dark:text-white">
+                      Answer Depth
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-gray-200 dark:bg-white/10" />
+                    <DropdownMenuRadioGroup 
+                      value={formData.preferred_answer_depth || ''} 
+                      onValueChange={(value) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          preferred_answer_depth: value as AnswerDepth
+                        }));
+                      }}
+                    >
+                      {(['brief', 'standard', 'comprehensive'] as AnswerDepth[]).map((depth) => (
+                        <DropdownMenuRadioItem
+                          key={depth}
+                          value={depth}
+                          className="text-gray-700 dark:text-white/90 hover:text-gray-900 dark:hover:text-white focus:bg-gray-100 dark:focus:bg-white/10 capitalize"
+                        >
+                          <span>{depth}</span>
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -272,4 +280,4 @@ export function AnswerPreferencesSection({
       </div>
     </div>
   )
-} 
+}
