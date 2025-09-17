@@ -54,6 +54,13 @@ export async function validateTurnstileToken(
 
     const result: TurnstileValidationResponse = await response.json();
 
+    // Log hostname for debugging
+    console.log('Turnstile validation response:', {
+      success: result.success,
+      hostname: result.hostname,
+      errorCodes: result['error-codes']
+    });
+
     if (!result.success) {
       console.error('Turnstile validation failed:', result['error-codes']);
       return {
@@ -74,6 +81,15 @@ export async function validateTurnstileToken(
         success: false,
         error: 'Invalid verification context'
       };
+    }
+
+    // Validate hostname for production (skip for test keys)
+    if (!isTestKey && result.hostname && result.hostname !== 'grokinterviews.org') {
+      console.warn('Turnstile hostname mismatch:', {
+        expected: 'grokinterviews.org',
+        received: result.hostname
+      });
+      // Don't fail validation for hostname mismatch, just log it
     }
 
     return {
