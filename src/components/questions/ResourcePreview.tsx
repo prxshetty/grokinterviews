@@ -19,11 +19,11 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
   const isMobile = useIsMobile();
   const isTabletOrSmaller = useIsTabletOrSmaller();
 
-  // Use resource data - for image/website/pdf resources, fallback to favicon
+  // Use resource data - for image/website/pdf/paper/book resources, fallback to favicon
   const displayTitle = resource.title || 'Untitled Resource';
   const displayDescription = resource.description;
   const displayImage = resource.previewUrl || 
-    ((resource.type === 'image' || resource.type === 'website' || resource.type === 'pdf' || resource.type === 'paper') && resource.url ? 
+    ((resource.type === 'image' || resource.type === 'website' || resource.type === 'pdf' || resource.type === 'paper' || resource.type === 'book') && resource.url ? 
      getWebsiteFavicon(resource.url) : null);
 
 
