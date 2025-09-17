@@ -12,6 +12,7 @@ interface BookmarkButtonProps {
   categoryId: number;
   initialIsBookmarked?: boolean;
   onBookmarkChange?: (isBookmarked: boolean) => void;
+  asDiv?: boolean; // New prop to render as div instead of button
 }
 
 const animations = {
@@ -50,54 +51,27 @@ export function BookmarkButton({
   categoryId: _categoryId,
   initialIsBookmarked = false,
   onBookmarkChange,
+  asDiv = false,
 }: BookmarkButtonProps) {
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
 
   // Handle bookmark toggle
-  const handleToggleBookmark = async () => {
+  const handleToggleBookmark = () => {
     const newBookmarkState = !isBookmarked;
     setIsBookmarked(newBookmarkState); // Optimistic update
 
-    // Make API call to persist bookmark status
-    if (_topicId && _categoryId) {
-      try {
-        const response = await fetch('/api/user/bookmarks', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            questionId: _questionId,
-            isBookmarked: newBookmarkState,
-            topicId: _topicId,
-            categoryId: _categoryId,
-          }),
-        });
-
-        if (!response.ok) {
-          // Revert optimistic update on failure
-          setIsBookmarked(!newBookmarkState);
-          console.error('Failed to update bookmark status');
-        }
-      } catch (error) {
-        // Revert optimistic update on error
-        setIsBookmarked(!newBookmarkState);
-        console.error('Error updating bookmark status:', error);
-      }
-    }
-
-    // Notify parent component if callback provided
+    // Notify parent component - let parent handle API calls
     if (onBookmarkChange) {
       onBookmarkChange(newBookmarkState);
     }
   };
 
-  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
     e.stopPropagation();
     handleToggleBookmark();
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement | HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); // Prevent page scroll on spacebar
       e.stopPropagation();
@@ -105,18 +79,32 @@ export function BookmarkButton({
     }
   };
 
+  const Wrapper = asDiv ? 'div' : Button;
+  const wrapperProps = asDiv
+    ? {
+        onClick: handleClick,
+        onKeyDown: handleKeyDown,
+        role: 'button',
+        tabIndex: 0,
+        'aria-pressed': isBookmarked,
+        'aria-label': isBookmarked ? 'Remove bookmark' : 'Add bookmark',
+        title: isBookmarked ? 'Remove bookmark' : 'Add bookmark',
+        className: "h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors",
+      }
+    : {
+        variant: "ghost" as const,
+        size: "icon" as const,
+        onClick: handleClick,
+        onKeyDown: handleKeyDown,
+        'aria-pressed': isBookmarked,
+        'aria-label': isBookmarked ? 'Remove bookmark' : 'Add bookmark',
+        title: isBookmarked ? 'Remove bookmark' : 'Add bookmark',
+        className: "h-8 w-8",
+      };
+
   return (
     <div className="relative flex items-center justify-center">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        aria-pressed={isBookmarked}
-        aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
-        title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
-        className="h-8 w-8"
-      >
+      <Wrapper {...wrapperProps}>
         <motion.div
           initial={{ scale: 1 }}
           animate={{ scale: isBookmarked ? 1.1 : 1 }}
@@ -150,7 +138,7 @@ export function BookmarkButton({
             )}
           </AnimatePresence>
         </motion.div>
-      </Button>
+      </Wrapper>
 
       <AnimatePresence>
         {isBookmarked && (

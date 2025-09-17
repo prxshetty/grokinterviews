@@ -147,10 +147,8 @@ function QuestionWithAnswerComponent({
     questionId,
     initialIsBookmarked,
     onBookmarkStatusChange,
-    ...(actualTopicId && actualCategoryId && {
-      topicId: actualTopicId,
-      categoryId: actualCategoryId
-    })
+    topicId: actualTopicId,
+    categoryId: actualCategoryId
   });
 
   // Sync expansion state with isOpen prop
@@ -199,11 +197,10 @@ function QuestionWithAnswerComponent({
     >
       {/* Header with AccordionTrigger and Bookmark Button */}
       <div className="relative bg-white dark:bg-gray-800 group-data-[state=open]:bg-gray-50 dark:group-data-[state=open]:bg-gray-700/50 transition-colors">
-        {/* Use AccordionTrigger with proper layout structure */}
-        <AccordionTrigger 
-          className={`text-left justify-start items-start ${
-            isTabletOrSmaller ? 'px-3 py-2.5 pr-16' : 'px-4 py-3 pr-20'
-          } [&>svg]:hidden hover:bg-gray-50 dark:hover:bg-gray-700/50 relative z-10 cursor-pointer w-full`}
+        <AccordionTrigger
+          className={`text-left justify-between items-center w-full ${
+            isTabletOrSmaller ? 'px-3 py-2.5' : 'px-4 py-3'
+          } hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer`}
           onClick={() => {
             console.log('🎯 Accordion trigger clicked for question:', questionId);
             // Don't preventDefault here - let the accordion handle the toggle
@@ -251,32 +248,28 @@ function QuestionWithAnswerComponent({
               )}
             </div>
           </div>
-          
-          {/* Custom chevron */}
-          <svg 
-            className="h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180 flex-shrink-0" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </AccordionTrigger>
-        
-        {/* Bookmark button positioned absolutely outside the trigger */}
-        {(actualCategoryId !== null && actualCategoryId !== undefined) && (
-          <div className={`absolute top-1/2 -translate-y-1/2 z-20 ${
-            isTabletOrSmaller ? 'right-8' : 'right-10'
-          }`}>
-            <BookmarkButton
-              questionId={questionId}
-              topicId={actualTopicId}
-              categoryId={actualCategoryId}
-              initialIsBookmarked={isBookmarkedState}
-              onBookmarkChange={handleBookmarkChange}
-            />
+
+          {/* Right side: Bookmark button + Accordion chevron */}
+          <div className="flex items-center flex-shrink-0 ml-2">
+            {/* Bookmark button - positioned to the left of chevron */}
+            {(actualCategoryId !== null && actualCategoryId !== undefined) && (
+              <div
+                className="mr-1"
+                onClick={(e) => e.stopPropagation()} // Prevent accordion toggle when clicking bookmark
+              >
+                <BookmarkButton
+                  questionId={questionId}
+                  topicId={actualTopicId}
+                  categoryId={actualCategoryId}
+                  initialIsBookmarked={isBookmarkedState}
+                  onBookmarkChange={handleBookmarkChange}
+                  asDiv={true}
+                />
+              </div>
+            )}
+            {/* Chevron icon is automatically added by AccordionTrigger */}
           </div>
-        )}
+        </AccordionTrigger>
       </div>
 
       <AccordionContent 
