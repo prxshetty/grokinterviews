@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useSpacemanTheme } from '@space-man/react-theme-animation';
 
 // Dynamically import Turnstile to prevent SSR issues
 const Turnstile = dynamic(() => import('react-turnstile'), {
@@ -30,11 +31,17 @@ export function TurnstileComponent({
 }: TurnstileComponentProps) {
   const turnstileRef = useRef<HTMLDivElement>(null!);
   const [isClient, setIsClient] = useState(false);
+  const { theme: currentTheme } = useSpacemanTheme();
 
   // Ensure we're on the client side to prevent hydration mismatches
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Determine the effective theme for Turnstile
+  const effectiveTheme = theme === 'auto' ? 
+    (currentTheme === 'system' ? 'auto' : currentTheme) : 
+    theme;
 
   const handleVerify = useCallback((token: string) => {
     onVerify(token);
@@ -72,7 +79,7 @@ export function TurnstileComponent({
         onError={handleError}
         onExpire={handleExpire}
         action={action}
-        theme={theme}
+        theme={effectiveTheme}
         size={size}
         retry="auto"
         refreshExpired="auto"
