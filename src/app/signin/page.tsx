@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import { TurnstileComponent } from '@/components/ui/turnstile';
+import { useTurnstile } from '@/hooks/useTurnstile';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -19,6 +21,9 @@ function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, refreshAuth, supabase } = useAuth();
+  
+  // Turnstile state management
+  const { token: turnstileToken, isVerified: isTurnstileVerified, error: turnstileError, setToken: setTurnstileToken, setError: setTurnstileError, reset: resetTurnstile } = useTurnstile();
 
   // CRITICAL: Check for password recovery IMMEDIATELY and SYNCHRONOUSLY
   // This must run before any other effects to prevent race conditions
@@ -105,6 +110,35 @@ function SignInForm() {
     if (!supabase) return;
 
     try {
+      // Validate Turnstile token if enabled
+      if (process.env.NEXT_PUBLIC_ENABLE_TURNSTILE === 'true') {
+        if (!isTurnstileVerified || !turnstileToken) {
+          setError('Please complete the bot protection verification.');
+          setLoading(false);
+          return;
+        }
+
+        // Verify token with server
+        const turnstileResponse = await fetch('/api/auth/verify-turnstile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: turnstileToken,
+            action: isSignUp ? 'signup' : 'signin'
+          }),
+        });
+
+        if (!turnstileResponse.ok) {
+          const turnstileError = await turnstileResponse.json();
+          setError(turnstileError.error || 'Bot protection verification failed. Please try again.');
+          resetTurnstile();
+          setLoading(false);
+          return;
+        }
+      }
+
       if (isSignUp) {
         // Production-ready check:
         // Layer 1: Check if the user exists in the core auth system at all.
@@ -233,6 +267,8 @@ function SignInForm() {
     setLastName('');
     setEmail('');
     setPassword('');
+    // Reset Turnstile when switching modes
+    resetTurnstile();
   };
 
   const handleSignInWithGoogle = async () => {
@@ -399,6 +435,20 @@ function SignInForm() {
               </button>
             </div>
           )}
+
+          {/* Turnstile Bot Protection */}
+          <div className="mb-6">
+            <TurnstileComponent
+              onVerify={setTurnstileToken}
+              onError={setTurnstileError}
+              onExpire={resetTurnstile}
+              action={isSignUp ? 'signup' : 'signin'}
+              className="flex justify-center"
+            />
+            {turnstileError && (
+              <p className="text-red-500 text-sm mt-2 text-center">{turnstileError}</p>
+            )}
+          </div>
 
           <button
             type="submit"
