@@ -69,7 +69,6 @@ class TopicDataService {
         throw new Error(`Failed to fetch section headers: ${response.statusText}`);
       }
       const sectionHeaders = await response.json();
-      // Convert to CategoryItem format, preserving order
       return sectionHeaders.map((header: any) => ({
         id: `header-${header.id}`,
         label: header.name
@@ -93,7 +92,6 @@ class TopicDataService {
         throw new Error(`Failed to fetch topics: ${response.statusText}`);
       }
       const topics = await response.json();
-      // Convert to CategoryItem format, preserving order
       return topics.map((topic: any) => ({
         id: `topic-${topic.id}`,
         label: topic.name

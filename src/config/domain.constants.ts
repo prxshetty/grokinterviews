@@ -65,50 +65,11 @@ export const DOMAIN_OPTIONS: DomainOption[] = [
   }
 ];
 
-// Legacy color mapping for backward compatibility
-export const DOMAIN_COLORS = {
-  'summary': {
-    color: 'text-pink-600 dark:text-pink-400',
-    gradient: 'from-pink-500 to-purple-600',
-    progressColor: '#EC4899'
-  },
-  'ai': {
-    color: 'text-purple-600 dark:text-purple-400',
-    gradient: 'from-purple-500 to-purple-600',
-    progressColor: '#8B5CF6'
-  },
-  'ml': {
-    color: 'text-blue-600 dark:text-blue-400',
-    gradient: 'from-blue-500 to-blue-600',
-    progressColor: '#3B82F6'
-  },
-  'sdesign': {
-    color: 'text-green-600 dark:text-green-400',
-    gradient: 'from-green-500 to-green-600',
-    progressColor: '#10B981'
-  },
-  'dsa': {
-    color: 'text-orange-600 dark:text-orange-400',
-    gradient: 'from-orange-500 to-orange-600',
-    progressColor: '#F59E0B'
-  },
-  'webdev': {
-    color: 'text-indigo-600 dark:text-indigo-400',
-    gradient: 'from-indigo-500 to-indigo-600',
-    progressColor: '#6366F1'
-  }
-} as const
-
 // Helper function to get full domain name from slug
 export const getDomainLabel = (domainId: string): string => {
   const domain = DOMAIN_OPTIONS.find(d => d.id === domainId);
   return domain?.label || domainId.charAt(0).toUpperCase() + domainId.slice(1);
 };
-
-// Helper function to get domain color
-export const getDomainColor = (domainId: keyof typeof DOMAIN_COLORS) => {
-  return DOMAIN_COLORS[domainId] || DOMAIN_COLORS.webdev // default fallback
-}
 
 // Valid domain IDs for validation
 export const VALID_DOMAINS = DOMAIN_OPTIONS.map(d => d.id);
@@ -117,15 +78,3 @@ export const VALID_DOMAINS = DOMAIN_OPTIONS.map(d => d.id);
 export const DOMAIN_LABEL_MAP = Object.fromEntries(
   DOMAIN_OPTIONS.map(d => [d.id, d.label])
 );
-
-// Legacy mapping for backward compatibility
-export const getDomainId = (domainName: string): keyof typeof DOMAIN_COLORS => {
-  const mapping: { [key: string]: keyof typeof DOMAIN_COLORS } = {
-    'Artificial Intelligence': 'ai',
-    'Machine Learning': 'ml',
-    'System Design': 'sdesign',
-    'Data Structures & Algorithms': 'dsa',
-    'Web Development': 'webdev'
-  }
-  return mapping[domainName] || 'webdev'
-}
