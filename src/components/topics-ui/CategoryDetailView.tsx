@@ -554,12 +554,6 @@ export default function CategoryDetailView({
             {!isTurnstileVerified ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
-                    Verify to Access Questions
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Please complete the verification below to access the questions.
-                  </p>
                 </div>
                 <TurnstileComponent
                   onVerify={handleTurnstileVerify}
