@@ -2,13 +2,12 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { AnimatedSpinner } from './animated_spinner';
 
 /**
  * Unified Loading Spinner System for GrokInterviews
  * 
  * This component provides a consistent loading experience across the entire application.
- * Updated to use the new morph-loading animated component.
+ * Updated to use the new luma-spin animated component.
  * 
  * @example
  * // Basic usage
@@ -37,20 +36,76 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-// Map LoadingSpinner sizes to AnimatedSpinner sizes
-const sizeMapping = {
-  sm: '4rem',
-  md: '5rem', 
-  lg: '6rem',
-  xl: '8rem'
+// Size mappings for the luma-spin component
+const sizeClasses = {
+  sm: 'w-8 h-8',
+  md: 'w-12 h-12', 
+  lg: 'w-16 h-16',
+  xl: 'w-20 h-20'
 };
 
 const colorClasses = {
-  primary: 'text-gray-900 dark:text-white',
-  secondary: 'text-gray-900 dark:text-white', 
-  accent: 'text-gray-900 dark:text-white',
-  muted: 'text-gray-700 dark:text-white/80'
+  primary: 'shadow-gray-800 dark:shadow-gray-100',
+  secondary: 'shadow-gray-700 dark:shadow-gray-200', 
+  accent: 'shadow-blue-600 dark:shadow-blue-400',
+  muted: 'shadow-gray-600 dark:shadow-gray-300'
 };
+
+function LumaSpinner({ size = 'md', color = 'primary', className }: { 
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  color?: 'primary' | 'secondary' | 'accent' | 'muted';
+  className?: string;
+}) {
+  return (
+    <div className={cn('relative aspect-square', sizeClasses[size], className)}>
+      <span className={cn(
+        'absolute rounded-[50px] animate-loaderAnim shadow-[inset_0_0_0_3px]',
+        colorClasses[color]
+      )} />
+      <span className={cn(
+        'absolute rounded-[50px] animate-loaderAnim animation-delay shadow-[inset_0_0_0_3px]',
+        colorClasses[color]
+      )} />
+      <style jsx>{`
+        @keyframes loaderAnim {
+          0% {
+            inset: 0 35px 35px 0;
+          }
+          12.5% {
+            inset: 0 35px 0 0;
+          }
+          25% {
+            inset: 35px 35px 0 0;
+          }
+          37.5% {
+            inset: 35px 0 0 0;
+          }
+          50% {
+            inset: 35px 0 0 35px;
+          }
+          62.5% {
+            inset: 0 0 0 35px;
+          }
+          75% {
+            inset: 0 0 35px 35px;
+          }
+          87.5% {
+            inset: 0 0 35px 0;
+          }
+          100% {
+            inset: 0 35px 35px 0;
+          }
+        }
+        .animate-loaderAnim {
+          animation: loaderAnim 2.5s infinite;
+        }
+        .animation-delay {
+          animation-delay: -1.25s;
+        }
+      `}</style>
+    </div>
+  );
+}
 
 export default function LoadingSpinner({
   size = 'md',
@@ -61,9 +116,10 @@ export default function LoadingSpinner({
   fullScreen = false
 }: LoadingSpinnerProps) {
   const spinner = (
-    <AnimatedSpinner 
-      size={sizeMapping[size]}
-      className={cn(colorClasses[color], className)}
+    <LumaSpinner 
+      size={size}
+      color={color}
+      className={className}
     />
   );
 
