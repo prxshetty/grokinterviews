@@ -569,64 +569,66 @@ export default function CategoryDetailView({
                 )}
               </div>
             ) : hasGroupedQuestions ? (
-              <Accordion 
-                type="single" 
-                collapsible 
-                className="w-full space-y-1"
-                value={openQuestionId || ""}
-                onValueChange={handleOpenQuestionChange}
-              >
-                {Object.entries(questionsByCategory).map(([catId, category], index) => (
-                  <div key={catId} id={`category-${catId}`} className="mb-8">
-                    <div className="flex flex-row justify-between items-center mb-3 gap-2">
-                      <h2 className="text-2xl sm:text-3xl font-editorial font-extralight tracking-tight md:text-2xl dark:text-white truncate flex-1 min-w-0">{category.name}</h2>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
-                          {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
-                        </span>
-                        {/* Mobile FloatingSettings - only show on first category */}
-                        {index === 0 && subtopicDetails.questions && subtopicDetails.questions.length > 0 && (
-                          <div className="sm:hidden">
-                            <FloatingSettings
-                              selectedDifficulty={selectedDifficulty || null}
-                              onSelectDifficulty={handleDifficultySelect}
-                              onClear={handleClearDifficulty}
-                            />
-                          </div>
-                        )}
+              <div className="no-select no-print">
+                <Accordion 
+                  type="single" 
+                  collapsible 
+                  className="w-full space-y-1"
+                  value={openQuestionId || ""}
+                  onValueChange={handleOpenQuestionChange}
+                >
+                  {Object.entries(questionsByCategory).map(([catId, category], index) => (
+                    <div key={catId} id={`category-${catId}`} className="mb-8">
+                      <div className="flex flex-row justify-between items-center mb-3 gap-2">
+                        <h2 className="text-2xl sm:text-3xl font-editorial font-extralight tracking-tight md:text-2xl dark:text-white truncate flex-1 min-w-0">{category.name}</h2>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
+                            {category.questions.filter(q => completedQuestions[q.id]).length}/{category.questions.length} completed
+                          </span>
+                          {/* Mobile FloatingSettings - only show on first category */}
+                          {index === 0 && subtopicDetails.questions && subtopicDetails.questions.length > 0 && (
+                            <div className="sm:hidden">
+                              <FloatingSettings
+                                selectedDifficulty={selectedDifficulty || null}
+                                onSelectDifficulty={handleDifficultySelect}
+                                onClear={handleClearDifficulty}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      {/* Progress bar with transparent background and stretched container */}
+                      <div className="w-full mb-4">
+                        <ProgressBar
+                          progress={(category.questions.filter(q => completedQuestions[q.id]).length / category.questions.length) * 100}
+                          total={category.questions.length}
+                          completed={category.questions.filter(q => completedQuestions[q.id]).length}
+                          showText={false}
+                          height="sm"
+                          className="bg-transparent"
+                        />
+                      </div>
+                      {/* Accordion items for questions within this category group */}
+                      {category.questions.map((question, _) => (
+                        <QuestionWithAnswer 
+                          key={question.id}
+                          question={question}
+                          topicId={question.categories?.topic_id ?? 0}
+                          domain={domain} // Pass domain for optimization
+                          onCompletionChange={handleCompletionChange}
+                          isBookmarked={bookmarkStatus[question.id] ?? false}
+                          onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
+                          isOpen={openQuestionId === question.id.toString()}
+                          onRequestClose={() => handleOpenQuestionChange("")}
+                        />
+                      ))}
                     </div>
-                    {/* Progress bar with transparent background and stretched container */}
-                    <div className="w-full mb-4">
-                      <ProgressBar
-                        progress={(category.questions.filter(q => completedQuestions[q.id]).length / category.questions.length) * 100}
-                        total={category.questions.length}
-                        completed={category.questions.filter(q => completedQuestions[q.id]).length}
-                        showText={false}
-                        height="sm"
-                        className="bg-transparent"
-                      />
-                    </div>
-                    {/* Accordion items for questions within this category group */}
-                    {category.questions.map((question, _) => (
-                      <QuestionWithAnswer 
-                        key={question.id}
-                        question={question}
-                        topicId={question.categories?.topic_id ?? 0}
-                        domain={domain} // Pass domain for optimization
-                        onCompletionChange={handleCompletionChange}
-                        isBookmarked={bookmarkStatus[question.id] ?? false}
-                        onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
-                        isOpen={openQuestionId === question.id.toString()}
-                        onRequestClose={() => handleOpenQuestionChange("")}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </Accordion>
+                  ))}
+                </Accordion>
+              </div>
             ) : memoizedFilteredQuestions.length > 0 ? (
               // Fallback to simple question list if no category info
-              <div className="pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20">
+              <div className="pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20 no-select no-print">
                 <h2 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl lg:text-4xl xl:text-5xl mb-6">Questions</h2>
                 <Accordion 
                   type="single" 
@@ -770,27 +772,29 @@ export default function CategoryDetailView({
                   )}
                 </div>
               ) : memoizedFilteredQuestions.length > 0 ? (
-                <Accordion 
-                  type="single" 
-                  collapsible 
-                  className="w-full space-y-2" // Added for consistent spacing
-                  value={openQuestionId || ""}
-                  onValueChange={handleOpenQuestionChange}
-                >
-                  {memoizedFilteredQuestions.map((question, _) => (
-                    <QuestionWithAnswer 
-                      key={question.id}
-                      question={question}
-                      topicId={question.topic_id ?? 0}
-                      domain={domain} // Pass domain for optimization
-                      onCompletionChange={handleCompletionChange}
-                      isBookmarked={bookmarkStatus[question.id] ?? false}
-                      onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
-                      isOpen={openQuestionId === question.id.toString()}
-                      onRequestClose={() => handleOpenQuestionChange("")}
-                    />  
-                  ))}
-                </Accordion>
+                <div className="no-select no-print">
+                  <Accordion 
+                    type="single" 
+                    collapsible 
+                    className="w-full space-y-2" // Added for consistent spacing
+                    value={openQuestionId || ""}
+                    onValueChange={handleOpenQuestionChange}
+                  >
+                    {memoizedFilteredQuestions.map((question, _) => (
+                      <QuestionWithAnswer 
+                        key={question.id}
+                        question={question}
+                        topicId={question.topic_id ?? 0}
+                        domain={domain} // Pass domain for optimization
+                        onCompletionChange={handleCompletionChange}
+                        isBookmarked={bookmarkStatus[question.id] ?? false}
+                        onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
+                        isOpen={openQuestionId === question.id.toString()}
+                        onRequestClose={() => handleOpenQuestionChange("")}
+                      />  
+                    ))}
+                  </Accordion>
+                </div>
               ) : (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-300">
                   <p>{selectedDifficulty ? `No ${selectedDifficulty} questions available.` : 'No questions available for this category.'}</p>
