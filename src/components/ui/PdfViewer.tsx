@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dialog, DialogContent, DialogTitle } from './dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './dialog';
 import { Resource } from '@/types/resources.types';
 
 interface PdfViewerProps {
@@ -24,6 +24,9 @@ export function PdfViewer({ resource, isOpen, onClose }: PdfViewerProps) {
         <DialogTitle className="sr-only">
           {resource.title || 'PDF Document'}
         </DialogTitle>
+        <DialogDescription className="sr-only">
+          PDF viewer for {resource.title || 'document'}. Use keyboard navigation or screen reader to interact with the PDF content.
+        </DialogDescription>
         <div className="w-full h-full overflow-hidden relative">
           <iframe
             src={pdfUrl}
