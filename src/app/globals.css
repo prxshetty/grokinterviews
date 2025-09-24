@@ -691,3 +691,18 @@ html.scrollbar-hidden::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
+
+/* Prevent text selection */
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none; /* Standard syntax */
+}
+
+/* Hide content when printing */
+@media print {
+  .no-print, .no-print * {
+    display: none !important;
+  }
+}
