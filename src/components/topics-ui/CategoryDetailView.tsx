@@ -5,6 +5,7 @@ import { motion, type Variants, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { QuestionWithAnswer } from '@/components/questions';
 import { LoadingSpinner, Accordion, ProgressBar } from '@/components/ui';
+import { TurnstileComponent } from '@/components/ui/turnstile';
 import { questionCache } from '@/utils/questionCache';
 import { useAuth } from '@/hooks/auth';
 import TopicCategoryGrid from './TopicCategoryGrid';
@@ -61,6 +62,10 @@ export default function CategoryDetailView({
   
   // Local state to store bookmark status
   const [bookmarkStatus, setBookmarkStatus] = useState<Record<number, boolean>>({});
+
+  // Turnstile verification state
+  const [isTurnstileVerified, setIsTurnstileVerified] = useState(false);
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
 
   // Local state for difficulty to handle filtering entirely on the client
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(() => searchParams.get('difficulty'));
@@ -462,6 +467,23 @@ export default function CategoryDetailView({
     }
   }, [searchParams, router, pathname, hasGroupedQuestions, questionsByCategory]);
 
+  // Turnstile handlers
+  const handleTurnstileVerify = useCallback((token: string) => {
+    console.log('Turnstile verification successful:', token);
+    setIsTurnstileVerified(true);
+    setTurnstileError(null);
+  }, []);
+
+  const handleTurnstileError = useCallback((error: string) => {
+    setIsTurnstileVerified(false);
+    setTurnstileError(error);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setIsTurnstileVerified(false);
+    setTurnstileError(null);
+  }, []);
+
   if (isLoading && !categoryDetails) {
     return (
       <LoadingSpinner 
@@ -481,7 +503,7 @@ export default function CategoryDetailView({
         text="Loading topic questions..." 
         centered={true}
       />
-    )
+    );
   }
 
   // If a subtopic is selected, show its details
@@ -529,7 +551,30 @@ export default function CategoryDetailView({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {hasGroupedQuestions ? (
+            {!isTurnstileVerified ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
+                    Verify to Access Questions
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Please complete the verification below to access the questions.
+                  </p>
+                </div>
+                <TurnstileComponent
+                  onVerify={handleTurnstileVerify}
+                  onError={handleTurnstileError}
+                  onExpire={handleTurnstileExpire}
+                  action="access-questions"
+                  className="mb-4"
+                />
+                {turnstileError && (
+                  <div className="text-red-600 dark:text-red-400 text-sm text-center">
+                    Verification failed: {turnstileError}
+                  </div>
+                )}
+              </div>
+            ) : hasGroupedQuestions ? (
               <Accordion 
                 type="single" 
                 collapsible 
@@ -713,7 +758,24 @@ export default function CategoryDetailView({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {memoizedFilteredQuestions.length > 0 ? (
+              {!isTurnstileVerified ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div className="text-center mb-6">
+                  </div>
+                  <TurnstileComponent
+                    onVerify={handleTurnstileVerify}
+                    onError={handleTurnstileError}
+                    onExpire={handleTurnstileExpire}
+                    action="access-questions"
+                    className="mb-4"
+                  />
+                  {turnstileError && (
+                    <div className="text-red-600 dark:text-red-400 text-sm text-center">
+                      Verification failed: {turnstileError}
+                    </div>
+                  )}
+                </div>
+              ) : memoizedFilteredQuestions.length > 0 ? (
                 <Accordion 
                   type="single" 
                   collapsible 
