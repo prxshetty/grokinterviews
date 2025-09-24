@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
@@ -13,80 +13,129 @@ interface ResourcePreviewProps {
   onResourceClick: (resource: Resource) => void;
 }
 
-export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewProps) {
+function ResourcePreviewComponent({ resource, onResourceClick }: ResourcePreviewProps) {
   const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
-  const ResourceTypeIcon = TYPE_DISPLAY_INFO[resource.type || 'other']?.Icon || ExternalLink;
   const isMobile = useIsMobile();
   const isTabletOrSmaller = useIsTabletOrSmaller();
 
-  // Use resource data - for image/website/pdf/paper/book resources, fallback to favicon
-  const displayTitle = resource.title || 'Untitled Resource';
-  const displayDescription = resource.description;
-  const displayImage = resource.previewUrl || 
-    ((resource.type === 'image' || resource.type === 'website' || resource.type === 'pdf' || resource.type === 'paper' || resource.type === 'book') && resource.url ? 
-     getWebsiteFavicon(resource.url) : null);
+  // Memoize resource type icon to prevent lookup on every render
+  const ResourceTypeIcon = useMemo(() => 
+    TYPE_DISPLAY_INFO[resource.type || 'other']?.Icon || ExternalLink,
+    [resource.type]
+  );
 
+  // Memoize display values to prevent recalculation on every render
+  const displayValues = useMemo(() => {
+    const displayTitle = resource.title || 'Untitled Resource';
+    const displayDescription = resource.description;
+    
+    // Only calculate favicon for specific types and when previewUrl is not available
+    let displayImage = resource.previewUrl;
+    if (!displayImage && 
+        (resource.type === 'image' || resource.type === 'website' || 
+         resource.type === 'pdf' || resource.type === 'paper' || resource.type === 'book') && 
+        resource.url) {
+      displayImage = getWebsiteFavicon(resource.url);
+    }
 
-  // Determine optimal sizing based on device
-  const getAspectRatio = () => {
-    if (isMobile) return 'aspect-[16/10] max-h-48';
-    if (isTabletOrSmaller) return 'aspect-[16/9] max-h-64'; // Better for iPad
-    return 'aspect-video max-h-98';
-  };
+    return { displayTitle, displayDescription, displayImage };
+  }, [resource.title, resource.description, resource.previewUrl, resource.type, resource.url]);
 
-  const getIconSize = () => {
-    if (isMobile) return 'w-10 h-10';
-    if (isTabletOrSmaller) return 'w-14 h-14'; // Larger for iPad
-    return 'w-16 h-16';
-  };
+  // Memoize responsive styling functions to prevent recreation on every render
+  const responsiveStyles = useMemo(() => {
+    const getAspectRatio = () => {
+      if (isMobile) return 'aspect-[16/10] max-h-48';
+      if (isTabletOrSmaller) return 'aspect-[16/9] max-h-64';
+      return 'aspect-video max-h-98';
+    };
 
-  const getTextSize = () => {
-    if (isMobile) return 'text-xs';
-    if (isTabletOrSmaller) return 'text-sm'; // Better readability on iPad
-    return 'text-sm';
-  };
+    const getIconSize = () => {
+      if (isMobile) return 'w-10 h-10';
+      if (isTabletOrSmaller) return 'w-14 h-14';
+      return 'w-16 h-16';
+    };
 
-  const getPadding = () => {
-    if (isMobile) return 'p-2';
-    if (isTabletOrSmaller) return 'p-3'; // More breathing room on iPad
-    return 'p-2';
-  };
+    const getTextSize = () => {
+      if (isMobile) return 'text-xs';
+      if (isTabletOrSmaller) return 'text-sm';
+      return 'text-sm';
+    };
 
-  const getButtonSize = () => {
-    if (isMobile) return 'sm';
-    if (isTabletOrSmaller) return 'default'; // Larger button for iPad
-    return 'sm';
-  };
+    const getPadding = () => {
+      if (isMobile) return 'p-2';
+      if (isTabletOrSmaller) return 'p-3';
+      return 'p-2';
+    };
+
+    const getButtonSize = (): "sm" | "default" | "lg" | "icon" => {
+      if (isMobile) return 'sm';
+      if (isTabletOrSmaller) return 'default';
+      return 'sm';
+    };
+
+    return {
+      aspectRatio: getAspectRatio(),
+      iconSize: getIconSize(),
+      textSize: getTextSize(),
+      padding: getPadding(),
+      buttonSize: getButtonSize()
+    };
+  }, [isMobile, isTabletOrSmaller]);
+
+  // Get gradient class (returns constant value, no memoization needed)
+  const gradientClass = getGradientForType(resource.type || 'other');
+
+  // Memoize click handlers to prevent recreation on every render
+  const handleImageClick = useCallback(() => {
+    if (resource.type === 'pdf') {
+      setIsPdfViewerOpen(true);
+    } else {
+      onResourceClick(resource);
+    }
+  }, [resource, onResourceClick]);
+
+  const handleButtonClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (resource.url) {
+      window.open(resource.url, '_blank', 'noopener,noreferrer');
+    }
+  }, [resource.url]);
+
+  const handlePdfViewerClose = useCallback(() => {
+    setIsPdfViewerOpen(false);
+  }, []);
+
+  // Memoize video embed URL to prevent recreation
+  const videoEmbedUrl = useMemo(() => {
+    if ((resource.type === 'video' || resource.type === 'youtube') && resource.videoId) {
+      return `https://www.youtube-nocookie.com/embed/${resource.videoId}?rel=0&showinfo=0&modestbranding=1&origin=${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}`;
+    }
+    return null;
+  }, [resource.type, resource.videoId]);
 
   return (
     <div className="w-full h-full">
       <div className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
         {/* Thumbnail/Preview Area - Optimized aspect ratios */}
-        <div className={`relative w-full bg-black flex-shrink-0 ${getAspectRatio()}`}>
-          {(resource.type === 'video' || resource.type === 'youtube') && resource.videoId ? (
+        <div className={`relative w-full bg-black flex-shrink-0 ${responsiveStyles.aspectRatio}`}>
+          {videoEmbedUrl ? (
             <iframe
-              src={`https://www.youtube.com/embed/${resource.videoId}?rel=0&showinfo=0`}
-              title={resource.title || 'Video player'}
+              src={videoEmbedUrl}
+              title={displayValues.displayTitle}
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
               className="w-full h-full"
               loading="lazy"
             />
-          ) : displayImage ? (
+          ) : displayValues.displayImage ? (
             <div 
               className="relative w-full h-full cursor-pointer" 
-              onClick={() => {
-                if (resource.type === 'pdf') {
-                  setIsPdfViewerOpen(true);
-                } else {
-                  onResourceClick(resource);
-                }
-              }}
+              onClick={handleImageClick}
             >
               <Image 
-                src={displayImage}
-                alt={displayTitle}
+                src={displayValues.displayImage}
+                alt={displayValues.displayTitle}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-contain"
@@ -96,43 +145,32 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
             </div>
           ) : (
             <div 
-              className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getGradientForType(resource.type || 'other')} cursor-pointer`}
-              onClick={() => {
-                if (resource.type === 'pdf') {
-                  setIsPdfViewerOpen(true);
-                } else {
-                  onResourceClick(resource);
-                }
-              }}
+              className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${gradientClass} cursor-pointer`}
+              onClick={handleImageClick}
             >
-              <ResourceTypeIcon className={`text-white/70 ${getIconSize()}`} />
+              <ResourceTypeIcon className={`text-white/70 ${responsiveStyles.iconSize}`} />
             </div>
           )}
         </div>
 
         {/* Content Area - Responsive padding and text sizing */}
-        <div className={`flex flex-col ${getPadding()}`}>
+        <div className={`flex flex-col ${responsiveStyles.padding}`}>
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1">
-              <h3 className={`font-medium text-foreground line-clamp-2 leading-tight ${getTextSize()}`}>
-                {displayTitle}
+              <h3 className={`font-medium text-foreground line-clamp-2 leading-tight ${responsiveStyles.textSize}`}>
+                {displayValues.displayTitle}
               </h3>
-              {displayDescription && (
+              {displayValues.displayDescription && (
                 <p className={`text-muted-foreground line-clamp-2 mt-1 leading-tight ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                  {displayDescription}
+                  {displayValues.displayDescription}
                 </p>
               )}
             </div>
             <div className="flex items-center flex-shrink-0">
               <Button 
                 variant="default"
-                size={getButtonSize()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (resource.url) {
-                    window.open(resource.url, '_blank', 'noopener,noreferrer');
-                  }
-                }}
+                size={responsiveStyles.buttonSize}
+                onClick={handleButtonClick}
                 className="flex-shrink-0"
               >
                 Open <svg className={`ml-1 ${isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,9 +187,12 @@ export function ResourcePreview({ resource, onResourceClick }: ResourcePreviewPr
         <PdfViewer 
           resource={resource}
           isOpen={isPdfViewerOpen}
-          onClose={() => setIsPdfViewerOpen(false)}
+          onClose={handlePdfViewerClose}
         />
       )}
     </div>
   );
 }
+
+// Memoize the entire component to prevent unnecessary re-renders when props haven't changed
+export const ResourcePreview = memo(ResourcePreviewComponent);
