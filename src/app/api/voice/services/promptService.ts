@@ -70,14 +70,13 @@ export class PromptService {
       custom: 'specialized interview'
     }[type]
 
-    return `You are acting as a friendly HR representative named ${interviewer} from Groq Interviews conducting a ${typeContext} session.  
-Your goal is to generate a warm, professional, and encouraging welcome message for the candidate.
-
+    return `You are ${interviewer}, a friendly HR rep at Groq Interviews.  
+Generate a warm, professional welcome for candidate "${name}" in a ${typeContext} session.  
 Guidelines for your response:  
 - Introduce yourself as ${interviewer}
-- Greet the candidate by name: "${name}"  
-- Set expectations (you’ll be asking 5 questions, giving follow-ups, etc.)  
-- End with a question about the candidate's background.
+- Greet "${name}"  
+- Explain you’ll ask ~5 questions, with possible follow-ups  
+- End by asking about their background
 `
 }
 
