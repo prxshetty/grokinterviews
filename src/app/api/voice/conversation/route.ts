@@ -263,8 +263,7 @@ export async function POST(request: NextRequest) {
             session_id: currentSessionId,
             transcript_text: userResponse,
             interaction_type: 'user_response',
-            conversation_order: conversationHistory.length,
-            voice_name: voiceName
+            conversation_order: conversationHistory.length
           });
 
         // Store AI response
@@ -275,8 +274,7 @@ export async function POST(request: NextRequest) {
             session_id: currentSessionId,
             transcript_text: aiResponse,
             interaction_type: 'ai_response',
-            conversation_order: conversationHistory.length + 1,
-            voice_name: voiceName
+            conversation_order: conversationHistory.length + 1
           });
 
         // Update session with current question count and check for completion
@@ -429,10 +427,12 @@ export async function GET(request: NextRequest) {
         userName = user.user_metadata.name;
       }
 
-      // Get interviewer name from voice configuration
+      // Get interviewer name from voice parameter - convert technical name to display name
       let interviewerName: string | undefined;
-      if (voiceParam && VOICE_CONFIG[voiceParam as VoiceOption]) {
-        interviewerName = VOICE_CONFIG[voiceParam as VoiceOption].displayName;
+      if (voiceParam) {
+        // Convert technical voice name to display name using VOICE_CONFIG
+        const voiceConfig = VOICE_CONFIG[voiceParam as VoiceOption];
+        interviewerName = voiceConfig?.displayName || voiceParam;
       }
 
       // Create welcome prompt with personalized name and interviewer

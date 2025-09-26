@@ -74,8 +74,7 @@ export class PromptService {
 Generate a warm, professional welcome for candidate "${name}" in a ${typeContext} session.  
 Guidelines for your response:  
 - Introduce yourself as ${interviewer}
-- Greet "${name}"  
-- Explain you’ll ask ~5 questions, with possible follow-ups  
+- Explain in short that you’ll ask ~5 questions, with possible follow-ups  
 - End by asking about their background
 `
 }

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 
 export interface InterviewSession {
@@ -85,16 +85,9 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
     isActive: false,
     isCompleted: false,
     conversationHistory: [],
-    currentQuestion: "Loading welcome message...", // Initial loading state
+    currentQuestion: "Welcome! Please start your interview session.",
     interviewReport: null,
   });
-
-  // Initialize welcome message on mount
-  useEffect(() => {
-    fetchWelcomeMessage('behavioral', undefined, undefined).then(welcomeMessage => {
-      setSession(prev => ({ ...prev, currentQuestion: welcomeMessage }));
-    });
-  }, []);
 
   const createSession = useCallback(async (sessionType: string, voiceName?: string, config?: InterviewModeConfig): Promise<string | null> => {
     try {

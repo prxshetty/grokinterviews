@@ -453,12 +453,18 @@ export default function WebInterviewPageContent() {
         setActiveInterviewType(sessionType as any);
         setActiveConfig(interviewConfig);
         
-        setSessionActive(true);
+        // Do NOT set session active before creating the session to avoid premature TTS
+        // setSessionActive(true);
         
-        incrementAiResponseKey();
+        // Do NOT increment the AI response key before the welcome message is ready
+        // incrementAiResponseKey();
         
         try {
           await createSession(sessionType as any, selectedVoice, interviewConfig);
+          
+          // Now that the personalized welcome message is set as currentQuestion,
+          // force VoicePlayer to render and auto-play the correct text
+          incrementAiResponseKey();
         } catch (error) {
           // Don't throw here
         }

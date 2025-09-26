@@ -3,15 +3,10 @@ import { createClient } from '@/utils/supabase/server';
 
 interface StoreConversationRequest {
   sessionId?: string;
-  userResponse?: string;
-  aiResponse?: string;
-  interactionType: 'user_response' | 'ai_response';
   transcriptText: string;
+  interactionType: 'user_response' | 'ai_response';
   conversationOrder: number;
   sessionType?: 'behavioral' | 'technical' | 'custom' | 'sd';
-  audioFileSize?: number;
-  audioDurationSeconds?: number;
-  voiceName?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -30,14 +25,10 @@ export async function POST(request: NextRequest) {
     const body: StoreConversationRequest = await request.json();
     const {
       sessionId,
-      aiResponse,
       interactionType,
       transcriptText,
       conversationOrder,
-      sessionType = 'behavioral',
-      audioFileSize,
-      audioDurationSeconds,
-      voiceName
+      sessionType = 'behavioral'
     } = body;
 
     // Validate required fields
@@ -58,10 +49,9 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           session_type: sessionType,
           session_start: new Date().toISOString(),
-          total_interactions: 0,
-          voice_name: voiceName || null
+          total_interactions: 0
         })
-        .select('session_id')
+        .select('id')
         .single();
 
       if (sessionError) {
@@ -72,7 +62,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      currentSessionId = sessionData.session_id;
+      currentSessionId = sessionData.id;
     }
 
     // Store the transcript
@@ -83,11 +73,7 @@ export async function POST(request: NextRequest) {
         session_id: currentSessionId,
         transcript_text: transcriptText,
         interaction_type: interactionType,
-        ai_response: aiResponse || null,
-        conversation_order: conversationOrder,
-        audio_file_size: audioFileSize || null,
-        audio_duration_seconds: audioDurationSeconds || null,
-        voice_name: voiceName || null
+        conversation_order: conversationOrder
       });
 
     if (transcriptError) {
@@ -105,7 +91,7 @@ export async function POST(request: NextRequest) {
       .update({
         session_end: new Date().toISOString()
       })
-      .eq('session_id', currentSessionId);
+      .eq('id', currentSessionId);
 
     if (updateError) {
       console.error('Error updating session:', updateError);
