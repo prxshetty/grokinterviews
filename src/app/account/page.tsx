@@ -12,7 +12,6 @@ import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
 import { PasswordSecuritySection } from '@/components/account/password-security/password-security-section';
 import type { UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
-import { DEFAULT_GROQ_MODEL_ID } from './types';
 
 function AccountPageContent() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -25,7 +24,6 @@ function AccountPageContent() {
   const [formData, setFormData] = useState<AccountFormData>({
     full_name: '',
     email: '',
-    specific_model_id: DEFAULT_GROQ_MODEL_ID,
     use_youtube_sources: true,
     use_pdf_sources: true,
     use_paper_sources: true,
@@ -39,7 +37,6 @@ function AccountPageContent() {
     custom_formatting_instructions: '',
   });
 
-  // Define account tabs
   const accountTabs = [
     { id: 'personal', label: 'Personal' },
     { id: 'ai-settings', label: 'AI Settings' },
@@ -49,13 +46,12 @@ function AccountPageContent() {
 
   useEffect(() => {
     isMounted.current = true;
-    
-    // Check for tab parameter in URL and set initial tab
+
     const tab = searchParams.get('tab');
     if (tab && ['personal', 'ai-settings', 'answer-preferences', 'password-security'].includes(tab)) {
       setActiveTab(tab);
     }
-    
+
     return () => {
       isMounted.current = false;
     };
@@ -84,7 +80,6 @@ function AccountPageContent() {
         if (isMounted.current && preferencesData) {
           setFormData(prev => ({
             ...prev,
-            specific_model_id: preferencesData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
             use_youtube_sources: preferencesData.use_youtube_sources ?? true,
             use_pdf_sources: preferencesData.use_pdf_sources ?? true,
             use_paper_sources: preferencesData.use_paper_sources ?? true,
@@ -100,7 +95,7 @@ function AccountPageContent() {
         }
       }
     };
-    
+
     if (profile && user) {
       setFormData(prev => ({
         ...prev,
@@ -158,9 +153,8 @@ function AccountPageContent() {
       }
       console.log("Profile data upserted successfully.");
 
-      const preferenceDataToSave: Omit<UserPreferences, 'theme' | 'email_notifications'> & { user_id: string } = {
+      const preferenceDataToSave: Omit<UserPreferences, 'theme' | 'email_notifications' | 'specific_model_id'> & { user_id: string } = {
         user_id: user.id,
-        specific_model_id: formData.specific_model_id || DEFAULT_GROQ_MODEL_ID,
         use_youtube_sources: formData.use_youtube_sources,
         use_pdf_sources: formData.use_pdf_sources,
         use_paper_sources: formData.use_paper_sources,
@@ -248,11 +242,7 @@ function AccountPageContent() {
             )}
 
             {activeTab === 'ai-settings' && (
-              <AiSettingsSection
-                formData={{ specific_model_id: formData.specific_model_id }}
-                renderSaveChangesButton={renderSaveChangesButton}
-                setFormData={setFormData}
-              />
+              <AiSettingsSection />
             )}
 
             {activeTab === 'answer-preferences' && (
