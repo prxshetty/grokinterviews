@@ -58,7 +58,7 @@ export interface ApiError {
 export interface AccountFormData {
   full_name: string
   email: string
-  specific_model_id: string
+  // Note: specific_model_id moved to localStorage (ai-config-storage)
   use_youtube_sources: boolean
   use_pdf_sources: boolean
   use_paper_sources: boolean
