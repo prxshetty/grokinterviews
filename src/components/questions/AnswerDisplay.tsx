@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useIsTabletOrSmaller } from '@/hooks/ui';
 import remarkGfm from 'remark-gfm';
+import Link from 'next/link';
 
 // Default markdown components
 const defaultMarkdownComponents = {
@@ -75,7 +76,7 @@ export function AnswerDisplay({
   isLoading,
   error,
   isCompleted = false,
-  onRetry = () => {},
+  onRetry = () => { },
   isRetrying = false,
   scrollProgress = 0,
 }: AnswerDisplayProps) {
@@ -93,7 +94,7 @@ export function AnswerDisplay({
 
   useEffect(() => {
     if (!isHydrated) return;
-    
+
     if (answerText && scrollableContainerRef.current) {
       const checkScrollable = () => {
         if (scrollableContainerRef.current) {
@@ -101,14 +102,14 @@ export function AnswerDisplay({
           setContentIsScrollable(isScrollable);
         }
       };
-      
+
       // Use requestAnimationFrame to ensure DOM is ready
       const rafId = requestAnimationFrame(checkScrollable);
       return () => cancelAnimationFrame(rafId);
     } else if (!answerText) {
       setContentIsScrollable(null);
     }
-    
+
     // Explicit return for TypeScript
     return;
   }, [answerText, isHydrated]);
@@ -156,19 +157,29 @@ export function AnswerDisplay({
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             {typeof error === 'string' ? error : 'An unknown error occurred while generating the answer.'}
           </p>
-          <Button
-            variant="outline"
-            onClick={onRetry}
-            disabled={isRetrying || isLoading}
-            className="mt-2"
-          >
-            {isRetrying || isLoading ? (
-              <InlineLoadingSpinner size="sm" />
+          <div className="flex flex-col gap-2 w-full max-w-xs items-center">
+            {(error?.toLowerCase().includes('configure') || error?.toLowerCase().includes('api key') || error?.toLowerCase().includes('auth')) ? (
+              <Link href="/account?tab=ai-settings" className="w-full">
+                <Button variant="default" className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
+                  Configure AI Settings
+                </Button>
+              </Link>
             ) : (
-              <RotateCw className="mr-2 h-4 w-4" />
+              <Button
+                variant="outline"
+                onClick={onRetry}
+                disabled={isRetrying || isLoading}
+                className="w-full"
+              >
+                {isRetrying || isLoading ? (
+                  <InlineLoadingSpinner size="sm" />
+                ) : (
+                  <RotateCw className="mr-2 h-4 w-4" />
+                )}
+                {isRetrying || isLoading ? 'Retrying...' : 'Retry'}
+              </Button>
             )}
-            {isRetrying || isLoading ? 'Retrying...' : 'Retry'}
-          </Button>
+          </div>
         </div>
       ) : answerText ? (
         <div className="h-full flex flex-col relative">
@@ -181,15 +192,15 @@ export function AnswerDisplay({
                 </span>
               </div>
               <div className="bg-gray-100 dark:bg-gray-800 rounded-full h-1">
-                <div 
+                <div
                   className="bg-blue-400 dark:bg-blue-500 h-1 rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${Math.min(scrollProgress, 100)}%` }}
                 />
               </div>
             </div>
           )}
-          
-          
+
+
           <div className="max-w-none p-4 flex-1 text-sm text-gray-800 dark:text-gray-200">
             <ReactMarkdown
               components={{
@@ -228,14 +239,14 @@ export function AnswerDisplay({
                   if (hasBlockElement) {
                     return <div {...props}>{children}</div>;
                   }
-                  
+
                   return <p className="mb-4" {...props}>{children}</p>;
                 },
                 a: (props) => (
-                  <a 
-                    {...props} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    {...props}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-blue-600 dark:text-blue-400 hover:underline"
                   />
                 ),
@@ -245,12 +256,12 @@ export function AnswerDisplay({
               {answerText}
             </ReactMarkdown>
           </div>
-          
+
           {/* Add bottom padding when progress bar is visible at bottom (desktop only) */}
           {isHydrated && !isTabletOrSmaller && shouldShowProgress && (
             <div className="h-16" />
           )}
-          
+
           {isCompleted && (
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
               <div className="flex items-center justify-center space-x-2">
@@ -276,8 +287,8 @@ export function AnswerDisplay({
             No answer yet
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {isCompleted 
-              ? 'No answer was generated for this question.' 
+            {isCompleted
+              ? 'No answer was generated for this question.'
               : 'Click the "Generate Answer" button to get started.'}
           </p>
         </div>

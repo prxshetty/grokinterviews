@@ -29,17 +29,15 @@ import { Logo } from '@/components/ui/Logo';
 import { DEFAULT_AVATAR_URL, MAIN_NAV_ITEMS } from '@/config';
 import { getDomainLabel } from '@/config/domain.constants';
 import { cn } from '@/lib/utils';
-import { useStreak } from '@/hooks/useStreak';
-import { StreakBadge } from '@/components/ui/streak-badge';
 import { toast } from 'sonner';
 
 // Memoized Logo component to prevent unnecessary re-renders
 const MemoizedLogo = memo(({ isScrolled }: { isScrolled: boolean }) => (
   <Link href="/" className="flex items-center whitespace-nowrap">
-    <Logo 
-      size="md" 
-      showText={!isScrolled} 
-      className="text-black dark:text-white" 
+    <Logo
+      size="md"
+      showText={!isScrolled}
+      className="text-black dark:text-white"
       textClassName="text-lg md:text-xl font-semi tracking-widest uppercase text-[9px]"
     />
   </Link>
@@ -47,10 +45,10 @@ const MemoizedLogo = memo(({ isScrolled }: { isScrolled: boolean }) => (
 MemoizedLogo.displayName = 'MemoizedLogo';
 
 // Memoized navigation links to prevent re-renders
-const MemoizedNavLinks = memo(({ 
-  currentDomainLabel, 
+const MemoizedNavLinks = memo(({
+  currentDomainLabel,
   user
-}: { 
+}: {
   currentDomainLabel: string;
   user: any;
 }) => {
@@ -65,11 +63,11 @@ const MemoizedNavLinks = memo(({
       >
         {currentDomainLabel}
       </Link>
-      
+
       {MAIN_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
         // Skip auth-required items if user is not logged in
         if (item.authRequired && !user) return null;
-        
+
         return (
           <Link
             key={item.id}
@@ -97,15 +95,13 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [showPasswordResetReminder, setShowPasswordResetReminder] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  
+
   // Use the shared auth state from the provider
   const { user, profile, signOut, supabase, refreshAuth } = useAuth();
-  const { current_streak, highest_streak, isLoading, error, refresh, invalidateCache } = useStreak(!!user, user?.id);
-  
 
 
-  // Track previous streak values for toast notifications
-  const prevStreakRef = useRef<{ current: number; highest: number } | null>(null);
+
+
 
   // Optimized initialization with throttled scroll handler
   useEffect(() => {
@@ -123,7 +119,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
         ticking = true;
       }
     };
-    
+
     // Use passive listener for better performance
     window.addEventListener('scroll', handleScroll, { passive: true });
 
@@ -131,7 +127,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
     const dismissed = sessionStorage.getItem('globalPasswordResetReminderDismissed');
-    
+
     if (mode === 'reset' && !dismissed) {
       setShowPasswordResetReminder(true);
     }
@@ -145,13 +141,13 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
   // Optimize avatar fix with debouncing and memoization
   const shouldFixAvatar = useMemo(() => {
     // Always sync Google avatar URL to profile if it exists and is different
-    return user?.user_metadata?.avatar_url && 
-           (profile?.avatar_url !== user.user_metadata.avatar_url);
+    return user?.user_metadata?.avatar_url &&
+      (profile?.avatar_url !== user.user_metadata.avatar_url);
   }, [user?.user_metadata?.avatar_url, profile?.avatar_url]);
 
   useEffect(() => {
     if (!shouldFixAvatar || !supabase || !user) return;
-    
+
     let timeoutId: NodeJS.Timeout;
     const fixMissingAvatar = async () => {
       try {
@@ -159,7 +155,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
           .from('profiles')
           .update({ avatar_url: user.user_metadata.avatar_url })
           .eq('id', user.id);
-        
+
         if (!error) {
           // Debounce auth refresh to prevent excessive calls
           timeoutId = setTimeout(() => refreshAuth(), 100);
@@ -170,7 +166,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
     };
 
     fixMissingAvatar();
-    
+
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
@@ -188,86 +184,12 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
     }
     return urls;
   }, [profile?.avatar_url, user?.user_metadata?.avatar_url]);
-  
+
   useImagePreloader(avatarUrls, true);
 
-  // Optimize streak error handling with exponential backoff
-  const retryCountRef = useRef(0);
-  useEffect(() => {
-    if (!error || retryCountRef.current >= 3) return;
-    
-    const handleStreakError = async () => {
-      try {
-        retryCountRef.current++;
-        invalidateCache();
-        
-        // Exponential backoff: 1s, 2s, 4s
-        const delay = Math.pow(2, retryCountRef.current - 1) * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        await refresh();
-      } catch {
-        // Silent error handling
-      }
-    };
 
-    handleStreakError();
-  }, [error, refresh, invalidateCache]);
 
-  // Optimized streak change detection for toast notifications
-  useEffect(() => {
-    // Only show toasts for authenticated users with valid streak data
-    if (!user || isLoading || error) return;
-    
-    // Skip on initial load when prevStreakRef is null
-    if (prevStreakRef.current === null) {
-      prevStreakRef.current = { current: current_streak, highest: highest_streak };
-      return;
-    }
-    
-    const prevStreak = prevStreakRef.current;
-    const streakIncreased = current_streak > prevStreak.current;
-    const newHighestStreak = highest_streak > prevStreak.highest;
-    
-    // Show toast only when streak actually increases
-    if (streakIncreased) {
-      let message: string;
-      let description: string;
-      let duration: number;
-      
-      if (newHighestStreak) {
-        // New personal best!
-        message = `🔥 New record! ${current_streak} day streak!`;
-        description = `You've beaten your previous best of ${prevStreak.highest} days`;
-        duration = 4000;
-      } else if (current_streak === 1) {
-        // Starting a new streak
-        message = `🚀 Streak started!`;
-        description = `Great job! Keep it up to build your streak`;
-        duration = 3000;
-      } else {
-        // Regular streak increase
-        message = `🔥 ${current_streak} day streak!`;
-        description = `You're on fire! Keep the momentum going`;
-        duration = 3000;
-      }
-      
-      // Show the toast
-      toast.success(message, {
-        description,
-        duration,
-      });
-      
-      // Dispatch custom event for confetti
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('toast-created', {
-          detail: { message, description, type: 'streak' }
-        }));
-      }
-    }
-    
-    // Update the previous values
-    prevStreakRef.current = { current: current_streak, highest: highest_streak };
-  }, [user, current_streak, highest_streak, isLoading, error]);
+
 
 
   const extractDomainFromPath = useCallback((path: string, section: 'topics') => {
@@ -359,15 +281,15 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
               <span>Password reset link used successfully.</span>
-              <a 
-                href="/account?tab=password-security" 
+              <a
+                href="/account?tab=password-security"
                 className="underline hover:no-underline font-medium"
               >
                 Update your password
               </a>
               <span>when ready.</span>
             </div>
-            <button 
+            <button
               onClick={dismissPasswordResetReminder}
               className="text-white/80 hover:text-white text-xl leading-none flex-shrink-0 w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded"
               title="Dismiss reminder"
@@ -423,7 +345,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                     <SheetHeader className="sr-only">
                       <SheetTitle>Navigation Menu</SheetTitle>
                     </SheetHeader>
-                    
+
                     {/* Clean, minimal mobile menu */}
                     <div className="flex flex-col h-full">
                       {/* Navigation Links */}
@@ -438,11 +360,11 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                               {currentDomainLabel}
                             </Link>
                           </SheetClose>
-                          
+
                           {MAIN_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
                             // Skip auth-required items if user is not logged in
                             if (item.authRequired && !user) return null;
-                            
+
                             return (
                               <SheetClose key={item.id} asChild>
                                 <Link
@@ -464,9 +386,9 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                           <div className="space-y-4">
                             <div className="flex items-center space-x-3">
                               <Avatar className="h-10 w-10">
-                                <AvatarImage 
-                                  src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL} 
-                                  alt={profile?.full_name || user.email || 'User'} 
+                                <AvatarImage
+                                  src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL}
+                                  alt={profile?.full_name || user.email || 'User'}
                                 />
                                 <AvatarFallback>
                                   {profile?.full_name?.[0] || user.email?.[0] || 'U'}
@@ -480,13 +402,8 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                   {user.email}
                                 </p>
                               </div>
-                              <StreakBadge 
-                                currentStreak={current_streak}
-                                highestStreak={highest_streak}
-                                isLoading={isLoading}
-                              />
                             </div>
-                            
+
                             <div className="space-y-2">
                               <SheetClose asChild>
                                 <Link
@@ -516,7 +433,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                 </Link>
                               </SheetClose>
                             </div>
-                            
+
                             {/* Bottom action bar */}
                             <div className="flex items-center justify-between w-full px-3 py-2 mt-4">
                               <ThemeSwitcher />
@@ -545,7 +462,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                 </Button>
                               </Link>
                             </SheetClose>
-                            
+
                             {/* Bottom action bar */}
                             <div className="flex items-center justify-start w-full px-3 py-2 mt-4">
                               <ThemeSwitcher />
@@ -560,7 +477,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
 
               {/* Desktop Navigation - Memoized */}
               <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex">
-                <MemoizedNavLinks 
+                <MemoizedNavLinks
                   currentDomainLabel={currentDomainLabel}
                   user={user}
                 />
@@ -570,20 +487,14 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
               <div className="hidden lg:flex lg:items-center lg:space-x-4">
                 {user ? (
                   <>
-                    {!error && (
-                      <StreakBadge
-                        currentStreak={current_streak}
-                        highestStreak={highest_streak}
-                        isLoading={isLoading}
-                      />
-                    )}
+
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button aria-label="User menu" className="flex items-center space-x-1.5 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors group">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage 
-                              src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL} 
-                              alt={profile?.full_name || user.email || 'User'} 
+                            <AvatarImage
+                              src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL}
+                              alt={profile?.full_name || user.email || 'User'}
                             />
                             <AvatarFallback>
                               {profile?.full_name?.[0] || user.email?.[0] || 'U'}
@@ -596,9 +507,9 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                         <div className="px-2 py-3">
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage 
-                                src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL} 
-                                alt={profile?.full_name || user.email || 'User'} 
+                              <AvatarImage
+                                src={user.user_metadata?.avatar_url || profile?.avatar_url || DEFAULT_AVATAR_URL}
+                                alt={profile?.full_name || user.email || 'User'}
                               />
                               <AvatarFallback>
                                 {profile?.full_name?.[0] || user.email?.[0] || 'U'}
@@ -666,7 +577,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </header>
-      
+
       <main className="flex-1 w-full pt-16">
         {children}
       </main>
