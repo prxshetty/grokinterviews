@@ -77,9 +77,9 @@ export default function PrivacyPolicy() {
         <h1 style={h1Style}>Privacy Policy</h1>
         <div style={lastUpdatedStyle}>Last updated: July 2025</div>
       </div>
-        
+
       <div style={contentStyle}>
-        
+
         <section style={sectionStyle}>
           <h2 style={h2Style}>1. Introduction</h2>
           <p style={pStyle}>Welcome to GrokInterviews ("we," "our," or "us"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered interview preparation platform and related services (the "Service").</p>
@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>2. Information We Collect</h2>
-          
+
           <h3 style={h3Style}>2.1 Personal Information</h3>
           <p style={pStyle}>When you create an account through Google OAuth, we collect:</p>
           <ul style={ulStyle}>
@@ -99,12 +99,11 @@ export default function PrivacyPolicy() {
           <h3 style={h3Style}>2.2 Usage and Activity Data</h3>
           <p style={pStyle}>We automatically collect information about your interaction with our Service:</p>
           <ul style={ulStyle}>
-            <li style={liStyle}><strong>Progress Tracking:</strong> Your completion status across 81,499+ interview questions and 2,394 technical topics</li>
-            <li style={liStyle}><strong>Activity Data:</strong> Learning sessions, time spent on topics, question attempts, and study patterns</li>
-            <li style={liStyle}><strong>Bookmarks:</strong> Questions and resources you save for later review</li>
-            <li style={liStyle}><strong>Preferences:</strong> Your learning preferences, difficulty settings, and AI model choices</li>
-            <li style={liStyle}><strong>Search Queries:</strong> Topics and questions you search for within our platform</li>
-            <li style={liStyle}><strong>Performance Analytics:</strong> Your progress across different domains (AI & ML, Web Development, System Design, DSA, Machine Learning)</li>
+            <li style={liStyle}><strong>Progress Tracking:</strong> Your completion status across 81,499+ interview questions</li>
+            <li style={liStyle}><strong>Activity Data:</strong> Learning session metadata (time spent, completion status)</li>
+            <li style={liStyle}><strong>Local Data:</strong> Bookmarks and API keys are stored locally on your device and are not collected by our servers</li>
+            <li style={liStyle}><strong>Preferences:</strong> Your learning preferences and difficulty settings</li>
+            <li style={liStyle}><strong>Performance Analytics:</strong> Your progress across different domains</li>
           </ul>
 
           <h3 style={h3Style}>2.3 Technical Data</h3>
@@ -120,7 +119,7 @@ export default function PrivacyPolicy() {
         <section style={sectionStyle}>
           <h2 style={h2Style}>3. How We Use Your Information</h2>
           <p style={pStyle}>We use the collected information for the following purposes:</p>
-          
+
           <h3 style={h3Style}>3.1 Core Service Functionality</h3>
           <ul style={ulStyle}>
             <li style={liStyle}>Providing access to our library of 3.6+ million learning resources</li>
@@ -149,15 +148,14 @@ export default function PrivacyPolicy() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>4. Information Sharing and Disclosure</h2>
-          
+
           <h3 style={h3Style}>4.1 Third-Party Services</h3>
           <p style={pStyle}>We share information with the following third-party services:</p>
           <ul style={ulStyle}>
-            <li style={liStyle}><strong>Google:</strong> For authentication services (OAuth) and text-to-speech functionality</li>
-            <li style={liStyle}><strong>Groq:</strong> For speech-to-text conversion and AI-powered conversation/answer generation (questions and context only, no personal data)</li>
+            <li style={liStyle}><strong>Google:</strong> For authentication services (OAuth)</li>
+            <li style={liStyle}><strong>OpenAI:</strong> For AI features (Direct communication using your API key) - Data is subject to <a href="https://openai.com/enterprise-privacy" target="_blank" rel="noopener noreferrer" style={linkStyle}>OpenAI's Enterprise Privacy</a></li>
             <li style={liStyle}><strong>Supabase:</strong> For database hosting and real-time features</li>
             <li style={liStyle}><strong>Vercel:</strong> For application hosting and analytics</li>
-            <li style={liStyle}><strong>VAPI:</strong> For phone voice interview features - <a href="https://vapi.ai/privacy" target="_blank" rel="noopener noreferrer" style={linkStyle}>https://vapi.ai/privacy</a></li>
           </ul>
 
           <h3 style={h3Style}>4.2 Legal Requirements</h3>
@@ -169,10 +167,11 @@ export default function PrivacyPolicy() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>5. Data Storage and Security</h2>
-          
+
           <h3 style={h3Style}>5.1 Data Storage</h3>
           <ul style={ulStyle}>
-            <li style={liStyle}>Your data is stored securely using Supabase (PostgreSQL) with Row Level Security (RLS)</li>
+            <li style={liStyle}>Your account data is stored securely using Supabase (PostgreSQL) with Row Level Security (RLS)</li>
+            <li style={liStyle}><strong>Local Storage:</strong> Bookmarks, complete interview transcripts, and API keys are stored exclusively on your local device</li>
             <li style={liStyle}>We implement database encryption and secure access controls</li>
             <li style={liStyle}>Real-time data synchronization with encrypted connections</li>
           </ul>
@@ -192,7 +191,7 @@ export default function PrivacyPolicy() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>6. Your Rights and Choices</h2>
-          
+
           <h3 style={h3Style}>6.1 Account Control</h3>
           <ul style={ulStyle}>
             <li style={liStyle}><strong>Access:</strong> View and manage your profile information</li>

@@ -9,6 +9,8 @@ const STORAGE_KEYS = {
     MODEL_PREFIX: 'ai_model_',
 } as const;
 
+// Simple obfuscation for API keys (not encryption, but prevents casual viewing)
+// For production, consider using Web Crypto API or a more robust solution
 function obfuscate(text: string): string {
     return btoa(text.split('').reverse().join(''));
 }
