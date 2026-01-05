@@ -94,7 +94,7 @@ export default function TermsOfService() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>3. User Account and Registration</h2>
-          
+
           <h3 style={h3Style}>3.1 Account Creation</h3>
           <p style={pStyle}>You may create an account through Google OAuth authentication. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
 
@@ -107,7 +107,7 @@ export default function TermsOfService() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>4. Acceptable Use</h2>
-          
+
           <h3 style={h3Style}>4.1 Permitted Use</h3>
           <p style={pStyle}>You may use our service for lawful purposes only. You agree to use the service in accordance with:</p>
           <ul style={ulStyle}>
@@ -132,7 +132,7 @@ export default function TermsOfService() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>5. Content and Intellectual Property</h2>
-          
+
           <h3 style={h3Style}>5.1 Our Content</h3>
           <p style={pStyle}>All content available through our service, including but not limited to questions, answers, explanations, resources, text, graphics, logos, and software, is the property of GrokInterviews or its licensors and is protected by copyright, trademark, and other intellectual property laws.</p>
 
@@ -151,7 +151,7 @@ export default function TermsOfService() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>7. Service Availability</h2>
-          
+
           <h3 style={h3Style}>7.1 Service Access</h3>
           <p style={pStyle}>We strive to maintain consistent service availability, but we do not guarantee that our service will be available at all times. We may suspend or restrict access to our service at any time for maintenance, updates, or other operational reasons.</p>
 
@@ -172,7 +172,7 @@ export default function TermsOfService() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>9. Disclaimers and Limitation of Liability</h2>
-          
+
           <h3 style={h3Style}>9.1 Service Disclaimers</h3>
           <p style={pStyle}>Our service is provided "as is" and "as available" without warranties of any kind, either express or implied. We do not warrant that:</p>
           <ul style={ulStyle}>
@@ -190,12 +190,22 @@ export default function TermsOfService() {
         </section>
 
         <section style={sectionStyle}>
-          <h2 style={h2Style}>10. Third-Party Services</h2>
-          <p style={pStyle}>Our service integrates with third-party services including:</p>
+          <h2 style={h2Style}>10. Third-Party Services and AI Models</h2>
+
+          <h3 style={h3Style}>10.1 BYOK (Bring Your Own Key) Model</h3>
+          <p style={pStyle}>Certain advanced features, such as voice interviews and AI-powered text generation, operate on a "Bring Your Own Key" model. You provide your own OpenAI API key, which is stored locally on your device.</p>
+          <ul style={ulStyle}>
+            <li style={liStyle}>Your API key is not stored on our servers.</li>
+            <li style={liStyle}>Usage costs are billed directly to you by the AI provider (e.g., OpenAI).</li>
+            <li style={liStyle}>You are responsible for managing your API key security and usage limits.</li>
+          </ul>
+
+          <h3 style={h3Style}>10.2 Supported Third-Party Services</h3>
+          <p style={pStyle}>Our service integrates with the following third-party services:</p>
           <ul style={ulStyle}>
             <li style={liStyle}><strong>Google OAuth:</strong> For authentication</li>
-            <li style={liStyle}><strong>Groq API:</strong> For AI-powered features</li>
-            <li style={liStyle}><strong>Supabase:</strong> For data storage and real-time features</li>
+            <li style={liStyle}><strong>OpenAI:</strong> For AI-powered conversation and voice features (using your API key)</li>
+            <li style={liStyle}><strong>Supabase:</strong> For authentication and secure data storage</li>
             <li style={liStyle}><strong>Vercel:</strong> For hosting and deployment</li>
           </ul>
           <p style={pStyle}>These third-party services have their own terms of service and privacy policies. We are not responsible for the terms or practices of these third-party services.</p>
@@ -203,7 +213,7 @@ export default function TermsOfService() {
 
         <section style={sectionStyle}>
           <h2 style={h2Style}>11. Termination</h2>
-          
+
           <h3 style={h3Style}>11.1 Termination by You</h3>
           <p style={pStyle}>You may terminate your account at any time by contacting us or through account settings. Upon termination, your right to use the service will cease immediately.</p>
 
