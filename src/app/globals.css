@@ -10,7 +10,8 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 9999; /* High z-index but still behind toasts */
+  z-index: 9999;
+  /* High z-index but still behind toasts */
 }
 
 /* Ensure toasts appear above confetti */
@@ -18,17 +19,16 @@ canvas {
   z-index: 10000 !important;
 }
 
-.sonner-glassy-toast {
-  margin-bottom: 8px !important;
-  position: relative !important;
-}
+
 
 @layer base {
   :root {
     /* Brand Colors */
-    --brand-primary: #000000; /* Black */
-    --brand-secondary: #2563eb; /* Blue */
-    
+    --brand-primary: #000000;
+    /* Black */
+    --brand-secondary: #2563eb;
+    /* Blue */
+
     /* Aurora Background Variables */
     --white: #ffffff;
     --black: #000000;
@@ -38,16 +38,21 @@ canvas {
     --blue-300: #93c5fd;
     --violet-200: #ddd6fe;
     --blue-400: #60a5fa;
-    
+
     /* Design System - Light Mode */
-    --background: 0 0% 100%; /* Pure white background */
-    --foreground: 0 0% 0%; /* Pure black text */
-    --card: 0 0% 100%; /* White cards */
+    --background: 0 0% 100%;
+    /* Pure white background */
+    --foreground: 0 0% 0%;
+    /* Pure black text */
+    --card: 0 0% 100%;
+    /* White cards */
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
-    --primary: 0 0% 0%; /* Black primary */
-    --primary-foreground: 0 0% 100%; /* White text on black */
+    --primary: 0 0% 0%;
+    /* Black primary */
+    --primary-foreground: 0 0% 100%;
+    /* White text on black */
     --primary-50: 0 0% 95%;
     --primary-100: 0 0% 90%;
     --primary-200: 0 0% 80%;
@@ -58,11 +63,16 @@ canvas {
     --primary-700: 0 0% 30%;
     --primary-800: 0 0% 20%;
     --primary-900: 0 0% 10%;
-    --primary-950: 0 0% 0%; /* Pure black */
-    --secondary: 217 91% 60%; /* Blue secondary */
-    --secondary-foreground: 0 0% 100%; /* White text on blue */
-    --muted: 0 0% 96%; /* Light gray for muted elements */
-    --muted-foreground: 0 0% 45%; /* Dark gray for muted text */
+    --primary-950: 0 0% 0%;
+    /* Pure black */
+    --secondary: 217 91% 60%;
+    /* Blue secondary */
+    --secondary-foreground: 0 0% 100%;
+    /* White text on blue */
+    --muted: 0 0% 96%;
+    /* Light gray for muted elements */
+    --muted-foreground: 0 0% 45%;
+    /* Dark gray for muted text */
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 9%;
     --destructive: 0 84.2% 60.2%;
@@ -71,14 +81,14 @@ canvas {
     --input: 0 0% 90%;
     --ring: 217 91% 60%;
     --radius: 0.5rem;
-    
+
     /* Chart Colors - Light Mode */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    
+
     /* Legacy Support */
     --background-color: hsl(var(--background));
     --card-background: hsl(var(--card));
@@ -88,14 +98,19 @@ canvas {
 
   .dark {
     /* Design System - Dark Mode */
-    --background: 0 0% 0%; /* Pure black background */
-    --foreground: 0 0% 100%; /* Pure white text */
-    --card: 0 0% 3%; /* Very dark gray for cards */
+    --background: 0 0% 0%;
+    /* Pure black background */
+    --foreground: 0 0% 100%;
+    /* Pure white text */
+    --card: 0 0% 3%;
+    /* Very dark gray for cards */
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 3%;
     --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%; /* White primary in dark mode */
-    --primary-foreground: 0 0% 0%; /* Black text on white */
+    --primary: 0 0% 100%;
+    /* White primary in dark mode */
+    --primary-foreground: 0 0% 0%;
+    /* Black text on white */
     --primary-50: 0 0% 5%;
     --primary-100: 0 0% 10%;
     --primary-200: 0 0% 20%;
@@ -106,11 +121,16 @@ canvas {
     --primary-700: 0 0% 70%;
     --primary-800: 0 0% 80%;
     --primary-900: 0 0% 90%;
-    --primary-950: 0 0% 100%; /* Pure white */
-    --secondary: 217 91% 60%; /* Blue secondary (same as light mode) */
-    --secondary-foreground: 0 0% 100%; /* White text on blue */
-    --muted: 0 0% 15%; /* Dark gray for muted elements */
-    --muted-foreground: 0 0% 65%; /* Light gray for muted text */
+    --primary-950: 0 0% 100%;
+    /* Pure white */
+    --secondary: 217 91% 60%;
+    /* Blue secondary (same as light mode) */
+    --secondary-foreground: 0 0% 100%;
+    /* White text on blue */
+    --muted: 0 0% 15%;
+    /* Dark gray for muted elements */
+    --muted-foreground: 0 0% 65%;
+    /* Light gray for muted text */
     --accent: 0 0% 15%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
@@ -118,14 +138,14 @@ canvas {
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 217 91% 60%;
-    
+
     /* Chart Colors - Dark Mode */
     --chart-1: 220 13% 69%;
     --chart-2: 220 9% 46%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    
+
     /* Legacy Support */
     --background-color: hsl(var(--background));
     --card-background: hsl(var(--card));
@@ -146,7 +166,12 @@ body {
 }
 
 /* Explicit font family for headings to ensure consistency */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 600;
   line-height: 1.2;
@@ -154,12 +179,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Hide scrollbar but keep functionality */
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* Custom animation for carousel */
@@ -173,6 +201,7 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -207,7 +236,8 @@ p {
 }
 
 .question-content.expanded {
-  max-height: 10000px; /* Much higher value to ensure all content fits */
+  max-height: 10000px;
+  /* Much higher value to ensure all content fits */
 }
 
 /* Button styling */
@@ -244,19 +274,22 @@ button {
   border-radius: 0.25rem;
   font-size: 0.875rem;
   font-family: 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
-  color: #000000 !important; /* Black text for better readability - important to override any other styles */
+  color: #000000 !important;
+  /* Black text for better readability - important to override any other styles */
   font-weight: 500;
 }
 
 .dark .prose code {
   background-color: #1a1a1a;
-  color: #f0f0f0 !important; /* Light text for better readability in dark mode - important to override */
+  color: #f0f0f0 !important;
+  /* Light text for better readability in dark mode - important to override */
   font-weight: 500;
 }
 
 /* Ensure code inside pre blocks is properly styled */
 .prose pre code {
-  color: #000000 !important; /* Force black text in light mode */
+  color: #000000 !important;
+  /* Force black text in light mode */
   background-color: transparent;
   padding: 0;
   border-radius: 0;
@@ -266,7 +299,8 @@ button {
 }
 
 .dark .prose pre code {
-  color: #f0f0f0 !important; /* Force light text in dark mode */
+  color: #f0f0f0 !important;
+  /* Force light text in dark mode */
   background-color: transparent;
 }
 
@@ -389,7 +423,8 @@ button {
   margin: 1.5rem 0;
 }
 
-.prose th, .prose td {
+.prose th,
+.prose td {
   border: 1px solid #e5e7eb;
   padding: 0.5rem 1rem;
   text-align: left;
@@ -509,42 +544,58 @@ button {
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 3px; /* Height of the timer bar */
-  background-color: #34d399; /* Default: Tailwind emerald-400 (for light mode) */
-  animation: shrink 5s linear forwards; /* Now defined in tailwind.config.js */
-  border-bottom-left-radius: inherit; /* Match toast corner radius */
-  border-bottom-right-radius: inherit; /* Match toast corner radius */
+  height: 3px;
+  /* Height of the timer bar */
+  background-color: #34d399;
+  /* Default: Tailwind emerald-400 (for light mode) */
+  animation: shrink 5s linear forwards;
+  /* Now defined in tailwind.config.js */
+  border-bottom-left-radius: inherit;
+  /* Match toast corner radius */
+  border-bottom-right-radius: inherit;
+  /* Match toast corner radius */
 }
 
 /* Dark mode override for the timer bar color */
 .dark [data-sonner-toast]::after {
-  background-color: #10b981; /* Dark Mode: Tailwind emerald-500 */
+  background-color: #10b981;
+  /* Dark Mode: Tailwind emerald-500 */
 }
 
 /* Ensure toast container allows absolute positioning of pseudo-element */
 [data-sonner-toast] {
-  position: relative; /* Needed for the absolute positioning of ::after */
-  overflow: hidden; /* Keep the timer bar contained */
+  overflow: hidden;
+  /* Keep the timer bar contained */
 }
 
 /* Glassy effect for Sonner toast in light mode */
 .sonner-glassy-toast {
-  background: rgba(255,255,255,0.8) !important;
-  border: 1px solid rgba(229,231,235,0.8) !important; /* Tailwind border-gray-200/80 */
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(229, 231, 235, 0.8) !important;
+  /* Tailwind border-gray-200/80 */
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
-  color: #111827 !important; /* Tailwind text-black */
-  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08), 0 1.5px 4px 0 rgba(0,0,0,0.03) !important;
+  color: #111827 !important;
+  /* Tailwind text-black */
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.08), 0 1.5px 4px 0 rgba(0, 0, 0, 0.03) !important;
 }
 
 /* Darker subtitle for glassy toast in light mode */
 .sonner-glassy-toast [data-description] {
-  color: #374151 !important; /* Tailwind gray-700 */
+  color: #374151 !important;
+  /* Tailwind gray-700 */
 }
 
 @keyframes flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
 }
 
 .animate-flicker {
@@ -557,6 +608,7 @@ button {
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -569,19 +621,23 @@ button {
 
 /* Morph Loading Animation Keyframes */
 @keyframes morph-0 {
+
   0%,
   100% {
     transform: translate(0, 0) scale(1);
     border-radius: 0%;
   }
+
   25% {
     transform: translate(20px, -20px) scale(1.2);
     border-radius: 50%;
   }
+
   50% {
     transform: translate(40px, 0) scale(0.8);
     border-radius: 25%;
   }
+
   75% {
     transform: translate(20px, 20px) scale(1.1);
     border-radius: 75%;
@@ -589,19 +645,23 @@ button {
 }
 
 @keyframes morph-1 {
+
   0%,
   100% {
     transform: translate(0, 0) scale(1) rotate(0deg);
     border-radius: 0%;
   }
+
   25% {
     transform: translate(-20px, -20px) scale(1.3) rotate(90deg);
     border-radius: 50%;
   }
+
   50% {
     transform: translate(-40px, 0) scale(0.7) rotate(180deg);
     border-radius: 25%;
   }
+
   75% {
     transform: translate(-20px, 20px) scale(1.2) rotate(270deg);
     border-radius: 75%;
@@ -609,19 +669,23 @@ button {
 }
 
 @keyframes morph-2 {
+
   0%,
   100% {
     transform: translate(0, 0) scale(1);
     border-radius: 0%;
   }
+
   25% {
     transform: translate(-20px, 20px) scale(0.9);
     border-radius: 100%;
   }
+
   50% {
     transform: translate(0, 40px) scale(1.4);
     border-radius: 0%;
   }
+
   75% {
     transform: translate(20px, 20px) scale(0.8);
     border-radius: 50%;
@@ -629,19 +693,23 @@ button {
 }
 
 @keyframes morph-3 {
+
   0%,
   100% {
     transform: translate(0, 0) scale(1) rotate(0deg);
     border-radius: 0%;
   }
+
   25% {
     transform: translate(20px, 20px) scale(1.1) rotate(-90deg);
     border-radius: 25%;
   }
+
   50% {
     transform: translate(0, -40px) scale(1.3) rotate(-180deg);
     border-radius: 100%;
   }
+
   75% {
     transform: translate(-20px, -20px) scale(0.9) rotate(-270deg);
     border-radius: 75%;
@@ -651,7 +719,8 @@ button {
 /* Overlay scrollbar to prevent layout-shift on load */
 @supports (overflow: overlay) {
   html {
-    overflow-y: overlay; /* draw scrollbar over content instead of resizing */
+    overflow-y: overlay;
+    /* draw scrollbar over content instead of resizing */
   }
 }
 
@@ -685,8 +754,10 @@ html:not(.scrollbar-hidden)::-webkit-scrollbar-thumb {
 
 /* Hidden scrollbar state applied by ScrollbarController */
 html.scrollbar-hidden {
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 html.scrollbar-hidden::-webkit-scrollbar {
   width: 0;
   height: 0;
@@ -694,15 +765,21 @@ html.scrollbar-hidden::-webkit-scrollbar {
 
 /* Prevent text selection */
 .no-select {
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* IE 10+ */
-  user-select: none; /* Standard syntax */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE 10+ */
+  user-select: none;
+  /* Standard syntax */
 }
 
 /* Hide content when printing */
 @media print {
-  .no-print, .no-print * {
+
+  .no-print,
+  .no-print * {
     display: none !important;
   }
 }
