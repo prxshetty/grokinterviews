@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -90,8 +90,18 @@ export default function WebInterviewPageContent() {
     });
   }, []);
   const [showChat, setShowChat] = useState(true);
-  const [allTranscripts, setAllTranscripts] = useState<Array<{ id: string, session_id: string, transcript_text: string, interaction_type: 'user_response' | 'ai_response', created_at: string, conversation_order: number }>>([]);
-  const [isLoadingTranscripts, setIsLoadingTranscripts] = useState(false);
+
+  // Convert conversationHistory to transcript format (no API fetch needed)
+  const localTranscripts = useMemo(() => {
+    return session.conversationHistory.map((msg, index) => ({
+      id: `local-${index}`,
+      session_id: session.id || '',
+      transcript_text: msg.text,
+      interaction_type: msg.type === 'ai' ? 'ai_response' as const : 'user_response' as const,
+      created_at: new Date().toISOString(),
+      conversation_order: index
+    }));
+  }, [session.conversationHistory, session.id]);
 
   // Interview type and custom configuration state
   const [selectedInterviewType, setSelectedInterviewType] = useState<InterviewType>('behavioral');
@@ -175,90 +185,13 @@ export default function WebInterviewPageContent() {
     checkVADSupport();
   }, [setVadSupported]); // setVadSupported is stable from the hook
 
-  // Optimized transcript fetching with debouncing and caching
-  const lastFetchRef = useRef<string>('');
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sessionIdRef = useRef<string>('');
-  const conversationLengthRef = useRef<number>(0);
+  // Keep conversationHistoryRef for terminateInterviewOnError
   const conversationHistoryRef = useRef<Array<{ type: 'ai' | 'user', text: string }>>([]);
 
-  // Create a stable fetch function using useCallback with stable dependencies
-  const fetchSessionTranscripts = useCallback(async (forceRefresh = false) => {
-    const currentSessionId = sessionIdRef.current;
-    const currentConversationLength = conversationLengthRef.current;
-
-    if (!currentSessionId) {
-      setAllTranscripts([]);
-      return;
-    }
-
-    // Prevent duplicate fetches for the same session
-    const fetchKey = `${currentSessionId}-${currentConversationLength}`;
-    if (!forceRefresh && lastFetchRef.current === fetchKey) {
-      return;
-    }
-
-    try {
-      setIsLoadingTranscripts(true);
-      const sessionTranscripts = await InterviewService.fetchSessionTranscripts(currentSessionId);
-      setAllTranscripts(sessionTranscripts);
-      lastFetchRef.current = fetchKey;
-    } catch (error) {
-      console.error('Error fetching session transcripts:', error);
-      setAllTranscripts([]);
-    } finally {
-      setIsLoadingTranscripts(false);
-    }
-  }, []); // Empty dependency array since we use refs for dynamic values
-
-  // Store the function in a ref for use in timeouts
-  const fetchSessionTranscriptsRef = useRef(fetchSessionTranscripts);
-  fetchSessionTranscriptsRef.current = fetchSessionTranscripts;
-
-  // Update refs when session data changes
+  // Update ref when session data changes
   useEffect(() => {
-    sessionIdRef.current = session.id || '';
-    conversationLengthRef.current = session.conversationHistory.length;
     conversationHistoryRef.current = session.conversationHistory;
-  }, [session.id, session.conversationHistory]);
-
-  // Fetch transcripts when session changes (initial load only)
-  useEffect(() => {
-    if (session.id) {
-      fetchSessionTranscriptsRef.current?.(true); // Force refresh on session change
-    } else {
-      setAllTranscripts([]);
-      lastFetchRef.current = '';
-    }
-  }, [session.id]); // Removed fetchSessionTranscripts from dependency array
-
-  // Debounced transcript refresh when conversation history changes
-  useEffect(() => {
-    if (session.id && session.conversationHistory.length > 0) {
-      const lastMessage = session.conversationHistory[session.conversationHistory.length - 1];
-
-      // Only fetch after AI responses (when transcripts are actually stored)
-      if (lastMessage && lastMessage.type === 'ai') {
-        // Clear existing timeout
-        if (fetchTimeoutRef.current) {
-          clearTimeout(fetchTimeoutRef.current);
-        }
-
-        // Debounce the fetch to prevent rapid successive calls
-        fetchTimeoutRef.current = setTimeout(() => {
-          if (fetchSessionTranscriptsRef.current) {
-            fetchSessionTranscriptsRef.current();
-          }
-        }, 1500); // Increased delay to ensure DB write completion
-      }
-    }
-
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-    };
-  }, [session.conversationHistory.length, session.id]); // Only depend on length, not the entire array
+  }, [session.conversationHistory]);
 
   // Function to automatically terminate interview when critical errors occur
   const terminateInterviewOnError = useCallback(async (reason: TerminationReason) => {
@@ -299,7 +232,7 @@ export default function WebInterviewPageContent() {
     try {
       setProcessingAI(true);
 
-      const result = await InterviewService.generateAIResponse(userText, history, sessionIdRef.current, activeInterviewType, activeConfig);
+      const result = await InterviewService.generateAIResponse(userText, history, session.id, activeInterviewType, activeConfig);
 
       // Update sessionId if returned from API
       if (result.sessionId && !session.id) {
@@ -453,7 +386,6 @@ export default function WebInterviewPageContent() {
 
       // Before starting interview, reset chat and state
       setShowChat(true);
-      setAllTranscripts([]);
       // Clear any previous conversation history
       await endSession(); // Ensure previous session state cleared
 
@@ -622,8 +554,8 @@ export default function WebInterviewPageContent() {
             interviewReport={session.interviewReport}
             voiceState={voiceState}
             rateLimitState={rateLimitState}
-            allTranscripts={allTranscripts}
-            isLoadingTranscripts={isLoadingTranscripts}
+            allTranscripts={localTranscripts}
+            isLoadingTranscripts={voiceState.isProcessingAI}
             showChat={showChat}
             selectedVoice={selectedVoice}
             voicePlayerRef={voicePlayerRef}
