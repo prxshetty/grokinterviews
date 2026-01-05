@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { getAIConfig } from '@/utils/ai-config-storage';
+import { getAnswerPreferences } from '@/utils/answer-preferences-storage';
 
 interface UseQuestionAnswerProps {
   questionId: number;
@@ -68,6 +69,7 @@ export function useQuestionAnswer({
     setError(null);
 
     try {
+      const preferences = getAnswerPreferences();
       const response = await fetch('/api/generate-answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,6 +81,7 @@ export function useQuestionAnswer({
           apiKey: aiConfig.apiKey,
           provider: aiConfig.provider,
           modelId: aiConfig.modelId,
+          preferences,
         }),
       });
 

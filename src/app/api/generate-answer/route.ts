@@ -20,7 +20,15 @@ type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 
 
 export async function POST(request: Request) {
-  const { questionText, questionId, apiKey, provider, modelId } = await request.json();
+  const {
+    questionText,
+    questionId,
+    apiKey,
+    provider,
+    modelId,
+    preferences: clientPreferences
+  } = await request.json();
+
   const supabase = await createClient();
 
   if (!questionText || !questionId) {
@@ -38,35 +46,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid AI provider' }, { status: 400 });
   }
 
-  let userId: string | undefined;
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) userId = user.id;
-  } catch (e: unknown) {
-    console.error('Auth error:', e instanceof Error ? e.message : 'Unknown error');
-  }
-
-  try {
-    const { data: preferencesData, error: preferencesFetchError } = await supabase
-      .from('user_preferences')
-      .select('use_youtube_sources, use_pdf_sources, use_paper_sources, use_website_sources, use_book_sources, use_image_sources, preferred_answer_format, preferred_answer_depth, include_code_snippets, include_latex_formulas, custom_formatting_instructions')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (preferencesFetchError) console.error('Preferences Fetch Error:', preferencesFetchError.message);
-
     const preferences = {
-      use_youtube: preferencesData?.use_youtube_sources ?? true,
-      use_pdf: preferencesData?.use_pdf_sources ?? true,
-      use_paper: preferencesData?.use_paper_sources ?? true,
-      use_website: preferencesData?.use_website_sources ?? true,
-      use_book: preferencesData?.use_book_sources ?? false,
-      use_image: preferencesData?.use_image_sources ?? false,
-      format: (preferencesData?.preferred_answer_format || 'markdown') as AnswerFormat,
-      depth: (preferencesData?.preferred_answer_depth || 'standard') as AnswerDepth,
-      include_code: preferencesData?.include_code_snippets ?? true,
-      include_latex: preferencesData?.include_latex_formulas ?? false,
-      custom_instructions: preferencesData?.custom_formatting_instructions || null,
+      use_youtube: clientPreferences?.use_youtube_sources ?? true,
+      use_pdf: clientPreferences?.use_pdf_sources ?? true,
+      use_paper: clientPreferences?.use_paper_sources ?? true,
+      use_website: clientPreferences?.use_website_sources ?? true,
+      use_book: clientPreferences?.use_book_sources ?? false,
+      use_image: clientPreferences?.use_image_sources ?? false,
+      format: (clientPreferences?.preferred_answer_format || 'markdown') as AnswerFormat,
+      depth: (clientPreferences?.preferred_answer_depth || 'standard') as AnswerDepth,
+      include_code: clientPreferences?.include_code_snippets ?? true,
+      include_latex: clientPreferences?.include_latex_formulas ?? false,
+      custom_instructions: clientPreferences?.custom_formatting_instructions || null,
     };
 
     const client = createAIClient(provider as AIProvider, apiKey);
@@ -143,21 +135,28 @@ export async function POST(request: Request) {
     }
 
     const finalUserMessage = userMessageSegments.join('\\n');
-    const max_tokens = preferences.depth === 'brief' ? 768 : preferences.depth === 'comprehensive' ? 4096 : 1024;
+    const maxTokens = preferences.depth === 'brief' ? 768 : preferences.depth === 'comprehensive' ? 4096 : 1024;
+    const useCompletionTokens = provider === 'openai';
 
-    const chatCompletion = await client.chat.completions.create({
+    const requestOptions: any = {
       messages: [
         { role: "system", content: systemPromptContent },
         { role: "user", content: finalUserMessage }
       ],
       model: modelId,
-      temperature: 0.7,
-      max_tokens,
-      top_p: 1,
       stream: false,
-    });
+    };
 
-    const generatedAnswer = chatCompletion.choices[0]?.message?.content || 'No answer generated.';
+    if (useCompletionTokens) {
+      requestOptions.max_completion_tokens = maxTokens;
+    } else {
+      requestOptions.max_tokens = maxTokens;
+      requestOptions.temperature = 0.7;
+      requestOptions.top_p = 1;
+    }
+
+    const chatCompletion = await client.chat.completions.create(requestOptions);
+    const generatedAnswer = (chatCompletion as any).choices[0]?.message?.content || 'No answer generated.';
 
     return NextResponse.json({
       id: questionId,
