@@ -2,16 +2,18 @@
 
 import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { VoiceActivityDetector, createVAD, isVADSupported } from '@/utils/vadUtils';
+import { type AIConfig } from '@/utils/ai-config-storage';
 
 interface VoiceRecorderHeadlessProps {
   onRecordingComplete: (audioBlob: Blob) => void;
   onTranscriptionReceived: (text: string) => void;
   disabled?: boolean;
   enableVAD?: boolean;
-  micEnabled?: boolean; // New prop to control microphone state
+  micEnabled?: boolean;
   autoStart?: boolean;
   onRecordingStateChange?: (isRecording: boolean, isSpeaking: boolean) => void;
   onError?: (error: string) => void;
+  aiConfig?: AIConfig | null;
 }
 
 export interface VoiceRecorderHeadlessRef {
@@ -29,15 +31,16 @@ export interface VoiceRecorderHeadlessRef {
   micEnabled: boolean; // New property to expose mic state
 }
 
-const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorderHeadlessProps>(({ 
-  onRecordingComplete, 
-  onTranscriptionReceived, 
+const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorderHeadlessProps>(({
+  onRecordingComplete,
+  onTranscriptionReceived,
   disabled = false,
   enableVAD = true,
-  micEnabled = true, // Default to enabled
+  micEnabled = true,
   autoStart = false,
   onRecordingStateChange,
-  onError
+  onError,
+  aiConfig
 }, ref) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -46,7 +49,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const [internalMicEnabled, setInternalMicEnabled] = useState(micEnabled);
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const vadRef = useRef<VoiceActivityDetector | null>(null);
@@ -64,19 +67,19 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   useEffect(() => {
     autoStartRef.current = autoStart;
   }, [autoStart]);
-  
+
   useEffect(() => {
     setInternalMicEnabled(micEnabled);
   }, [micEnabled]);
-  
+
   useEffect(() => {
     micEnabledRef.current = internalMicEnabled;
   }, [internalMicEnabled]);
-  
+
   useEffect(() => {
     recordingStartTimeRef.current = recordingStartTime;
   }, [recordingStartTime]);
-  
+
   useEffect(() => {
     isRecordingRef.current = isRecording;
     isSpeakingRef.current = isSpeaking;
@@ -110,13 +113,17 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const transcribeAudio = useCallback(async (audioBlob: Blob) => {
     try {
       setIsProcessing(true);
-      
+
+      if (!aiConfig?.apiKey) {
+        throw new Error('OpenAI API key required. Please configure your API key in Account Settings.');
+      }
+
       const formData = new FormData();
-      // Use the correct filename based on the blob's type
-      const filename = audioBlob.type.includes('wav') ? 'recording.wav' : 
-                      audioBlob.type.includes('webm') ? 'recording.webm' : 
-                      'recording.wav'; // default to wav
+      const filename = audioBlob.type.includes('wav') ? 'recording.wav' :
+        audioBlob.type.includes('webm') ? 'recording.webm' :
+          'recording.wav';
       formData.append('audio', audioBlob, filename);
+      formData.append('apiKey', aiConfig.apiKey);
 
       console.log('📝 Sending audio for transcription...');
 
@@ -131,10 +138,10 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       }
 
       const result = await response.json();
-      
+
       if (result.success && result.text) {
         console.log('✅ Transcription received:', result.text);
-        
+
         // Only send transcription to AI if microphone is enabled
         if (micEnabledRef.current) {
           console.log('🎤 Microphone enabled, sending transcription to AI');
@@ -153,7 +160,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     } finally {
       setIsProcessing(false);
     }
-  }, [onTranscriptionReceived, onError, setIsProcessing]);
+  }, [onTranscriptionReceived, onError, setIsProcessing, aiConfig]);
 
   // VAD callback handlers - using refs to avoid recreating VAD instance
   const handleSpeechStart = useCallback(() => {
@@ -163,7 +170,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       clearTimeout(autoStopTimeoutRef.current);
       autoStopTimeoutRef.current = null;
     }
-    
+
     // Start recording when speech is detected, but only if mic is enabled
     if (micEnabledRef.current && !isRecordingRef.current) {
       console.log('🎤 VAD triggering recording start');
@@ -181,20 +188,20 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const handleSpeechPause = useCallback(() => {
     console.log('⏸️ VAD: Speech paused - checking MediaRecorder state');
     setIsSpeaking(false);
-    
+
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
       console.log('⚠️ MediaRecorder not recording, ignoring speech pause');
       return;
     }
-    
+
     const now = Date.now();
     const minRecordingDuration = 1000;
-    
+
     if (recordingStartTimeRef.current && (now - recordingStartTimeRef.current) < minRecordingDuration) {
       console.log('⚠️ Recording too short, waiting for minimum duration...');
       return;
     }
-    
+
     console.log('🛑 VAD stopping recording after speech pause');
     mediaRecorderRef.current.stop();
     setIsRecording(false);
@@ -204,12 +211,12 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const handleSpeechEnd = useCallback(() => {
     console.log('🤫 VAD: Speech ended after silence timeout (backup)');
     setIsSpeaking(false);
-    
+
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
       console.log('⚠️ MediaRecorder not recording, ignoring speech end');
       return;
     }
-    
+
     console.log('🛑 VAD backup: Stopping recording after silence timeout');
     mediaRecorderRef.current.stop();
     setIsRecording(false);
@@ -225,14 +232,14 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     const vadInstanceId = Math.random().toString(36).substring(7);
     console.log(`🔧 VAD useEffect triggered [${vadInstanceId}], enableVAD:`, enableVAD, 'isVADSupported:', isVADSupported());
     setVadSupported(isVADSupported());
-    
+
     // Ensure any existing VAD is cleaned up first
     if (vadRef.current) {
       console.log(`🧹 Cleaning up existing VAD before creating new one [${vadInstanceId}]`);
       vadRef.current.destroy();
       vadRef.current = null;
     }
-    
+
     if (enableVAD && isVADSupported()) {
       console.log(`🎯 Creating VAD instance [${vadInstanceId}]...`);
       vadRef.current = createVAD({
@@ -271,11 +278,11 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         onError?.('Microphone is disabled. Please enable it to record.');
         return;
       }
-      
+
       // Reset force stop flag for new recording
       isForceStoppedRef.current = false;
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -287,7 +294,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       const mediaRecorderOptions: MediaRecorderOptions = {
         mimeType: 'audio/wav'
       };
-      
+
       // Fallback if WAV is not supported (rare)
       if (!MediaRecorder.isTypeSupported('audio/wav')) {
         console.warn('⚠️ WAV not supported, trying WebM');
@@ -298,9 +305,9 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
           delete mediaRecorderOptions.mimeType;
         }
       }
-      
+
       console.log(`🎤 Using recording format: ${mediaRecorderOptions.mimeType || 'default'}`);
-      
+
       const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -312,49 +319,49 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       };
 
       streamRef.current = stream;
-      
+
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { 
-          type: mediaRecorderOptions.mimeType || 'audio/wav' 
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mediaRecorderOptions.mimeType || 'audio/wav'
         });
-        
+
         setRecordingStartTime(null);
-        
+
         stream.getTracks().forEach(track => track.stop());
         streamRef.current = null;
-        
+
         if (vadRef.current) {
           await vadRef.current.stop();
         }
-        
+
         // Skip transcription if recording was force-stopped (manual interview termination)
         if (isForceStoppedRef.current) {
           console.log('🛑 Recording was force-stopped, skipping transcription');
           isForceStoppedRef.current = false; // Reset flag
           return;
         }
-        
+
         if (audioBlob.size < 1000) {
           console.log('⚠️ Recording too small, skipping transcription:', audioBlob.size, 'bytes');
           onError?.('Recording too short. Please speak for at least 1 second.');
           return;
         }
-        
+
         onRecordingComplete(audioBlob);
         await transcribeAudio(audioBlob);
       };
 
       mediaRecorder.start(1000);
-      
+
       setIsRecording(true);
       setRecordingStartTime(Date.now());
-      
+
       if (autoStartRef.current) {
         setHasAutoStarted(true);
       }
-      
+
       console.log('🎤 MediaRecorder started, state:', mediaRecorder.state);
-      
+
       if (enableVAD && vadRef.current && vadSupported) {
         try {
           await vadRef.current.start();
@@ -369,7 +376,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
     } catch (error: unknown) {
       console.error('❌ Failed to start recording:', error);
-      
+
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
           onError?.('Microphone access denied. Please click the microphone icon in your browser\'s address bar and allow microphone access, then refresh the page.');
@@ -396,26 +403,26 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setIsSpeaking(false);
-      
+
       if (vadRef.current) {
         await vadRef.current.stop();
       }
-      
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
       }
-      
+
       console.log('🛑 Recording stopped');
     }
   }, [isRecording, setIsRecording, setIsSpeaking]);
 
   const forceStop = useCallback(() => {
     console.log('🛑 VoiceRecorderHeadless: Force stopping recording');
-    
+
     // Set flag to prevent transcription on manual termination
     isForceStoppedRef.current = true;
-    
+
     if (mediaRecorderRef.current && isRecording) {
       try {
         mediaRecorderRef.current.stop();
@@ -423,7 +430,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         console.warn('Warning: Could not stop MediaRecorder:', error);
       }
     }
-    
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
         try {
@@ -434,7 +441,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       });
       streamRef.current = null;
     }
-    
+
     if (vadRef.current) {
       try {
         vadRef.current.stop();
@@ -442,18 +449,18 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         console.warn('Warning: Could not stop VAD:', error);
       }
     }
-    
+
     if (autoStopTimeoutRef.current) {
       clearTimeout(autoStopTimeoutRef.current);
       autoStopTimeoutRef.current = null;
     }
-    
+
     setIsRecording(false);
     setIsProcessing(false);
     setIsSpeaking(false);
-    
+
     audioChunksRef.current = [];
-    
+
     console.log('✅ VoiceRecorderHeadless: Recording stopped successfully');
   }, [isRecording, setIsRecording, setIsProcessing, setIsSpeaking]);
 
@@ -483,7 +490,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   const toggleMic = useCallback(() => {
     const newMicState = !internalMicEnabled;
     setInternalMicEnabled(newMicState);
-    
+
     if (!newMicState) {
       // If disabling mic, stop any current recording and ensure VAD is aware
       if (isRecording) {
@@ -493,7 +500,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       // Also clear any speaking state when mic is disabled
       setIsSpeaking(false);
     }
-    
+
     console.log(`🎤 Microphone ${newMicState ? 'enabled' : 'disabled'}`);
   }, [internalMicEnabled, isRecording, stopRecording]);
 

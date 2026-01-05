@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface RateLimitState {
   isRateLimited: boolean;
@@ -12,73 +12,24 @@ export interface UseRateLimitReturn {
   clearRateLimit: () => void;
 }
 
+/**
+ * Rate limiting hook - currently disabled since users provide their own API keys.
+ * Keeping the interface for potential future use.
+ */
 export const useRateLimit = (): UseRateLimitReturn => {
   const [rateLimitState, setRateLimitState] = useState<RateLimitState>({
     isRateLimited: false,
     rateLimitMessage: '',
   });
 
+  // Always returns true (allowed) since users use their own API keys
   const checkRateLimit = useCallback(async (
-    interviewType: 'web' | 'phone' = 'web', 
-    sessionType: string = 'behavioral',
-    voiceId: string = 'Sophia'
+    _interviewType: 'web' | 'phone' = 'web',
+    _sessionType: string = 'behavioral',
+    _voiceId: string = 'Sophia'
   ): Promise<boolean> => {
-    try {
-      let endpoint: string;
-      let requestBody: any;
-
-      if (interviewType === 'web') {
-        endpoint = '/api/voice/conversation';
-        requestBody = {
-          checkRateLimit: true,
-          sessionType,
-          voiceId
-        };
-      } else {
-        endpoint = '/api/voice/phone-calls';
-        requestBody = {
-          checkRateLimitOnly: true,
-          userId: 'current' // This will be handled by the API to get current user
-        };
-      }
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (response.status === 429) {
-        const errorData = await response.json();
-        const defaultMessage = interviewType === 'web' 
-          ? 'You have already completed an interview this week. Please try again next week.'
-          : 'You have already made a phone interview today. Please try again tomorrow.';
-          
-        setRateLimitState({
-          isRateLimited: true,
-          rateLimitMessage: errorData.message || defaultMessage,
-        });
-        return false;
-      }
-      
-      if (!response.ok) {
-        throw new Error('Failed to check rate limit');
-      }
-      
-      // If we get here, user is not rate limited
-      setRateLimitState({
-        isRateLimited: false,
-        rateLimitMessage: '',
-      });
-      return true;
-      
-    } catch (error) {
-      console.error('Failed to check rate limit:', error);
-      // On error, allow the interview to proceed (fail open)
-      return true;
-    }
+    // Rate limiting disabled - users are using their own API keys
+    return true;
   }, []);
 
   const setRateLimited = useCallback((limited: boolean, message: string = '') => {
@@ -94,11 +45,6 @@ export const useRateLimit = (): UseRateLimitReturn => {
       rateLimitMessage: '',
     });
   }, []);
-
-  // Check rate limit on mount (default to web interviews)
-  useEffect(() => {
-    checkRateLimit('web');
-  }, []); // Only run on mount, no dependencies needed
 
   return {
     rateLimitState,

@@ -8,6 +8,7 @@ import ErrorDisplay from './ErrorDisplay';
 import InterviewReport from './InterviewReport';
 import { type VoiceOption } from '@/types';
 import { type TerminationReason } from '@/services/interviewService';
+import { type AIConfig } from '@/utils/ai-config-storage';
 
 interface InterviewContentProps {
   // Session state
@@ -15,9 +16,9 @@ interface InterviewContentProps {
   isActive: boolean;
   isCompleted: boolean;
   currentQuestion: string;
-  conversationHistory: Array<{type: 'ai' | 'user', text: string}>;
+  conversationHistory: Array<{ type: 'ai' | 'user', text: string }>;
   interviewReport: any;
-  
+
   // Voice state
   voiceState: {
     isRecordingActive: boolean;
@@ -30,13 +31,13 @@ interface InterviewContentProps {
     ttsError: string | null;
     vadSupported: boolean;
   };
-  
+
   // Rate limit state
   rateLimitState: {
     isRateLimited: boolean;
     rateLimitMessage: string;
   };
-  
+
   // Transcript data
   allTranscripts: Array<{
     id: string;
@@ -48,16 +49,17 @@ interface InterviewContentProps {
   }>;
   isLoadingTranscripts: boolean;
   showChat: boolean;
-  
+
   // Voice settings
   selectedVoice: VoiceOption;
-  micEnabled: boolean; // New prop for microphone toggle
-  
+  micEnabled: boolean;
+  aiConfig: AIConfig | null;
+
   // Refs for external control
   voicePlayerRef: React.RefObject<VoicePlayerRef | null>;
   voiceRecorderRef: React.RefObject<VoiceRecorderHeadlessRef | null>;
   voicePageVisualizerRef: React.RefObject<any>;
-  
+
   // Event handlers
   onTranscriptionReceived: (text: string) => Promise<void>;
   onRecordingStateChange: (isRecording: boolean, isSpeaking: boolean) => void;
@@ -68,7 +70,7 @@ interface InterviewContentProps {
   onAudioData: (audioData: Float32Array) => void;
   onPlaybackComplete: () => void;
   onTerminateInterview: (reason: TerminationReason) => Promise<void>;
-  
+
   // State setters
   setAutoStartRecording: (value: boolean) => void;
   setSessionActive: (value: boolean) => void;
@@ -86,6 +88,7 @@ export default function InterviewContent({
   showChat,
   selectedVoice,
   micEnabled,
+  aiConfig,
   voicePlayerRef,
   voiceRecorderRef,
   onTranscriptionReceived,
@@ -100,7 +103,7 @@ export default function InterviewContent({
   setAutoStartRecording,
   setSessionActive,
 }: InterviewContentProps) {
-  
+
   // Handle recording completion
   const handleRecordingComplete = useCallback((_audioBlob: Blob) => {
     setAutoStartRecording(false);
@@ -112,37 +115,37 @@ export default function InterviewContent({
     if (!isActive) {
       setSessionActive(true);
     }
-    
+
     await onTranscriptionReceived(text);
   }, [isActive, setSessionActive, onTranscriptionReceived]);
 
   // Enhanced error handling with interview termination
   const handleRecordingError = useCallback((error: any) => {
     onRecordingError(error);
-    
+
     // Check for critical errors that should terminate the interview
     const errorMessage = error?.toString().toLowerCase() || '';
-    
-    if (errorMessage.includes('microphone') || 
-        errorMessage.includes('permission') || 
-        errorMessage.includes('not allowed') ||
-        errorMessage.includes('access denied')) {
+
+    if (errorMessage.includes('microphone') ||
+      errorMessage.includes('permission') ||
+      errorMessage.includes('not allowed') ||
+      errorMessage.includes('access denied')) {
       onTerminateInterview({
         type: 'microphone_error',
         message: 'Interview terminated due to microphone access issues',
         details: error
       });
-    } else if (errorMessage.includes('network') || 
-              errorMessage.includes('connection') ||
-              errorMessage.includes('timeout')) {
+    } else if (errorMessage.includes('network') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('timeout')) {
       onTerminateInterview({
         type: 'network_error',
         message: 'Interview terminated due to network connectivity issues',
         details: error
       });
-    } else if (errorMessage.includes('rate limit') || 
-              errorMessage.includes('429') ||
-              errorMessage.includes('quota')) {
+    } else if (errorMessage.includes('rate limit') ||
+      errorMessage.includes('429') ||
+      errorMessage.includes('quota')) {
       onTerminateInterview({
         type: 'rate_limit',
         message: 'Interview terminated due to service rate limits',
@@ -154,12 +157,12 @@ export default function InterviewContent({
   // Enhanced TTS error handling
   const handleTtsError = useCallback((error: any) => {
     onTtsError(error);
-    
+
     const errorMessage = error?.toString() || '';
-    const isRateLimitError = errorMessage.includes('rate limit') || 
-                           errorMessage.includes('429') || 
-                           errorMessage.includes('Rate limit exceeded');
-    
+    const isRateLimitError = errorMessage.includes('rate limit') ||
+      errorMessage.includes('429') ||
+      errorMessage.includes('Rate limit exceeded');
+
     if (isRateLimitError && isActive) {
       onTerminateInterview({
         type: 'rate_limit',
@@ -191,27 +194,29 @@ export default function InterviewContent({
         enableVAD={isActive && !isCompleted}
         micEnabled={micEnabled}
         autoStart={voiceState.shouldAutoStartRecording && !rateLimitState.isRateLimited}
+        aiConfig={aiConfig}
       />
 
       {/* Interview Content */}
       <div className="space-y-6">
         {/* Hidden VoicePlayer for audio functionality */}
         <div className="hidden">
-          <VoicePlayer 
+          <VoicePlayer
             ref={voicePlayerRef}
             key={voiceState.aiResponseKey}
-            text={currentQuestion} 
+            text={currentQuestion}
             voice={selectedVoice}
             autoPlay={isActive && !isCompleted && !voiceState.isProcessingAI && !rateLimitState.isRateLimited}
             onPlayStateChange={onPlayStateChange}
             onAudioData={onAudioData}
             onError={handleTtsError}
             onPlaybackComplete={onPlaybackComplete}
+            aiConfig={aiConfig}
           />
         </div>
 
         {/* Recent Transcript Display */}
-        <RecentTranscriptDisplay 
+        <RecentTranscriptDisplay
           allTranscripts={allTranscripts}
           isLoadingTranscripts={isLoadingTranscripts}
           isInterviewActive={isActive}

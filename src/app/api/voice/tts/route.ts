@@ -1,68 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TextToSpeechClient } from '@google-cloud/text-to-speech';
-import { mapVoiceToCloudTTS, getVoiceGender, CLOUD_TTS_AUDIO_CONFIG } from '@/utils/audioUtils';
+import OpenAI from 'openai';
 
-// Initialize Google Cloud Text-to-Speech client with lazy initialization
-let ttsClient: TextToSpeechClient | null = null;
-
-function initializeTTSClient(): TextToSpeechClient {
-  if (ttsClient) {
-    return ttsClient;
-  }
-
-  // Validate required environment variables
-  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY;
-  const projectId = process.env.GOOGLE_PROJECT_ID;
-
-  if (!clientEmail || !privateKey || !projectId) {
-    throw new Error('Missing required Google Cloud credentials. Please set GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_PROJECT_ID environment variables.');
-  }
-
-  try {
-    // Handle different private key formats that might exist in production
-    let formattedPrivateKey = privateKey;
-    
-    // If the key doesn't start with -----BEGIN, it might be base64 encoded
-    if (!privateKey.includes('-----BEGIN')) {
-      try {
-        formattedPrivateKey = Buffer.from(privateKey, 'base64').toString('utf8');
-      } catch {
-        // If base64 decoding fails, use the key as-is
-        formattedPrivateKey = privateKey;
-      }
-    }
-    
-    // Ensure proper line breaks in private key
-    formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n');
-    
-    // Validate private key format
-    if (!formattedPrivateKey.includes('-----BEGIN') || !formattedPrivateKey.includes('-----END')) {
-      throw new Error('Invalid private key format');
-    }
-
-    ttsClient = new TextToSpeechClient({
-      credentials: {
-        client_email: clientEmail,
-        private_key: formattedPrivateKey,
-      },
-      projectId: projectId,
-    });
-
-    return ttsClient;
-  } catch (error: any) {
-    console.error('Failed to initialize Google Cloud TTS client:', error);
-    throw new Error(`Failed to initialize Google Cloud TTS client: ${error.message}`);
-  }
-}
+// Voice mapping from internal names to OpenAI TTS voices
+const VOICE_MAP: Record<string, 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'> = {
+  'Sophia': 'nova',      // Female, warm
+  'Marcus': 'onyx',      // Male, deep
+  'Aoede': 'shimmer',    // Female, expressive
+  'Algieba': 'echo',     // Male, clear
+  'Emily': 'alloy',      // Female, neutral
+};
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse request body
     const body = await request.json();
-    const { text, voice = 'Marcus' } = body;
+    const { text, voice = 'Marcus', apiKey } = body;
 
-    // Validate input
     if (!text || typeof text !== 'string') {
       return NextResponse.json(
         { error: 'Text is required and must be a string' },
@@ -70,113 +22,76 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (text.length > 5000) {
+    if (!apiKey) {
       return NextResponse.json(
-        { error: 'Text is too long. Maximum length is 5000 characters.' },
+        { error: 'API key required. Please configure your OpenAI API key in Account Settings.', requires_ai_config: true },
         { status: 400 }
       );
     }
 
-    // Initialize TTS client with error handling
-    let client: TextToSpeechClient;
-    try {
-      client = initializeTTSClient();
-    } catch (error: any) {
-      console.error('TTS client initialization failed:', error);
+    if (text.length > 4096) {
       return NextResponse.json(
-        { error: 'Service temporarily unavailable. Please try again later.' },
-        { status: 503 }
+        { error: 'Text is too long. Maximum length is 4096 characters.' },
+        { status: 400 }
       );
     }
 
-    // Map voice to Google Cloud TTS voice
-    const cloudVoice = mapVoiceToCloudTTS(voice);
-    const voiceGender = getVoiceGender(cloudVoice);
+    // Map internal voice to OpenAI voice
+    const openaiVoice = VOICE_MAP[voice] || 'onyx';
 
-    // Prepare the synthesis request
-    const request_config = {
-      input: { text },
-      voice: {
-        languageCode: 'en-US',
-        name: cloudVoice,
-        ssmlGender: voiceGender,
-      },
-      audioConfig: {
-        audioEncoding: 'LINEAR16' as const,
-        sampleRateHertz: CLOUD_TTS_AUDIO_CONFIG.SAMPLE_RATE,
-      },
-    };
-
-    // Perform the text-to-speech request with timeout
-    const synthesizePromise = client.synthesizeSpeech(request_config);
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timeout')), 25000); // 25 second timeout
+    console.log('🎤 Generating TTS with OpenAI:', {
+      textLength: text.length,
+      voice: openaiVoice,
     });
 
-    const [response] = await Promise.race([synthesizePromise, timeoutPromise]) as any;
+    const openai = new OpenAI({ apiKey });
 
-    if (!response || !response.audioContent) {
-      console.error('No audio content received from Google Cloud TTS');
-      return NextResponse.json(
-        { error: 'Failed to generate audio content' },
-        { status: 500 }
-      );
-    }
+    const mp3Response = await openai.audio.speech.create({
+      model: 'tts-1',
+      voice: openaiVoice,
+      input: text,
+      response_format: 'mp3',
+    });
 
-    // Convert the audio content to a Buffer
-    const audioBuffer = Buffer.from(response.audioContent);
-    
-    // Return the audio as a response
+    const audioBuffer = Buffer.from(await mp3Response.arrayBuffer());
+
+    console.log('✅ TTS successful, audio size:', audioBuffer.length);
+
     return new NextResponse(audioBuffer, {
       status: 200,
       headers: {
-        'Content-Type': 'audio/wav',
+        'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.length.toString(),
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Cache-Control': 'public, max-age=3600',
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('TTS Error:', error);
-    
-    // Handle specific Google Cloud errors
-    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('invalid_api_key')) {
       return NextResponse.json(
-        { error: 'Network connectivity issue. Please try again later.' },
-        { status: 503 }
-      );
-    }
-    
-    if (error.message?.includes('quota') || error.message?.includes('limit')) {
-      return NextResponse.json(
-        { error: 'Service quota exceeded. Please try again later.' },
-        { status: 429 }
-      );
-    }
-    
-    if (error.message?.includes('authentication') || error.message?.includes('credentials')) {
-      return NextResponse.json(
-        { error: 'Authentication error. Please contact support.' },
+        { error: 'Invalid API key. Please check your OpenAI API key in Account Settings.', type: 'auth_error' },
         { status: 401 }
       );
     }
 
-    if (error.message?.includes('timeout')) {
+    if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
       return NextResponse.json(
-        { error: 'Request timeout. Please try again with shorter text.' },
-        { status: 408 }
+        { error: 'Rate limit exceeded. Please wait a moment and try again.', type: 'rate_limit' },
+        { status: 429 }
       );
     }
 
-    // Generic error response
     return NextResponse.json(
-      { error: 'Internal error during speech synthesis' },
+      { error: 'Internal error during speech synthesis', details: errorMessage },
       { status: 500 }
     );
   }
 }
 
-// Handle unsupported methods
 export async function GET() {
   return NextResponse.json(
     { error: 'Method not allowed. Use POST to submit text.' },

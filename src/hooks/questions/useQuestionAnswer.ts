@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { getAIConfig } from '@/utils/ai-config-storage';
 
 interface UseQuestionAnswerProps {
   questionId: number;
@@ -54,7 +55,14 @@ export function useQuestionAnswer({
   const generateAnswer = useCallback(async () => {
     // Prevent duplicate calls
     if (isGenerating || generatedAnswer || generationAttemptedRef.current) return;
-    
+
+    const aiConfig = getAIConfig();
+    if (!aiConfig) {
+      setError('Please configure your AI provider and API key in Account Settings');
+      toast.error('AI not configured. Go to Account > AI Settings to set up your API key.');
+      return;
+    }
+
     generationAttemptedRef.current = true;
     setIsGenerating(true);
     setError(null);
@@ -68,20 +76,31 @@ export function useQuestionAnswer({
           questionId,
           topicId,
           categoryId,
+          apiKey: aiConfig.apiKey,
+          provider: aiConfig.provider,
+          modelId: aiConfig.modelId,
         }),
       });
-      
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`API error for question ${questionId}:`, errorText);
-        throw new Error(`Error: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        console.error(`API error for question ${questionId}:`, errorData);
+
+        if (errorData.requires_ai_config) {
+          setError('Please configure your AI provider and API key in Account Settings');
+          toast.error('AI not configured. Go to Account > AI Settings.');
+        } else if (errorData.type === 'auth_error') {
+          setError('Invalid API key. Please check your API key in Account Settings.');
+          toast.error('Invalid API key. Please update it in Account Settings.');
+        } else {
+          throw new Error(errorData.error || response.statusText);
+        }
+        return;
       }
-      
+
       const data = await response.json();
-      
-      if (data.requires_model_selection) {
-        setError(data.message || 'Please configure your AI model in Account Settings');
-      } else if (data.answer_text) {
+
+      if (data.answer_text) {
         setGeneratedAnswer(data.answer_text);
       } else {
         setError('No answer was generated');

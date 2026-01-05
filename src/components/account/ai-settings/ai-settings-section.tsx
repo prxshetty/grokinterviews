@@ -62,8 +62,16 @@ export function AiSettingsSection() {
   // Handle model change
   const handleModelChange = (modelId: string) => {
     if (!provider) return
+    const model = getModelsForProvider(provider).find(m => m.id === modelId)
+    if (!model) return
+
     setSelectedModelId(modelId)
     setSelectedModel(provider, modelId)
+
+    // Show toast notification with model details
+    toast.success(`Switched to ${model.name}`, {
+      description: `$${model.inputPrice}/M input • $${model.outputPrice}/M output`
+    })
   }
 
   // Handle API key save with connection test
@@ -278,22 +286,24 @@ export function AiSettingsSection() {
                                       </div>
                                     </div>
                                     <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        ${model.inputPrice} / ${model.outputPrice} per 1M tokens (in/out)
-                                      </p>
+                                      <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Pricing (per 1M tokens)</p>
+                                      <div className="space-y-0.5">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Input: ${model.inputPrice.toFixed(2)}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Output: ${model.outputPrice.toFixed(2)}</p>
+                                      </div>
                                     </div>
                                   </div>
                                 </TooltipContent>
                               </Tooltip>
                             </div>
                             <div className="mt-2">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${model.tier === 'cheap' ? 'border-green-500 text-green-700 dark:text-green-300' :
-                                model.tier === 'balanced' ? 'border-blue-500 text-blue-700 dark:text-blue-300' :
-                                  'border-purple-500 text-purple-700 dark:text-purple-300'
-                                } bg-transparent`}>
-                                {model.tier === 'cheap' ? '💨 Fast & Cheap' :
-                                  model.tier === 'balanced' ? '⚖️ Balanced' :
-                                    '✨ Premium'}
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${model.tier === 'cheap' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                                model.tier === 'balanced' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                                  'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                                }`}>
+                                {model.tier === 'cheap' ? 'Fast' :
+                                  model.tier === 'balanced' ? 'Balanced' :
+                                    'Premium'}
                               </span>
                             </div>
                           </div>

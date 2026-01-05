@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -29,7 +29,7 @@ import { Logo } from '@/components/ui/Logo';
 import { DEFAULT_AVATAR_URL, MAIN_NAV_ITEMS } from '@/config';
 import { getDomainLabel } from '@/config/domain.constants';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+
 
 // Memoized Logo component to prevent unnecessary re-renders
 const MemoizedLogo = memo(({ isScrolled }: { isScrolled: boolean }) => (
