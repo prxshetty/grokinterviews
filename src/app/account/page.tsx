@@ -11,7 +11,8 @@ import { PersonalInfoSection } from '@/components/account/personal-info/personal
 import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-section';
 import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
 import { PasswordSecuritySection } from '@/components/account/password-security/password-security-section';
-import type { UserPreferences, AnswerFormat, AnswerDepth, AccountFormData } from './types';
+import { getAnswerPreferences, saveAnswerPreferences } from '@/utils/answer-preferences-storage';
+import type { AnswerFormat, AnswerDepth, AccountFormData } from './types';
 
 function AccountPageContent() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -64,35 +65,24 @@ function AccountPageContent() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    const fetchUserPreferences = async () => {
-      if (user && isMounted.current && supabase) {
-        const { data: preferencesData, error: prefError } = await supabase
-          .from('user_preferences')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (prefError) {
-          console.error('Error fetching preferences:', prefError);
-          toast.error('Could not load your preferences.');
-        }
-
-        if (isMounted.current && preferencesData) {
-          setFormData(prev => ({
-            ...prev,
-            use_youtube_sources: preferencesData.use_youtube_sources ?? true,
-            use_pdf_sources: preferencesData.use_pdf_sources ?? true,
-            use_paper_sources: preferencesData.use_paper_sources ?? true,
-            use_website_sources: preferencesData.use_website_sources ?? true,
-            use_book_sources: preferencesData.use_book_sources ?? false,
-            use_image_sources: preferencesData.use_image_sources ?? false,
-            preferred_answer_format: preferencesData.preferred_answer_format || 'markdown',
-            preferred_answer_depth: preferencesData.preferred_answer_depth || 'standard',
-            include_code_snippets: preferencesData.include_code_snippets ?? true,
-            include_latex_formulas: preferencesData.include_latex_formulas ?? false,
-            custom_formatting_instructions: preferencesData.custom_formatting_instructions || '',
-          }));
-        }
+    // Load answer preferences from localStorage
+    const loadPreferences = () => {
+      if (isMounted.current) {
+        const prefs = getAnswerPreferences();
+        setFormData(prev => ({
+          ...prev,
+          use_youtube_sources: prefs.use_youtube_sources,
+          use_pdf_sources: prefs.use_pdf_sources,
+          use_paper_sources: prefs.use_paper_sources,
+          use_website_sources: prefs.use_website_sources,
+          use_book_sources: prefs.use_book_sources,
+          use_image_sources: prefs.use_image_sources,
+          preferred_answer_format: prefs.preferred_answer_format,
+          preferred_answer_depth: prefs.preferred_answer_depth,
+          include_code_snippets: prefs.include_code_snippets,
+          include_latex_formulas: prefs.include_latex_formulas,
+          custom_formatting_instructions: prefs.custom_formatting_instructions,
+        }));
       }
     };
 
@@ -102,9 +92,9 @@ function AccountPageContent() {
         full_name: profile.full_name || '',
         email: user.email || '',
       }));
-      fetchUserPreferences();
+      loadPreferences();
     }
-  }, [profile, user, supabase]);
+  }, [profile, user]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -130,31 +120,27 @@ function AccountPageContent() {
     }
 
     setSaving(true);
-    if (!supabase) {
-      toast.error("Database connection not available.");
-      setSaving(false);
-      return;
-    }
-    console.log("Saving changes for user:", user.id);
-    console.log("Form data:", formData);
 
     try {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: formData.full_name,
-        }, { onConflict: 'id' });
+      // Save profile to Supabase (only name)
+      if (supabase) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            full_name: formData.full_name,
+          }, { onConflict: 'id' });
 
-      if (profileError) {
-        console.error('Error saving profile:', profileError);
-        toast.error(`Failed to save profile: ${profileError.message}`);
-        return;
+        if (profileError) {
+          console.error('Error saving profile:', profileError);
+          toast.error(`Failed to save profile: ${profileError.message}`);
+          setSaving(false);
+          return;
+        }
       }
-      console.log("Profile data upserted successfully.");
 
-      const preferenceDataToSave: Omit<UserPreferences, 'theme' | 'email_notifications' | 'specific_model_id'> & { user_id: string } = {
-        user_id: user.id,
+      // Save answer preferences to localStorage
+      saveAnswerPreferences({
         use_youtube_sources: formData.use_youtube_sources,
         use_pdf_sources: formData.use_pdf_sources,
         use_paper_sources: formData.use_paper_sources,
@@ -165,26 +151,15 @@ function AccountPageContent() {
         preferred_answer_depth: formData.preferred_answer_depth,
         include_code_snippets: formData.include_code_snippets,
         include_latex_formulas: formData.include_latex_formulas,
-        custom_formatting_instructions: formData.custom_formatting_instructions || null,
-      };
-      console.log("Attempting to upsert preferences:", preferenceDataToSave);
-
-      const { error: preferencesError } = await supabase
-        .from('user_preferences')
-        .upsert(preferenceDataToSave, { onConflict: 'user_id' });
-
-      if (preferencesError) {
-        console.error('Error saving preferences:', preferencesError);
-        toast.error(`Failed to save preferences: ${preferencesError.message}`);
-        return;
-      }
-      console.log("User preferences upserted successfully.");
+        custom_formatting_instructions: formData.custom_formatting_instructions,
+      });
 
       await refreshAuth();
       toast.success('Settings saved successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
       console.error('Unexpected error during saveChanges:', error);
-      toast.error(`An unexpected error occurred: ${error.message || 'Please try again.'}`);
+      toast.error(`An unexpected error occurred: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
