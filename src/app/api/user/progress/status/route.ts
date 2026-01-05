@@ -42,25 +42,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ status: 'unknown', error: 'Question ID is required' }, { status: 400 });
     }
 
-    let isUserBookmarked = false;
-    let actualProgressStatus = 'unknown'; // Default progress status
+    // Default values (bookmark status is now client-side only)
+    const isUserBookmarked = false;
+    let actualProgressStatus = 'unknown';
 
-    // 1. Check user_bookmarks
-    const { data: bookmarkData, error: bookmarkError } = await supabase
-      .from('user_bookmarks')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('question_id', questionId)
-      .maybeSingle();
-
-    if (bookmarkError && bookmarkError.code !== 'PGRST116') { // PGRST116 is "Not found"
-      console.error('Error fetching from user_bookmarks:', bookmarkError);
-      // Potentially return an error if this is not just a "not found"
-      return NextResponse.json({ status: 'unknown', error: 'Failed to check bookmark status due to DB error' }, { status: 500 });
-    }
-    if (bookmarkData) {
-      isUserBookmarked = true;
-    }
+    // 1. Check user_progress for actual progress status (moved up, removed bookmark check)
 
     // 2. Check user_progress for actual progress status (e.g., viewed, completed)
     const { data: progressData, error: progressError } = await supabase
@@ -78,7 +64,7 @@ export async function GET(request: NextRequest) {
     if (progressData && progressData.status) {
       actualProgressStatus = progressData.status;
     }
-    
+
     // If the question is completed, but somehow no progressData was found (e.g. race condition or data issue),
     // and it's bookmarked, we might infer a different status or log a warning.
     // For now, if progressData.status is null/undefined, actualProgressStatus remains 'unknown'.
