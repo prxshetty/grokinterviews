@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
-// Removed toggleQuestionBookmark import as progress tracking is disabled
+import { useState, useEffect, useCallback } from 'react';
+import {
+  isBookmarked as checkIsBookmarked,
+  addBookmark,
+  removeBookmark
+} from '@/utils/bookmark-storage';
 
 interface UseQuestionBookmarkProps {
   questionId: number;
-  initialIsBookmarked: boolean;
-  onBookmarkStatusChange: ((questionId: number, newStatus: boolean) => void) | undefined;
+  initialIsBookmarked?: boolean;
+  onBookmarkStatusChange?: ((questionId: number, newStatus: boolean) => void) | undefined;
   topicId?: number;
   categoryId?: number;
 }
@@ -19,53 +23,42 @@ export function useQuestionBookmark({
   questionId,
   initialIsBookmarked,
   onBookmarkStatusChange,
-  topicId: _topicId,
-  categoryId: _categoryId
+  topicId,
+  categoryId
 }: UseQuestionBookmarkProps): UseQuestionBookmarkReturn {
-  const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
+  // Initialize from local storage, fallback to prop
+  const [isBookmarked, setIsBookmarked] = useState(() => {
+    if (typeof window === 'undefined') return initialIsBookmarked ?? false;
+    return checkIsBookmarked(questionId);
+  });
 
-  // Sync with prop changes
+  // Sync with local storage on mount and when questionId changes
   useEffect(() => {
-    setIsBookmarked(initialIsBookmarked);
-  }, [initialIsBookmarked]);
-
-  const handleBookmarkChange = async (newStatus: boolean) => {
-    // Optimistic update
-    setIsBookmarked(newStatus);
-    onBookmarkStatusChange?.(questionId, newStatus);
-
-    // Make API call to persist bookmark status
-    if (_topicId && _categoryId) {
-      try {
-        const response = await fetch('/api/user/bookmarks', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            questionId,
-            isBookmarked: newStatus,
-            topicId: _topicId,
-            categoryId: _categoryId,
-          }),
-        });
-
-        if (!response.ok) {
-          // Revert optimistic update on failure
-          setIsBookmarked(!newStatus);
-          onBookmarkStatusChange?.(questionId, !newStatus);
-          console.error('Failed to update bookmark status');
-        }
-      } catch (error) {
-        // Revert optimistic update on error
-        setIsBookmarked(!newStatus);
-        onBookmarkStatusChange?.(questionId, !newStatus);
-        console.error('Error updating bookmark status:', error);
-      }
-    } else {
-      console.log(`Question ${questionId} bookmark status changed to ${newStatus} (local only - missing topicId or categoryId)`);
+    if (typeof window !== 'undefined') {
+      setIsBookmarked(checkIsBookmarked(questionId));
     }
-  };
+  }, [questionId]);
+
+  const handleBookmarkChange = useCallback((newStatus: boolean) => {
+    // Validate required IDs
+    if (!topicId || !categoryId) {
+      console.warn(`Cannot bookmark question ${questionId}: missing topicId or categoryId`);
+      return;
+    }
+
+    // Update local storage
+    if (newStatus) {
+      addBookmark(topicId, categoryId, questionId);
+    } else {
+      removeBookmark(questionId);
+    }
+
+    // Update state
+    setIsBookmarked(newStatus);
+
+    // Notify parent if callback provided
+    onBookmarkStatusChange?.(questionId, newStatus);
+  }, [questionId, topicId, categoryId, onBookmarkStatusChange]);
 
   return {
     isBookmarked,
