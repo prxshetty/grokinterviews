@@ -5,6 +5,12 @@ import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { VoiceOption } from '@/types/voice.types';
+import {
+  getAllSessions,
+  getSession,
+  deleteSession as deleteLocalSession,
+  type VoiceSession as StoredVoiceSession
+} from '@/utils/transcript-storage';
 
 interface InterviewSession {
   id: string;
@@ -18,51 +24,9 @@ interface InterviewSession {
   interview_scores?: {
     overall_score: number;
     created_at: string;
-  }[];
+  }[] | undefined;
   interview_mode?: 'web' | 'phone';
   voice_name?: string;
-}
-
-interface PhoneCall {
-  id: string;
-  user_id: string;
-  vapi_call_id: string;
-  phone_number: string;
-  call_status: string;
-  call_duration: number;
-  audio_recording_url?: string;
-  transcript_text?: string;
-  analysis_summary?: string;
-  interview_score?: number;
-  strengths?: string[];
-  weaknesses?: string[];
-  recommendations?: string[];
-  error_message?: string;
-  metadata?: any;
-  created_at: string;
-  updated_at: string;
-  voice_name?: string;
-  conversationFlow?: Array<{
-    id: string;
-    interactionType: string;
-    transcriptText: string;
-    conversationOrder: number;
-    createdAt: string;
-  }>;
-  vapiData?: {
-    messages?: Array<{
-      role: 'assistant' | 'user' | 'system' | 'function';
-      message: string;
-      time: number;
-      endTime?: number;
-      secondsFromStart: number;
-      duration?: number;
-    }>;
-    cost?: number;
-    endedReason?: string;
-    analysis?: any;
-    artifact?: any;
-  };
 }
 
 interface Transcript {
@@ -90,100 +54,75 @@ interface CombinedInterview {
   status: string;
   session_type: 'behavioral' | 'technical' | 'custom' | 'sd';
   interview_mode: 'web' | 'phone';
-  session_start?: string;
-  session_end?: string | null;
-  call_duration?: number;
-  interview_scores?: any[];
+  session_start?: string | undefined;
+  session_end?: string | null | undefined;
+  call_duration?: number | undefined;
+  interview_scores?: any[] | undefined;
   voice_name?: string | undefined;
+}
+
+function convertStoredSession(stored: StoredVoiceSession): InterviewSession {
+  return {
+    id: stored.id,
+    session_type: stored.sessionType,
+    session_start: stored.startedAt,
+    session_end: stored.endedAt || null,
+    question_count: stored.messages.filter(m => m.type === 'ai').length,
+    week_identifier: new Date(stored.startedAt).toISOString().split('T')[0] ?? '',
+    is_completed: stored.isCompleted,
+    transcripts: stored.messages.map((msg, idx) => ({
+      id: `${stored.id}-${idx}`,
+      transcript_text: msg.text,
+      interaction_type: msg.type === 'ai' ? 'ai_response' as const : 'user_response' as const,
+      created_at: new Date(msg.timestamp).toISOString(),
+      conversation_order: idx,
+    })),
+    interview_scores: stored.score ? [{
+      overall_score: stored.score.overall_score,
+      created_at: stored.endedAt || stored.startedAt
+    }] : undefined,
+    interview_mode: 'web',
+    voice_name: stored.voiceName || 'Default Voice'
+  };
 }
 
 export function useInterviewData() {
   const { user } = useAuth();
   const router = useRouter();
-  
-  // Use ref to store router to avoid dependency issues
+
   const routerRef = useRef(router);
   routerRef.current = router;
-  
+
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
-  const [phoneCalls, setPhoneCalls] = useState<PhoneCall[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [voiceFilter, setVoiceFilter] = useState<VoiceOption | 'all'>('all');
-  
+
   const [selectedSession, setSelectedSession] = useState<InterviewSession | null>(null);
-  const [selectedPhoneCall, setSelectedPhoneCall] = useState<PhoneCall | null>(null);
   const [selectedScore, setSelectedScore] = useState<InterviewScore | null>(null);
   const [loadingScore, setLoadingScore] = useState(false);
   const [activeTab, setActiveTab] = useState('transcript');
   const [isExporting, setIsExporting] = useState(false);
 
-  // Track if we've already fetched data to prevent unnecessary re-fetching
   const hasFetchedDataRef = useRef(false);
 
   const fetchSessions = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Fetch web interview sessions
-      const sessionsResponse = await fetch('/api/voice/sessions');
-      const sessionsData = await sessionsResponse.json();
-      
-      if (sessionsData.success) {
-        const webSessions = (sessionsData.sessions || []).map((session: InterviewSession) => ({
-          ...session,
-          interview_mode: 'web' as const,
-          voice_name: session.voice_name || 'Default Voice'
-        }));
-        setSessions(webSessions);
-      } else {
-        toast.error('Failed to fetch web interview sessions');
-        setSessions([]);
-      }
 
-      // Fetch enhanced phone call transcript history
-      const phoneResponse = await fetch(`/api/voice/transcripts?limit=50`);
-      const phoneData = await phoneResponse.json();
-      
-      if (phoneResponse.ok && phoneData.success) {
-        const enhancedPhoneCalls = phoneData.data.map((item: any) => ({
-          id: item.id,
-          user_id: user?.id,
-          vapi_call_id: item.vapiCallId,
-          phone_number: item.phoneNumber,
-          call_status: item.callStatus,
-          call_duration: item.callDuration || 0,
-          audio_recording_url: item.audioRecordingUrl,
-          transcript_text: item.transcriptText,
-          analysis_summary: item.analysisSummary,
-          interview_score: item.interviewScore,
-          strengths: item.strengths,
-          weaknesses: item.weaknesses,
-          recommendations: item.recommendations,
-          error_message: null,
-          metadata: item.vapiData,
-          created_at: item.createdAt,
-          updated_at: item.updatedAt,
-          voice_name: item.voiceName,
-          conversationFlow: item.conversationFlow,
-          vapiData: item.vapiData
-        }));
-        setPhoneCalls(enhancedPhoneCalls);
-      } else {
-        console.error('Failed to fetch phone call transcripts:', phoneData.error);
-        setPhoneCalls([]);
-      }
+      // Fetch sessions from localStorage
+      const storedSessions = getAllSessions();
+      const webSessions = storedSessions.map(convertStoredSession);
+      setSessions(webSessions);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to fetch interview data');
       setSessions([]);
-      setPhoneCalls([]);
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, []);
 
-  // Store fetchSessions in a ref to access it in useEffect without dependency issues
   const fetchSessionsRef = useRef(fetchSessions);
   fetchSessionsRef.current = fetchSessions;
 
@@ -192,22 +131,27 @@ export function useInterviewData() {
       routerRef.current.push('/signin');
       return;
     }
-    
-    // Only fetch data once, even if user object changes due to desktop switching
+
     if (!hasFetchedDataRef.current) {
       hasFetchedDataRef.current = true;
       fetchSessionsRef.current();
     }
-  }, [user]); // Use ref pattern to avoid fetchSessions dependency
+  }, [user]);
 
   const fetchScore = useCallback(async (sessionId: string) => {
     try {
       setLoadingScore(true);
-      const response = await fetch(`/api/voice/score?sessionId=${sessionId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setSelectedScore(data.score);
+      const storedSession = getSession(sessionId);
+
+      if (storedSession?.score) {
+        setSelectedScore({
+          overall_score: storedSession.score.overall_score,
+          strengths: storedSession.score.strengths,
+          weaknesses: storedSession.score.weaknesses,
+          improvements: storedSession.score.improvements,
+          detailed_feedback: storedSession.score.detailed_feedback || '',
+          created_at: storedSession.endedAt || storedSession.startedAt
+        });
       } else {
         setSelectedScore(null);
       }
@@ -225,19 +169,12 @@ export function useInterviewData() {
     }
 
     try {
-      const response = await fetch(`/api/voice/sessions/${sessionId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('Interview session deleted successfully');
-        setSessions(prev => prev.filter(session => session.id !== sessionId));
-        if (selectedSession?.id === sessionId) {
-          setSelectedSession(null);
-          setSelectedScore(null);
-        }
-      } else {
-        toast.error('Failed to delete interview session');
+      deleteLocalSession(sessionId);
+      toast.success('Interview session deleted successfully');
+      setSessions(prev => prev.filter(session => session.id !== sessionId));
+      if (selectedSession?.id === sessionId) {
+        setSelectedSession(null);
+        setSelectedScore(null);
       }
     } catch (error) {
       console.error('Error deleting session:', error);
@@ -252,9 +189,9 @@ export function useInterviewData() {
         .sort((a, b) => a.conversation_order - b.conversation_order)
         .map(t => `${t.interaction_type === 'ai_response' ? 'AI' : 'You'}: ${t.transcript_text}`)
         .join('\n\n');
-      
+
       const content = `Interview Session - ${session.session_type}\nDate: ${new Date(session.session_start).toLocaleString()}\nDuration: ${session.session_end ? Math.floor((new Date(session.session_end).getTime() - new Date(session.session_start).getTime()) / 60000) + ' minutes' : 'Incomplete'}\n\n--- Transcript ---\n\n${transcripts}`;
-      
+
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -269,59 +206,26 @@ export function useInterviewData() {
     }
   }, []);
 
-  const exportPhoneTranscript = useCallback((phoneCall: PhoneCall) => {
-    setIsExporting(true);
-    try {
-      const content = phoneCall.transcript_text || 'No transcript available';
-      
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `phone-interview-${new Date(phoneCall.created_at).toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } finally {
-      setIsExporting(false);
-    }
-  }, []);
-
-  // Create combined list of all interviews
   const allInterviews = useMemo(() => {
-    return [
-      ...sessions.map(session => ({
-        ...session,
-        type: 'web' as const,
-        date: session.session_start,
-        status: session.is_completed ? 'completed' : 'incomplete',
-        interview_mode: (session.interview_mode || 'web') as 'web' | 'phone',
-        voice_name: session.voice_name
-      })),
-      ...phoneCalls.map(call => ({
-        ...call,
-        type: 'phone' as const,
-        date: call.created_at,
-        status: call.call_status,
-        session_type: 'behavioral' as const,
-        interview_mode: 'phone' as const,
-        voice_name: call.voice_name
-      }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [sessions, phoneCalls]);
+    return sessions.map(session => ({
+      ...session,
+      type: 'web' as const,
+      date: session.session_start,
+      status: session.is_completed ? 'completed' : 'incomplete',
+      interview_mode: (session.interview_mode || 'web') as 'web' | 'phone',
+      voice_name: session.voice_name
+    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [sessions]);
 
-  // Filter interviews based on voice
   const filteredInterviews = useMemo(() => {
     return allInterviews.filter(interview => {
-      const matchesVoiceFilter = voiceFilter === 'all' || 
+      const matchesVoiceFilter = voiceFilter === 'all' ||
         (interview.voice_name && interview.voice_name === voiceFilter);
-      
+
       return matchesVoiceFilter;
     });
   }, [allInterviews, voiceFilter]);
 
-  // Group interviews by date
   const groupedInterviews = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -354,28 +258,13 @@ export function useInterviewData() {
   }, [filteredInterviews]);
 
   const handleSelectInterview = useCallback((interview: CombinedInterview) => {
-    if (interview.type === 'web') {
-      // Find the original session from the sessions array
-      const originalSession = sessions.find(session => session.id === interview.id);
-      if (originalSession) {
-        setSelectedSession(originalSession);
-          setSelectedPhoneCall(null);
-        // Always try to fetch score - let the API determine if one exists
-        // This fixes the issue where scores exist but is_completed is false
-        fetchScore(interview.id);
-      }
-    } else {
-      // Find the original phone call from the phoneCalls array
-      const originalPhoneCall = phoneCalls.find(call => call.id === interview.id);
-      if (originalPhoneCall) {
-        setSelectedPhoneCall(originalPhoneCall);
-        setSelectedSession(null);
-        setSelectedScore(null);
-      }
+    const originalSession = sessions.find(session => session.id === interview.id);
+    if (originalSession) {
+      setSelectedSession(originalSession);
+      fetchScore(interview.id);
     }
-  }, [fetchScore, sessions, phoneCalls]);
+  }, [fetchScore, sessions]);
 
-  // Manual refresh function that resets the fetch flag and re-fetches data
   const refreshData = useCallback(async () => {
     hasFetchedDataRef.current = false;
     await fetchSessionsRef.current();
@@ -385,21 +274,21 @@ export function useInterviewData() {
   return {
     // Data
     sessions,
-    phoneCalls,
+    phoneCalls: [],
     allInterviews,
     filteredInterviews,
     groupedInterviews,
-    
+
     // State
     loading,
     voiceFilter,
     selectedSession,
-    selectedPhoneCall,
+    selectedPhoneCall: null,
     selectedScore,
     loadingScore,
     activeTab,
     isExporting,
-    
+
     // Actions
     setVoiceFilter,
     setActiveTab,
@@ -407,7 +296,7 @@ export function useInterviewData() {
     fetchScore,
     deleteSession,
     exportSession,
-    exportPhoneTranscript,
+    exportPhoneTranscript: () => { },
     fetchSessions,
     refreshData
   };

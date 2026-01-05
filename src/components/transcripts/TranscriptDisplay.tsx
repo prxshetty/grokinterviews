@@ -30,7 +30,7 @@ interface InterviewSession {
   interview_scores?: {
     overall_score: number;
     created_at: string;
-  }[];
+  }[] | undefined;
   interview_mode?: 'web' | 'phone';
   voice_name?: string;
 }
@@ -191,8 +191,8 @@ export function TranscriptDisplay({
 
                         <div
                           className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${transcript.interaction_type === 'user_response'
-                              ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
-                              : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                            ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
                             }`}
                         >
                           <p className="text-sm whitespace-pre-wrap">{transcript.transcript_text}</p>
@@ -250,8 +250,8 @@ export function TranscriptDisplay({
 
                           <div
                             className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${message.role === 'user'
-                                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
-                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                              ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
                               }`}
                           >
                             <p className="text-sm whitespace-pre-wrap">{message.message}</p>
@@ -299,8 +299,8 @@ export function TranscriptDisplay({
 
                           <div
                             className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${flow.interactionType === 'user_response'
-                                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
-                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                              ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
                               }`}
                           >
                             <p className="text-sm whitespace-pre-wrap">{flow.transcriptText}</p>

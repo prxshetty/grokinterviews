@@ -1,3 +1,11 @@
+import {
+  createSession as createLocalSession,
+  addMessage,
+  getSession,
+  completeSession,
+  type VoiceSession
+} from '@/utils/transcript-storage';
+
 export interface TerminationReason {
   type: 'rate_limit' | 'microphone_error' | 'network_error' | 'user_abort' | 'system_error';
   message: string;
@@ -17,48 +25,19 @@ export interface AIResponseResult {
 }
 
 export class InterviewService {
-  static async createSession(sessionType: string, voiceName?: string) {
-    const response = await fetch('/api/voice/sessions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ sessionType, voiceName }),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create session');
-    }
-    
-    return response.json();
+  static createSession(sessionType: string, voiceName?: string): { session: VoiceSession } {
+    const validSessionType = sessionType as 'behavioral' | 'technical' | 'custom' | 'sd';
+    const session = createLocalSession(validSessionType, voiceName);
+    return { session };
   }
 
-  static async addInitialWelcomeMessage(sessionId: string, welcomeText: string) {
-    try {
-      const response = await fetch('/api/voice/transcripts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          transcriptText: welcomeText,
-          interactionType: 'ai_response',
-          conversationOrder: 0
-        }),
-      });
-      
-      if (!response.ok) {
-        console.warn('Failed to add initial welcome message to transcripts');
-      }
-    } catch (error) {
-      console.error('Error adding initial welcome message:', error);
-    }
+  static addInitialWelcomeMessage(sessionId: string, welcomeText: string): void {
+    addMessage(sessionId, { type: 'ai', text: welcomeText, timestamp: Date.now() });
   }
 
   static async generateAIResponse(
-    userText: string, 
-    conversationHistory: ConversationMessage[], 
+    userText: string,
+    conversationHistory: ConversationMessage[],
     sessionId: string | null,
     sessionType: string = 'behavioral',
     config?: any
@@ -80,19 +59,18 @@ export class InterviewService {
     if (!response.ok) {
       const errorData = await response.json();
       const errorMessage = errorData.error || 'Failed to generate AI response';
-      
-      // Check for rate limit errors
-      if (response.status === 429 || 
-          errorMessage.toLowerCase().includes('rate limit') || 
-          errorMessage.toLowerCase().includes('quota')) {
+
+      if (response.status === 429 ||
+        errorMessage.toLowerCase().includes('rate limit') ||
+        errorMessage.toLowerCase().includes('quota')) {
         throw new Error(`RATE_LIMIT: ${errorMessage}`);
       }
-      
+
       throw new Error(errorMessage);
     }
 
     const result = await response.json();
-    
+
     if (!result.success || !result.aiResponse) {
       throw new Error('No AI response received');
     }
@@ -100,52 +78,26 @@ export class InterviewService {
     return result;
   }
 
-  static async terminateInterview(
+  static terminateInterview(
     sessionId: string,
-    reason: TerminationReason,
-    conversationHistory: ConversationMessage[]
-  ) {
-    try {
-      const response = await fetch('/api/voice/terminate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          reason,
-          conversationHistory
-        }),
-      });
-
-      if (response.ok) {
-        console.log('✅ Interview terminated successfully in database');
-      } else {
-        console.error('❌ Failed to terminate interview in database');
-      }
-    } catch (error) {
-      console.error('❌ Error calling termination API:', error);
-    }
+    _reason: TerminationReason,
+    _conversationHistory: ConversationMessage[]
+  ): void {
+    completeSession(sessionId);
+    console.log('✅ Interview terminated successfully in localStorage');
   }
 
-  static async fetchSessionTranscripts(sessionId: string) {
-    const response = await fetch(`/api/voice/sessions?sessionId=${sessionId}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch session transcripts');
+  static fetchSessionTranscripts(sessionId: string): any[] {
+    const session = getSession(sessionId);
+    if (!session) {
+      return [];
     }
-    
-    const data = await response.json();
-    const sessionTranscripts = data.transcripts || [];
-    
-    // Sort by conversation_order or created_at ascending (chronological order)
-    sessionTranscripts.sort((a: any, b: any) => {
-      if (a.conversation_order && b.conversation_order) {
-        return a.conversation_order - b.conversation_order;
-      }
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
-    
-    return sessionTranscripts;
+
+    return session.messages.map((msg, index) => ({
+      transcript_text: msg.text,
+      interaction_type: msg.type === 'ai' ? 'ai_response' : 'user_response',
+      conversation_order: index,
+      created_at: new Date(msg.timestamp).toISOString()
+    }));
   }
 }

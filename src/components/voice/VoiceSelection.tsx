@@ -43,9 +43,8 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
     <div className={cn("space-y-2", className)}>
       <div className="text-center">
         <h3 className="text-sm font-medium text-foreground mb-1">Select Your Interviewer</h3>
-        <p className="text-xs text-muted-foreground">Choose the voice for your AI interviewer</p>
       </div>
-      
+
       {/* All Voices in Single Row */}
       <div className="flex justify-center gap-2">
         {allVoices.map((voice) => (
@@ -77,7 +76,7 @@ export function VoiceSelection({ selectedVoice, onVoiceChange, className }: Voic
                 draggable={false}
               />
             </div>
-            
+
             {/* Voice Info */}
             <div className="text-center">
               <div className={cn(

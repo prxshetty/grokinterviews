@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 import { type AIConfig } from '@/utils/ai-config-storage';
+import { createSession as createLocalSession, addMessage, completeSession } from '@/utils/transcript-storage';
 
 export interface InterviewSession {
   id: string | null;
@@ -22,7 +23,6 @@ export interface UseInterviewSessionReturn {
   setSessionCompleted: (completed: boolean) => void;
 }
 
-// Utility function to generate dynamic welcome messages (fallback)
 const generateWelcomeMessage = (sessionType: string, config?: InterviewModeConfig): string => {
   const baseGreeting = "Welcome to your";
 
@@ -49,11 +49,8 @@ const generateWelcomeMessage = (sessionType: string, config?: InterviewModeConfi
   }
 };
 
-// Async function to fetch personalized welcome message from API
-// Async function to fetch personalized welcome message from API
 const fetchWelcomeMessage = async (sessionType: string, config?: InterviewModeConfig, voice?: string, aiConfig?: AIConfig | null): Promise<string> => {
   try {
-    // If no API key, use fallback immediately
     if (!aiConfig?.apiKey) {
       console.warn('No API key provided for welcome message, using fallback');
       return generateWelcomeMessage(sessionType, config);
@@ -65,7 +62,7 @@ const fetchWelcomeMessage = async (sessionType: string, config?: InterviewModeCo
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'welcome', // New field to distinguish request type
+        type: 'welcome',
         sessionType,
         config,
         voiceName: voice,
@@ -79,7 +76,6 @@ const fetchWelcomeMessage = async (sessionType: string, config?: InterviewModeCo
       return result.welcomeMessage;
     }
 
-    // Fallback if API fails
     console.warn('Failed to fetch welcome message, using fallback:', response.status);
     return generateWelcomeMessage(sessionType, config);
 
@@ -101,54 +97,23 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
 
   const createSession = useCallback(async (sessionType: string, voiceName?: string, config?: InterviewModeConfig, aiConfig?: AIConfig | null): Promise<string | null> => {
     try {
-      const response = await fetch('/api/voice/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionType, voiceName }),
-      });
+      const validSessionType = sessionType as 'behavioral' | 'technical' | 'custom' | 'sd';
+      const localSession = createLocalSession(validSessionType, voiceName);
+      const newSessionId = localSession.id;
+      const welcomeMessage = await fetchWelcomeMessage(sessionType, config, voiceName, aiConfig);
+      addMessage(newSessionId, { type: 'ai', text: welcomeMessage, timestamp: Date.now() });
 
-      if (response.ok) {
-        const result = await response.json();
-        const newSessionId = result.session.id;
+      setSession(prev => ({
+        ...prev,
+        id: newSessionId,
+        isActive: true,
+        isCompleted: false,
+        conversationHistory: [],
+        currentQuestion: welcomeMessage,
+        interviewReport: null,
+      }));
 
-        // Fetch personalized welcome message
-        const welcomeMessage = await fetchWelcomeMessage(sessionType, config, voiceName, aiConfig);
-
-        // Store the welcome message in transcripts for conversation order 0
-        try {
-          await fetch('/api/voice/store-conversation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sessionId: newSessionId,
-              transcriptText: welcomeMessage,
-              interactionType: 'ai_response',
-              conversationOrder: 0,
-              sessionType,
-              voiceName,
-            }),
-          })
-        } catch (error) {
-          console.error('Error storing welcome transcript:', error)
-        }
-
-        setSession(prev => ({
-          ...prev,
-          id: newSessionId,
-          isActive: true,
-          isCompleted: false,
-          conversationHistory: [],
-          currentQuestion: welcomeMessage,
-          interviewReport: null,
-        }));
-
-        return newSessionId;
-      }
-      return null;
+      return newSessionId;
     } catch (error) {
       console.error('Error creating session:', error);
       return null;
@@ -156,23 +121,9 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
   }, []);
 
   const endSession = useCallback(async (aiConfig?: AIConfig | null) => {
-    // Mark session as completed in database if there's an active session
     if (session.id) {
-      try {
-        await fetch('/api/voice/sessions/complete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sessionId: session.id }),
-        });
-      } catch (error) {
-        console.error('Error marking session as completed:', error);
-        // Continue with local state reset even if API call fails
-      }
+      completeSession(session.id);
     }
-
-    // Reset to default welcome message
     const welcomeMessage = await fetchWelcomeMessage('behavioral', undefined, undefined, aiConfig);
 
     setSession(prev => ({
