@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { User } from '@supabase/supabase-js';
-import Groq from 'groq-sdk';
 import { createClient } from '@/utils/supabase/server';
 import { checkRateLimit as checkUserRateLimit } from '@/utils/rateLimiting';
-import { 
+import {
   ConversationRequest,
   ConversationResponse,
 } from '../types';
-import { 
-  ERROR_MESSAGES, 
-  HTTP_STATUS 
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS
 } from '../constants';
 
 export class ValidationMiddleware {
@@ -20,7 +19,7 @@ export class ValidationMiddleware {
   }> {
     try {
       const body = await request.json();
-      
+
       // Validate required fields
       if (!body.userResponse || !body.userResponse.trim()) {
         return {
@@ -64,7 +63,7 @@ export class ValidationMiddleware {
     try {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         return {
           isAuthenticated: false,
@@ -93,7 +92,7 @@ export class ValidationMiddleware {
   ): Promise<NextResponse> {
     try {
       const rateLimitResult = await checkUserRateLimit('web', userId, voiceId);
-      
+
       if (!rateLimitResult.isAllowed) {
         return NextResponse.json({
           error: ERROR_MESSAGES.RATE_LIMIT_EXCEEDED,
@@ -102,9 +101,9 @@ export class ValidationMiddleware {
         }, { status: HTTP_STATUS.RATE_LIMIT });
       }
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         rateLimited: false,
-        remainingAttempts: rateLimitResult.remainingAttempts 
+        remainingAttempts: rateLimitResult.remainingAttempts
       });
     } catch (error) {
       return NextResponse.json({
@@ -128,7 +127,7 @@ export class ValidationMiddleware {
 
     try {
       const rateLimitResult = await checkUserRateLimit('web', userId, voiceId);
-      
+
       if (!rateLimitResult.isAllowed) {
         return {
           isAllowed: false,
@@ -154,21 +153,9 @@ export class ValidationMiddleware {
   static handleError(error: any): NextResponse {
     console.error('API Error:', error);
 
-    // Handle specific Groq API errors
-    if (error instanceof Groq.APIError) {
-      return NextResponse.json(
-        { 
-          error: ERROR_MESSAGES.AI_INTERVIEW_FAILED, 
-          details: error.message,
-          type: 'groq_api_error'
-        },
-        { status: HTTP_STATUS.INTERNAL_SERVER_ERROR }
-      );
-    }
-
     // Handle other errors
     return NextResponse.json(
-      { 
+      {
         error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
         details: error.message || 'Unknown error occurred'
       },

@@ -9,15 +9,14 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { TranscriptReport } from '@/components/transcripts/TranscriptReport';
 import { AnalysisCard } from '@/components/transcripts/AnalysisCard';
 import { DetailedFeedbackCard } from '@/components/transcripts/DetailedFeedbackCard';
-import { 
-  TrendingUp, 
-  Eye, 
+import {
+  TrendingUp,
+  Eye,
   ChevronRight,
   BarChart3,
 } from 'lucide-react';
 import { DEFAULT_AVATAR_URL } from '@/config';
 import { getVoiceAvatarUrl } from '@/utils/voiceUtils';
-import { MiniAudioPlayer } from '@/components/ui/MiniAudioPlayer';
 
 interface InterviewSession {
   id: string;
@@ -141,7 +140,7 @@ export function TranscriptDisplay({
   }
 
   const isWebInterview = !!selectedSession;
-  
+
   return (
     <div className="flex-1 bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm flex flex-col">
       {/* Tab Navigation with Session Info */}
@@ -155,11 +154,6 @@ export function TranscriptDisplay({
             activeTab={activeTab}
             onTabChange={onTabChange}
           />
-          
-          {/* Mini Audio Player for Phone Interviews */}
-          {selectedPhoneCall && (
-            <MiniAudioPlayer callId={selectedPhoneCall.vapi_call_id} />
-          )}
         </div>
       </div>
 
@@ -171,16 +165,15 @@ export function TranscriptDisplay({
           <div className="h-full overflow-y-auto px-6 py-6">
             {isWebInterview ? (
               /* Web Interview Transcript */
-              <div className="space-y-6">       
+              <div className="space-y-6">
                 <div className="space-y-4">
                   {selectedSession?.transcripts
                     ?.sort((a, b) => a.conversation_order - b.conversation_order)
                     .map((transcript) => (
                       <div
                         key={transcript.id}
-                        className={`flex gap-3 ${
-                          transcript.interaction_type === 'user_response' ? 'justify-end' : 'justify-start'
-                        }`}
+                        className={`flex gap-3 ${transcript.interaction_type === 'user_response' ? 'justify-end' : 'justify-start'
+                          }`}
                       >
                         {transcript.interaction_type === 'ai_response' && (
                           <div className="flex-shrink-0">
@@ -195,25 +188,23 @@ export function TranscriptDisplay({
                             />
                           </div>
                         )}
-                        
+
                         <div
-                           className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${
-                             transcript.interaction_type === 'user_response'
-                               ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
-                               : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
-                           }`}
-                         >
-                           <p className="text-sm whitespace-pre-wrap">{transcript.transcript_text}</p>
-                           <p className={`text-xs opacity-70 mt-2 ${
-                             transcript.interaction_type === 'user_response' ? 'text-right' : 'text-left'
-                           }`}>
-                             {new Date(transcript.created_at).toLocaleTimeString([], {
-                               hour: '2-digit',
-                               minute: '2-digit'
-                             })}
-                           </p>
-                         </div>
-                        
+                          className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${transcript.interaction_type === 'user_response'
+                              ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                            }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">{transcript.transcript_text}</p>
+                          <p className={`text-xs opacity-70 mt-2 ${transcript.interaction_type === 'user_response' ? 'text-right' : 'text-left'
+                            }`}>
+                            {new Date(transcript.created_at).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+
                         {transcript.interaction_type === 'user_response' && (
                           <div className="flex-shrink-0">
                             <Avatar className="h-8 w-8">
@@ -230,7 +221,7 @@ export function TranscriptDisplay({
               </div>
             ) : (
               /* Phone Call Transcript */
-              <div className="space-y-6">                
+              <div className="space-y-6">
                 <div className="space-y-4">
                   {/* Use VAPI messages if available, fallback to conversationFlow */}
                   {selectedPhoneCall?.vapiData?.messages && selectedPhoneCall.vapiData.messages.length > 0 ? (
@@ -240,9 +231,8 @@ export function TranscriptDisplay({
                       .map((message, index) => (
                         <div
                           key={`vapi-${index}`}
-                          className={`flex gap-3 ${
-                            message.role === 'user' ? 'justify-end' : 'justify-start'
-                          }`}
+                          className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'
+                            }`}
                         >
                           {message.role === 'bot' && (
                             <div className="flex-shrink-0">
@@ -257,22 +247,20 @@ export function TranscriptDisplay({
                               />
                             </div>
                           )}
-                          
+
                           <div
-                             className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${
-                               message.role === 'user'
-                                 ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
-                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
-                             }`}
-                           >
-                             <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-                             <p className={`text-xs opacity-70 mt-2 ${
-                               message.role === 'user' ? 'text-right' : 'text-left'
-                             }`}>
-                               {Math.floor(message.secondsFromStart / 60)}:{String(Math.floor(message.secondsFromStart % 60)).padStart(2, '0')}
-                             </p>
-                           </div>
-                          
+                            className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${message.role === 'user'
+                                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                              }`}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                            <p className={`text-xs opacity-70 mt-2 ${message.role === 'user' ? 'text-right' : 'text-left'
+                              }`}>
+                              {Math.floor(message.secondsFromStart / 60)}:{String(Math.floor(message.secondsFromStart % 60)).padStart(2, '0')}
+                            </p>
+                          </div>
+
                           {message.role === 'user' && (
                             <div className="flex-shrink-0">
                               <Avatar className="h-8 w-8">
@@ -292,9 +280,8 @@ export function TranscriptDisplay({
                       .map((flow) => (
                         <div
                           key={flow.id}
-                          className={`flex gap-3 ${
-                            flow.interactionType === 'user_response' ? 'justify-end' : 'justify-start'
-                          }`}
+                          className={`flex gap-3 ${flow.interactionType === 'user_response' ? 'justify-end' : 'justify-start'
+                            }`}
                         >
                           {flow.interactionType === 'ai_response' && (
                             <div className="flex-shrink-0">
@@ -309,25 +296,23 @@ export function TranscriptDisplay({
                               />
                             </div>
                           )}
-                          
+
                           <div
-                             className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${
-                               flow.interactionType === 'user_response'
-                                 ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
-                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
-                             }`}
-                           >
-                             <p className="text-sm whitespace-pre-wrap">{flow.transcriptText}</p>
-                             <p className={`text-xs opacity-70 mt-2 ${
-                               flow.interactionType === 'user_response' ? 'text-right' : 'text-left'
-                             }`}>
-                               {new Date(flow.createdAt).toLocaleTimeString([], {
-                                 hour: '2-digit',
-                                 minute: '2-digit'
-                               })}
-                             </p>
-                           </div>
-                          
+                            className={`max-w-sm lg:max-w-lg xl:max-w-2xl px-4 py-2 ${flow.interactionType === 'user_response'
+                                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-md'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-tl-md'
+                              }`}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">{flow.transcriptText}</p>
+                            <p className={`text-xs opacity-70 mt-2 ${flow.interactionType === 'user_response' ? 'text-right' : 'text-left'
+                              }`}>
+                              {new Date(flow.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+
                           {flow.interactionType === 'user_response' && (
                             <div className="flex-shrink-0">
                               <Avatar className="h-8 w-8">
@@ -355,7 +340,7 @@ export function TranscriptDisplay({
               </div>
             ) : (
               <div className="space-y-6">
-                
+
                 {(selectedScore || selectedPhoneCall?.analysis_summary) ? (
                   <div className="space-y-6">
                     {/* First Row - Overall Score and Recommendations */}
@@ -383,7 +368,7 @@ export function TranscriptDisplay({
                         icon={<TrendingUp className="h-5 w-5" />}
                         colorClassName="text-green-600 dark:text-green-400"
                       />
-                      
+
                       <AnalysisCard
                         title="Areas for Improvement"
                         items={selectedScore?.weaknesses ?? selectedPhoneCall?.weaknesses ?? []}

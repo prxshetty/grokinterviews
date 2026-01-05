@@ -4,6 +4,7 @@ import { InterviewModeConfig } from '@/app/api/voice/types'
 import TechnicalInterviewForm from './TechnicalInterviewForm'
 import SystemDesignForm from './SystemDesignForm'
 import BehaviorInterviewForm from './BehaviorInterviewForm'
+import { VoiceSelection, type VoiceType } from '@/components/voice/VoiceSelection'
 
 // Default objects to prevent re-renders
 const DEFAULT_CUSTOM_CONFIG: InterviewModeConfig = {
@@ -27,6 +28,8 @@ interface InterviewSelectionPanelProps {
   customConfig?: InterviewModeConfig
   onCustomConfigChange?: (config: InterviewModeConfig) => void
   customConfigErrors?: Record<string, string>
+  selectedVoice?: VoiceType | null
+  onVoiceChange?: (voice: VoiceType) => void
 }
 
 export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = ({
@@ -42,6 +45,8 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
   customConfig,
   onCustomConfigChange,
   customConfigErrors,
+  selectedVoice,
+  onVoiceChange,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [previousType, setPreviousType] = useState(selectedType);
@@ -65,7 +70,7 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
 
   // Memoize the callback to prevent re-renders
   const stableOnCustomConfigChange = useMemo(
-    () => onCustomConfigChange || (() => {}),
+    () => onCustomConfigChange || (() => { }),
     [onCustomConfigChange]
   );
 
@@ -118,9 +123,8 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
   return (
     <div className="font-pp-editorial font-light flex flex-col gap-4 items-center w-full pt-20 md:pt-24">
       {/* Top Section: AI Avatar with Carousel */}
-      <div className={`flex flex-col items-center transition-all duration-500 ease-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      }`}>
+      <div className={`flex flex-col items-center transition-all duration-500 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}>
         <InterviewAvatar
           isInterviewActive={isInterviewActive}
           isPlayingTTS={isPlayingTTS}
@@ -130,14 +134,13 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
           onTypeChange={onTypeChange}
         />
       </div>
-      
+
       {/* Interview Title */}
       {!isInterviewActive && (
         <div
           key={selectedType}
-          className={`transition-all duration-700 ease-out transform-gpu ${
-            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
-          }`}
+          className={`transition-all duration-700 ease-out transform-gpu ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+            }`}
           style={{ transitionDelay: isVisible ? '150ms' : '0ms' }}>
           <h2 className="font-editorial font-light text-3xl md:text-4xl text-center mt-2 transform">
             {(() => {
@@ -156,11 +159,20 @@ export const InterviewSelectionPanel: React.FC<InterviewSelectionPanelProps> = (
       )}
 
       {/* Bottom Section: Interview Configuration Forms */}
-      <div className={`w-full transition-all duration-700 ease-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      }`}
-      style={{ transitionDelay: isVisible ? '200ms' : '0ms' }}>
+      <div className={`w-full transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+        style={{ transitionDelay: isVisible ? '200ms' : '0ms' }}>
         {renderInterviewForm()}
+
+        {/* Voice Selection - shown when not in active interview */}
+        {!isInterviewActive && onVoiceChange && (
+          <div className="mt-6">
+            <VoiceSelection
+              selectedVoice={selectedVoice || null}
+              onVoiceChange={onVoiceChange}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

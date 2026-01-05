@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         const response = await client.chat.completions.create({
             model: provider === 'openai' ? 'gpt-5-nano-2025-08-07' : 'gemini-2.5-flash-lite',
             messages: [{ role: 'user', content: 'Say "OK"' }],
-            max_tokens: 5,
+            max_completion_tokens: 5,
         });
 
         if (response.choices && response.choices.length > 0) {

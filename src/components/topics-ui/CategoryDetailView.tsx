@@ -17,7 +17,7 @@ import { QuestionType, TopicItem, DisplayItem, TopicResponse } from '@/types/top
 // Animation variants that don't use transforms
 const fadeInVariants: Variants = {
   hidden: { opacity: 0 },
-  visible: { 
+  visible: {
     opacity: 1,
     transition: { duration: 0.3, ease: "easeOut" as const }
   }
@@ -42,24 +42,24 @@ export default function CategoryDetailView({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   // Set user ID on questionCache when user changes
   useEffect(() => {
     questionCache.setUserId(user?.id);
   }, [user?.id]);
-  
+
   // Local state for UI elements
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Initialize subtopic state from URL parameters
   const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(() => {
     return searchParams.get('subtopic') || null;
   });
   const [subtopicDetails, setSubtopicDetails] = useState<TopicItem | null>(null);
-  
+
   const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
-  const [isSubtopicProgressLoading, ] = useState(false);
-  
+  const [isSubtopicProgressLoading,] = useState(false);
+
   // Local state to store bookmark status
   const [bookmarkStatus, setBookmarkStatus] = useState<Record<number, boolean>>({});
 
@@ -69,7 +69,7 @@ export default function CategoryDetailView({
 
   // Local state for difficulty to handle filtering entirely on the client
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(() => searchParams.get('difficulty'));
-  
+
   // State for Accordion: stores the value (questionId.toString()) of the currently open item.
   const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(
     highlightedQuestionId ? highlightedQuestionId.toString() : undefined
@@ -77,7 +77,7 @@ export default function CategoryDetailView({
 
   // Track if we should allow scroll effects to prevent interference with manual accordion operations
   const [allowScrollEffect, setAllowScrollEffect] = useState(true);
-  
+
   // Track which question ID we've already handled from URL to prevent re-opening
   const [handledQuestionId, setHandledQuestionId] = useState<number | null>(null);
 
@@ -87,18 +87,18 @@ export default function CategoryDetailView({
   const hasQuestions = categoryDetails?.questions && categoryDetails.questions.length > 0;
 
   // Memoize expensive calculations
-  
+
   // Memoize the questions to filter based on selected subtopic
   const questionsToFilter = useMemo(() => {
-    return selectedSubtopic && subtopicDetails?.questions 
-      ? subtopicDetails.questions 
+    return selectedSubtopic && subtopicDetails?.questions
+      ? subtopicDetails.questions
       : categoryDetails?.questions || [];
   }, [selectedSubtopic, subtopicDetails?.questions, categoryDetails?.questions]);
 
   // Memoize the filtered questions calculation using local state
   const memoizedFilteredQuestions = useMemo(() => {
     if (!questionsToFilter || questionsToFilter.length === 0) return [];
-    
+
     if (selectedDifficulty) {
       return questionsToFilter.filter((q: QuestionType) => q.difficulty === selectedDifficulty);
     }
@@ -108,15 +108,15 @@ export default function CategoryDetailView({
   // Memoize the expensive questionsByCategory grouping operation
   const questionsByCategory = useMemo(() => {
     const grouped: Record<number, { name: string; questions: QuestionType[], topic_id: number; }> = {};
-    
+
     if (memoizedFilteredQuestions.length > 0) {
       // Group questions by their category
       memoizedFilteredQuestions.forEach((question: QuestionType) => {
         if (question.categories) {
           const categoryId = question.categories.id;
           if (!grouped[categoryId]) {
-            grouped[categoryId] = { 
-              name: question.categories.name, 
+            grouped[categoryId] = {
+              name: question.categories.name,
               questions: [],
               topic_id: question.categories.topic_id
             };
@@ -125,7 +125,7 @@ export default function CategoryDetailView({
         }
       });
     }
-    
+
     return grouped;
   }, [memoizedFilteredQuestions]);
 
@@ -134,7 +134,7 @@ export default function CategoryDetailView({
     if (!categoryDetails?.subtopics) {
       return [];
     }
-    
+
     return Object.entries(categoryDetails.subtopics)
       .filter(([id]) => id.startsWith('topic-'))
       .map(([id, subtopicData]) => {
@@ -154,7 +154,7 @@ export default function CategoryDetailView({
 
   // Callback to handle bookmark status changes from individual QuestionWithAnswer components
   const handleBookmarkChangeFromQuestion = useCallback((
-    questionId: number, 
+    questionId: number,
     newStatus: boolean
   ) => {
     setBookmarkStatus(prevStatus => ({
@@ -182,11 +182,11 @@ export default function CategoryDetailView({
       try {
         const questions = memoizedFilteredQuestions;
         const questionIds = questions.map(q => q.id);
-        
+
         if (questionIds.length > 0) {
           try {
             const completedResults = questionIds.map(id => questionCache.isQuestionCompleted(id));
-            
+
             if (!signal.aborted) {
               const newCompletedStatus: Record<number, boolean> = {};
               questionIds.forEach((id: number, index: number) => {
@@ -226,45 +226,45 @@ export default function CategoryDetailView({
   const loadSubtopicDetails = useCallback(async (topicId: string) => {
     try {
       setIsLoading(true);
-      
+
       const topicNumericId = parseInt(topicId.replace('topic-', ''));
       if (isNaN(topicNumericId)) {
         setIsLoading(false);
         return;
       }
-      
+
       const response = await fetch(`/api/topics/topic-details?topicId=${topicNumericId}`);
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(`Failed to fetch subtopic details: ${response.status} ${response.statusText} - ${errorData}`);
       }
-      
+
       const data: TopicResponse = await response.json();
-      
+
       if (data && data.topic) {
         const formattedSubtopic: TopicItem = {
           id: topicId,
           label: data.topic.name,
           content: data.topic.description || '',
-          questions: data.categories && data.categories.length > 0 
+          questions: data.categories && data.categories.length > 0
             ? data.categories.flatMap(cat => (cat.questions || []).map(q => ({
-                ...q,
-                categories: {
-                  id: cat.id,
-                  name: cat.name,
-                  topic_id: cat.topic_id
-                }
-              })))
+              ...q,
+              categories: {
+                id: cat.id,
+                name: cat.name,
+                topic_id: cat.topic_id
+              }
+            })))
             : [],
           subtopicId: data.topic.id
         };
-        
+
         setSubtopicDetails(formattedSubtopic);
         setOpenQuestionId(undefined);
       } else {
         // console.error('Invalid subtopic data structure:', data);
       }
-    } catch { 
+    } catch {
       // console.error('Error fetching subtopic details:', error);
     } finally {
       setIsLoading(false);
@@ -280,22 +280,22 @@ export default function CategoryDetailView({
 
   // Auto-scroll to question or category section when question is highlighted from URL
   useEffect(() => {
-    if (highlightedQuestionId && 
-        (memoizedFilteredQuestions.length > 0 || (hasGroupedQuestions && Object.keys(questionsByCategory).length > 0)) &&
-        allowScrollEffect &&
-        handledQuestionId !== highlightedQuestionId) {
-      
+    if (highlightedQuestionId &&
+      (memoizedFilteredQuestions.length > 0 || (hasGroupedQuestions && Object.keys(questionsByCategory).length > 0)) &&
+      allowScrollEffect &&
+      handledQuestionId !== highlightedQuestionId) {
+
       const performStagedScroll = () => {
         let scrollTarget = null;
         let isQuestionElement = false;
-        
+
         const possibleQuestionSelectors = [
           `[data-value="${highlightedQuestionId}"]`,
           `[value="${highlightedQuestionId}"]`,
           `#question-${highlightedQuestionId}`,
           `[data-question-id="${highlightedQuestionId}"]`
         ];
-        
+
         for (const selector of possibleQuestionSelectors) {
           scrollTarget = document.querySelector(selector);
           if (scrollTarget) {
@@ -303,48 +303,48 @@ export default function CategoryDetailView({
             break;
           }
         }
-        
+
         if (!scrollTarget && hasGroupedQuestions && Object.keys(questionsByCategory).length > 0) {
           const categoryIdFromUrl = searchParams.get('categoryId');
-          
-          const targetCategoryId = categoryIdFromUrl || 
+
+          const targetCategoryId = categoryIdFromUrl ||
             Object.entries(questionsByCategory).find(([_, category]) =>
               category.questions.some(q => q.id === highlightedQuestionId)
             )?.[0];
-          
+
           if (targetCategoryId) {
             scrollTarget = document.getElementById(`category-${targetCategoryId}`);
           }
         }
-        
+
         if (scrollTarget) {
           const navHeight = 64;
           const additionalOffset = 20;
           const elementRect = scrollTarget.getBoundingClientRect();
           let scrollPosition;
-          
+
           if (isQuestionElement) {
             scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
           } else {
             scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
           }
-          
+
           scrollPosition = Math.max(0, scrollPosition);
-          
+
           window.scrollTo({
             top: scrollPosition,
             behavior: 'smooth'
           });
-          
+
           setTimeout(() => {
             setOpenQuestionId(highlightedQuestionId.toString());
             setHandledQuestionId(highlightedQuestionId);
-            
+
             setTimeout(() => {
-              const updatedElement = isQuestionElement 
+              const updatedElement = isQuestionElement
                 ? document.querySelector(`[data-value="${highlightedQuestionId}"]`)
                 : document.getElementById(`category-${searchParams.get('categoryId') || ''}`);
-                
+
               if (updatedElement) {
                 const updatedRect = updatedElement.getBoundingClientRect();
                 if (updatedRect.top < navHeight || updatedRect.top > navHeight + 100) {
@@ -384,7 +384,7 @@ export default function CategoryDetailView({
     newSearchParams.set('subtopic', topicId);
     newSearchParams.delete('q');
     router.push(`${pathname}?${newSearchParams.toString()}`);
-    
+
     setSelectedSubtopic(topicId);
     await loadSubtopicDetails(topicId);
   }, [searchParams, router, pathname, loadSubtopicDetails]);
@@ -395,7 +395,7 @@ export default function CategoryDetailView({
     newSearchParams.delete('subtopic');
     newSearchParams.delete('q');
     router.push(`${pathname}?${newSearchParams.toString()}`);
-    
+
     setSelectedSubtopic(null);
     setSubtopicDetails(null);
     setOpenQuestionId(undefined);
@@ -422,31 +422,27 @@ export default function CategoryDetailView({
     params.delete('difficulty');
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
-  
+
   const handleCompletionChange = useCallback(async (
-    questionId: number, 
+    questionId: number,
     status: boolean,
-    _changedQuestionTopicId?: number, 
+    _changedQuestionTopicId?: number,
     _changedQuestionCategoryId?: number
   ) => {
     setCompletedQuestions(prev => ({ ...prev, [questionId]: status }));
-
-    if (status && typeof window !== 'undefined' && window.invalidateStreakCache) {
-      window.invalidateStreakCache();
-    }
   }, [setCompletedQuestions]);
 
   // Handler for Accordion's onValueChange
   const handleOpenQuestionChange = useCallback((value: string) => {
     setOpenQuestionId(value);
-    
+
     setAllowScrollEffect(false);
     setTimeout(() => setAllowScrollEffect(true), 1000);
-    
+
     if (value) {
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.set('q', value);
-      
+
       const questionId = parseInt(value);
       if (questionId && hasGroupedQuestions) {
         const categoryEntry = Object.entries(questionsByCategory).find(([_, category]) =>
@@ -457,7 +453,7 @@ export default function CategoryDetailView({
           newSearchParams.set('categoryId', catId);
         }
       }
-      
+
       router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
     } else {
       const newSearchParams = new URLSearchParams(searchParams);
@@ -486,10 +482,10 @@ export default function CategoryDetailView({
 
   if (isLoading && !categoryDetails) {
     return (
-      <LoadingSpinner 
-        size="lg" 
-        color="primary" 
-        text="Loading content..." 
+      <LoadingSpinner
+        size="lg"
+        color="primary"
+        text="Loading content..."
         centered={true}
       />
     );
@@ -497,10 +493,10 @@ export default function CategoryDetailView({
 
   if (selectedSubtopic && isLoading) {
     return (
-      <LoadingSpinner 
-        size="lg" 
-        color="primary" 
-        text="Loading topic questions..." 
+      <LoadingSpinner
+        size="lg"
+        color="primary"
+        text="Loading topic questions..."
         centered={true}
       />
     );
@@ -509,7 +505,7 @@ export default function CategoryDetailView({
   // If a subtopic is selected, show its details
   if (selectedSubtopic && subtopicDetails) {
     return (
-      <motion.div 
+      <motion.div
         className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8"
         initial="hidden"
         animate="visible"
@@ -542,7 +538,7 @@ export default function CategoryDetailView({
             )}
           </div>
         </div>
-        
+
         <AnimatePresence mode="wait">
           <motion.div
             key={selectedDifficulty}
@@ -570,9 +566,9 @@ export default function CategoryDetailView({
               </div>
             ) : hasGroupedQuestions ? (
               <div className="no-select no-print">
-                <Accordion 
-                  type="single" 
-                  collapsible 
+                <Accordion
+                  type="single"
+                  collapsible
                   className="w-full space-y-1"
                   value={openQuestionId || ""}
                   onValueChange={handleOpenQuestionChange}
@@ -610,7 +606,7 @@ export default function CategoryDetailView({
                       </div>
                       {/* Accordion items for questions within this category group */}
                       {category.questions.map((question, _) => (
-                        <QuestionWithAnswer 
+                        <QuestionWithAnswer
                           key={question.id}
                           question={question}
                           topicId={question.categories?.topic_id ?? 0}
@@ -630,15 +626,15 @@ export default function CategoryDetailView({
               // Fallback to simple question list if no category info
               <div className="pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20 no-select no-print">
                 <h2 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl lg:text-4xl xl:text-5xl mb-6">Questions</h2>
-                <Accordion 
-                  type="single" 
-                  collapsible 
+                <Accordion
+                  type="single"
+                  collapsible
                   className="w-full space-y-2"
                   value={openQuestionId || ""}
                   onValueChange={handleOpenQuestionChange}
                 >
                   {memoizedFilteredQuestions.map((question, _) => (
-                    <QuestionWithAnswer 
+                    <QuestionWithAnswer
                       key={question.id}
                       question={question}
                       topicId={subtopicDetails?.subtopicId ?? 0}
@@ -662,10 +658,10 @@ export default function CategoryDetailView({
       </motion.div>
     );
   }
-  
+
   // Render category details
   return (
-    <motion.div 
+    <motion.div
       className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 py-4 pt-12 sm:pt-16 md:pt-20"
       initial="hidden"
       animate="visible"
@@ -699,16 +695,16 @@ export default function CategoryDetailView({
           )}
         </div>
       </div>
-      
+
       {/* If the category has subtopics, show them */}
       {hasRealSubtopics && categoryDetails?.subtopics && (
         <div className="mb-6">
           {isSubtopicProgressLoading ? (
             // Loading indicator
-            <LoadingSpinner 
-              size="md" 
-              color="secondary" 
-              text="Loading topic progress..." 
+            <LoadingSpinner
+              size="md"
+              color="secondary"
+              text="Loading topic progress..."
               centered={true}
             />
           ) : (
@@ -725,7 +721,7 @@ export default function CategoryDetailView({
           )}
         </div>
       )}
-      
+
       {/* Show questions if available */}
       {hasQuestions && (
         <div className="mt-6 pt-12 sm:pt-16 md:pt-20 lg:pt-16 xl:pt-20">
@@ -745,7 +741,7 @@ export default function CategoryDetailView({
               )}
             </div>
           </div>
-          
+
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedDifficulty}
@@ -773,15 +769,15 @@ export default function CategoryDetailView({
                 </div>
               ) : memoizedFilteredQuestions.length > 0 ? (
                 <div className="no-select no-print">
-                  <Accordion 
-                    type="single" 
-                    collapsible 
+                  <Accordion
+                    type="single"
+                    collapsible
                     className="w-full space-y-2" // Added for consistent spacing
                     value={openQuestionId || ""}
                     onValueChange={handleOpenQuestionChange}
                   >
                     {memoizedFilteredQuestions.map((question, _) => (
-                      <QuestionWithAnswer 
+                      <QuestionWithAnswer
                         key={question.id}
                         question={question}
                         topicId={question.topic_id ?? 0}
@@ -791,7 +787,7 @@ export default function CategoryDetailView({
                         onBookmarkStatusChange={handleBookmarkChangeFromQuestion}
                         isOpen={openQuestionId === question.id.toString()}
                         onRequestClose={() => handleOpenQuestionChange("")}
-                      />  
+                      />
                     ))}
                   </Accordion>
                 </div>
@@ -804,7 +800,7 @@ export default function CategoryDetailView({
           </AnimatePresence>
         </div>
       )}
-      
+
       {/* Show a message if no content is available */}
       {!hasRealSubtopics && !hasQuestions && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
