@@ -11,22 +11,19 @@ interface ConversationMessage {
   timestamp?: number;
 }
 
-// Helper function to get current week identifier (YYYY-WW format)
-function getCurrentWeekIdentifier(): string {
-  const now = new Date();
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-  const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-  return `${now.getFullYear()}-${weekNumber.toString().padStart(2, '0')}`;
-}
-
 // Helper function to generate AI scoring using OpenAI
 async function generateInterviewScore(
   conversationHistory: ConversationMessage[],
   sessionType: InterviewMode,
   apiKey: string,
   config?: InterviewModeConfig
-): Promise<any> {
+): Promise<{
+  overall_score: number;
+  strengths: string[];
+  weaknesses: string[];
+  improvements: string[];
+  detailed_feedback: string;
+}> {
   const userResponses = conversationHistory
     .filter(msg => msg.type === 'user')
     .map(msg => msg.text)
@@ -38,7 +35,7 @@ async function generateInterviewScore(
 
   const completion = await openai.chat.completions.create({
     messages: [{ role: 'user', content: scoringPrompt }],
-    model: 'gpt-4o-mini', // Use a capable but cost-effective model for scoring
+    model: 'gpt-4o-mini',
     temperature: 0.3,
     max_tokens: 800,
     response_format: { type: 'json_object' }
@@ -56,14 +53,14 @@ async function generateInterviewScore(
       improvements: Array.isArray(parsed.improvements) ? parsed.improvements : ['Use STAR method', 'Provide quantifiable results', 'Practice storytelling'],
       detailed_feedback: parsed.detailed_feedback || response
     };
-  } catch (parseError) {
-    console.warn('Failed to parse AI scoring response, using fallback:', parseError);
+  } catch {
+    console.warn('Failed to parse AI scoring response, using fallback');
     return {
       overall_score: 7,
       strengths: ['Provided detailed responses', 'Showed enthusiasm for the role'],
       weaknesses: ['Could improve response structure', 'Needs more specific examples'],
       improvements: ['Use STAR method for behavioral questions', 'Provide quantifiable results', 'Practice storytelling techniques'],
-      detailed_feedback: response || 'The candidate provided responses to the interview questions. Due to a technical issue, detailed feedback could not be generated, but the overall performance was satisfactory.'
+      detailed_feedback: response || 'The candidate provided responses to the interview questions.'
     };
   }
 }
@@ -92,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     const openai = new OpenAI({ apiKey });
 
-    // --- HANDLE WELCOME MESSAGE EXTENSION ---
+    // --- HANDLE WELCOME MESSAGE ---
     if (type === 'welcome') {
       try {
         const supabase = await createClient();
@@ -115,7 +112,7 @@ export async function POST(request: NextRequest) {
 
         const completion = await openai.chat.completions.create({
           messages: [{ role: 'user', content: welcomePrompt }],
-          model: 'gpt-4o-mini', // Fast model for welcome message
+          model: 'gpt-4o-mini',
           temperature: 0.7,
           max_tokens: 200,
         });
@@ -141,7 +138,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // --- CONVERSATION LOGIC (Original POST functionality) ---
+    // --- CONVERSATION LOGIC ---
 
     if (!userResponse || !userResponse.trim()) {
       return NextResponse.json(
@@ -150,12 +147,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
     console.log('🤖 Processing AI interview response:', {
       userResponse: userResponse.substring(0, 100) + '...',
       historyLength: conversationHistory.length,
     });
 
+    // Auth check (for user metadata in prompts, not for DB storage)
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -167,7 +164,6 @@ export async function POST(request: NextRequest) {
     }
 
     const currentQuestionCount = conversationHistory.filter((msg: ConversationMessage) => msg.type === 'user').length;
-
     const isLastQuestion = currentQuestionCount >= 3;
 
     const conversationContext = conversationHistory
@@ -194,7 +190,7 @@ export async function POST(request: NextRequest) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Please provide your next interview question or follow-up based on the candidate's response: "${userResponse}"` },
       ],
-      model: 'gpt-4o-mini', // Use fast model for conversation
+      model: 'gpt-4o-mini',
       temperature: 0.7,
       max_tokens: 200,
     });
@@ -210,117 +206,31 @@ export async function POST(request: NextRequest) {
       responseTime: Date.now() - startTime,
     });
 
-    // Store conversation data to database
-    let currentSessionId = sessionId;
-    // ... DB storage logic ...
-    // Note: Reusing existing logic but keeping it cleaner
-    const currentWeek = getCurrentWeekIdentifier();
-
-    try {
-      if (!currentSessionId) {
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('interview_sessions')
-          .insert({
-            user_id: user.id,
-            session_type: sessionType,
-            session_start: new Date().toISOString(),
-            total_interactions: 0,
-            week_identifier: currentWeek,
-            question_count: 0,
-            is_completed: false,
-            voice_name: voiceName
-          })
-          .select('id')
-          .single();
-
-        if (sessionError) console.error('Error creating session:', sessionError);
-        else currentSessionId = sessionData.id;
-      }
-
-      if (currentSessionId) {
-        await supabase.from('voice_transcripts').insert({
-          user_id: user.id,
-          session_id: currentSessionId,
-          transcript_text: userResponse,
-          interaction_type: 'user_response',
-          conversation_order: conversationHistory.length
-        });
-
-        await supabase.from('voice_transcripts').insert({
-          user_id: user.id,
-          session_id: currentSessionId,
-          transcript_text: aiResponse,
-          interaction_type: 'ai_response',
-          conversation_order: conversationHistory.length + 1
-        });
-
-        const newQuestionCount = currentQuestionCount + 1;
-        const shouldComplete = newQuestionCount >= 5;
-
-        await supabase.from('interview_sessions').update({
-          session_end: shouldComplete ? new Date().toISOString() : null,
-          question_count: newQuestionCount,
-          is_completed: shouldComplete
-        }).eq('id', currentSessionId);
-
-        // If this completes the interview, generate score
-        if (shouldComplete) {
-          console.log('🎯 Interview completed after', newQuestionCount, 'questions');
-
-          try {
-            const updatedHistory = [...conversationHistory,
-            { type: 'user' as const, text: userResponse },
-            { type: 'ai' as const, text: aiResponse }
-            ];
-
-            const score = await generateInterviewScore(updatedHistory, sessionType as InterviewMode, apiKey, config);
-
-            // Check if score already exists for this session
-            const { data: existingScore } = await supabase
-              .from('interview_scores')
-              .select('id')
-              .eq('session_id', currentSessionId)
-              .single();
-
-            if (!existingScore) {
-              await supabase
-                .from('interview_scores')
-                .insert({
-                  session_id: currentSessionId,
-                  overall_score: score.overall_score,
-                  strengths: score.strengths,
-                  weaknesses: score.weaknesses,
-                  improvements: score.improvements,
-                  detailed_feedback: score.detailed_feedback
-                });
-
-              console.log('✅ Interview score generated and stored');
-            }
-          } catch (error) {
-            console.error('⚠️ Failed to generate score:', error);
-          }
-        }
-      }
-    } catch (dbError) {
-      console.error('⚠️ Failed to store conversation data:', dbError);
-    }
-
-    // Check if interview was completed
+    // Check if interview is complete
     const newQuestionCount = currentQuestionCount + 1;
     const isComplete = newQuestionCount >= 5;
 
-    // Get the final score to return if completed
+    // Generate score if complete (returned directly, not stored in DB)
     let interviewScore = null;
-    if (isComplete && currentSessionId) {
+    if (isComplete) {
+      console.log('🎯 Interview completed after', newQuestionCount, 'questions');
+
       try {
-        const { data: scoreData } = await supabase
-          .from('interview_scores')
-          .select('*')
-          .eq('session_id', currentSessionId)
-          .single();
-        interviewScore = scoreData;
+        const updatedHistory: ConversationMessage[] = [
+          ...conversationHistory,
+          { type: 'user' as const, text: userResponse },
+          { type: 'ai' as const, text: aiResponse }
+        ];
+
+        interviewScore = await generateInterviewScore(
+          updatedHistory,
+          sessionType as InterviewMode,
+          apiKey,
+          config
+        );
+        console.log('✅ Interview score generated');
       } catch (error) {
-        console.error('Failed to fetch generated score:', error);
+        console.error('⚠️ Failed to generate score:', error);
       }
     }
 
@@ -328,7 +238,7 @@ export async function POST(request: NextRequest) {
       success: true,
       aiResponse: aiResponse,
       conversationContinues: !isComplete,
-      sessionId: currentSessionId,
+      sessionId: sessionId, // Pass through the client-side session ID
       questionProgress: {
         current: newQuestionCount,
         total: 5,
@@ -336,7 +246,9 @@ export async function POST(request: NextRequest) {
       },
       interviewComplete: isComplete,
       interviewReport: interviewScore,
-      message: isComplete ? (interviewScore ? "Interview completed! Your detailed report is ready." : "Interview completed! Your score will be available shortly.") : undefined
+      message: isComplete
+        ? (interviewScore ? "Interview completed! Your detailed report is ready." : "Interview completed!")
+        : undefined
     });
 
   } catch (error: any) {
