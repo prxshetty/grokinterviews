@@ -175,6 +175,33 @@ export async function POST(request: NextRequest) {
 
     // Try to use Supabase directly first
     try {
+      // If question IDs are provided (for bookmarks or batch fetch)
+      if (body.questionIds && Array.isArray(body.questionIds) && body.questionIds.length > 0) {
+        const { data: questions, error } = await supabase
+          .from('questions')
+          .select(`
+            *,
+            categories:category_id (
+              id,
+              name,
+              topic_id,
+              topic:topic_id (
+                id,
+                name,
+                domain_id,
+                domain:domain_id (
+                    id,
+                    code
+                )
+              )
+            )
+          `)
+          .in('id', body.questionIds);
+
+        if (error) throw error;
+        return NextResponse.json({ questions: questions || [] });
+      }
+
       // If a search query is provided
       if (query) {
         let dbQuery = supabase
