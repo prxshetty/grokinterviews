@@ -23,7 +23,7 @@ interface InterviewSession {
   interview_scores?: {
     overall_score: number;
     created_at: string;
-  }[];
+  }[] | undefined;
   interview_mode?: 'web' | 'phone';
   voice_name?: string;
 }
@@ -56,10 +56,10 @@ interface CombinedInterview {
   status: string;
   session_type: 'behavioral' | 'technical' | 'custom' | 'sd';
   interview_mode: 'web' | 'phone';
-  session_start?: string;
-  session_end?: string | null;
-  call_duration?: number;
-  interview_scores?: any[];
+  session_start?: string | undefined;
+  session_end?: string | null | undefined;
+  call_duration?: number | undefined;
+  interview_scores?: any[] | undefined;
   voice_name?: string | undefined;
 }
 
@@ -110,7 +110,7 @@ export function InterviewList({
 
   const renderInterviewItem = (interview: CombinedInterview) => {
     const isSelected = (selectedSession?.id === interview.id && interview.type === 'web') ||
-                     (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
+      (selectedPhoneCall?.id === interview.id && interview.type === 'phone');
 
     // Use utility functions for voice configuration
     const interviewerName = getVoiceDisplayName(interview.voice_name, interview.type);
@@ -124,7 +124,7 @@ export function InterviewList({
           "group cursor-pointer transition-all duration-300 rounded-full relative",
           "bg-gray-100/80 dark:bg-gray-800/80 shadow-sm border backdrop-blur-sm",
           "hover:shadow-md hover:bg-gray-50/90 dark:hover:bg-gray-750/90",
-          isSelected 
+          isSelected
             ? "border-blue-500/60 shadow-lg bg-blue-50/50 dark:bg-blue-900/20"
             : "border-gray-200/60 dark:border-gray-700/60 hover:border-gray-300/80 dark:hover:border-gray-600/80"
         )}
@@ -135,17 +135,17 @@ export function InterviewList({
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <Avatar className="h-14 w-14 ring-2 ring-white/50 dark:ring-gray-700/50">
-                <AvatarImage 
-                  src={interviewerImage} 
-                  alt={interviewerName} 
-                  className="object-cover object-[center_25%]" 
+                <AvatarImage
+                  src={interviewerImage}
+                  alt={interviewerName}
+                  className="object-cover object-[center_25%]"
                 />
                 <AvatarFallback className="bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                   <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </AvatarFallback>
               </Avatar>
             </div>
-            
+
             {/* Content */}
             <div className="flex-1 min-w-0 mt-1 space-y-1">
               {/* Title (Name) and Tag */}
@@ -153,7 +153,7 @@ export function InterviewList({
                 <h3 className={cn(
                   "text-base font-medium truncate leading-tight",
                   isVoicePremium(interview.voice_name, interview.type)
-                    ? "text-amber-600 dark:text-amber-400" 
+                    ? "text-amber-600 dark:text-amber-400"
                     : "text-gray-900 dark:text-gray-100"
                 )}>
                   {interviewerName}
@@ -169,12 +169,12 @@ export function InterviewList({
                   {interview.session_type === 'sd' ? 'SYSTEM DESIGN' : interview.session_type.toUpperCase()}
                 </span>
               </div>
-              
+
               {/* Subtitle (Date and Duration) */}
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <span>
-                  {new Date(interview.date).toLocaleDateString('en-US', { 
-                    month: 'short', 
+                  {new Date(interview.date).toLocaleDateString('en-US', {
+                    month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
@@ -224,7 +224,7 @@ export function InterviewList({
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm h-full flex flex-col">
-        
+
         {/* Header */}
         <div className="p-4">
           <div className="flex items-center justify-between">
@@ -248,24 +248,24 @@ export function InterviewList({
                 {getAvailableVoices(activeTab)
                   .filter(config => config.tier !== 'premium')
                   .map((config) => (
-                  <SelectItem key={config.technicalName} value={config.technicalName}>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-5 h-5">
-                        <AvatarImage 
-                          src={config.image} 
-                          alt={config.displayName}
-                          className="object-cover object-[center_25%]"
-                        />
-                        <AvatarFallback className="text-xs">
-                          {config.displayName.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-foreground font-medium">
-                        {config.displayName}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
+                    <SelectItem key={config.technicalName} value={config.technicalName}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-5 h-5">
+                          <AvatarImage
+                            src={config.image}
+                            alt={config.displayName}
+                            className="object-cover object-[center_25%]"
+                          />
+                          <AvatarFallback className="text-xs">
+                            {config.displayName.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-foreground font-medium">
+                          {config.displayName}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
