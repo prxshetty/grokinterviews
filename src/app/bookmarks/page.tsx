@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Clock, ArrowRight } from 'lucide-react';
+import { ArrowRight, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TabNav } from '@/components/ui/tab-nav';
 import {
@@ -15,6 +15,7 @@ import {
 
 import { DOMAIN_OPTIONS, getDomainLabel } from '@/config/domain.constants';
 import { DOMAIN_ILLUSTRATIONS } from '@/components/topics-ui/DomainIllustrations';
+import { getBookmarkDetails, removeBookmark } from '@/utils/bookmark-storage';
 
 const allDomains = ['all', ...DOMAIN_OPTIONS.map(option => option.id)];
 
@@ -29,7 +30,6 @@ interface Bookmark {
   domain: string | null;
   sectionName: string | null;
   createdAt: string;
-  updatedAt: string;
   timeAgo: string;
 }
 
@@ -38,53 +38,59 @@ function buildQuestionUrl(bookmark: Bookmark): string {
     return `/topics?q=${bookmark.questionId}`;
   }
   const sectionSlug = bookmark.sectionName
-      ? `header-${bookmark.sectionName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()}`
-      : `bookmark-topic-${bookmark.topicId}`;
+    ? `header-${bookmark.sectionName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()}`
+    : `bookmark-topic-${bookmark.topicId}`;
 
-  const url = new URL(`/topics/${bookmark.domain}`, 'http://localhost:3000');
-  url.searchParams.set('category', sectionSlug);
-  url.searchParams.set('subtopic', `topic-${bookmark.topicId}`);
-  url.searchParams.set('q', bookmark.questionId.toString());
-  url.searchParams.set('categoryId', bookmark.categoryId.toString());
-  return url.pathname + url.search;
+  // Construct URL properly
+  const params = new URLSearchParams();
+  params.set('category', sectionSlug);
+  params.set('subtopic', `topic-${bookmark.topicId}`);
+  params.set('q', bookmark.questionId.toString());
+  params.set('categoryId', bookmark.categoryId.toString());
+
+  return `/topics/${bookmark.domain}?${params.toString()}`;
 }
 
-const BookmarkCard = ({ bookmark }: { bookmark: Bookmark }) => {
-    const Illustration = (bookmark.domain ? DOMAIN_ILLUSTRATIONS[bookmark.domain as keyof typeof DOMAIN_ILLUSTRATIONS] : null) ?? DOMAIN_ILLUSTRATIONS['other'] as React.ComponentType<{ className?: string }>
-    return (
-        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:border-blue-500/30 transition-all duration-300 group">
-            <div className="p-5 sm:p-6">
-                <div className="flex items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                        <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">
-                            {bookmark.sectionName} &gt; {bookmark.categoryName}
-                        </div>
-                        <p className="text-base font-medium text-gray-800 dark:text-gray-200 leading-snug break-words">
-                            {bookmark.questionText}
-                        </p>
-                        <div className="mt-2 flex items-center gap-2">
-                            <Illustration className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {getDomainLabel(bookmark.domain || 'other')}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="flex flex-col items-center justify-center gap-2 h-full">
-                        <Link
-                            href={buildQuestionUrl(bookmark)}
-                            aria-label="View question"
-                            className="inline-flex items-center justify-center h-8 w-8 rounded-full text-blue-600 hover:text-blue-500 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
-                        >
-                            <ArrowRight className="h-4 w-4" />
-                        </Link>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                            <Clock className="w-3 h-3 inline mr-1" />{bookmark.timeAgo}
-                        </span>
-                    </div>
-                </div>
+const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark, onRemove: (id: number) => void }) => {
+  const Illustration = (bookmark.domain ? DOMAIN_ILLUSTRATIONS[bookmark.domain as keyof typeof DOMAIN_ILLUSTRATIONS] : null) ?? DOMAIN_ILLUSTRATIONS['other'] as React.ComponentType<{ className?: string }>
+  return (
+    <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:border-blue-500/30 transition-all duration-300 group">
+      <div className="p-5 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">
+              {bookmark.sectionName} &gt; {bookmark.categoryName}
             </div>
+            <p className="text-base font-medium text-gray-800 dark:text-gray-200 leading-snug break-words">
+              {bookmark.questionText}
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <Illustration className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {getDomainLabel(bookmark.domain || 'other')}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-2 h-full">
+            <Link
+              href={buildQuestionUrl(bookmark)}
+              aria-label="View question"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full text-blue-600 hover:text-blue-500 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/30 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <button
+              onClick={() => onRemove(bookmark.questionId)}
+              aria-label="Remove bookmark"
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 border border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-600 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-    )
+      </div>
+    </div>
+  )
 }
 
 function BookmarksPage() {
@@ -98,10 +104,63 @@ function BookmarksPage() {
     const fetchBookmarks = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/user/bookmarks');
-        if (!response.ok) throw new Error('Failed to fetch bookmarks');
+
+        // 1. Get bookmarks from local storage
+        if (typeof window === 'undefined') {
+          setLoading(false);
+          return;
+        }
+
+        const storedBookmarks = getBookmarkDetails();
+
+        if (storedBookmarks.length === 0) {
+          setBookmarks([]);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Extract question IDs
+        const questionIds = storedBookmarks.map(b => b.questionId);
+
+        // 3. Fetch question details from API
+        const response = await fetch('/api/questions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ questionIds }),
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch question details');
+
         const data = await response.json();
-        setBookmarks(data.bookmarks || []);
+        const questions = data.questions || [];
+
+        // 4. Map questions to Bookmark format
+        const mappedBookmarks: Bookmark[] = questions.map((q: any) => {
+          const category = q.categories;
+          const topic = category?.topic;
+          const domain = topic?.domain;
+
+          // Default timestamp since we don't store it
+          const createdAt = new Date().toISOString();
+
+          return {
+            id: `bk-${q.id}`, // Synthetic ID
+            questionId: q.id,
+            questionText: q.question_text,
+            topicId: topic?.id || 0,
+            topicName: topic?.name || 'Unknown Topic',
+            categoryId: category?.id || 0,
+            categoryName: category?.name || 'Unknown Category',
+            domain: domain?.code || null,
+            sectionName: topic?.name || null,
+            createdAt: createdAt,
+            timeAgo: 'Your list' // Since we lost the timestamp
+          };
+        });
+
+        setBookmarks(mappedBookmarks);
       } catch (err) {
         console.error('Error fetching bookmarks:', err);
         setError('Failed to load your bookmarks. Please try again later.');
@@ -109,16 +168,21 @@ function BookmarksPage() {
         setLoading(false);
       }
     };
+
     fetchBookmarks();
   }, []);
+
+  const handleRemoveBookmark = (questionId: number) => {
+    removeBookmark(questionId);
+    setBookmarks(prev => prev.filter(b => b.questionId !== questionId));
+  };
 
   const processedBookmarks = useMemo(() => {
     return bookmarks
       .filter(b => selectedDomain === 'all' || b.domain === selectedDomain)
       .sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+        // Just sort by ID as proxy for time since we don't have real time
+        return sortOrder === 'asc' ? a.questionId - b.questionId : b.questionId - a.questionId;
       });
   }, [bookmarks, selectedDomain, sortOrder]);
 
@@ -135,31 +199,31 @@ function BookmarksPage() {
         </header>
 
         <div className="sticky top-16 z-10 py-4 mb-8 border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex-1 w-full">
-                    <TabNav
-                        items={allDomains.map(domain => ({ id: domain, label: domain === 'all' ? 'All' : getDomainLabel(domain) }))}
-                        activeTab={selectedDomain}
-                        onTabChange={setSelectedDomain}
-                        variant="button"
-                    />
-                </div>
-                <div className="w-full sm:w-auto">
-                    <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
-                        <SelectTrigger className="w-full sm:w-auto h-8 text-xs rounded-full border-gray-300/60 dark:border-gray-600/60 [&_svg]:size-3">
-                            <SelectValue placeholder="Sort by..." />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="desc">
-                                <span className="font-medium">Newest</span>
-                            </SelectItem>
-                            <SelectItem value="asc">
-                                <span className="font-medium">Oldest</span>
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-1 w-full">
+              <TabNav
+                items={allDomains.map(domain => ({ id: domain, label: domain === 'all' ? 'All' : getDomainLabel(domain) }))}
+                activeTab={selectedDomain}
+                onTabChange={setSelectedDomain}
+                variant="button"
+              />
             </div>
+            <div className="w-full sm:w-auto">
+              <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
+                <SelectTrigger className="w-full sm:w-auto h-8 text-xs rounded-full border-gray-300/60 dark:border-gray-600/60 [&_svg]:size-3">
+                  <SelectValue placeholder="Sort by..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="desc">
+                    <span className="font-medium">Newest First</span>
+                  </SelectItem>
+                  <SelectItem value="asc">
+                    <span className="font-medium">Oldest First</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -176,21 +240,25 @@ function BookmarksPage() {
             <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">No bookmarks yet</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Start saving questions to find them here later.</p>
             <div className="mt-6">
-                <Button asChild>
-                    <Link href="/topics">Explore Topics</Link>
-                </Button>
+              <Button asChild>
+                <Link href="/topics">Explore Topics</Link>
+              </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             {processedBookmarks.length > 0 ? (
-                processedBookmarks.map(bookmark => (
-                    <BookmarkCard key={bookmark.id} bookmark={bookmark} />
-                ))
+              processedBookmarks.map(bookmark => (
+                <BookmarkCard
+                  key={bookmark.id}
+                  bookmark={bookmark}
+                  onRemove={handleRemoveBookmark}
+                />
+              ))
             ) : (
-                <div className="text-center py-20">
-                    <p className="text-lg text-gray-600 dark:text-gray-400">No bookmarks found for the selected domain.</p>
-                </div>
+              <div className="text-center py-20">
+                <p className="text-lg text-gray-600 dark:text-gray-400">No bookmarks found for the selected domain.</p>
+              </div>
             )}
           </div>
         )}
