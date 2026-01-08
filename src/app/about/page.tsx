@@ -12,55 +12,77 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="w-full">
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative z-10">
-          {/* Header Section */}
-          <header className="mb-16 md:mb-24 text-left">
-            <div className="max-w-3xl">
-              <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-editorial font-extralight tracking-wide">
-                About Us
-              </h2>
-              <h1 className="text-5xl md:text-7xl mt-2 font-editorial font-extralight tracking-[-1.8px] leading-[110%] text-black dark:text-white">
-                GrokInterviews
-              </h1>
-            </div>
-          </header>
-
-          {/* Our Mission Section */}
-          <section className="mb-16 md:mb-24 max-w-3xl">
-            <h2 className="text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white mb-6">
-              Our Mission
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative z-10">
+        {/* Header Section */}
+        <header className="mb-16 md:mb-24 text-left">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-editorial font-extralight tracking-wide">
+              About Us
             </h2>
-            <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-              <p>
-                At GrokInterviews, our mission is to empower software engineers and
-                data scientists with the most comprehensive and intelligent tools
-                for interview preparation. We aggregate, organize, and present a
-                vast array of resources, enhanced by AI, to help you master
-                technical concepts and excel in your interviews.
-              </p>
-            </div>
-          </section>
+            <h1 className="text-5xl md:text-7xl mt-2 font-editorial font-extralight tracking-[-1.8px] leading-[110%] text-black dark:text-white">
+              GrokInterviews
+            </h1>
+          </div>
+        </header>
 
-          {/* FAQ Section */}
-          <section className="mb-16 md:mb-24">
-            <Faq3
-              heading="Frequently Asked Questions"
-              description="Find answers to common questions about our platform and features."
-              items={GROK_INTERVIEW_FAQ_ITEMS}
-            />
-          </section>
+        {/* Our Mission Section */}
+        <section className="mb-16 md:mb-24 max-w-3xl">
+          <h2 className="text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white mb-6">
+            Our Mission
+          </h2>
+          <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p>
+              At GrokInterviews, our mission is to empower software engineers and
+              data scientists with the most comprehensive and intelligent tools
+              for interview preparation. We aggregate, organize, and present a
+              vast array of resources, enhanced by AI, to help you master
+              technical concepts and excel in your interviews.
+            </p>
+          </div>
+        </section>
 
-          {/* Contact Section */}
-          <section id="contact-form" className="max-w-3xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-4xl font-editorial font-extralight mb-4">Let's Have a Chat</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Questions about our platform, features, or just want to say hello? We're here to help
-              </p>
-            </div>
-            <ContactForm />
-          </section>
-        </main>
-      </div>
+        {/* Open Source Section */}
+        <section className="mb-16 md:mb-24 max-w-3xl">
+          <h2 className="text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white mb-6">
+            Open Source
+          </h2>
+          <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p>
+              GrokInterviews is proudly open source. We believe in transparency and community collaboration.
+              Check out our code, contribute, or star us on GitHub!
+            </p>
+            <a
+              href="https://github.com/prxshetty/grokinterviews"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+            >
+              Visit our GitHub Repository
+              <span className="text-xl">→</span>
+            </a>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="mb-16 md:mb-24">
+          <Faq3
+            heading="Frequently Asked Questions"
+            description="Find answers to common questions about our platform and features."
+            items={GROK_INTERVIEW_FAQ_ITEMS}
+          />
+        </section>
+
+        {/* Contact Section */}
+        <section id="contact-form" className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-editorial font-extralight mb-4">Let's Have a Chat</h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Questions about our platform, features, or just want to say hello? We're here to help
+            </p>
+          </div>
+          <ContactForm />
+        </section>
+      </main>
+    </div>
   )
 }
