@@ -65,7 +65,7 @@ class PdfMetadataService {
 
       try {
         const metadata = await requestPromise;
-        
+
         // Cache the result
         if (metadata) {
           this.setCachedMetadata(url, metadata);
@@ -110,12 +110,12 @@ class PdfMetadataService {
    */
   async extractWikimediaMetadataBatch(urls: string[]): Promise<Map<string, PdfMetadata | null>> {
     const results = new Map<string, PdfMetadata | null>();
-    
+
     try {
       // Extract filenames for all URLs
       const urlFilenameMap = new Map<string, string>();
       const validFilenames: string[] = [];
-      
+
       for (const url of urls) {
         const filename = this.extractWikimediaFilename(url);
         if (filename) {
@@ -140,16 +140,16 @@ class PdfMetadataService {
       apiUrl.searchParams.set('titles', validFilenames.join('|'));
       apiUrl.searchParams.set('origin', '*');
 
-      console.log('🔗 Making API call to:', apiUrl.toString());
+
       const response = await fetch(apiUrl.toString());
-      
+
       if (!response.ok) {
         console.error('❌ API response not OK:', response.status, response.statusText);
         return results;
       }
-      
+
       const data = await response.json();
-      console.log('📡 Raw API response:', JSON.stringify(data, null, 2));
+
 
       // Handle normalized titles (WikiCommons converts underscores to spaces)
       if (data.query?.normalized) {
@@ -175,15 +175,15 @@ class PdfMetadataService {
       // Process each page
       for (const [pageId, page] of Object.entries(pages)) {
         if (pageId === '-1' || !page || typeof page !== 'object') continue;
-        
+
         const pageData = page as any;
         const filename = pageData.title;
-        console.log('🔍 Processing page:', { pageId, filename });
-        
+
+
         // Find the original URL for this filename
         const originalUrl = urlFilenameMap.get(filename);
-        console.log('🔗 URL mapping:', { filename, originalUrl, allMappings: Object.fromEntries(urlFilenameMap) });
-        
+
+
         if (!originalUrl) {
           console.warn('⚠️ No URL found for filename:', filename);
           continue;
@@ -191,7 +191,7 @@ class PdfMetadataService {
 
         if (pageData.imageinfo?.[0]) {
           const imageInfo = pageData.imageinfo[0];
-          console.log('📊 Image info found for:', filename, imageInfo);
+
           const metadata = this.parseWikimediaResponse(imageInfo, filename);
           results.set(originalUrl, metadata);
         } else {
@@ -210,12 +210,12 @@ class PdfMetadataService {
       return results;
     } catch (error) {
       console.error('PdfMetadataService: Error fetching Wikimedia metadata batch:', error);
-      
+
       // Set all URLs to null on error
       for (const url of urls) {
         results.set(url, null);
       }
-      
+
       return results;
     }
   }
@@ -248,15 +248,15 @@ class PdfMetadataService {
         }
       });
     }
-    
+
     // We only need thumburl and description - titles come from your database
     // For Internet Archive PDFs, use Keywords field as description (contains archive.org link)
     // Otherwise try ImageDescription from extmetadata
     const extmetadata = imageInfo.extmetadata || {};
-    const description = metadataMap.Keywords && metadataMap.Keywords.includes('archive.org') 
-                       ? `Internet Archive: ${metadataMap.Keywords}`
-                       : cleanDescription(extmetadata.ImageDescription?.value);
-    
+    const description = metadataMap.Keywords && metadataMap.Keywords.includes('archive.org')
+      ? `Internet Archive: ${metadataMap.Keywords}`
+      : cleanDescription(extmetadata.ImageDescription?.value);
+
     // Use filename as fallback title but we mainly care about thumburl and description
     const metadata: PdfMetadata = {
       title: filename.replace('File:', '').replace('.pdf', ''),
@@ -268,15 +268,7 @@ class PdfMetadataService {
     if (imageInfo.thumburl) metadata.previewUrl = imageInfo.thumburl;
     if (imageInfo.thumburl) metadata.thumbnailUrl = imageInfo.thumburl;
 
-    console.log('📋 Parsed Wikimedia metadata:', {
-      filename,
-      title: metadata.title,
-      description: metadata.description,
-      previewUrl: metadata.previewUrl,
-      thumbnailUrl: metadata.thumbnailUrl,
-      directPdfUrl: metadata.directPdfUrl,
-      originalMetadata: metadataMap
-    });
+
 
     return metadata;
   }
@@ -327,7 +319,7 @@ class PdfMetadataService {
     if (this.cache.size >= PdfMetadataService.MAX_CACHE_SIZE) {
       this.evictOldestCacheEntry();
     }
-    
+
     this.cache.set(url, {
       data: metadata,
       timestamp: Date.now(),
@@ -352,14 +344,14 @@ class PdfMetadataService {
   private evictOldestCacheEntry(): void {
     let oldestUrl: string | null = null;
     let oldestTimestamp = Date.now();
-    
+
     for (const [url, cached] of this.cache.entries()) {
       if (cached.timestamp < oldestTimestamp) {
         oldestTimestamp = cached.timestamp;
         oldestUrl = url;
       }
     }
-    
+
     if (oldestUrl) {
       this.cache.delete(oldestUrl);
     }
