@@ -65,9 +65,18 @@ export async function POST(request: Request) {
 
     let resources: Resource[] = [];
     try {
-      const { data: resourceData, error: resourceError } = await supabase.from('resources').select('*').eq('question_id', questionId);
-      if (resourceError) console.error('Resource Fetch Error:', resourceError.message);
-      else resources = resourceData || [];
+      // Replaced Supabase fetch with R2 fetch
+      const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
+      if (r2Url) {
+        const r2Response = await fetch(`${r2Url}/resources/q-${questionId}.json`);
+        if (r2Response.ok) {
+          resources = await r2Response.json();
+        } else if (r2Response.status !== 404) {
+          console.error(`Failed to fetch resources from R2: ${r2Response.statusText}`);
+        }
+      } else {
+        console.warn("NEXT_PUBLIC_R2_PUBLIC_URL not set, skipping logic to fetch resources.");
+      }
     } catch (err) { console.error('Err fetching resources:', err); }
 
     const sourceMap: { [key: string]: boolean } = {

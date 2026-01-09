@@ -138,10 +138,17 @@ export const useInterviewSession = (): UseInterviewSessionReturn => {
   }, [session.id]);
 
   const addToHistory = useCallback((type: 'ai' | 'user', text: string) => {
-    setSession(prev => ({
-      ...prev,
-      conversationHistory: [...prev.conversationHistory, { type, text }],
-    }));
+    setSession(prev => {
+      // Save to local storage persistence
+      if (prev.id) {
+        addMessage(prev.id, { type, text, timestamp: Date.now() });
+      }
+
+      return {
+        ...prev,
+        conversationHistory: [...prev.conversationHistory, { type, text }],
+      };
+    });
   }, []);
 
   const updateCurrentQuestion = useCallback((question: string) => {

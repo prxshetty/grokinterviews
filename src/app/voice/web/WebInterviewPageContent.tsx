@@ -232,7 +232,7 @@ export default function WebInterviewPageContent() {
     try {
       setProcessingAI(true);
 
-      const result = await InterviewService.generateAIResponse(userText, history, session.id, activeInterviewType, activeConfig);
+      const result = await InterviewService.generateAIResponse(userText, history, session.id, activeInterviewType, activeConfig, aiConfig?.apiKey);
 
       // Update sessionId if returned from API
       if (result.sessionId && !session.id) {
@@ -319,7 +319,7 @@ export default function WebInterviewPageContent() {
         setProcessingAI(false);
       }, 100);
     }
-  }, [setProcessingAI, setInterviewReport, setSessionCompleted, setSessionActive, addToHistory, updateCurrentQuestion, incrementAiResponseKey, terminateInterviewOnError, activeInterviewType, activeConfig]);
+  }, [setProcessingAI, setInterviewReport, setSessionCompleted, setSessionActive, addToHistory, updateCurrentQuestion, incrementAiResponseKey, terminateInterviewOnError, activeInterviewType, activeConfig, aiConfig]);
 
   const handleBackToModeSelector = useCallback(() => {
     router.push('/voice');

@@ -40,7 +40,8 @@ export class InterviewService {
     conversationHistory: ConversationMessage[],
     sessionId: string | null,
     sessionType: string = 'behavioral',
-    config?: any
+    config?: any,
+    apiKey?: string
   ): Promise<AIResponseResult> {
     const response = await fetch('/api/voice/conversation', {
       method: 'POST',
@@ -52,7 +53,8 @@ export class InterviewService {
         conversationHistory,
         sessionId,
         sessionType,
-        config
+        config,
+        apiKey
       }),
     });
 
