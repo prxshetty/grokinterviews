@@ -79,10 +79,10 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // Load topics for the selected domain
   const loadTopics = useCallback(async (topicName: string) => {
-    console.log('topics/page - loadTopics called with:', topicName);
+
     const cacheKey = `topics-${topicName}`;
     if (dataCache[cacheKey]) {
-      console.log('Serving topics from cache:', cacheKey);
+
       setTopicCategories(dataCache[cacheKey]);
       return;
     }
@@ -102,10 +102,10 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // Load category details
   const loadCategoryDetails = useCallback(async (categoryId: string) => {
-    console.log('topics/page - loadCategoryDetails called with:', categoryId);
+
     const cacheKey = `category-details-${categoryId}`;
     if (dataCache[cacheKey]) {
-      console.log('Serving from cache:', cacheKey);
+
       setCategoryDetails(dataCache[cacheKey]);
       return;
     }
@@ -123,12 +123,12 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
         // Find the section name from topicCategories for display purposes.
         let section = topicCategories.find(c => c.id === categoryId);
         let sectionName: string;
-        
+
         if (!section) {
           if (categoryId.startsWith('bookmark-topic-')) {
             // For bookmark URLs, we don't have a matching section ID, so we skip section loading
             // and go directly to loading the topic details
-            console.log('Bookmark URL detected, skipping section loading for:', categoryId);
+
             setCategoryDetails({
               id: categoryId,
               label: 'Bookmarked Question',
@@ -137,35 +137,35 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
             setIsLoading(prev => ({ ...prev, sections: false }));
             return;
           }
-          
+
           console.warn('Section not found in topicCategories for categoryId:', categoryId);
-          
+
           // Fallback: try to find section by name if the categoryId was constructed from section name
           // Extract potential section name from categoryId (e.g., "header-foundations-of-artificial-intelligence" -> "Foundations of Artificial Intelligence")
           const potentialSectionName = categoryId.replace('header-', '')
             .split('-')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
-          
-          section = topicCategories.find(c => 
+
+          section = topicCategories.find(c =>
             c.label.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') === categoryId.replace('header-', '') ||
             c.label.toLowerCase() === potentialSectionName.toLowerCase()
           );
-          
+
           if (!section) {
             console.error('No matching section found for categoryId:', categoryId, 'Tried section name:', potentialSectionName);
             setIsLoading(prev => ({ ...prev, sections: false }));
             return;
           }
-          
-          console.log('Found section by name fallback:', section.label);
+
+
         }
-        
+
         sectionName = section.label;
 
         // Fetch topics using the section name, not the ID
         const topicsInSection = await TopicDataService.getTopicsBySection(domain, sectionName);
-        
+
         const sectionData: TopicItem = {
           label: sectionName,
           subtopics: topicsInSection.reduce((acc: Record<string, any>, topic: any) => {
@@ -204,14 +204,14 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
 
   // Handle category selection from TopicCategoryGrid
   const handleCategorySelect = useCallback(async (categoryId: string) => {
-    console.log('Category selected:', categoryId);
+
     setSelectedCategory(categoryId);
     // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.set('category', categoryId);
     params.delete('q'); // Clear question ID when a new category is selected
     router.push(`${pathname}?${params.toString()}`);
-    
+
     // Load category details
     await loadCategoryDetails(categoryId);
   }, [searchParams, pathname, router, loadCategoryDetails, setSelectedCategory]);
@@ -219,15 +219,15 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   // Handle difficulty selection
   const handleDifficultyChange = useCallback(async (difficulty: string | null) => {
     if (!difficulty) return;
-    console.log('Difficulty selected:', difficulty);
+
     setSelectedDifficulty(difficulty);
-    
+
     // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.set('difficulty', difficulty);
     params.delete('q'); // Clear question ID when difficulty is selected
     router.push(`${pathname}?${params.toString()}`);
-    
+
     // Load difficulty questions
     setIsLoading(prev => ({ ...prev, difficultyQuestions: true }));
     try {
@@ -247,7 +247,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const clearDifficultyFilter = useCallback(() => {
     setSelectedDifficulty(null);
     setDifficultyQuestions([]);
-    
+
     // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.delete('difficulty');
@@ -258,7 +258,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   const handleBackToMainCategories = useCallback(() => {
     setSelectedCategory(null);
     setCategoryDetails(null);
-    
+
     // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.delete('category');

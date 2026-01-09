@@ -2,6 +2,7 @@
 
 import React, { useState, memo, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { IconHover3D } from '@/components/ui';
 import styles from './TopicCategoryGrid.module.css';
 import { LoadingSpinner } from '@/components/ui';
@@ -87,15 +88,15 @@ function TopicCategoryGridComponent({
   // Helper function to get the display name for the domain
   const getDisplayDomainName = (domainKey: string): string => {
     return getDomainLabel(domainKey);
- };
+  };
 
   // Display loading or error state if applicable
   if (isLoading) {
     return (
-      <LoadingSpinner 
-        size="lg" 
-        color="primary" 
-        text="Loading items..." 
+      <LoadingSpinner
+        size="lg"
+        color="primary"
+        text="Loading items..."
         centered={true}
       />
     );
@@ -139,13 +140,16 @@ function TopicCategoryGridComponent({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </button>
-            <h2 className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl text-left text-gray-800 dark:text-gray-200">
+            <motion.h2
+              layoutId={`domain-title-${domain}`}
+              className="text-3xl sm:text-4xl font-editorial font-extralight tracking-tight md:text-5xl text-left text-gray-800 dark:text-gray-200"
+            >
               {getDisplayDomainName(domain)}
-            </h2>
+            </motion.h2>
           </div>
         </div>
       )}
-      <div 
+      <div
         className={`${styles.gridContainer} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 xl:gap-12`}
       >
         {displayableItems.map((item, index) => {

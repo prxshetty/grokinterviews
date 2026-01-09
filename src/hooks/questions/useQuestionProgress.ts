@@ -46,27 +46,27 @@ export function useQuestionProgress({
   useEffect(() => {
     const answerElement = answerRef.current;
     if (!answerElement || !isExpanded || !hasAnswer || isCompleted) return;
-    
+
     // Find the scrollable container within the answer element
     // Try multiple selectors to find the scrollable container
     let scrollableContainer: HTMLElement | null = null;
-    
+
     // First check if the answerElement itself is scrollable (mobile case)
     const computedStyle = window.getComputedStyle(answerElement);
     if (computedStyle.overflowY === 'auto' || computedStyle.overflowY === 'scroll') {
       scrollableContainer = answerElement;
     }
-    
+
     // If not found, try to find by class (desktop case)
     if (!scrollableContainer) {
       scrollableContainer = answerElement.querySelector('.h-full.overflow-y-auto') as HTMLElement;
     }
-    
+
     // If still not found, try to find any scrollable element
     if (!scrollableContainer) {
       scrollableContainer = answerElement.querySelector('[style*="overflow-y: auto"]') as HTMLElement;
     }
-    
+
     if (!scrollableContainer) {
       console.warn('Scrollable container not found in answer element');
       console.log('Answer element structure:', answerElement);
@@ -81,10 +81,10 @@ export function useQuestionProgress({
 
     const calculateScrollProgress = () => {
       if (!scrollableContainer) return;
-      
+
       const totalHeight = scrollableContainer.scrollHeight - scrollableContainer.clientHeight;
       let percentage: number;
-      
+
       if (totalHeight <= 0) {
         // Content is shorter than or fits the container - mark as completed immediately
         percentage = 100;
@@ -92,7 +92,7 @@ export function useQuestionProgress({
         const scrollPosition = scrollableContainer.scrollTop;
         percentage = Math.min(Math.round((scrollPosition / totalHeight) * 100), 100);
       }
-      
+
       setScrollProgress(percentage);
 
       // Mark as completed when 90% scrolled and not already completed
@@ -100,12 +100,11 @@ export function useQuestionProgress({
         console.log(`Question ${questionId} reached ${percentage}% scroll, marking as completed`);
         console.log('Completion details:', { questionId, topicId, categoryId, domain });
         setIsCompleted(true); // Optimistic UI update
-        
+
         // Store completion in cache
         questionCache.markQuestionCompleted(questionId, topicId, categoryId);
-        
+
         onCompletionChange?.(questionId, true, topicId, categoryId);
-        console.log('Showing toast notification...');
         toast.success("Question Completed! Your progress has been saved locally.");
 
         console.log(`Question ${questionId} marked as completed and stored in cache`);
@@ -116,9 +115,9 @@ export function useQuestionProgress({
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       scrollTimeoutRef.current = setTimeout(calculateScrollProgress, 100); // Reduced debounce time for better responsiveness
     };
-    
+
     scrollableContainer.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     // Initial check after a short delay to ensure content is rendered
     const initialCheckTimeout = setTimeout(calculateScrollProgress, 200);
 
@@ -132,7 +131,7 @@ export function useQuestionProgress({
   const toggleCompletion = () => {
     const newCompletedState = !isCompleted;
     setIsCompleted(newCompletedState);
-    
+
     if (newCompletedState) {
       questionCache.markQuestionCompleted(questionId, topicId, categoryId);
       toast.success("Question Completed! Your progress has been saved locally.");
@@ -140,7 +139,7 @@ export function useQuestionProgress({
       questionCache.markQuestionIncomplete(questionId);
       toast.info("Question marked as incomplete. Progress updated locally.");
     }
-    
+
     onCompletionChange?.(questionId, newCompletedState, topicId, categoryId);
   };
 

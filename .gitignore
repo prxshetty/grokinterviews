@@ -4,6 +4,7 @@ topics/*
 .mcp.json
 .cursor
 *.md
+!README.md
 scripts/
 *.sql
 # dependencies
@@ -48,3 +49,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.claude.json
