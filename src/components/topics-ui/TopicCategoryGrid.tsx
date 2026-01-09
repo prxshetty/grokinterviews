@@ -127,7 +127,7 @@ function TopicCategoryGridComponent({
   }
 
   return (
-    <div className={`w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 bg-transparent ${compact ? 'pt-4' : 'pt-12 sm:pt-16 md:pt-20'}`}>
+    <div className={`w-full flex flex-col ${compact ? 'pt-4' : 'pt-8 sm:pt-12'}`}>
       {showDomainTitle && domain && (
         <div className="flex items-center justify-between mb-6 gap-3">
           <div className="flex items-center gap-3">

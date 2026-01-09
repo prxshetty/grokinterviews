@@ -52,7 +52,7 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
   }
 
   return (
-    <div className={cn("w-full max-w-7xl mx-auto px-4", className)}>
+    <div className={cn("w-full max-w-8xl mx-auto px-4", className)}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

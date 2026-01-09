@@ -293,7 +293,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
   return (
     <TopicDataProvider>
       <div className="min-h-screen bg-transparent">
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-8xl mx-auto px-4 py-8">
           <ErrorBoundary>
             {showTopicGrid && (
               <TopicCategoryGrid
