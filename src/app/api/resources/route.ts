@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,29 +12,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`API - Fetching resources for question ID: ${questionId}`);
+    const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
 
-    const supabase = await createClient();
-
-    // Fetch resources for the question
-    const { data: resources, error: resourceError } = await supabase
-      .from('resources')
-      .select('*')
-      .eq('question_id', questionId)
-      .order('relevance_score', { ascending: false });
-
-    if (resourceError) {
-      console.error('Error fetching resources:', resourceError);
+    if (!r2Url) {
+      console.error('API - NEXT_PUBLIC_R2_PUBLIC_URL is not set');
+      // Return empty array or error, but let's be graceful during migration
       return NextResponse.json(
-        { error: 'Failed to fetch resources' },
-        { status: 500 }
+        { error: 'Storage configuration missing' },
+        { status: 503 }
       );
     }
 
-    console.log(`Found ${resources?.length || 0} resources for question ${questionId}`);
+    // Fetch from R2 Static JSON
+    const r2Response = await fetch(`${r2Url}/resources/q-${questionId}.json`);
 
-    return NextResponse.json(resources || []);
-    
+    if (!r2Response.ok) {
+      if (r2Response.status === 404) {
+        return NextResponse.json([]);
+      }
+      console.error(`API - Failed to fetch from R2: ${r2Response.statusText}`);
+      return NextResponse.json(
+        { error: 'Failed to fetch resources' },
+        { status: 502 }
+      );
+    }
+
+    const resources = await r2Response.json();
+
+    // Sort by relevance_score descending if present
+    if (Array.isArray(resources)) {
+      resources.sort((a: any, b: any) => (b.relevance_score || 0) - (a.relevance_score || 0));
+    }
+
+    return NextResponse.json(resources);
+
   } catch (error: any) {
     console.error('Error in resources API route:', error);
     return NextResponse.json(

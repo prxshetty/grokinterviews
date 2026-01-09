@@ -23,6 +23,10 @@ export interface Resource {
   duration?: string | null;
   videoId?: string | null;
   directPdfUrl?: string | null;
+  subcategory_id?: number | null;
+  category_id?: number | null;
+  topic_id?: number | null;
+  domain?: string | null;
 }
 
 /** User preferences for resource types */
@@ -77,12 +81,12 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
  */
 export function getYouTubeVideoId(url: string): string | null {
   if (!url) return null;
-  
+
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
-  
-  return (match && typeof match[2] === 'string' && match[2].length === 11) 
-    ? match[2] 
+
+  return (match && typeof match[2] === 'string' && match[2].length === 11)
+    ? match[2]
     : null;
 }
 

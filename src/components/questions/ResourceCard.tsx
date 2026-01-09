@@ -13,23 +13,23 @@ interface ResourceCardProps {
   shouldReduceMotion?: boolean;
 }
 
-export function ResourceCard({ 
-  resource, 
-  index, 
-  onResourceClick, 
-  shouldReduceMotion = false 
+export function ResourceCard({
+  resource,
+  index,
+  onResourceClick,
+  shouldReduceMotion = false
 }: ResourceCardProps) {
   // Use resource data
   const displayTitle = resource.title || 'Untitled Resource';
-  
+
   // For image/website/pdf/paper/book resources, use favicon as the preview (similar to website resources)
-  const displayImage = resource.previewUrl || 
+  const displayImage = resource.previewUrl ||
     ((resource.type === 'image' || resource.type === 'website' || resource.type === 'pdf' || resource.type === 'paper' || resource.type === 'book') && resource.url ? getWebsiteFavicon(resource.url) : null);
   return (
     <motion.div
       key={resource.id}
       layoutId={`resource-card-${resource.id}`}
-      whileHover={!shouldReduceMotion ? { 
+      whileHover={!shouldReduceMotion ? {
         y: -4,
         scale: 1.01,
         transition: { type: "spring", stiffness: 400, damping: 25 }
@@ -38,8 +38,8 @@ export function ResourceCard({
       className="overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col bg-white dark:bg-gray-900 rounded-lg group w-full h-full border border-gray-200 dark:border-gray-700 cursor-pointer"
     >
       {/* Image Section - Larger height for better thumbnail visibility */}
-      <motion.div 
-        layoutId={`resource-image-${resource.id}`} 
+      <motion.div
+        layoutId={`resource-image-${resource.id}`}
         className="relative h-20 w-full bg-gray-100 dark:bg-gray-800 flex-shrink-0"
       >
         {(resource.type === 'video' || resource.type === 'youtube') && resource.videoId ? (
@@ -52,29 +52,29 @@ export function ResourceCard({
           />
         ) : displayImage ? (
           <div className="relative h-full w-full">
-            <Image 
-              src={displayImage} 
-              alt={displayTitle} 
+            <Image
+              src={displayImage}
+              alt={displayTitle}
               fill
               sizes="(max-width: 768px) 56vw, (max-width: 1200px) 33vw, 25vw"
-              className="rounded-t-lg object-cover" 
-              unoptimized={resource.type === 'image'} // Don't optimize external preview images
+              className="rounded-t-lg object-cover"
+              unoptimized={true} // External images (Wikimedia, Google Favicons) often rate-limit Next.js optimization.
             />
             {/* Special handling for favicons - website, image, pdf, paper, and book resources */}
-            {(resource.type === 'website' || resource.type === 'image' || resource.type === 'pdf' || resource.type === 'paper' || resource.type === 'book') && 
-             displayImage?.includes('google.com/s2/favicons') && (
-              <div className={`absolute inset-0 bg-gradient-to-br ${getGradientForType(resource.type)} rounded-t-lg flex items-center justify-center`}>
-                <div className="bg-white/95 dark:bg-gray-800/95 rounded-full p-6 shadow-lg">
-                  <Image 
-                    src={displayImage} 
-                    alt="Site favicon" 
-                    width={48} 
-                    height={48} 
-                    className="rounded-lg"
-                  />
+            {(resource.type === 'website' || resource.type === 'image' || resource.type === 'pdf' || resource.type === 'paper' || resource.type === 'book') &&
+              displayImage?.includes('google.com/s2/favicons') && (
+                <div className={`absolute inset-0 bg-gradient-to-br ${getGradientForType(resource.type)} rounded-t-lg flex items-center justify-center`}>
+                  <div className="bg-white/95 dark:bg-gray-800/95 rounded-full p-6 shadow-lg">
+                    <Image
+                      src={displayImage}
+                      alt="Site favicon"
+                      width={48}
+                      height={48}
+                      className="rounded-lg"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         ) : (
           <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getGradientForType(resource.type || 'other')} rounded-t-lg relative overflow-hidden`}>
@@ -94,7 +94,7 @@ export function ResourceCard({
       <div className="px-2 pb-2 flex flex-col flex-grow">
         {/* Type Badge */}
         <div className="flex items-center pt-1.5 mb-1.5">
-          <div 
+          <div
             className="text-xs font-medium px-1.5 py-0.5 rounded-full flex items-center"
             style={{
               background: getGradientForType(resource.type || 'other'),
@@ -108,7 +108,7 @@ export function ResourceCard({
             <span className="text-xs">{resource.type ? TYPE_DISPLAY_INFO[resource.type]?.title || resource.type : 'Other'}</span>
           </div>
         </div>
-        
+
         {/* Title - Allow more lines for better readability */}
         <h3 className="text-xs font-semibold tracking-tight text-gray-900 dark:text-white line-clamp-2 leading-tight group-hover:text-primary transition-colors">
           {displayTitle}

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/utils/supabase/client';
 import { Resource, UseResourcesProps, UseResourcesReturn } from '@/types';
 import { getWebsiteFavicon, getYouTubeVideoId } from '@/types/resources.types';
 
@@ -26,50 +25,66 @@ export function useResources({
       setLoading(true);
       setError(null);
 
-      // Build query based on available IDs
-      let query = supabase
-        .from('resources')
-        .select('*')
-        .eq('question_id', questionId);
+      const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
 
-      // Add filters based on available parameters
+      if (!r2Url) {
+        // Fallback or error if R2 URL is not configured
+        console.warn('NEXT_PUBLIC_R2_PUBLIC_URL is not set.');
+        // For now, we return empty or could fallback to Supabase if imported
+        // But for migration, we want to enforce R2 usage.
+        throw new Error('Storage configuration missing');
+      }
+
+      // Fetch from R2 Static JSON
+      const response = await fetch(`${r2Url}/resources/q-${questionId}.json`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // No resources found for this question
+          setResources([]);
+          setTotalCount(0);
+          return;
+        }
+        throw new Error(`Failed to fetch resources: ${response.statusText}`);
+      }
+
+      const allResources: Resource[] = await response.json();
+
+      // Client-side Filtering
+      let filtered = allResources;
+
       if (subcategoryId) {
-        query = query.eq('subcategory_id', subcategoryId);
+        filtered = filtered.filter(r => r.subcategory_id === subcategoryId);
       } else if (categoryId) {
-        query = query.eq('category_id', categoryId);
+        filtered = filtered.filter(r => r.category_id === categoryId);
       } else if (topicId) {
-        query = query.eq('topic_id', topicId);
+        filtered = filtered.filter(r => r.topic_id === topicId);
       }
 
       if (domain) {
-        query = query.eq('domain', domain);
+        filtered = filtered.filter(r => r.domain === domain);
       }
 
-      const { data, error: fetchError, count } = await query;
-
-      if (fetchError) {
-        console.error('Error fetching resources:', fetchError);
-        setError('Failed to load resources');
-        return;
-      }
+      // Sort by relevance score (descending)
+      filtered.sort((a: any, b: any) => (b.relevance_score || 0) - (a.relevance_score || 0));
 
       // Process resources with additional metadata
-      const processedResources = (data || []).map((resource: any) => ({
+      const processedResources = filtered.map((resource: any) => ({
         ...resource,
-        videoId: resource.type === 'youtube' || resource.type === 'video' 
-          ? getYouTubeVideoId(resource.url) 
+        videoId: resource.type === 'youtube' || resource.type === 'video'
+          ? getYouTubeVideoId(resource.url)
           : null,
-        previewUrl: resource.type === 'website' 
-          ? getWebsiteFavicon(resource.url) 
+        previewUrl: resource.type === 'website'
+          ? getWebsiteFavicon(resource.url)
           : undefined,
         description: resource.description || undefined
       }));
 
       setResources(processedResources);
-      setTotalCount(count || processedResources.length);
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      setError('An unexpected error occurred');
+      setTotalCount(filtered.length);
+    } catch (err: any) {
+      console.error('Error fetching resources:', err);
+      setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
