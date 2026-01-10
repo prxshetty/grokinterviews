@@ -17,7 +17,23 @@ import {
   getSelectedModel,
   setSelectedModel,
   hasAPIKey,
+  getAnswerDepth,
+  setAnswerDepth,
+  getIncludeCode,
+  setIncludeCode,
+  type AnswerDepth,
 } from '@/utils/ai-config-storage'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { ChevronDown } from 'lucide-react'
 
 export function AiSettingsSection() {
   // State
@@ -25,6 +41,8 @@ export function AiSettingsSection() {
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
+  const [answerDepth, setAnswerDepthState] = useState<AnswerDepth>('standard')
+  const [includeCode, setIncludeCodeState] = useState(true)
   const [isKeyStored, setIsKeyStored] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -39,6 +57,8 @@ export function AiSettingsSection() {
       const storedModel = getSelectedModel(storedProvider)
       setSelectedModelId(storedModel)
     }
+    setAnswerDepthState(getAnswerDepth())
+    setIncludeCodeState(getIncludeCode())
   }, [])
 
   // Handle provider change
@@ -318,6 +338,65 @@ export function AiSettingsSection() {
                       </div>
                     )
                   })}
+                </div>
+              </section>
+            )}
+
+            {/* Answer Preferences Section (Merged) */}
+            {provider && (
+              <section className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Answer Preferences</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Answer Depth */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Answer Depth</label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between text-sm capitalize bg-white dark:text-gray-200 dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          {answerDepth}
+                          <ChevronDown className="h-4 w-4 opacity-70" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md backdrop-blur-md">
+                        <DropdownMenuLabel>Detail Level</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup
+                          value={answerDepth}
+                          onValueChange={(val) => {
+                            const depth = val as AnswerDepth
+                            setAnswerDepthState(depth)
+                            setAnswerDepth(depth)
+                          }}
+                        >
+                          <DropdownMenuRadioItem value="brief">Brief</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="standard">Standard</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="comprehensive">Comprehensive</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Include Code Snippets */}
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Include Code Snippets</span>
+                    <label className="relative inline-block w-10 mr-2 align-middle select-none cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={includeCode}
+                        onChange={(e) => {
+                          const val = e.target.checked
+                          setIncludeCodeState(val)
+                          setIncludeCode(val)
+                        }}
+                        className="sr-only"
+                      />
+                      <div className={`block w-10 h-6 rounded-full transition-colors ${includeCode ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                      <div className={`absolute left-1 top-1 w-4 h-4 rounded-full transition-transform bg-white dark:bg-black transform ${includeCode ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                    </label>
+                  </div>
                 </div>
               </section>
             )}

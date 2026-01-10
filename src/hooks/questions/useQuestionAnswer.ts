@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { getAIConfig } from '@/utils/ai-config-storage';
-import { getAnswerPreferences } from '@/utils/answer-preferences-storage';
+import { getAIConfig, getAnswerDepth, getIncludeCode } from '@/utils/ai-config-storage';
 
 interface UseQuestionAnswerProps {
   questionId: number;
@@ -69,7 +68,11 @@ export function useQuestionAnswer({
     setError(null);
 
     try {
-      const preferences = getAnswerPreferences();
+      const preferences = {
+        preferred_answer_depth: getAnswerDepth(),
+        include_code_snippets: getIncludeCode(),
+      };
+
       const response = await fetch('/api/generate-answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

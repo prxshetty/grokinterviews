@@ -9,10 +9,8 @@ import { TabNav } from '@/components/ui/tab-nav';
 import { toast } from 'sonner';
 import { PersonalInfoSection } from '@/components/account/personal-info/personal-info-section';
 import { AiSettingsSection } from '@/components/account/ai-settings/ai-settings-section';
-import { AnswerPreferencesSection } from '@/components/account/answer-preferences/answer-preferences-section';
 import { PasswordSecuritySection } from '@/components/account/password-security/password-security-section';
-import { getAnswerPreferences, saveAnswerPreferences } from '@/utils/answer-preferences-storage';
-import type { AnswerFormat, AnswerDepth, AccountFormData } from './types';
+import type { AnswerDepth, AccountFormData } from './types';
 
 function AccountPageContent() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -25,23 +23,13 @@ function AccountPageContent() {
   const [formData, setFormData] = useState<AccountFormData>({
     full_name: '',
     email: '',
-    use_youtube_sources: true,
-    use_pdf_sources: true,
-    use_paper_sources: true,
-    use_website_sources: true,
-    use_book_sources: false,
-    use_image_sources: false,
-    preferred_answer_format: 'markdown' as AnswerFormat,
     preferred_answer_depth: 'standard' as AnswerDepth,
     include_code_snippets: true,
-    include_latex_formulas: false,
-    custom_formatting_instructions: '',
   });
 
   const accountTabs = [
     { id: 'personal', label: 'Personal' },
     { id: 'ai-settings', label: 'AI Settings' },
-    { id: 'answer-preferences', label: 'Answer Preferences' },
     { id: 'password-security', label: 'Password Security' },
   ];
 
@@ -49,7 +37,7 @@ function AccountPageContent() {
     isMounted.current = true;
 
     const tab = searchParams.get('tab');
-    if (tab && ['personal', 'ai-settings', 'answer-preferences', 'password-security'].includes(tab)) {
+    if (tab && ['personal', 'ai-settings', 'password-security'].includes(tab)) {
       setActiveTab(tab);
     }
 
@@ -65,26 +53,7 @@ function AccountPageContent() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    // Load answer preferences from localStorage
-    const loadPreferences = () => {
-      if (isMounted.current) {
-        const prefs = getAnswerPreferences();
-        setFormData(prev => ({
-          ...prev,
-          use_youtube_sources: prefs.use_youtube_sources,
-          use_pdf_sources: prefs.use_pdf_sources,
-          use_paper_sources: prefs.use_paper_sources,
-          use_website_sources: prefs.use_website_sources,
-          use_book_sources: prefs.use_book_sources,
-          use_image_sources: prefs.use_image_sources,
-          preferred_answer_format: prefs.preferred_answer_format,
-          preferred_answer_depth: prefs.preferred_answer_depth,
-          include_code_snippets: prefs.include_code_snippets,
-          include_latex_formulas: prefs.include_latex_formulas,
-          custom_formatting_instructions: prefs.custom_formatting_instructions,
-        }));
-      }
-    };
+    // Load answer preferences logic removed
 
     if (profile && user) {
       setFormData(prev => ({
@@ -92,7 +61,6 @@ function AccountPageContent() {
         full_name: profile.full_name || '',
         email: user.email || '',
       }));
-      loadPreferences();
     }
   }, [profile, user]);
 
@@ -104,13 +72,7 @@ function AccountPageContent() {
     }));
   };
 
-  const handleSwitchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: checked
-    }));
-  };
+
 
   const saveChanges = async () => {
     if (!user) {
@@ -139,20 +101,7 @@ function AccountPageContent() {
         }
       }
 
-      // Save answer preferences to localStorage
-      saveAnswerPreferences({
-        use_youtube_sources: formData.use_youtube_sources,
-        use_pdf_sources: formData.use_pdf_sources,
-        use_paper_sources: formData.use_paper_sources,
-        use_website_sources: formData.use_website_sources,
-        use_book_sources: formData.use_book_sources,
-        use_image_sources: formData.use_image_sources,
-        preferred_answer_format: formData.preferred_answer_format,
-        preferred_answer_depth: formData.preferred_answer_depth,
-        include_code_snippets: formData.include_code_snippets,
-        include_latex_formulas: formData.include_latex_formulas,
-        custom_formatting_instructions: formData.custom_formatting_instructions,
-      });
+      // Answer preferences are now handled in AiSettingsSection (ai-config-storage)
 
       await refreshAuth();
       toast.success('Settings saved successfully!');
@@ -220,27 +169,7 @@ function AccountPageContent() {
               <AiSettingsSection />
             )}
 
-            {activeTab === 'answer-preferences' && (
-              <AnswerPreferencesSection
-                formData={{
-                  use_youtube_sources: formData.use_youtube_sources,
-                  use_pdf_sources: formData.use_pdf_sources,
-                  use_paper_sources: formData.use_paper_sources,
-                  use_website_sources: formData.use_website_sources,
-                  use_book_sources: formData.use_book_sources,
-                  use_image_sources: formData.use_image_sources,
-                  preferred_answer_format: formData.preferred_answer_format,
-                  preferred_answer_depth: formData.preferred_answer_depth,
-                  include_code_snippets: formData.include_code_snippets,
-                  include_latex_formulas: formData.include_latex_formulas,
-                  custom_formatting_instructions: formData.custom_formatting_instructions,
-                }}
-                handleInputChange={handleInputChange}
-                handleSwitchChange={handleSwitchChange}
-                setFormData={setFormData}
-                renderSaveChangesButton={renderSaveChangesButton}
-              />
-            )}
+
 
             {activeTab === 'password-security' && (
               <PasswordSecuritySection

@@ -1,7 +1,6 @@
 // src/app/api/generate-answer/route.ts
 import { NextResponse } from 'next/server';
 import { createAIClient, type AIProvider } from '@/utils/ai-client';
-import { createClient } from '@/utils/supabase/server';
 
 
 interface Resource {
@@ -14,7 +13,6 @@ interface Resource {
   relevance_score?: number | null;
 }
 
-type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown';
 type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 
 
@@ -28,8 +26,6 @@ export async function POST(request: Request) {
     modelId,
     preferences: clientPreferences
   } = await request.json();
-
-  const supabase = await createClient();
 
   if (!questionText || !questionId) {
     return NextResponse.json({ error: 'Question text and ID required' }, { status: 400 });
@@ -48,17 +44,8 @@ export async function POST(request: Request) {
 
   try {
     const preferences = {
-      use_youtube: clientPreferences?.use_youtube_sources ?? true,
-      use_pdf: clientPreferences?.use_pdf_sources ?? true,
-      use_paper: clientPreferences?.use_paper_sources ?? true,
-      use_website: clientPreferences?.use_website_sources ?? true,
-      use_book: clientPreferences?.use_book_sources ?? false,
-      use_image: clientPreferences?.use_image_sources ?? false,
-      format: (clientPreferences?.preferred_answer_format || 'markdown') as AnswerFormat,
       depth: (clientPreferences?.preferred_answer_depth || 'standard') as AnswerDepth,
       include_code: clientPreferences?.include_code_snippets ?? true,
-      include_latex: clientPreferences?.include_latex_formulas ?? false,
-      custom_instructions: clientPreferences?.custom_formatting_instructions || null,
     };
 
     const client = createAIClient(provider as AIProvider, apiKey);
@@ -79,18 +66,7 @@ export async function POST(request: Request) {
       }
     } catch (err) { console.error('Err fetching resources:', err); }
 
-    const sourceMap: { [key: string]: boolean } = {
-      youtube: preferences.use_youtube,
-      pdf: preferences.use_pdf,
-      paper: preferences.use_paper,
-      website: preferences.use_website,
-      book: preferences.use_book,
-      image: preferences.use_image,
-      note: true
-    };
-    const filteredResources = resources.filter(r => sourceMap[r.type] === true);
-
-    const formatResources = (type: string): string => filteredResources.filter(r => r.type === type).map(r => {
+    const formatResources = (type: string): string => resources.filter(r => r.type === type).map(r => {
       if (['youtube', 'paper', 'website', 'pdf', 'book', 'image'].includes(type)) {
         return `- [${r.title || (r.url ? new URL(r.url).hostname : 'Link')}](${r.url || ''})`;
       }
@@ -108,25 +84,17 @@ export async function POST(request: Request) {
       notes: formatResources('note')
     };
 
-    const systemPromptContent = "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions.";
+    const systemPromptContent = "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions. Always respond in well-formatted Markdown.";
     const userMessageSegments = [
-      `Please answer the following interview question strictly using the specified Markdown format (Headers: #, ##, ###; Emphasis: **bold**):`,
+      `Please answer the following interview question using Markdown format:`,
       `"${questionText}"`,
-      `\\nAdhere to the following preferences:`,
-      `- Answer Format: ${preferences.format}`,
-      `- Answer Depth: ${preferences.depth}`,
+      `\\nAnswer Depth: ${preferences.depth}`,
     ];
 
-    if (preferences.custom_instructions) {
-      userMessageSegments.push(`- Additional Instructions: ${preferences.custom_instructions}`);
-    }
     if (preferences.include_code) {
-      userMessageSegments.push(`- Include relevant code snippets. Format them using proper markdown code blocks with triple backticks and language specification.`);
+      userMessageSegments.push(`Include relevant code snippets with proper markdown code blocks.`);
     } else {
-      userMessageSegments.push(`- Focus on theoretical explanations rather than code examples.`);
-    }
-    if (preferences.include_latex) {
-      userMessageSegments.push(`- For mathematical formulas and equations, use LaTeX notation with dollar signs.`);
+      userMessageSegments.push(`Focus on theoretical explanations rather than code examples.`);
     }
 
     const resourceInfoSegments: string[] = [];

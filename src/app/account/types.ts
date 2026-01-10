@@ -28,22 +28,12 @@ export interface UserProfile {
 export interface UserPreferences {
   user_id: string // Foreign key to profiles.id
   specific_model_id: string | null
-  use_youtube_sources?: boolean
-  use_pdf_sources?: boolean
-  use_paper_sources?: boolean
-  use_website_sources?: boolean
-  use_book_sources?: boolean
-  use_image_sources?: boolean
-  preferred_answer_format?: AnswerFormat
   preferred_answer_depth?: AnswerDepth
   include_code_snippets?: boolean
-  include_latex_formulas?: boolean
-  custom_formatting_instructions?: string | null
   theme?: string
   email_notifications?: boolean
 }
 
-export type AnswerFormat = 'bullet_points' | 'numbered_lists' | 'table' | 'paragraph' | 'markdown'
 export type AnswerDepth = 'brief' | 'standard' | 'comprehensive'
 
 // --- API Error Interface ---
@@ -58,16 +48,6 @@ export interface ApiError {
 export interface AccountFormData {
   full_name: string
   email: string
-  // Note: specific_model_id moved to localStorage (ai-config-storage)
-  use_youtube_sources: boolean
-  use_pdf_sources: boolean
-  use_paper_sources: boolean
-  use_website_sources: boolean
-  use_book_sources: boolean
-  use_image_sources: boolean
-  preferred_answer_format: AnswerFormat
   preferred_answer_depth: AnswerDepth
   include_code_snippets: boolean
-  include_latex_formulas: boolean
-  custom_formatting_instructions: string
 } 

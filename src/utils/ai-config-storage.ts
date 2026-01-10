@@ -3,10 +3,14 @@
 
 import type { AIProvider } from './ai-client';
 
+export type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
+
 const STORAGE_KEYS = {
     PROVIDER: 'ai_provider',
     API_KEY_PREFIX: 'ai_key_',
     MODEL_PREFIX: 'ai_model_',
+    ANSWER_DEPTH: 'ai_answer_depth',
+    INCLUDE_CODE: 'ai_include_code',
 } as const;
 
 // Simple obfuscation for API keys (not encryption, but prevents casual viewing)
@@ -69,6 +73,29 @@ export function getSelectedModel(provider: AIProvider): string | null {
 export function setSelectedModel(provider: AIProvider, modelId: string): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEYS.MODEL_PREFIX + provider, modelId);
+}
+
+// Answer Depth management
+export function getAnswerDepth(): AnswerDepth {
+    if (typeof window === 'undefined') return 'standard';
+    return (localStorage.getItem(STORAGE_KEYS.ANSWER_DEPTH) as AnswerDepth) || 'standard';
+}
+
+export function setAnswerDepth(depth: AnswerDepth): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.ANSWER_DEPTH, depth);
+}
+
+// Include Code management
+export function getIncludeCode(): boolean {
+    if (typeof window === 'undefined') return true;
+    const stored = localStorage.getItem(STORAGE_KEYS.INCLUDE_CODE);
+    return stored === null ? true : stored === 'true';
+}
+
+export function setIncludeCode(include: boolean): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.INCLUDE_CODE, String(include));
 }
 
 // Get full AI config for API calls
