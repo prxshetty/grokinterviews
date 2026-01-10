@@ -50,20 +50,16 @@ class DatabaseService {
    * @param domain Optional domain filter (e.g., 'ml' for Machine Learning)
    */
   async getTopics(domain?: string): Promise<Topic[]> {
-    console.log('DatabaseService.getTopics - Called with domain:', domain);
 
     // Check cache first if no domain filter is applied
     if (!domain && this.cache.topics && Date.now() - this.cache.lastFetched.topics < this.CACHE_EXPIRY) {
-      console.log('DatabaseService.getTopics - Using cached topics data');
       return this.cache.topics;
     }
 
     // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
-      console.log('DatabaseService.getTopics - Running in browser, using API');
       try {
         const url = domain ? `/api/topics?domain=${domain}` : '/api/topics';
-        console.log('DatabaseService.getTopics - Fetching from URL:', url);
 
         const response = await fetch(url);
 
@@ -72,7 +68,6 @@ class DatabaseService {
         }
 
         const topics: Topic[] = await response.json(); // API now returns Topic[] directly
-        console.log('DatabaseService.getTopics - Received data from API:', topics);
 
         // Update cache if no domain filter was applied
         if (!domain) {
@@ -99,12 +94,12 @@ class DatabaseService {
           .select('id')
           .eq('code', domain)
           .single();
-        
+
         if (domainError || !domainData) {
           console.error(`Domain ${domain} not found:`, domainError);
           return [];
         }
-        
+
         query = query.eq('domain_id', domainData.id);
       }
 
@@ -141,7 +136,6 @@ class DatabaseService {
       this.cache.lastFetched.categories[cacheKey] &&
       Date.now() - this.cache.lastFetched.categories[cacheKey] < this.CACHE_EXPIRY
     ) {
-      console.log(`Using cached categories for topic ${topicId}`);
       return this.cache.categoriesByTopic[cacheKey];
     }
 
@@ -157,7 +151,6 @@ class DatabaseService {
 
         // API now returns Category[] directly for this specific call
         const categories: Category[] = await response.json();
-        console.log(`DatabaseService.getCategoriesByTopic - Received ${categories.length} categories from API for topic ${topicId}:`, categories);
 
         // Update cache
         this.cache.categoriesByTopic[cacheKey] = categories;
@@ -247,7 +240,6 @@ class DatabaseService {
       this.cache.lastFetched.questions[cacheKey] &&
       Date.now() - this.cache.lastFetched.questions[cacheKey] < this.CACHE_EXPIRY
     ) {
-      console.log(`Using cached questions for category ${categoryId}`);
       return this.cache.questionsByCategory[cacheKey];
     }
 
@@ -359,14 +351,12 @@ class DatabaseService {
 
         if (!response.ok) {
           if (response.status === 404) {
-            console.log(`DatabaseService.getTopicWithCategories - Topic ${topicId} not found via API.`);
             return null;
           }
           throw new Error(`Failed to fetch topic with categories: ${response.statusText}`);
         }
 
         const topicWithCategories: TopicWithCategories | null = await response.json(); // API now returns TopicWithCategories | null
-        console.log(`DatabaseService.getTopicWithCategories - Received data for ${topicId} from API:`, topicWithCategories);
         return topicWithCategories;
       } catch (error) {
         console.error(`Failed to fetch topic with categories via API for ${topicId}:`, error);
@@ -442,14 +432,12 @@ class DatabaseService {
 
         if (!response.ok) {
           if (response.status === 404) {
-            console.log(`DatabaseService.getCategoryWithQuestions - Category ${categoryId} in topic ${apiTopicId} not found via API.`);
             return null;
           }
           throw new Error(`Failed to fetch category ${categoryId} with questions for topic ${apiTopicId}: ${response.statusText}`);
         }
 
         const categoryWithQuestions: CategoryWithQuestions | null = await response.json();
-        console.log(`DatabaseService.getCategoryWithQuestions - Received data for category ${categoryId}, topic ${apiTopicId} from API:`, categoryWithQuestions);
         return categoryWithQuestions;
 
       } catch (error) {
@@ -478,7 +466,6 @@ class DatabaseService {
         }
 
         const sectionName = topics[0].section_name;
-        console.log(`Found section name: ${sectionName} for header ID ${headerId}`);
 
         // Get all categories that belong to this section
         const { data: categories, error: categoriesError } = await supabase
@@ -493,8 +480,6 @@ class DatabaseService {
         }
 
         if (!categories || categories.length === 0) {
-          console.log(`No categories found for section ${sectionName}`);
-
           // Create a fake category with the section name
           const fakeCategory: CategoryWithQuestions = {
             id: parseInt(headerId, 10),
@@ -506,8 +491,6 @@ class DatabaseService {
 
           return fakeCategory;
         }
-
-        console.log(`Found ${categories.length} categories for section ${sectionName}`);
 
         // Create a result object with the section name
         const result = {
@@ -542,14 +525,12 @@ class DatabaseService {
           };
 
           if (!questionsError && questionsForSubtopic && questionsForSubtopic.length > 0) {
-            console.log(`Found ${questionsForSubtopic.length} questions for category ${category.name}`);
             // Also add these questions to the main result for backward compatibility
             // Ensure result.questions is treated as defined here
             result.questions.push(...questionsForSubtopic);
           }
         }
 
-        console.log(`Created ${Object.keys(result.subtopics).length} subtopics for section ${sectionName}`);
         return result as CategoryWithQuestions; // Cast to ensure compatibility, subtopics is an extra prop
       } catch (error) {
         console.error(`Error processing section header ${categoryId}:`, error);
@@ -738,20 +719,17 @@ class DatabaseService {
       this.cache.lastFetched.allDetailedTopics > 0 && // Ensure timestamp is valid (not initial 0)
       (Date.now() - this.cache.lastFetched.allDetailedTopics < this.CACHE_EXPIRY) // Check expiry
     ) {
-      console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Using cached data');
       return this.cache.allDetailedTopics;
     }
 
     if (isBrowser) {
-      console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Running in browser, using API /api/topics-detailed');
       try {
         const response = await fetch('/api/topics-detailed');
         if (!response.ok) {
           throw new Error(`Failed to fetch detailed topics: ${response.statusText}`);
         }
         const topicsWithCategories: TopicWithCategories[] = await response.json();
-        console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Received data from API:', topicsWithCategories.length);
-        
+
         this.cache.allDetailedTopics = topicsWithCategories;
         this.cache.lastFetched!.allDetailedTopics = Date.now();
 
@@ -763,7 +741,6 @@ class DatabaseService {
     }
 
     // Server-side direct database access
-    console.log('DatabaseService.fetchAllTopicsWithDetailedCategories - Running on server, direct Supabase query');
     try {
       const { data, error } = await supabase
         .from('topics')
@@ -774,7 +751,7 @@ class DatabaseService {
         console.error('Error fetching topics with categories directly:', error);
         throw error;
       }
-      
+
       this.cache.allDetailedTopics = (data as TopicWithCategories[]) || [];
       this.cache.lastFetched!.allDetailedTopics = Date.now();
 

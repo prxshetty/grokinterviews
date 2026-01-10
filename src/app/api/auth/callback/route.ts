@@ -35,10 +35,6 @@ export async function GET(request: NextRequest) {
         console.log('Creating profile for OAuth user:', userData.user.id)
         const { user } = userData
         const email = user.email || ''
-        // Supabase user_metadata might not be immediately available after code exchange with ssr client
-        // It's safer to rely on user.email and potentially a default username/fullname
-        // Or, if essential, make another call to get full user details after session is set.
-        // For now, let's use email to derive username and a placeholder for full_name.
         const fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'New User';
         const username = user.user_metadata?.user_name || user.user_metadata?.preferred_username || email.split('@')[0] || `user-${Date.now()}`;
         const avatarUrl = user.user_metadata?.avatar_url || '';

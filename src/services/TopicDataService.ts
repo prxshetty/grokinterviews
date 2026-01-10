@@ -51,10 +51,10 @@ class TopicDataService {
     categories: Record<string, CategoryItem[]> | null;
     categoryDetails: Record<string, any>;
   } = {
-    topics: null,
-    categories: null,
-    categoryDetails: {}
-  };
+      topics: null,
+      categories: null,
+      categoryDetails: {}
+    };
   private ongoingGetAllTopicDataFetch: Promise<TopicTree> | null = null;
 
   /**
@@ -101,7 +101,7 @@ class TopicDataService {
       return [];
     }
   }
-  
+
   /**
    * Gets all main categories from a specific topic file
    * @param topicId The ID of the topic to get categories from
@@ -145,11 +145,8 @@ class TopicDataService {
       // Check cache first
       const cacheKey = `${topicId}:${categoryId}`;
       if (this.cache.categoryDetails[cacheKey]) {
-        console.log(`Using cached data for ${topicId}:${categoryId}`);
         return this.cache.categoryDetails[cacheKey];
       }
-
-      console.log(`Fetching category details for ${topicId}:${categoryId}`);
 
       let categoryDataFromDB: any = null;
 
@@ -158,7 +155,6 @@ class TopicDataService {
         const categoryWithQuestions = await DatabaseService.getCategoryWithQuestions(categoryId, topicId);
 
         if (categoryWithQuestions) {
-          console.log(`Found category ${categoryId} with ${categoryWithQuestions.questions?.length || 0} questions in database`);
 
           categoryDataFromDB = {
             id: categoryWithQuestions.id, // Keep original category ID if needed
@@ -182,7 +178,6 @@ class TopicDataService {
           }
         } else {
           // This case means the categoryId itself was not found or has no details in DB.
-          console.log(`Category ${categoryId} not found in database via DatabaseService.getCategoryWithQuestions.`);
         }
       } catch (dbError) {
         console.error(`Error fetching category details for ${categoryId} from database:`, dbError);
@@ -196,14 +191,12 @@ class TopicDataService {
       // now operates on 'result' which is derived solely from dbCategoryData.
       // The extensive fallback logic (searching this.cache.topics, special handling) is preserved here.
       if (!result || Object.keys(result.subtopics || {}).length === 0) {
-        console.log(`Attempting fallback for ${topicId}:${categoryId}`);
         if (this.cache.topics && this.cache.topics[topicId]) {
           const topic = this.cache.topics[topicId];
           if (topic && topic.subtopics) {
             // Try to find the category by exact ID match first
             if (topic.subtopics[categoryId]) {
               result = topic.subtopics[categoryId];
-              console.log(`Fallback: Found category by exact ID match in cache: ${categoryId}`);
             } else {
               // Try to find by partial match or label
               for (const subtopicKey in topic.subtopics) {
@@ -215,7 +208,6 @@ class TopicDataService {
                   categoryId.toLowerCase().includes(subtopic.label.toLowerCase())
                 )) {
                   result = subtopic;
-                  console.log(`Fallback: Found category by fuzzy match in cache: ${subtopic.label}`);
                   break;
                 }
               }
@@ -266,7 +258,6 @@ class TopicDataService {
 
       if (result) {
         this.cache.categoryDetails[cacheKey] = result;
-        console.log(`Successfully fetched and cached details for ${topicId}:${categoryId}`, result);
       } else {
         console.warn(`Failed to fetch category details for ${topicId}:${categoryId} after all attempts.`);
         // Return null or an empty object structure if preferred, instead of throwing
@@ -287,11 +278,9 @@ class TopicDataService {
    * @param topicId The ID of the topic to load
    */
   async getTopicData(topicId: string): Promise<TopicTree | null> {
-    console.log('TopicDataService.getTopicData - Called with topicId:', topicId);
     try {
       // Try to get from cache first
       if (this.cache.topics && this.cache.topics[topicId]) {
-        console.log('TopicDataService.getTopicData - Using cached data');
         return { [topicId]: this.cache.topics[topicId] };
       }
 
@@ -354,25 +343,19 @@ class TopicDataService {
    * Gets all available topic data
    */
   async getAllTopicData(): Promise<TopicTree> {
-    console.log('TopicDataService.getAllTopicData - Called');
-
     // Try to get from cache first
     if (this.cache.topics) {
-      console.log('TopicDataService.getAllTopicData - Using cached data (this.cache.topics)');
       return this.cache.topics;
     }
 
     // Check if a fetch is already in progress
     if (this.ongoingGetAllTopicDataFetch) {
-      console.log('TopicDataService.getAllTopicData - Fetch already in progress, returning existing promise');
       return this.ongoingGetAllTopicDataFetch;
     }
 
-    console.log('TopicDataService.getAllTopicData - Starting new fetch using optimized method');
     this.ongoingGetAllTopicDataFetch = (async (): Promise<TopicTree> => {
       try {
         const topicsWithCategories = await DatabaseService.fetchAllTopicsWithDetailedCategories();
-        console.log('TopicDataService.getAllTopicData - Fetched from DatabaseService:', topicsWithCategories.length, 'topics with categories');
 
         if (!topicsWithCategories || topicsWithCategories.length === 0) {
           console.warn('TopicDataService.getAllTopicData - No topics returned from DatabaseService.fetchAllTopicsWithDetailedCategories');
@@ -405,7 +388,6 @@ class TopicDataService {
         }
 
         this.cache.topics = newTopicTree;
-        console.log('TopicDataService.getAllTopicData - Successfully processed and cached data.');
         return newTopicTree;
 
       } catch (error) {

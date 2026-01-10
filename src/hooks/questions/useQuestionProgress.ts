@@ -69,13 +69,6 @@ export function useQuestionProgress({
 
     if (!scrollableContainer) {
       console.warn('Scrollable container not found in answer element');
-      console.log('Answer element structure:', answerElement);
-      console.log('Answer element classes:', answerElement.className);
-      console.log('Answer element computed style:', {
-        overflowY: computedStyle.overflowY,
-        height: computedStyle.height,
-        maxHeight: computedStyle.maxHeight
-      });
       return;
     }
 
@@ -97,8 +90,6 @@ export function useQuestionProgress({
 
       // Mark as completed when 90% scrolled and not already completed
       if (percentage >= 90 && !isCompleted && questionId) {
-        console.log(`Question ${questionId} reached ${percentage}% scroll, marking as completed`);
-        console.log('Completion details:', { questionId, topicId, categoryId, domain });
         setIsCompleted(true); // Optimistic UI update
 
         // Store completion in cache
@@ -106,8 +97,6 @@ export function useQuestionProgress({
 
         onCompletionChange?.(questionId, true, topicId, categoryId);
         toast.success("Question Completed! Your progress has been saved locally.");
-
-        console.log(`Question ${questionId} marked as completed and stored in cache`);
       }
     };
 
