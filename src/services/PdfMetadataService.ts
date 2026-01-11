@@ -47,13 +47,11 @@ class PdfMetadataService {
    */
   async extractMetadata(url: string): Promise<PdfMetadata | null> {
     try {
-      // Check cache first
       const cached = this.getCachedMetadata(url);
       if (cached) {
         return cached;
       }
 
-      // Check if request is already pending to avoid duplicates
       const pendingRequest = this.pendingRequests.get(url);
       if (pendingRequest) {
         return pendingRequest;
@@ -200,7 +198,6 @@ class PdfMetadataService {
         }
       }
 
-      // Ensure all URLs have a result
       for (const url of urls) {
         if (!results.has(url)) {
           results.set(url, null);

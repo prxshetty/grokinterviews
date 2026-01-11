@@ -108,7 +108,6 @@ class TopicDataService {
    */
   async getTopicCategories(topicId: string): Promise<CategoryItem[]> {
     try {
-      // Check cache first
       if (this.cache.categories && this.cache.categories[topicId]) {
         return this.cache.categories[topicId];
       }
@@ -164,7 +163,7 @@ class TopicDataService {
 
           if (categoryWithQuestions.questions && categoryWithQuestions.questions.length > 0) {
             categoryWithQuestions.questions.forEach((question) => {
-              const questionId = `question-${question.id}`; // Ensure question.id is unique and suitable
+              const questionId = `question-${question.id}`;
               categoryDataFromDB.subtopics[questionId] = {
                 id: questionId,
                 label: question.question_text,
@@ -226,7 +225,7 @@ class TopicDataService {
               if (node.subtopics) {
                 for (const key in node.subtopics) {
                   const subNode = node.subtopics[key];
-                  if (subNode) { // Check if subNode exists before passing
+                  if (subNode) {
                     const found = findNaiveBayes(subNode);
                     if (found) return found;
                   }
@@ -240,7 +239,7 @@ class TopicDataService {
               if (topic && topic.subtopics) {
                 for (const subtopicKey in topic.subtopics) {
                   const subNode = topic.subtopics[subtopicKey];
-                  if (subNode) { // Check if subNode exists before passing
+                  if (subNode) {
                     const found = findNaiveBayes(subNode);
                     if (found) {
                       result = found;

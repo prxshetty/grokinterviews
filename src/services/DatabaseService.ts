@@ -51,12 +51,10 @@ class DatabaseService {
    */
   async getTopics(domain?: string): Promise<Topic[]> {
 
-    // Check cache first if no domain filter is applied
     if (!domain && this.cache.topics && Date.now() - this.cache.lastFetched.topics < this.CACHE_EXPIRY) {
       return this.cache.topics;
     }
 
-    // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
         const url = domain ? `/api/topics?domain=${domain}` : '/api/topics';
@@ -130,7 +128,6 @@ class DatabaseService {
   async getCategoriesByTopic(topicId: string | number): Promise<Category[]> {
     const cacheKey = `topic_${topicId}`;
 
-    // Check cache first
     if (
       this.cache.categoriesByTopic[cacheKey] &&
       this.cache.lastFetched.categories[cacheKey] &&
@@ -139,7 +136,6 @@ class DatabaseService {
       return this.cache.categoriesByTopic[cacheKey];
     }
 
-    // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
         // Fetch categories from API
@@ -168,7 +164,7 @@ class DatabaseService {
       // Check if topicId is a number or a slug
       let topicIdValue: number | null = null;
 
-      if (typeof topicId === 'number' || !isNaN(Number(topicId))) {
+      if (!isNaN(Number(topicId))) {
         topicIdValue = Number(topicId);
       } else {
         // First get the topic by slug
@@ -187,7 +183,7 @@ class DatabaseService {
         }
 
         // If not found by slug, try with name
-        if (!topicIdValue) {
+        if (!topicIdValue && typeof topicId === 'string') {
           try {
             const { data, error } = await supabase
               .from('topics')
@@ -234,7 +230,6 @@ class DatabaseService {
   async getQuestionsByCategory(categoryId: string | number): Promise<Question[]> {
     const cacheKey = `category_${categoryId}`;
 
-    // Check cache first
     if (
       this.cache.questionsByCategory[cacheKey] &&
       this.cache.lastFetched.questions[cacheKey] &&
@@ -243,7 +238,6 @@ class DatabaseService {
       return this.cache.questionsByCategory[cacheKey];
     }
 
-    // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
         // Fetch questions from API
@@ -338,7 +332,6 @@ class DatabaseService {
    * @param topicId The ID or slug of the topic
    */
   async getTopicWithCategories(topicId: string | number): Promise<TopicWithCategories | null> {
-    // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
         const response = await fetch(`/api/topics`, {
@@ -409,23 +402,13 @@ class DatabaseService {
    * @param categoryId The ID or slug of the category
    */
   async getCategoryWithQuestions(categoryId: string | number, topicIdFromCaller?: string | number): Promise<CategoryWithQuestions | null> {
-    // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
-        // Ensure topicIdFromCaller is a specific value, not 'any' or undefined for the main API call.
-        // If topicIdFromCaller is not provided or is unsuitable, this API call might fail or return unexpected results.
-        // The db-route for categories now expects a concrete topicId when categoryId is also present.
         const apiTopicId = topicIdFromCaller && String(topicIdFromCaller) !== 'any' ? String(topicIdFromCaller) : undefined;
 
         if (!apiTopicId) {
-          console.warn(`DatabaseService.getCategoryWithQuestions: topicIdFromCaller is undefined or 'any'. Cannot reliably fetch category ${categoryId} with questions via API without a specific topic ID.`);
-          // Potentially fall back to a broader search or return null, 
-          // but this indicates a potential issue in the calling code or data flow.
-          // For now, let's attempt the call and let the API handle it, or return null directly.
-          // Depending on API behavior, it might 404 or try to guess, which is not ideal.
-          // A more robust solution would be to ensure topicId is always passed from TopicDataService.
-          // Consider making topicIdFromCaller non-optional if it's always available.
-          return null; // Or try a more generic API call if one exists that doesn't need topicId
+          console.warn(`DatabaseService.getCategoryWithQuestions: topicIdFromCaller missing for ${categoryId}.`);
+          return null; // Requires topic ID for context
         }
 
         const response = await fetch(`/api/topics/categories?categoryId=${categoryId}&topicId=${apiTopicId}`);
@@ -446,11 +429,9 @@ class DatabaseService {
       }
     }
 
-    // Check if categoryId is a header ID (e.g., 'header-123')
     if (typeof categoryId === 'string' && categoryId.startsWith('header-')) {
       console.log(`Category ID ${categoryId} is a section header ID`);
 
-      // Extract the header ID number
       const headerId = categoryId.replace('header-', '');
 
       try {
@@ -480,13 +461,13 @@ class DatabaseService {
         }
 
         if (!categories || categories.length === 0) {
-          // Create a fake category with the section name
+          // Create a synthetic category for the section header
           const fakeCategory: CategoryWithQuestions = {
             id: parseInt(headerId, 10),
             name: sectionName,
             topic_id: 0,
-            created_at: new Date().toISOString(), // Required by type - this is synthetic data for section headers
-            questions: [] // Ensure questions is initialized as Question[]
+            created_at: new Date().toISOString(),
+            questions: []
           };
 
           return fakeCategory;
@@ -498,9 +479,9 @@ class DatabaseService {
           name: sectionName,
           slug: `section-${headerId}`,
           topic_id: 0,
-          created_at: new Date().toISOString(), // Required by type - this is synthetic data for section headers
-          questions: [] as Question[], // Explicitly type as Question[] and initialize
-          subtopics: {} as Record<string, any> // Explicitly type as Record<string, any> and initialize
+          created_at: new Date().toISOString(),
+          questions: [] as Question[],
+          subtopics: {} as Record<string, any>
         };
 
         // Add each category as a subtopic
@@ -617,7 +598,6 @@ class DatabaseService {
       categoryId?: number
     }
   ): Promise<Question[]> {
-    // If we're in the browser, we need to use the API instead of direct Supabase access
     if (isBrowser) {
       try {
         // Build query parameters
@@ -711,14 +691,11 @@ class DatabaseService {
    * Uses a new API route if on client-side, or direct Supabase query if on server-side.
    */
   async fetchAllTopicsWithDetailedCategories(): Promise<TopicWithCategories[]> {
-    // Check cache first
-    if (
-      this.cache.allDetailedTopics &&
-      this.cache.lastFetched && // Explicitly check if lastFetched object exists
-      typeof this.cache.lastFetched.allDetailedTopics === 'number' && // Check if property is a number
-      this.cache.lastFetched.allDetailedTopics > 0 && // Ensure timestamp is valid (not initial 0)
-      (Date.now() - this.cache.lastFetched.allDetailedTopics < this.CACHE_EXPIRY) // Check expiry
-    ) {
+    const lastFetched = this.cache.lastFetched?.allDetailedTopics;
+    const isCacheValid = lastFetched && lastFetched > 0 &&
+      (Date.now() - lastFetched < this.CACHE_EXPIRY);
+
+    if (this.cache.allDetailedTopics && isCacheValid) {
       return this.cache.allDetailedTopics;
     }
 

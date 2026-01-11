@@ -90,7 +90,7 @@ export function AnswerDisplay({
     setIsHydrated(true);
   }, []);
 
-  // Removed debug logging to prevent hydration issues
+
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -119,22 +119,9 @@ export function AnswerDisplay({
       if (contentIsScrollable !== null) {
         setContentIsScrollable(null);
       }
-    } else {
-      if (error) {
-        // Toast notifications could be re-implemented here if needed
-        // using a toast library like react-hot-toast or something similar
-      } else if (answerText) {
-        if (contentIsScrollable !== null) {
-          if (contentIsScrollable === true) {
-            if (isCompleted) {
-              // Toast notifications could be re-implemented here if needed
-              // using a toast library like react-hot-toast or something similar
-            }
-          } else {
-            // Toast notifications could be re-implemented here if needed
-            // using a toast library like react-hot-toast or something similar
-          }
-        }
+    } else if (answerText) {
+      if (contentIsScrollable !== null) {
+        // No action needed for scrollable state changes
       }
     }
   }, [isLoading, error, answerText, isCompleted, contentIsScrollable]);
@@ -214,22 +201,13 @@ export function AnswerDisplay({
                 code: CodeBlock,
                 pre: ({ children }) => <>{children}</>, // Let CodeBlock handle the pre element
                 p: ({ children, ...props }) => {
-                  // Check if any child is a block element that should not be inside a p tag
+                  // Prevent invalid nesting of block elements (div, pre) inside paragraphs
                   const hasBlockElement = React.Children.toArray(children).some(
                     (child) => {
                       if (React.isValidElement(child)) {
-                        // Check for direct block elements
-                        if (child.type === 'div' || child.type === 'pre') {
-                          return true;
-                        }
-                        // Check for CodeBlock component (which renders a pre inside a div)
-                        if (typeof child.type === 'function' && child.type === CodeBlock) {
-                          return true;
-                        }
-                        // Check for code elements that might contain pre elements
-                        if (child.type === 'code' && child.props && !(child.props as any).inline) {
-                          return true;
-                        }
+                        if (child.type === 'div' || child.type === 'pre') return true;
+                        if (typeof child.type === 'function' && child.type === CodeBlock) return true;
+                        if (child.type === 'code' && child.props && !(child.props as any).inline) return true;
                       }
                       return false;
                     }
