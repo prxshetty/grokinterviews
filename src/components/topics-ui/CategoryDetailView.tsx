@@ -464,8 +464,8 @@ export default function CategoryDetailView({
   }, [searchParams, router, pathname, hasGroupedQuestions, questionsByCategory]);
 
   // Turnstile handlers
-  const handleTurnstileVerify = useCallback((token: string) => {
-    console.log('Turnstile verification successful:', token);
+  const handleTurnstileVerify = useCallback((_token: string) => {
+
     setIsTurnstileVerified(true);
     setTurnstileError(null);
   }, []);
