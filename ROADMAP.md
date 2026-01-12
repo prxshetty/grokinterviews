@@ -1,53 +1,43 @@
-# GrokInterviews Roadmap
-
-## Voice Interview 2.0: The "Human" Experience
-*Transitioning from standard Q&A to immersive, low-latency, and personalized interview simulations.*
-
-### Phase 1: Real-Time & Interactive (Low Latency)
-- [ ] **Migrate to Google Gemini Live API**
-    - Implement WebSocket-based streaming via the Google SDK.
-    - Targeting sub-500ms latency for natural conversational flow.
-    - Enable Full Duplex Communication to allow for user interruptions and AI cues.
-    - *Technical Note:* Deprecating the sequential Speech-to-Text -> LLM -> Text-to-Speech model.
+### Phase 1: Real-Time & Interactive
+- [ ] Migrate to Google Gemini Live API
+    - WebSocket-based streaming via Google SDK
+    - Target sub-500ms latency
+    - Full duplex communication for interruptions and AI cues
 
 ### Phase 2: Personas & Structured Logic
-- [ ] **Dynamic Interviewer Personas**
-    - Implement context-aware interviewer behaviors.
-    - Utilize RAG and advanced job description parsing to tailor technical and behavioral depth for every query.
-- [ ] **Stateful Interview Flows**
-    - Replace hardcoded logic with a session state machine.
-    - **Defined Stages:**
-        1. Introduction and Ice-breakers
-        2. Technical and Behavioral Deep Dive
-        3. Challenge/Curveball Implementation
-        4. Wrap-up and Candidate Questions
+- [ ] Dynamic Interviewer Personas
+    - Context-aware interviewer behaviors
+    - LocalRAG + job description parsing for tailored depth
+- [ ] Stateful Interview Flows
+    - Session state machine with defined stages: Introduction, Technical Deep Dive, Curveball, Wrap-up
 
 ### Phase 3: Multi-Modal & Visual Intelligence
-- [ ] **Resume-Tailored Questions**
-    - **Automated PDF Parsing:** Extract technology stack and experience from uploaded resumes.
-    - **Contextual Generation:** Generate specific questions based on past project experience (e.g., specific infrastructure or leadership challenges).
-- [ ] **Webcam Integration**
-    - Analyze non-verbal cues such as eye contact and posture using client-side computer vision.
-    - Provide objective feedback on executive presence and confidence metrics.
-- [ ] **Session Recording**
-    - Archive full video and audio replays for candidate self-review.
+- [ ] Resume-Tailored Questions
+    - PDF parsing for tech stack and experience extraction
+    - Contextual question generation from past projects
+- [ ] Webcam Integration
+    - Non-verbal cue analysis (eye contact, posture)
+    - Executive presence and confidence metrics
+- [ ] Session Recording
+    - Full video/audio replays for self-review
+- [ ] Interactive System Design Board
+    - Whiteboard interface for candidate diagrams
+    - AI visual context during system design interviews
 
 ---
 
 ## Data & Infrastructure
 
 ### Open Source Resource Pipeline
-- [ ] **GitHub Migration (from Cloudflare R2)**
-    - Migrate JSON blobs to a structured GitHub repository.
-    - Facilitate community-driven updates via Pull Requests for questions and content fixes.
-    - Utilize Git's versioning and compression for dataset management.
-- [ ] **Data Pipeline Optimization**
-    - Implement concurrent processing for resource updates.
-    - Establish automated validity checks via CI/CD for data integrity.
+- [ ] GitHub Migration (from Cloudflare R2)
+    - Migrate JSON to structured GitHub repo
+    - Community-driven updates via PRs
+- [ ] Data Pipeline Optimization
+    - Concurrent processing for resource updates
+    - Automated validity checks via CI/CD
 
 ---
 
-## Future Specifications
-
-- [ ] **Interactive System Design Board:** A specialized whiteboard interface providing the AI with visual context of candidate diagrams.
-- [ ] **Global Language Support:** Native technical interview support for Mandarin, Hindi, and Spanish.
+## Quality of Life
+- [ ] Global Language Support
+    - Native interview support for Mandarin, Hindi, Spanish
