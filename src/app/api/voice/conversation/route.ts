@@ -147,10 +147,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🤖 Processing AI interview response:', {
-      userResponse: userResponse.substring(0, 100) + '...',
-      historyLength: conversationHistory.length,
-    });
+
 
     // Auth check (for user metadata in prompts, not for DB storage)
     const supabase = await createClient();
@@ -180,9 +177,9 @@ export async function POST(request: NextRequest) {
       currentQuestionCount,
       isLastQuestion
     };
-
     const systemPrompt = PromptService.createSystemPrompt(promptContext);
-    const startTime = Date.now();
+
+
 
     // Call OpenAI LLM for AI response
     const chatCompletion = await openai.chat.completions.create({
@@ -201,10 +198,7 @@ export async function POST(request: NextRequest) {
       throw new Error('No response generated from AI');
     }
 
-    console.log('✅ AI response generated:', {
-      sessionType,
-      responseTime: Date.now() - startTime,
-    });
+
 
     // Check if interview is complete
     const newQuestionCount = currentQuestionCount + 1;
@@ -213,7 +207,7 @@ export async function POST(request: NextRequest) {
     // Generate score if complete (returned directly, not stored in DB)
     let interviewScore = null;
     if (isComplete) {
-      console.log('🎯 Interview completed after', newQuestionCount, 'questions');
+
 
       try {
         const updatedHistory: ConversationMessage[] = [
@@ -228,7 +222,7 @@ export async function POST(request: NextRequest) {
           apiKey,
           config
         );
-        console.log('✅ Interview score generated');
+
       } catch (error) {
         console.error('⚠️ Failed to generate score:', error);
       }

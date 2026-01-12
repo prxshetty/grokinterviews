@@ -39,10 +39,7 @@ export async function POST(request: NextRequest) {
     // Map internal voice to OpenAI voice
     const openaiVoice = VOICE_MAP[voice] || 'onyx';
 
-    console.log('🎤 Generating TTS with OpenAI:', {
-      textLength: text.length,
-      voice: openaiVoice,
-    });
+
 
     const openai = new OpenAI({ apiKey });
 
@@ -55,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const audioBuffer = Buffer.from(await mp3Response.arrayBuffer());
 
-    console.log('✅ TTS successful, audio size:', audioBuffer.length);
+
 
     return new NextResponse(audioBuffer, {
       status: 200,

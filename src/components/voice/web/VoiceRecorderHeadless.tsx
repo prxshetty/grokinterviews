@@ -125,7 +125,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       formData.append('audio', audioBlob, filename);
       formData.append('apiKey', aiConfig.apiKey);
 
-      console.log('📝 Sending audio for transcription...');
+
 
       const response = await fetch('/api/voice/stt', {
         method: 'POST',
@@ -140,14 +140,14 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
       const result = await response.json();
 
       if (result.success && result.text) {
-        console.log('✅ Transcription received:', result.text);
+
 
         // Only send transcription to AI if microphone is enabled
         if (micEnabledRef.current) {
-          console.log('🎤 Microphone enabled, sending transcription to AI');
+
           onTranscriptionReceived(result.text);
         } else {
-          console.log('🔇 Microphone disabled, transcription received but not sent to AI');
+
         }
       } else {
         throw new Error('No transcription text received');
@@ -164,7 +164,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
   // VAD callback handlers - using refs to avoid recreating VAD instance
   const handleSpeechStart = useCallback(() => {
-    console.log('🗣️ VAD: Speech started');
+
     setIsSpeaking(true);
     if (autoStopTimeoutRef.current) {
       clearTimeout(autoStopTimeoutRef.current);
@@ -173,7 +173,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
     // Start recording when speech is detected, but only if mic is enabled
     if (micEnabledRef.current && !isRecordingRef.current) {
-      console.log('🎤 VAD triggering recording start');
+
       // Use a timeout to avoid circular dependency issues
       setTimeout(() => {
         if (micEnabledRef.current && !isRecordingRef.current) {
@@ -181,16 +181,16 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         }
       }, 0);
     } else if (!micEnabledRef.current) {
-      console.log('🔇 VAD detected speech but microphone is disabled');
+
     }
   }, []); // Empty dependency array to avoid circular dependencies
 
   const handleSpeechPause = useCallback(() => {
-    console.log('⏸️ VAD: Speech paused - checking MediaRecorder state');
+
     setIsSpeaking(false);
 
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
-      console.log('⚠️ MediaRecorder not recording, ignoring speech pause');
+
       return;
     }
 
@@ -198,50 +198,50 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     const minRecordingDuration = 1000;
 
     if (recordingStartTimeRef.current && (now - recordingStartTimeRef.current) < minRecordingDuration) {
-      console.log('⚠️ Recording too short, waiting for minimum duration...');
+
       return;
     }
 
-    console.log('🛑 VAD stopping recording after speech pause');
+
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setIsSpeaking(false);
   }, []); // Empty dependency array
 
   const handleSpeechEnd = useCallback(() => {
-    console.log('🤫 VAD: Speech ended after silence timeout (backup)');
+
     setIsSpeaking(false);
 
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
-      console.log('⚠️ MediaRecorder not recording, ignoring speech end');
+
       return;
     }
 
-    console.log('🛑 VAD backup: Stopping recording after silence timeout');
+
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setIsSpeaking(false);
   }, []); // Empty dependency array
 
   const handleVADMisfire = useCallback(() => {
-    console.log('⚠️ VAD: Misfire detected');
+
   }, []); // Empty dependency array
 
   // Initialize VAD on component mount
   useEffect(() => {
-    const vadInstanceId = Math.random().toString(36).substring(7);
-    console.log(`🔧 VAD useEffect triggered [${vadInstanceId}], enableVAD:`, enableVAD, 'isVADSupported:', isVADSupported());
+
+
     setVadSupported(isVADSupported());
 
     // Ensure any existing VAD is cleaned up first
     if (vadRef.current) {
-      console.log(`🧹 Cleaning up existing VAD before creating new one [${vadInstanceId}]`);
+
       vadRef.current.destroy();
       vadRef.current = null;
     }
 
     if (enableVAD && isVADSupported()) {
-      console.log(`🎯 Creating VAD instance [${vadInstanceId}]...`);
+
       vadRef.current = createVAD({
         onSpeechStart: handleSpeechStart,
         onSpeechPause: handleSpeechPause,
@@ -253,13 +253,13 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         minSpeechFrames: 4,
         preSpeechPadFrames: 1
       });
-      console.log(`✅ VAD instance created successfully [${vadInstanceId}]`);
+
     } else {
-      console.log(`❌ VAD not enabled or not supported [${vadInstanceId}]`);
+
     }
 
     return () => {
-      console.log(`🧹 Cleaning up VAD [${vadInstanceId}]...`);
+
       if (vadRef.current) {
         vadRef.current.destroy();
         vadRef.current = null;
@@ -274,7 +274,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     try {
       // Check if microphone is enabled before starting recording
       if (!micEnabledRef.current) {
-        console.log('🔇 Microphone disabled, cannot start recording');
+
         onError?.('Microphone is disabled. Please enable it to record.');
         return;
       }
@@ -306,7 +306,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         }
       }
 
-      console.log(`🎤 Using recording format: ${mediaRecorderOptions.mimeType || 'default'}`);
+
 
       const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
       mediaRecorderRef.current = mediaRecorder;
@@ -336,13 +336,13 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
         // Skip transcription if recording was force-stopped (manual interview termination)
         if (isForceStoppedRef.current) {
-          console.log('🛑 Recording was force-stopped, skipping transcription');
+
           isForceStoppedRef.current = false; // Reset flag
           return;
         }
 
         if (audioBlob.size < 1000) {
-          console.log('⚠️ Recording too small, skipping transcription:', audioBlob.size, 'bytes');
+
           onError?.('Recording too short. Please speak for at least 1 second.');
           return;
         }
@@ -360,18 +360,18 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         setHasAutoStarted(true);
       }
 
-      console.log('🎤 MediaRecorder started, state:', mediaRecorder.state);
+
 
       if (enableVAD && vadRef.current && vadSupported) {
         try {
           await vadRef.current.start();
-          console.log('🎤 Recording started with VAD enabled');
+
         } catch (vadError) {
           console.warn('⚠️ VAD failed to start, continuing without it:', vadError);
-          console.log('🎤 Recording started (VAD disabled)');
+
         }
       } else {
-        console.log('🎤 Recording started (VAD disabled)');
+
       }
 
     } catch (error: unknown) {
@@ -413,12 +413,12 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
         streamRef.current = null;
       }
 
-      console.log('🛑 Recording stopped');
+
     }
   }, [isRecording, setIsRecording, setIsSpeaking]);
 
   const forceStop = useCallback(() => {
-    console.log('🛑 VoiceRecorderHeadless: Force stopping recording');
+
 
     // Set flag to prevent transcription on manual termination
     isForceStoppedRef.current = true;
@@ -461,11 +461,11 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
     audioChunksRef.current = [];
 
-    console.log('✅ VoiceRecorderHeadless: Recording stopped successfully');
+
   }, [isRecording, setIsRecording, setIsProcessing, setIsSpeaking]);
 
   const pauseVAD = useCallback(async () => {
-    console.log('⏸️ VoiceRecorderHeadless: Pausing VAD');
+
     if (vadRef.current) {
       try {
         await vadRef.current.pause();
@@ -476,7 +476,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   }, []);
 
   const resumeVAD = useCallback(async () => {
-    console.log('▶️ VoiceRecorderHeadless: Resuming VAD');
+
     if (vadRef.current) {
       try {
         await vadRef.current.resume();
@@ -494,14 +494,14 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
     if (!newMicState) {
       // If disabling mic, stop any current recording and ensure VAD is aware
       if (isRecording) {
-        console.log('🔇 Microphone disabled, stopping current recording');
+
         stopRecording();
       }
       // Also clear any speaking state when mic is disabled
       setIsSpeaking(false);
     }
 
-    console.log(`🎤 Microphone ${newMicState ? 'enabled' : 'disabled'}`);
+
   }, [internalMicEnabled, isRecording, stopRecording]);
 
   // Expose methods to parent component via ref
@@ -523,7 +523,7 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
   // Auto-start recording when autoStart prop becomes true (only if mic is enabled)
   useEffect(() => {
     if (autoStart && !isRecording && !disabled && !isProcessing && !hasAutoStarted && micEnabledRef.current) {
-      console.log('🎤 Auto-starting recording after TTS completion');
+
       startRecording();
     } else if (!autoStart && hasAutoStarted) {
       setHasAutoStarted(false);

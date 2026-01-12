@@ -68,7 +68,7 @@ export function HeroSection() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:bg-background dark:hover:border-t-border bg-muted group flex w-fit items-center gap-2 sm:gap-3 rounded-full border p-1 pl-3 sm:pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950 max-w-[calc(100vw-3rem)] sm:max-w-none">
-                                <span className="text-foreground text-xs sm:text-sm truncate">⭐ Star us on GitHub</span>
+                                <span className="text-foreground text-xs sm:text-sm truncate">⭐ Star us on GitHub! </span>
                                 <span className="dark:border-background block h-3 sm:h-4 w-0.5 border-l bg-white dark:bg-zinc-700 flex-shrink-0"></span>
                                 <div className="bg-background group-hover:bg-muted size-5 sm:size-6 overflow-hidden rounded-full duration-500 flex-shrink-0">
                                     <div className="flex w-10 sm:w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">

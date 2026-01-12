@@ -88,23 +88,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🎤 Processing speech-to-text request:', {
-      fileName: audioFile.name,
-      fileSize: audioFile.size,
-      fileType: audioFile.type,
-    });
+
 
     const audioBuffer = await audioFile.arrayBuffer();
     const uint8Array = new Uint8Array(audioBuffer);
     const isValidAudio = validateAudioFile(uint8Array, fileType);
 
     if (!isValidAudio) {
-      console.log('❌ Invalid audio file detected:', {
-        fileName: audioFile.name,
-        fileType,
-        size: audioBuffer.byteLength,
-        firstBytes: Array.from(uint8Array.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
-      });
+
 
       return NextResponse.json(
         {
@@ -141,12 +132,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('📁 Prepared file for OpenAI Whisper:', {
-      fileName,
-      mimeType,
-      originalType: audioFile.type,
-      size: audioBuffer.byteLength
-    });
+
 
     // Initialize OpenAI client with user's API key
     const openai = new OpenAI({ apiKey });
@@ -160,9 +146,7 @@ export async function POST(request: NextRequest) {
       response_format: 'json',
     });
 
-    console.log('✅ Transcription successful:', {
-      text: transcription.text,
-    });
+
 
     return NextResponse.json({
       success: true,

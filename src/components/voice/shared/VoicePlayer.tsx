@@ -53,7 +53,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
     stopPlayback: () => {
-      console.log('🛑 VoicePlayer: Force stopping playback');
+
 
       // Stop audio analysis
       if (animationFrameRef.current) {
@@ -97,7 +97,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       // Notify parent
       onPlayStateChange?.(false);
 
-      console.log('✅ VoicePlayer: Playback stopped successfully');
+
     },
     getAudioElement: () => audioRef.current
   }), [audioUrl, onPlayStateChange]);
@@ -194,7 +194,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
       setIsLoading(true);
       setError(null);
 
-      console.log(`🎤 Generating speech with OpenAI TTS for:`, text.substring(0, 50) + '...');
+
 
       const response = await fetch('/api/voice/tts', {
         method: 'POST',
