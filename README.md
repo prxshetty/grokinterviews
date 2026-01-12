@@ -1,6 +1,6 @@
-# 🚀 GrokInterviews - AI-Powered Interview Preparation Platform
+# GrokInterviews - Open Source Technical Interview Preparation Platform
 
-A comprehensive, AI-enhanced interview preparation platform with **3.6+ million curated resources** and **81,499 technical questions** across 5 major domains.
+A comprehensive, enterprise-grade interview preparation platform featuring **3.6+ million curated resources** and **81,499 technical questions** across 5 major domains. This project aims to be the definitive open-source solution for technical interview preparation, engineered for scale and community contribution.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -8,60 +8,60 @@ A comprehensive, AI-enhanced interview preparation platform with **3.6+ million 
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 
-## 📊 Scale & Impact
+## Scale & Impact
 
-- **🗃️ 3,646,759 Learning Resources** - Curated YouTube videos, research papers, PDFs, and educational content
-- **❓ 81,499 Interview Questions** across 5 comprehensive domains
-- **📂 16,300 Question Categories** with hierarchical organization
-- **🎯 2,394 Technical Topics** covering all major interview preparation areas
-- **🏗️ 22,482 Lines of Code** in TypeScript/React/Next.js
-- **🔌 30 RESTful API Endpoints** for comprehensive data access
-- **⚡ 51 React Components** with modular, reusable architecture
+*   **3,646,759 Learning Resources** - Curated YouTube videos, research papers, PDFs, and educational content
+*   **81,499 Interview Questions** across 5 comprehensive domains
+*   **16,300 Question Categories** with hierarchical organization
+*   **2,394 Technical Topics** covering all major interview preparation areas
+*   **22,482 Lines of Code** in TypeScript/React/Next.js
+*   **30 RESTful API Endpoints** for comprehensive data access
+*   **51 React Components** with modular, reusable architecture
 
-## 🎯 Domain Coverage
+## Domain Coverage
 
 | Domain | Topics | Categories | Questions |
-|--------|--------|------------|-----------|
+| :--- | :--- | :--- | :--- |
 | **AI & Machine Learning** | 813 | 6,673 | 33,363 |
 | **Web Development** | 431 | 4,016 | 20,080 |
 | **System Design** | 461 | 2,360 | 11,800 |
 | **Data Structures & Algorithms** | 305 | 1,715 | 8,575 |
 | **Machine Learning** | 384 | 1,536 | 7,681 |
 
-## ✨ Key Features
+## Key Features
 
-### 🎙️ Voice Interview Practice
-- **Real-time Voice Interviews** with AI-powered behavioral interview simulation
-- **Dual Interview Modes** - Web-based interviews and authentic phone call experiences
-- **Advanced Voice Settings** with multiple TTS providers (Google Cloud TTS, Groq/PlayAI)
-- **Premium Voice Options** including Google's high-quality Chirp3-HD voices
-- **Voice Activity Detection (VAD)** for natural conversation flow
-- **Real-time Transcription** with instant feedback during interviews
+### Voice Interview Practice
+*   **Real-time Voice Interviews** with AI-powered behavioral interview simulation
+*   **Dual Interview Modes** - Web-based interviews and authentic phone call experiences
+*   **Advanced Voice Settings** with multiple TTS providers (Google Cloud TTS, Groq/PlayAI)
+*   **Premium Voice Options** including Google's high-quality Chirp3-HD voices
+*   **Voice Activity Detection (VAD)** for natural conversation flow
+*   **Real-time Transcription** with instant feedback during interviews
 
-### 🤖 AI-Powered Learning
-- **Dynamic Answer Generation** using multiple LLM models via Groq API
-- **Personalized Learning Paths** with intelligent resource recommendations
-- **Smart Content Filtering** by difficulty, keywords, and learning preferences
+### AI-Powered Learning
+*   **Dynamic Answer Generation** using multiple LLM models via Groq API
+*   **Personalized Learning Paths** with intelligent resource recommendations
+*   **Smart Content Filtering** by difficulty, keywords, and learning preferences
 
-### 📈 Advanced Progress Tracking
-- **Real-time Progress Analytics** with completion percentages
-- **Hierarchical Progress Calculation** (Domain → Section → Topic → Category → Questions)
-- **Visual Activity Grids** showing learning streaks and patterns
-- **Intelligent Bookmarking System** for personalized study plans
+### Advanced Progress Tracking
+*   **Real-time Progress Analytics** with completion percentages
+*   **Hierarchical Progress Calculation** (Domain → Section → Topic → Category → Questions)
+*   **Visual Activity Grids** showing learning streaks and patterns
+*   **Intelligent Bookmarking System** for personalized study plans
 
-### 🔍 Powerful Search & Navigation
-- **Multi-level Topic Hierarchy** with intuitive navigation
-- **Advanced Filtering Options** by difficulty, domain, and keywords
-- **Smart Search Functionality** across 81K+ questions
-- **Responsive Grid Layouts** optimized for all devices
+### Search & Navigation
+*   **Multi-level Topic Hierarchy** with intuitive navigation
+*   **Advanced Filtering Options** by difficulty, domain, and keywords
+*   **Smart Search Functionality** across 81K+ questions
+*   **Responsive Grid Layouts** optimized for all devices
 
-### 👤 User Experience
-- **Seamless Authentication** with Google OAuth integration
-- **Dark/Light Mode Support** with system preference detection
-- **Personalized Dashboard** with progress insights and recommendations
-- **Mobile-First Responsive Design** using Tailwind CSS
+### User Experience
+*   **Seamless Authentication** with Google OAuth integration
+*   **Dark/Light Mode Support** with system preference detection
+*   **Personalized Dashboard** with progress insights and recommendations
+*   **Mobile-First Responsive Design** using Tailwind CSS
 
-## 🏗️ Technical Architecture
+## Technical Architecture
 
 ### Frontend Stack
 ```typescript
@@ -93,50 +93,50 @@ A comprehensive, AI-enhanced interview preparation platform with **3.6+ million 
 - Resource filtering based on learning preferences
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Supabase account (for database)
-- Groq API key (for AI features)
-- Google Cloud TTS API key (for premium voice features)
+*   Node.js 18+ and npm
+*   Supabase account (for database)
+*   Groq API key (for AI features)
+*   Google Cloud TTS API key (for premium voice features)
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/grokinterviews.git
-   cd grokinterviews
-   ```
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/grokinterviews.git
+    cd grokinterviews
+    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-3. **Environment Setup**
-   ```bash
-   cp .env.example .env.local
-   # Add your Supabase, Groq API, and Google Cloud TTS credentials
-   ```
+3.  **Environment Setup**
+    ```bash
+    cp .env.example .env.local
+    # Add your Supabase, Groq API, and Google Cloud TTS credentials
+    ```
 
-4. **Database Setup**
-   ```bash
-   # Run database migrations (if any)
-   # The database schema is automatically managed by Supabase
-   ```
+4.  **Database Setup**
+    ```bash
+    # Run database migrations (if any)
+    # The database schema is automatically managed by Supabase
+    ```
 
-5. **Start development server**
-   ```bash
-   npm run dev
-   ```
+5.  **Start development server**
+    ```bash
+    npm run dev
+    ```
 
-6. **Open your browser**
-   ```
-   http://localhost:3000
-   ```
+6.  **Open your browser**
+    ```
+    http://localhost:3000
+    ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 grokinterviews/
@@ -163,7 +163,7 @@ grokinterviews/
 └── ...
 ```
 
-## 🔧 API Endpoints
+## API Endpoints
 
 <details>
 <summary>View All 30 API Endpoints</summary>
@@ -194,64 +194,64 @@ grokinterviews/
 And 13 more specialized endpoints...
 </details>
 
-## 🛡️ Database Schema
+## Database Schema
 
 The application uses a sophisticated PostgreSQL database with:
 
-- **15+ Interconnected Tables** with foreign key relationships
-- **Materialized Views** for complex progress calculations
-- **Row Level Security (RLS)** for data protection
-- **Real-time Subscriptions** for live updates
-- **Optimized Indexing** for sub-second query performance
+*   **15+ Interconnected Tables** with foreign key relationships
+*   **Materialized Views** for complex progress calculations
+*   **Row Level Security (RLS)** for data protection
+*   **Real-time Subscriptions** for live updates
+*   **Optimized Indexing** for sub-second query performance
 
 Key tables: `profiles`, `topics`, `categories`, `questions`, `resources`, `user_progress`, `user_activity`, `user_bookmarks`, `user_preferences`
 
-## 🎯 Recent Engineering Achievements
+## Recent Engineering Achievements
 
-- ✅ **Voice Interview System**: Built comprehensive voice interview platform with dual modes
-- ✅ **Multi-TTS Integration**: Implemented Google Cloud TTS and Groq/PlayAI voice synthesis
-- ✅ **Premium Voice Features**: Added high-quality Chirp3-HD voices with voice selection
-- ✅ **Real-time Audio Processing**: Integrated Voice Activity Detection for natural flow
-- ✅ **Performance Optimization**: Implemented React.memo, useMemo, and lazy loading
-- ✅ **Database Optimization**: Created materialized views reducing query time by 80%
-- ✅ **Component Architecture**: Consolidated duplicate components reducing bundle size by 30%
-- ✅ **Real-time Features**: Built activity tracking processing 200+ events per user
-- ✅ **AI Integration**: Implemented dynamic answer generation with multiple LLM models
-- ✅ **Progressive Web App**: Added offline capabilities and mobile optimization
+*   **Voice Interview System**: Built comprehensive voice interview platform with dual modes
+*   **Multi-TTS Integration**: Implemented Google Cloud TTS and Groq/PlayAI voice synthesis
+*   **Premium Voice Features**: Added high-quality Chirp3-HD voices with voice selection
+*   **Real-time Audio Processing**: Integrated Voice Activity Detection for natural flow
+*   **Performance Optimization**: Implemented React.memo, useMemo, and lazy loading
+*   **Database Optimization**: Created materialized views reducing query time by 80%
+*   **Component Architecture**: Consolidated duplicate components reducing bundle size by 30%
+*   **Real-time Features**: Built activity tracking processing 200+ events per user
+*   **AI Integration**: Implemented dynamic answer generation with multiple LLM models
+*   **Progressive Web App**: Added offline capabilities and mobile optimization
 
-## 🚀 Performance Metrics
+## Performance Metrics
 
-- **⚡ Sub-second Query Performance** for 81K+ questions
-- **📱 Mobile-First Responsive** design with 95+ Lighthouse scores
-- **🔄 Real-time Updates** with Supabase subscriptions
-- **💾 Intelligent Caching** reducing API calls by 60%
-- **🎨 Optimized Bundle Size** with code splitting and lazy loading
+*   **Sub-second Query Performance** for 81K+ questions
+*   **Mobile-First Responsive** design with 95+ Lighthouse scores
+*   **Real-time Updates** with Supabase subscriptions
+*   **Intelligent Caching** reducing API calls by 60%
+*   **Optimized Bundle Size** with code splitting and lazy loading
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1.  Fork the repository
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- **Groq** for providing fast LLM inference
-- **Supabase** for the robust backend infrastructure
-- **Next.js** and **React** communities for excellent documentation
-- **Tailwind CSS** and **Shadcn UI** for beautiful, accessible components
+*   **Groq** for providing fast LLM inference
+*   **Supabase** for the robust backend infrastructure
+*   **Next.js** and **React** communities for excellent documentation
+*   **Tailwind CSS** and **Shadcn UI** for modern, accessible components
 
 ---
 
 <div align="center">
-  <strong>Built with ❤️ for the developer community</strong>
+  <strong>Built for the developer community</strong>
   <br>
-  <sub>Helping developers ace their technical interviews with AI-powered preparation</sub>
+  <sub>Advancing technical interview preparation through open source innovation.</sub>
 </div>
