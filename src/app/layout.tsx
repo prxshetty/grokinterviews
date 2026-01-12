@@ -4,6 +4,7 @@ import ClientProviders from '@/components/client-providers';
 import { cn } from '@/lib/utils';
 import { Manrope } from 'next/font/google'
 import { PPEditorialUltralight } from '@/fonts/pp-editorial';
+import { CustomScrollArea } from '@/components/ui/custom-scroll-area';
 
 
 const manrope = Manrope({
@@ -86,24 +87,24 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Critical Resource Hints for LCP Optimization */}
-        
+
         {/* Font loading is handled automatically by Next.js */}
-        
+
         {/* Preconnect to external domains for faster loading */}
         <link rel="preconnect" href="https://upload.wikimedia.org" />
         <link rel="preconnect" href="https://html.tailus.io" />
         <link rel="preconnect" href="https://lh3.googleusercontent.com" />
         <link rel="preconnect" href="https://avatars.githubusercontent.com" />
-        
+
         {/* DNS prefetch for analytics and external services */}
         <link rel="dns-prefetch" href="https://vitals.vercel-analytics.com" />
         <link rel="dns-prefetch" href="https://vercel-analytics.com" />
         <link rel="dns-prefetch" href="https://img.youtube.com" />
-        
+
         {/* Preload critical CSS - removed problematic hardcoded CSS link */}
-        
+
         {/* Performance hints */}
-<meta name="description" content="Ace your tech interviews with an AI-enhanced platform. 3.6M+ resources, 50K+ questions across AI, Web Dev, System Design, DSA, and ML." />
+        <meta name="description" content="Ace your tech interviews with an AI-enhanced platform. 3.6M+ resources, 50K+ questions across AI, Web Dev, System Design, DSA, and ML." />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -115,25 +116,9 @@ export default function RootLayout({
         PPEditorialUltralight.variable
       )}>
         <ClientProviders>
-              {children}
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-(function(){
-  const root = document.documentElement;
-  root.classList.add('scrollbar-hidden');
-  let hideTimer;
-  function show(){
-    clearTimeout(hideTimer);
-    root.classList.remove('scrollbar-hidden');
-    hideTimer = setTimeout(() => root.classList.add('scrollbar-hidden'), 1200);
-  }
-  window.addEventListener('wheel', show, { passive: true });
-  window.addEventListener('scroll', show, { passive: true });
-})();
-                `,
-              }}
-            />
+          <CustomScrollArea>
+            {children}
+          </CustomScrollArea>
         </ClientProviders>
       </body>
     </html>

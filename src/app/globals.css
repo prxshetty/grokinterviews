@@ -153,11 +153,21 @@ canvas {
   }
 }
 
+html,
 body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  /* Force disable browser scrollbar */
   background-color: var(--background-color);
   color: var(--text-color);
-  letter-spacing: -0.025em;
   font-family: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  letter-spacing: -0.025em;
 }
 
 /* Ensure all text elements use the correct font */
@@ -717,51 +727,8 @@ button {
 }
 
 /* Overlay scrollbar to prevent layout-shift on load */
-@supports (overflow: overlay) {
-  html {
-    overflow-y: overlay;
-    /* draw scrollbar over content instead of resizing */
-  }
-}
 
-/* Firefox – slimmer bar so width change is negligible */
-html {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground)) transparent;
-}
 
-/* WebKit browsers – optional styling */
-body::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-/* Base thumb style with transition */
-html::-webkit-scrollbar-thumb {
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-}
-
-/* Hidden state – fully transparent */
-html.scrollbar-hidden::-webkit-scrollbar-thumb {
-  background-color: transparent;
-}
-
-/* Visible state */
-html:not(.scrollbar-hidden)::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.4);
-}
-
-/* Hidden scrollbar state applied by ScrollbarController */
-html.scrollbar-hidden {
-  scrollbar-width: none;
-  /* Firefox */
-}
-
-html.scrollbar-hidden::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
 
 /* Prevent text selection */
 .no-select {
