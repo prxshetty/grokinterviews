@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+
 import { cva } from "class-variance-authority"
 import { HTMLMotionProps, motion } from "framer-motion"
 

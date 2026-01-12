@@ -1,8 +1,9 @@
-import React from 'react';
-import Link from 'next/link';
 
-interface Button1Props extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-  children: React.ReactNode;
+import Link from 'next/link';
+import { AnchorHTMLAttributes, ReactNode } from 'react';
+
+interface Button1Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
+  children: ReactNode;
   href: string;
 }
 
@@ -11,7 +12,7 @@ export const Button1 = ({ children, href, className, ...props }: Button1Props) =
   const filteredProps = Object.fromEntries(
     Object.entries(props).filter(([_, value]) => value !== undefined)
   );
-  
+
   return (
     <div className="relative inline-flex items-center justify-center gap-4 group">
       <div className="absolute inset-0 duration-1000 opacity-60 transition-all bg-gradient-to-r from-indigo-500 via-pink-500 to-yellow-400 rounded-md blur-lg filter group-hover:opacity-100 group-hover:duration-200"></div>

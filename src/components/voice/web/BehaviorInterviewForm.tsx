@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 import { Play, Building2, Briefcase, Plus, Minus, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const industryOptions = [
   'Technology',
-  'Healthcare', 
+  'Healthcare',
   'Finance',
   'Consulting',
   'Marketing',
@@ -42,7 +42,7 @@ export default function BehaviorInterviewForm({
   rateLimited,
   onStartInterview
 }: BehaviorInterviewFormProps) {
-  
+
   const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
   const industryDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -86,7 +86,7 @@ export default function BehaviorInterviewForm({
       {/* Main Prompt Box */}
       <div className="w-full max-w-[380px] md:max-w-[500px] lg:max-w-[700px] mx-auto">
         <div className="rounded-3xl border border-border bg-background p-2 shadow-[0_8px_30px_rgba(0,0,0,0.24)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300">
-          
+
           {/* Input Field */}
           <div className="relative">
             <input
@@ -105,10 +105,10 @@ export default function BehaviorInterviewForm({
 
           {/* Actions Row */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-0 pt-2">
-            
+
             {/* Left Side - Configuration Options */}
             <div className="flex items-center gap-1">
-              
+
               {/* Industry Selector */}
               <div className="relative" ref={industryDropdownRef}>
                 <button
@@ -130,28 +130,28 @@ export default function BehaviorInterviewForm({
                     </motion.div>
                   </div>
                   {config.industry ? (
-                  <>
-                    <span className="text-xs overflow-hidden whitespace-nowrap flex-shrink-0 max-w-20">
-                      {config.industry}
-                    </span>
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleInputChange('industry', '');
-                      }}
-                      className="w-4 h-4 flex items-center justify-center text-current hover:text-destructive transition-colors cursor-pointer"
-                    >
-                      <X className="w-3 h-3" />
-                    </div>
-                  </>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Industry</span>
-                )}
+                    <>
+                      <span className="text-xs overflow-hidden whitespace-nowrap flex-shrink-0 max-w-20">
+                        {config.industry}
+                      </span>
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInputChange('industry', '');
+                        }}
+                        className="w-4 h-4 flex items-center justify-center text-current hover:text-destructive transition-colors cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Industry</span>
+                  )}
                 </button>
 
                 {/* Industry Dropdown */}
                 {showIndustryDropdown && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -185,7 +185,7 @@ export default function BehaviorInterviewForm({
                 <div className="flex items-center gap-1 px-2 py-1 border border-transparent rounded-full">
                   <Briefcase className="w-4 h-4 text-muted-foreground" />
                 </div>
-                
+
                 {/* Min Years */}
                 <div className="flex items-center gap-1">
                   <button

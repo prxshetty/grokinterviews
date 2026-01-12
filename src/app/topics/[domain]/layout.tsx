@@ -1,11 +1,11 @@
 // This is a server component by default in Next.js App Router
- 
-import React from 'react';
+
+import { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { VALID_DOMAINS } from '@/config/domain.constants';
 
 type Props = {
-  children: React.ReactNode;
+  children: ReactNode;
   params: Promise<{ domain: string }>;
 };
 
@@ -13,12 +13,12 @@ type Props = {
 export default async function DomainLayout({ children, params }: Props) {
   // Decode the domain parameter directly from the awaited props
   const domain = decodeURIComponent((await params).domain);
-  
+
   // Domain validation - ensure only valid domains can be accessed
   if (!VALID_DOMAINS.includes(domain)) {
     notFound();
   }
-  
+
   return (
     <div data-domain={domain}>
       {children}

@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 import { Play, Code, Target, Plus, Minus, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const programmingLanguages = [
   'JavaScript',
-  'Python', 
+  'Python',
   'Java',
   'C++',
   'Go',
@@ -55,7 +55,7 @@ export default function TechnicalInterviewForm({
   rateLimited,
   onStartInterview
 }: TechnicalInterviewFormProps) {
-  
+
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showFocusAreasDropdown, setShowFocusAreasDropdown] = useState(false);
   const languageDropdownRef = useRef<HTMLDivElement>(null);
@@ -90,10 +90,10 @@ export default function TechnicalInterviewForm({
   };
 
   const currentDifficultyIndex = config.difficulty ? difficultyOptions.indexOf(config.difficulty) : -1;
-  
+
   const handleDifficultyChange = (direction: 'up' | 'down') => {
     const currentIndex = config.difficulty ? difficultyOptions.indexOf(config.difficulty) : -1;
-    
+
     if (direction === 'up') {
       if (currentIndex === -1 || !config.difficulty) {
         handleInputChange('difficulty', 'Easy');
@@ -128,7 +128,7 @@ export default function TechnicalInterviewForm({
       {/* Main Prompt Box */}
       <div className="w-full max-w-[380px] md:max-w-[500px] lg:max-w-[700px] mx-auto">
         <div className="rounded-3xl border border-border bg-background p-2 shadow-[0_8px_30px_rgba(0,0,0,0.24)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300">
-          
+
           {/* Input Field - keeping the text field for target role */}
           <div className="relative">
             <input
@@ -147,10 +147,10 @@ export default function TechnicalInterviewForm({
 
           {/* Actions Row */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-0 pt-2">
-            
+
             {/* Left Side - Configuration Options */}
             <div className="flex items-center gap-1">
-              
+
               {/* Programming Language Selector */}
               <div className="relative" ref={languageDropdownRef}>
                 <button
@@ -193,7 +193,7 @@ export default function TechnicalInterviewForm({
 
                 {/* Language Dropdown */}
                 {showLanguageDropdown && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -253,7 +253,7 @@ export default function TechnicalInterviewForm({
 
                 {/* Focus Areas Dropdown */}
                 {showFocusAreasDropdown && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -272,8 +272,8 @@ export default function TechnicalInterviewForm({
                         >
                           <div className={cn(
                             "w-3 h-3 rounded border transition-colors",
-                            isSelected 
-                              ? "bg-blue-500 border-blue-500" 
+                            isSelected
+                              ? "bg-blue-500 border-blue-500"
                               : "border-muted-foreground/50"
                           )}>
                             {isSelected && (
@@ -299,7 +299,7 @@ export default function TechnicalInterviewForm({
                 <div className="flex items-center gap-1 px-0 md:px-2 py-1 border border-transparent rounded-full">
                   <Target className="w-4 h-4 text-muted-foreground" />
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleDifficultyChange('down')}

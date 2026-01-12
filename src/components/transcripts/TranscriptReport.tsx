@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 
 interface TranscriptReportProps {
   score: number;
@@ -40,7 +40,7 @@ export function TranscriptReport({ score, label = "Overall Score" }: TranscriptR
               {label}
             </h3>
           </div>
-          
+
           <div className="space-y-4">
             <div className="text-center mt-5">
               <div className={`text-6xl font-bold ${getScoreColor(normalizedScore)} mb-2`}>
@@ -50,13 +50,13 @@ export function TranscriptReport({ score, label = "Overall Score" }: TranscriptR
                 {getPerformanceText(normalizedScore)}
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Score</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
-                <div 
+                <div
                   className={`${getProgressColor(normalizedScore)} h-2 rounded-full transition-all duration-1000 ease-out`}
                   style={{ width: `${(normalizedScore / 10) * 100}%` }}
                 />

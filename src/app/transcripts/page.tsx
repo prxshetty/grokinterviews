@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { TranscriptHeader, TranscriptList, TranscriptDisplay } from '@/components/transcripts';
 import { useInterviewData } from '@/components/voice/shared/useInterviewData';
 import { useAuth } from '@/components/AuthProvider';
@@ -27,10 +27,10 @@ export default function TranscriptsPage() {
     return (
       <div className="min-h-screen bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <LoadingSpinner 
-            size="lg" 
-            color="primary" 
-            text="Loading interview transcripts..." 
+          <LoadingSpinner
+            size="lg"
+            color="primary"
+            text="Loading interview transcripts..."
             centered={true}
           />
         </div>
@@ -53,7 +53,7 @@ export default function TranscriptsPage() {
               onSelectInterview={handleSelectInterview}
               voiceFilter={voiceFilter}
               onVoiceFilterChange={setVoiceFilter}
-              
+
             />
           </div>
 

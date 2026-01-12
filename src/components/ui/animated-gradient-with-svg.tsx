@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useDimensions } from "@/hooks/use-debounced-dimensions";
 
@@ -58,8 +58,8 @@ const AnimatedGradient: React.FC<AnimatedGradientProps> = ({
     blur === "light"
       ? "blur-2xl"
       : blur === "medium"
-      ? "blur-3xl"
-      : "blur-[100px]";
+        ? "blur-3xl"
+        : "blur-[100px]";
 
   // Don't render anything until after hydration
   if (!isClient) {

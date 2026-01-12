@@ -1,7 +1,7 @@
 "use client";
 
 import { useMotionValue, motion, useMotionTemplate } from "framer-motion";
-import React, { MouseEvent as ReactMouseEvent, useState } from "react";
+import { MouseEvent as ReactMouseEvent, useState, ReactNode, HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export const CardSpotlight = ({
@@ -13,8 +13,8 @@ export const CardSpotlight = ({
 }: {
   radius?: number;
   color?: string;
-  children: React.ReactNode;
-} & React.HTMLAttributes<HTMLDivElement>) => {
+  children: ReactNode;
+} & HTMLAttributes<HTMLDivElement>) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   function handleMouseMove({

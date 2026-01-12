@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Phone, Clock, Calendar, Download, Play, Pause } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { cn } from '@/lib/utils';
@@ -30,10 +30,10 @@ interface CallHistoryProps {
   maxItems?: number;
 }
 
-export default function CallHistory({ 
+export default function CallHistory({
   className,
   refreshTrigger,
-  maxItems = 10 
+  maxItems = 10
 }: CallHistoryProps) {
   const { user } = useAuth();
   const [callHistory, setCallHistory] = useState<CallHistoryItem[]>([]);
@@ -41,7 +41,7 @@ export default function CallHistory({
   const [error, setError] = useState<string | null>(null);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [audioElements, setAudioElements] = useState<Map<string, HTMLAudioElement>>(new Map());
-  
+
   // Use ref to store maxItems to prevent infinite loops
   const maxItemsRef = useRef(maxItems);
   maxItemsRef.current = maxItems;
@@ -56,13 +56,13 @@ export default function CallHistory({
         setError(null);
 
         const response = await fetch(`/api/voice/phone-calls?userId=${user.id}&limit=${maxItemsRef.current}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch call history');
         }
 
         const data = await response.json();
-        
+
         // Map database fields to component interface
         const mappedCalls = (data.calls || []).map((call: any) => ({
           id: call.id,
@@ -82,7 +82,7 @@ export default function CallHistory({
           },
           createdAt: call.created_at
         }));
-        
+
         setCallHistory(mappedCalls);
       } catch (err) {
         console.error('Error fetching call history:', err);
@@ -242,7 +242,7 @@ export default function CallHistory({
   return (
     <div className={cn("space-y-4", className)}>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Call History</h3>
-      
+
       <div className="space-y-3">
         {callHistory.map((call) => (
           <div

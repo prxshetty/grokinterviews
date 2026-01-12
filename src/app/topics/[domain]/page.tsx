@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import TopicPageClient from './TopicPageClient'; // Import the new client component
 import { LoadingSpinner } from '@/components/ui';
 import { TopicDataProvider } from '@/components';
@@ -11,10 +11,10 @@ interface PageProps {
 // Define a simple loading component
 function LoadingFallback() {
   return (
-    <LoadingSpinner 
-      size="xl" 
-      color="primary" 
-      text="Loading topic..." 
+    <LoadingSpinner
+      size="xl"
+      color="primary"
+      text="Loading topic..."
       fullScreen={true}
     />
   );

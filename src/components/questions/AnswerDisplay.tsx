@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, Children, isValidElement } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Copy, Check, AlertCircle, RotateCw, MessageSquare } from 'lucide-react';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -202,9 +202,9 @@ export function AnswerDisplay({
                 pre: ({ children }) => <>{children}</>, // Let CodeBlock handle the pre element
                 p: ({ children, ...props }) => {
                   // Prevent invalid nesting of block elements (div, pre) inside paragraphs
-                  const hasBlockElement = React.Children.toArray(children).some(
+                  const hasBlockElement = Children.toArray(children).some(
                     (child) => {
-                      if (React.isValidElement(child)) {
+                      if (isValidElement(child)) {
                         if (child.type === 'div' || child.type === 'pre') return true;
                         if (typeof child.type === 'function' && child.type === CodeBlock) return true;
                         if (child.type === 'code' && child.props && !(child.props as any).inline) return true;

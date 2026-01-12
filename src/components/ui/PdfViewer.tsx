@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './dialog';
 import { Resource } from '@/types/resources.types';
 

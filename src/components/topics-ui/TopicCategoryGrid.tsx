@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, memo, useMemo, useCallback } from 'react';
+import { useState, memo, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { IconHover3D } from '@/components/ui';

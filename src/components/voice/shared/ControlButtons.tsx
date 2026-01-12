@@ -1,4 +1,4 @@
-import React from 'react'
+
 import { Mic, MessageCircle, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

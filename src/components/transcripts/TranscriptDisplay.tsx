@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import Image from 'next/image';
 import { TabNav } from '@/components/ui/tab-nav';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';

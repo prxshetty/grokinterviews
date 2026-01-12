@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function SignUpContent() {
@@ -12,7 +12,7 @@ function SignUpContent() {
     // Preserve existing search parameters
     const currentParams = new URLSearchParams(searchParams.toString());
     currentParams.set('mode', 'signup');
-    
+
     router.replace(`/signin?${currentParams.toString()}`);
   }, [router, searchParams]);
 

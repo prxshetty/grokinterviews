@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import { useState, useRef, CSSProperties, FC, ReactNode, useContext, useMemo, Fragment, useId } from 'react';
 import { motion, MotionConfigContext, LayoutGroup, MotionStyle } from 'framer-motion';
 import styles from './icon-3d-hover.module.css';
 
@@ -10,7 +10,7 @@ interface Props {
   text?: string;
   variant?: 'Default' | 'Hover';
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
   width?: number;
   height?: number;
 }
@@ -33,9 +33,9 @@ const transition2 = {
 const transformTemplate1 = (_: any, t: string) => `translate(-50%, -50%) ${t}`;
 
 // Transition wrapper component
-const Transition: React.FC<{ value: any; children: React.ReactNode }> = ({ value, children }) => {
-  const config = React.useContext(MotionConfigContext);
-  const contextValue = React.useMemo(() => {
+const Transition: FC<{ value: any; children: ReactNode }> = ({ value, children }) => {
+  const config = useContext(MotionConfigContext);
+  const contextValue = useMemo(() => {
     const memoizedTransition = value ?? config.transition;
     return { ...config, transition: memoizedTransition };
   }, [config, value]);
@@ -48,9 +48,9 @@ const Transition: React.FC<{ value: any; children: React.ReactNode }> = ({ value
 };
 
 
-const Variants = motion.create(React.Fragment);
+const Variants = motion.create(Fragment);
 
-export const IconHover3D: React.FC<Props> = ({
+export const IconHover3D: FC<Props> = ({
   heading = "Library",
   text = "A comprehensive collection of digital books and resources for learning and research. ",
   variant = 'Default',
@@ -59,9 +59,10 @@ export const IconHover3D: React.FC<Props> = ({
   width = 450, // Further increased for maximum desktop display
   height = 150, // Further increased for maximum desktop display
   ...restProps
-}) => {  const [currentVariant, setCurrentVariant] = useState<'Default' | 'Hover'>(variant);
+}) => {
+  const [currentVariant, setCurrentVariant] = useState<'Default' | 'Hover'>(variant);
   const refBinding = useRef<HTMLDivElement>(null);
-  const defaultLayoutId = React.useId();
+  const defaultLayoutId = useId();
 
   const isHoverVariant = currentVariant === 'Hover';
   const variants = [currentVariant === 'Default' ? 'GPnJri30y' : 'zEwHlJ7zp'];
@@ -140,7 +141,7 @@ export const IconHover3D: React.FC<Props> = ({
 
 
   return (
-    <div 
+    <div
       style={{ width, height }}
       className={`${styles.iconHover3DWrapper} icon-hover-3d-wrapper`}
     >
@@ -734,72 +735,72 @@ export const IconHover3D: React.FC<Props> = ({
                   </motion.div>
                   {/* Corner elements */}
                   <motion.div
-                  style={{
-                    flex: "none",
-                    height: "24px",
-                    left: isHoverVariant ? "-6px" : "14px",
-                    overflow: "hidden",
-                    position: "absolute",
-                    top: isHoverVariant ? "-6px" : "14px",
-                    width: "24px",
-                    zIndex: 2,
-                    borderLeft: "4px solid hsl(var(--foreground))",
-                    borderTop: "4px solid hsl(var(--foreground))",
-                    scale: 1
-                  }}
-                  variants={cornerScaleVariants}
-                  animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
+                    style={{
+                      flex: "none",
+                      height: "24px",
+                      left: isHoverVariant ? "-6px" : "14px",
+                      overflow: "hidden",
+                      position: "absolute",
+                      top: isHoverVariant ? "-6px" : "14px",
+                      width: "24px",
+                      zIndex: 2,
+                      borderLeft: "4px solid hsl(var(--foreground))",
+                      borderTop: "4px solid hsl(var(--foreground))",
+                      scale: 1
+                    }}
+                    variants={cornerScaleVariants}
+                    animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
                   />
                   <motion.div
-                  style={{
-                    flex: "none",
-                    height: "24px",
-                    left: isHoverVariant ? "-6px" : "14px",
-                    overflow: "hidden",
-                    position: "absolute",
-                    top: isHoverVariant ? "330px" : "310px",
-                    width: "24px",
-                    zIndex: 2,
-                    borderLeft: "4px solid hsl(var(--foreground))",
-                    borderBottom: "4px solid hsl(var(--foreground))",
-                    scale: 1
-                  }}
-                  variants={cornerScaleVariants}
-                  animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
+                    style={{
+                      flex: "none",
+                      height: "24px",
+                      left: isHoverVariant ? "-6px" : "14px",
+                      overflow: "hidden",
+                      position: "absolute",
+                      top: isHoverVariant ? "330px" : "310px",
+                      width: "24px",
+                      zIndex: 2,
+                      borderLeft: "4px solid hsl(var(--foreground))",
+                      borderBottom: "4px solid hsl(var(--foreground))",
+                      scale: 1
+                    }}
+                    variants={cornerScaleVariants}
+                    animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
                   />
                   <motion.div
-                  style={{
-                    bottom: isHoverVariant ? "-6px" : "14px",
-                    flex: "none",
-                    height: "24px",
-                    overflow: "hidden",
-                    position: "absolute",
-                    right: isHoverVariant ? "-6px" : "14px",
-                    width: "24px",
-                    zIndex: 2,
-                    borderRight: "4px solid hsl(var(--foreground))",
-                    borderBottom: "4px solid hsl(var(--foreground))",
-                    scale: 1
-                  }}
-                  variants={cornerScaleVariants}
-                  animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
+                    style={{
+                      bottom: isHoverVariant ? "-6px" : "14px",
+                      flex: "none",
+                      height: "24px",
+                      overflow: "hidden",
+                      position: "absolute",
+                      right: isHoverVariant ? "-6px" : "14px",
+                      width: "24px",
+                      zIndex: 2,
+                      borderRight: "4px solid hsl(var(--foreground))",
+                      borderBottom: "4px solid hsl(var(--foreground))",
+                      scale: 1
+                    }}
+                    variants={cornerScaleVariants}
+                    animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
                   />
                   <motion.div
-                  style={{
-                    flex: "none",
-                    height: "24px",
-                    overflow: "hidden",
-                    position: "absolute",
-                    right: isHoverVariant ? "-6px" : "14px",
-                    top: isHoverVariant ? "-6px" : "14px",
-                    width: "24px",
-                    zIndex: 2,
-                    borderRight: "4px solid hsl(var(--foreground))",
-                    borderTop: "4px solid hsl(var(--foreground))",
-                    scale: 1
-                  }}
-                  variants={cornerScaleVariants}
-                  animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
+                    style={{
+                      flex: "none",
+                      height: "24px",
+                      overflow: "hidden",
+                      position: "absolute",
+                      right: isHoverVariant ? "-6px" : "14px",
+                      top: isHoverVariant ? "-6px" : "14px",
+                      width: "24px",
+                      zIndex: 2,
+                      borderRight: "4px solid hsl(var(--foreground))",
+                      borderTop: "4px solid hsl(var(--foreground))",
+                      scale: 1
+                    }}
+                    variants={cornerScaleVariants}
+                    animate={isHoverVariant ? 'zEwHlJ7zp' : 'default'}
                   />
                 </motion.div>
               </motion.div>
@@ -884,7 +885,7 @@ export const IconHover3D: React.FC<Props> = ({
                       {heading}
                     </span>                    {/* Animated overlay text (black) */}
                     <motion.span
-                    className='mx-1 mt-0.5 text-center'
+                      className='mx-1 mt-0.5 text-center'
                       style={{
                         position: "absolute",
                         top: 0,

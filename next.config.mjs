@@ -10,12 +10,6 @@ const nextConfig = {
   // Generate source maps for client bundles to improve debugging and eliminate “missing source map” warnings
   productionBrowserSourceMaps: true,
 
-  
-  // Temporarily disable ESLint during builds (re-enable after console cleanup)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  
   // Experimental features for better performance
   experimental: {
     optimizePackageImports: [
@@ -28,7 +22,7 @@ const nextConfig = {
       'lodash'
     ],
   },
-  
+
   // Turbopack configuration (moved from experimental)
   turbopack: {
     rules: {
@@ -38,7 +32,7 @@ const nextConfig = {
       },
     },
   },
-  
+
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
@@ -99,12 +93,12 @@ const nextConfig = {
       }
     ],
   },
-  
+
   // Webpack optimizations
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Exclude heavy libraries from client bundle
     config.externals = [...config.externals, 'hnswlib-node'];
-    
+
     // Optimize bundle splitting
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
@@ -152,7 +146,7 @@ const nextConfig = {
         },
       };
     }
-    
+
     // Add bundle analyzer in development
     if (process.env.ANALYZE === 'true') {
       config.plugins.push(
@@ -162,10 +156,10 @@ const nextConfig = {
         })
       );
     }
-    
+
     return config;
   },
-  
+
   // Headers for better caching and security
   async headers() {
     return [

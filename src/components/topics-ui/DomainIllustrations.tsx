@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 // SVG Illustrations for domain cards
 export const AIIllustration = ({ className }: { className?: string }) => (

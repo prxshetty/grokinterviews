@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, ReactNode, MutableRefObject } from "react";
 import { useScroll, useTransform, motion, MotionValue, AnimatePresence } from "framer-motion";
 import { useSpacemanTheme } from "@space-man/react-theme-animation";
 import { useCentralizedIntersection } from "@/hooks/ui/use-centralized-intersection";
@@ -8,14 +8,14 @@ export const ContainerScroll = ({
   titleComponent,
   images,
 }: {
-  titleComponent: string | React.ReactNode;
+  titleComponent: string | ReactNode;
   images: { src: string; srcDark?: string; alt: string }[];
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
   });
-  const [isMobile, setIsMobile] = React.useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { theme } = useSpacemanTheme();
   const [mounted, setMounted] = useState(false);
@@ -23,7 +23,7 @@ export const ContainerScroll = ({
   // Filter images for mobile to show only domain and voice
   const getFilteredImages = () => {
     if (isMobile) {
-      return images.filter(img => 
+      return images.filter(img =>
         img.src.includes('domain') || img.src.includes('voice')
       );
     }
@@ -57,7 +57,7 @@ export const ContainerScroll = ({
     setMounted(true);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -85,7 +85,7 @@ export const ContainerScroll = ({
   const setRefs = (node: HTMLDivElement) => {
     if (node) {
       containerRef.current = node;
-      (intersectionRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      (intersectionRef as MutableRefObject<HTMLDivElement | null>).current = node;
     }
   };
 
@@ -101,15 +101,15 @@ export const ContainerScroll = ({
         }}
       >
         <Header translate={translate} titleComponent={titleComponent} />
-        <Card 
-          rotate={rotate} 
-          translate={translate} 
+        <Card
+          rotate={rotate}
+          translate={translate}
           scale={scale}
           images={filteredImages}
           currentImageIndex={currentImageIndex}
           getCurrentImageSrc={getCurrentImageSrc}
         />
-        <NavigationDots 
+        <NavigationDots
           images={filteredImages}
           currentImageIndex={currentImageIndex}
           onImageSelect={setCurrentImageIndex}
@@ -199,11 +199,10 @@ export const NavigationDots = ({
           aria-label={`View image ${index + 1}`}
         >
           <motion.div
-            className={`rounded-full transition-all duration-500 ease-out ${
-              index === currentImageIndex
-                ? 'w-4 sm:w-6 h-1 sm:h-1.5 bg-gray-900 dark:bg-white'
-                : 'w-1 sm:w-1.5 h-1 sm:h-1.5 bg-gray-300 dark:bg-gray-600 group-hover:bg-gray-400 dark:group-hover:bg-gray-500'
-            }`}
+            className={`rounded-full transition-all duration-500 ease-out ${index === currentImageIndex
+              ? 'w-4 sm:w-6 h-1 sm:h-1.5 bg-gray-900 dark:bg-white'
+              : 'w-1 sm:w-1.5 h-1 sm:h-1.5 bg-gray-300 dark:bg-gray-600 group-hover:bg-gray-400 dark:group-hover:bg-gray-500'
+              }`}
             animate={{
               width: index === currentImageIndex ? 24 : 6,
             }}

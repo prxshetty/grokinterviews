@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCentralizedIntersection } from '@/hooks/ui'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
@@ -12,18 +12,18 @@ import dynamic from 'next/dynamic'
 import type { ComponentType } from 'react'
 
 const WovenCanvas = dynamic(
-  () => import('@/components/ui/woven-canvas').then(mod => ({ default: mod.WovenCanvas })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
+    () => import('@/components/ui/woven-canvas').then(mod => ({ default: mod.WovenCanvas })),
+    {
+        ssr: false,
+        loading: () => null,
+    }
 ) as ComponentType<any>
 
 
 export function HeroSection() {
     // Observe visibility with optimized settings for scroll performance
-    const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({ 
-        threshold: 0.1, 
+    const { ref: sectionRef, isVisible, mounted } = useCentralizedIntersection({
+        threshold: 0.1,
         rootMargin: '100px',
         once: false
     })
@@ -41,7 +41,7 @@ export function HeroSection() {
             else setTimeout(start, 500)
         }
     }, [])
-    const isReady = mounted;    
+    const isReady = mounted;
     return (
         <>
             <div ref={sectionRef} className="relative w-full overflow-hidden h-[calc(100svh-4rem)]">
@@ -49,13 +49,13 @@ export function HeroSection() {
                 <div className="absolute inset-0 z-0">
                     <div className="absolute right-2 top-0 w-2/3 h-full overflow-hidden opacity-60">
                         {showCanvas && isVisible && (
-                                <WovenCanvas
-                                    className="absolute inset-0 scale-105"
-                                    particleCount={5000}
-                                    opacity={0.6}
-                                    rotationSpeed={0.01}
-                                />
-                            )}
+                            <WovenCanvas
+                                className="absolute inset-0 scale-105"
+                                particleCount={5000}
+                                opacity={0.6}
+                                rotationSpeed={0.01}
+                            />
+                        )}
                     </div>
                 </div>
                 {/* Consistent padding that matches navigation exactly */}
@@ -80,12 +80,12 @@ export function HeroSection() {
                                 </div>
                             </Link>
                         </div>
-                
+
                         {/* Main Heading */}
                         <h1 className={`mt-6 sm:mt-8 text-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-editorial font-light leading-[110%] tracking-[-1.8px] w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
                             Your <span className="italic font-extralight">Complete</span> Platform for Interviews
                         </h1>
-                        
+
                         {/* Description */}
                         <div className={`w-full transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '200ms' }}>
                             <p className="mt-4 sm:mt-6 max-w-2xl text-balance text-sm sm:text-base md:text-lg text-muted-foreground w-full">
@@ -111,7 +111,7 @@ export function HeroSection() {
 
                     </div>
                 </div>
-                
+
 
             </div>
         </>

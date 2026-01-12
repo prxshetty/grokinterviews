@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, ComponentType } from 'react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ArrowRight, Trash2 } from 'lucide-react';
@@ -52,7 +52,7 @@ function buildQuestionUrl(bookmark: Bookmark): string {
 }
 
 const BookmarkCard = ({ bookmark, onRemove }: { bookmark: Bookmark, onRemove: (id: number) => void }) => {
-  const Illustration = (bookmark.domain ? DOMAIN_ILLUSTRATIONS[bookmark.domain as keyof typeof DOMAIN_ILLUSTRATIONS] : null) ?? DOMAIN_ILLUSTRATIONS['other'] as React.ComponentType<{ className?: string }>
+  const Illustration = (bookmark.domain ? DOMAIN_ILLUSTRATIONS[bookmark.domain as keyof typeof DOMAIN_ILLUSTRATIONS] : null) ?? DOMAIN_ILLUSTRATIONS['other'] as ComponentType<{ className?: string }>
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:border-blue-500/30 transition-all duration-300 group">
       <div className="p-5 sm:p-6">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useState, useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -324,7 +324,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
   }, [isPlaying, generateSpeech, onError]); // Keep generateSpeech dependency for togglePlayback as it's needed
 
   // Auto-generate and play speech when text changes and autoPlay is enabled
-  React.useEffect(() => {
+  useEffect(() => {
     if (autoPlay && text.trim() && generateSpeechRef.current) {
       // Small delay to ensure UI updates are complete
       const timer = setTimeout(() => {
@@ -339,7 +339,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
   }, [text, autoPlay]);
 
   // Cleanup on unmount
-  React.useEffect(() => {
+  useEffect(() => {
     const currentAudio = audioRef.current;
     const currentUrl = audioUrl;
 
@@ -455,7 +455,7 @@ export const VoicePlayer = forwardRef<VoicePlayerRef, VoicePlayerProps>(({
 });
 
 // Fix React import
-import React from 'react';
+
 
 // Set display name for debugging
 VoicePlayer.displayName = 'VoicePlayer';

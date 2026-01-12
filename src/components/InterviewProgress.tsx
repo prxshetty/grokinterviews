@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { getScoreColor } from '@/components/voice/shared/utils';
 
 interface InterviewProgressProps {
@@ -35,16 +35,15 @@ export function InterviewProgress({ current, total, isComplete }: InterviewProgr
           {isComplete ? 'Complete!' : `${Math.round(progressPercentage)}%`}
         </span>
       </div>
-      
+
       <div className="w-full bg-gray-200 rounded-full h-2">
-        <div 
-          className={`h-2 rounded-full transition-all duration-300 ${
-            isComplete ? 'bg-green-500' : 'bg-blue-500'
-          }`}
+        <div
+          className={`h-2 rounded-full transition-all duration-300 ${isComplete ? 'bg-green-500' : 'bg-blue-500'
+            }`}
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
-      
+
       {isComplete && (
         <p className="text-center text-green-600 font-medium mt-2">
           🎉 Interview completed! Generating your score...

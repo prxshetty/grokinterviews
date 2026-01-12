@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 
 interface ProgressBarProps {
   progress: number; // 0-100
@@ -32,7 +32,7 @@ export default function ProgressBar({
 
   // For display, if progress is very small but > 0, set a minimum width to make it visible
   const displayWidth = (safeProgress > 0 && safeProgress < 2) ? 2 : safeProgress;
-  
+
   const progressColor = 'bg-foreground';
 
   return (
@@ -44,9 +44,9 @@ export default function ProgressBar({
         ></div>
         {/* Progress indicator dot */}
         {safeProgress > 0 && (
-          <div 
+          <div
             className="absolute w-3 h-3 bg-foreground rounded-full border-2 border-background transition-all duration-500 ease-out"
-            style={{ 
+            style={{
               left: `${displayWidth}%`,
               top: '50%',
               transform: 'translateX(-50%) translateY(-50%)'

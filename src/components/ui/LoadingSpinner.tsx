@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { cn } from '@/lib/utils';
 
 /**
@@ -39,19 +39,19 @@ interface LoadingSpinnerProps {
 // Size mappings for the luma-spin component
 const sizeClasses = {
   sm: 'w-8 h-8',
-  md: 'w-12 h-12', 
+  md: 'w-12 h-12',
   lg: 'w-16 h-16',
   xl: 'w-20 h-20'
 };
 
 const colorClasses = {
   primary: 'shadow-gray-800 dark:shadow-gray-100',
-  secondary: 'shadow-gray-700 dark:shadow-gray-200', 
+  secondary: 'shadow-gray-700 dark:shadow-gray-200',
   accent: 'shadow-blue-600 dark:shadow-blue-400',
   muted: 'shadow-gray-600 dark:shadow-gray-300'
 };
 
-function LumaSpinner({ size = 'md', color = 'primary', className }: { 
+function LumaSpinner({ size = 'md', color = 'primary', className }: {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   color?: 'primary' | 'secondary' | 'accent' | 'muted';
   className?: string;
@@ -116,7 +116,7 @@ export default function LoadingSpinner({
   fullScreen = false
 }: LoadingSpinnerProps) {
   const spinner = (
-    <LumaSpinner 
+    <LumaSpinner
       size={size}
       color={color}
       className={className}

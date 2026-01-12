@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { InterviewModeConfig } from '@/app/api/voice/types';
 import { Play, Target, List, X, Plus, Minus } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ const systemTypes = [
   'E-commerce System (Amazon/eBay)',
   'Chat/Messaging System (WhatsApp/Slack)',
   'Video Streaming (YouTube/Netflix)',
-  'Ride Sharing App (Uber/Lyft)', 
+  'Ride Sharing App (Uber/Lyft)',
   'Food Delivery Service (DoorDash/UberEats)',
   'URL Shortener (bit.ly)',
   'Search Engine (Google)',
@@ -19,7 +19,7 @@ const systemTypes = [
 
 const scaleOptions = [
   '100K users',
-  '1M users', 
+  '1M users',
   '10M users',
   '100M users',
   '1B+ users'
@@ -64,7 +64,7 @@ export default function SystemDesignForm({
   rateLimited,
   onStartInterview
 }: SystemDesignFormProps) {
-  
+
   const [showSystemTypeDropdown, setShowSystemTypeDropdown] = useState(false);
   const [showFocusAreasDropdown, setShowFocusAreasDropdown] = useState(false);
   const systemTypeDropdownRef = useRef<HTMLDivElement>(null);
@@ -118,7 +118,7 @@ export default function SystemDesignForm({
       {/* Main Prompt Box */}
       <div className="w-full max-w-[380px] md:max-w-[500px] lg:max-w-[700px] mx-auto">
         <div className="rounded-3xl border border-border bg-background p-2 shadow-[0_8px_30px_rgba(0,0,0,0.24)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-all duration-300">
-          
+
           {/* Input Field - keeping the text field for target role */}
           <div className="relative">
             <input
@@ -136,9 +136,9 @@ export default function SystemDesignForm({
           </div>
 
           {/* Actions Row */}          <div className="flex flex-col md:flex-row items-center justify-between gap-3 p-0 pt-2">
-            
+
             {/* Left Side - Configuration Options */}            <div className="flex items-center gap-1">
-              
+
               {/* System Type Selector */}              <div className="relative" ref={systemTypeDropdownRef}>
                 <button
                   type="button"
@@ -181,7 +181,7 @@ export default function SystemDesignForm({
                 </button>
 
                 {/* System Type Dropdown */}                {showSystemTypeDropdown && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -238,7 +238,7 @@ export default function SystemDesignForm({
                 </button>
 
                 {/* Focus Areas Dropdown */}                {showFocusAreasDropdown && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -257,8 +257,8 @@ export default function SystemDesignForm({
                         >
                           <div className={cn(
                             "w-3 h-3 rounded border transition-colors",
-                            isSelected 
-                              ? "bg-blue-500 border-blue-500" 
+                            isSelected
+                              ? "bg-blue-500 border-blue-500"
                               : "border-muted-foreground/50"
                           )}>
                             {isSelected && (
@@ -283,7 +283,7 @@ export default function SystemDesignForm({
                 <div className="flex items-center gap-1 px-2 py-1 border border-transparent rounded-full">
                   <span className="text-xs text-muted-foreground">Scale:</span>
                 </div>
-                
+
                 {/* Scale Counter */}                <div className="flex items-center gap-1">
                   <button
                     onClick={() => {

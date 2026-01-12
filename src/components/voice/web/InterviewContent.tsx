@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import VoiceRecorderHeadless, { type VoiceRecorderHeadlessRef } from './VoiceRecorderHeadless';
 import { VoicePlayer, type VoicePlayerRef } from '@/components/voice/shared/VoicePlayer';
 import { RecentTranscriptDisplay } from '@/components/voice/shared';

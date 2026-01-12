@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 import { InterviewModeConfig } from '@/app/api/voice/types';
 
 const topicOptions = [
@@ -39,7 +39,7 @@ export default function CustomInterviewForm({
   errors,
   disabled = true // Always disabled for now since it's coming soon
 }: CustomInterviewFormProps) {
-  
+
   const handleInputChange = (field: keyof InterviewModeConfig, value: any) => {
     onConfigChange({
       ...config,

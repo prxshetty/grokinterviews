@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 interface TabNavItem {
@@ -18,10 +18,10 @@ interface TabNavProps {
   variant?: 'button' | 'link'; // Determines whether to render buttons or links
 }
 
-export function TabNav({ 
-  items, 
-  activeTab, 
-  onTabChange, 
+export function TabNav({
+  items,
+  activeTab,
+  onTabChange,
   className = "",
   variant = 'button'
 }: TabNavProps) {
@@ -109,7 +109,7 @@ const Tab = ({
   variant,
 }: TabProps) => {
   const ref = useRef<HTMLLIElement>(null);
-  
+
   useEffect(() => {
     if (isActive && ref.current) {
       const { width } = ref.current.getBoundingClientRect();
@@ -125,7 +125,7 @@ const Tab = ({
       }
     }
   }, [isActive, setPosition, position.left, position.opacity]);
-  
+
   const isUnderCursor =
     ref.current &&
     position.opacity === 1 &&
@@ -137,11 +137,10 @@ const Tab = ({
   };
 
   // Mobile-first responsive classes with better touch targets and text sizing
-  const commonClassName = `relative block px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-xs font-medium transition-colors whitespace-nowrap min-w-0 ${
-    isUnderCursor || isActive
+  const commonClassName = `relative block px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-xs font-medium transition-colors whitespace-nowrap min-w-0 ${isUnderCursor || isActive
       ? 'text-white dark:text-black'
       : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-  }`;
+    }`;
 
   return (
     <li

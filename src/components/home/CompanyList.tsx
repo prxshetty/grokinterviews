@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useScrollAnimation } from '@/hooks/ui';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
@@ -216,7 +216,7 @@ export default function ResourceCarousel() {
           Our AI aggregates knowledge from top platforms, research papers, and developer communities to provide you with comprehensive interview preparation.
         </p>
       </div>
-      
+
       <div className="group w-full overflow-hidden relative">
         {/* Gradient masks removed for cleaner look */}
         <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
@@ -242,7 +242,7 @@ export default function ResourceCarousel() {
               >
                 {/* Logo container - Fixed sizing for perfect fit */}
                 <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 transform transition-transform duration-300 ease-in-out mb-3 sm:mb-4 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
-                   <Image
+                  <Image
                     src={resource.logo}
                     alt={`${resource.name} Logo`}
                     className={`${resource.className} max-h-[70%] max-w-[70%] object-contain`}
@@ -271,7 +271,7 @@ export default function ResourceCarousel() {
               >
                 {/* Logo container - Fixed sizing for perfect fit */}
                 <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 transform transition-transform duration-300 ease-in-out mb-3 sm:mb-4 flex items-center justify-center group-hover/item:scale-110 bg-white/5 dark:bg-black/5 rounded-lg backdrop-blur-sm">
-                   <Image
+                  <Image
                     src={resource.logo}
                     alt={`${resource.name} Logo`}
                     className={`${resource.className} max-h-[70%] max-w-[70%] object-contain`}

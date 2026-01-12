@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 interface CompanyLogoProps {
   className?: string;
@@ -13,9 +13,9 @@ export default function CompanyLogo({ className = '', size = 'sm' }: CompanyLogo
   };
 
   return (
-    <svg 
+    <svg
       className={`${sizeClasses[size]} ${className}`}
-      viewBox="0 0 90 90" 
+      viewBox="0 0 90 90"
       xmlns="http://www.w3.org/2000/svg"
       fill="currentColor"
     >

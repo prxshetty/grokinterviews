@@ -1,12 +1,12 @@
-import React from 'react';
+
 import { ArrowLeft } from 'lucide-react';
 
 interface InterviewHeaderProps {
   onBackToModeSelector: () => void;
 }
 
-export const InterviewHeader: React.FC<InterviewHeaderProps> = ({ 
-  onBackToModeSelector 
+export const InterviewHeader: React.FC<InterviewHeaderProps> = ({
+  onBackToModeSelector
 }) => {
   return (
     <div className="mb-2">

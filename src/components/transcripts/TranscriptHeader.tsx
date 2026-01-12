@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+
 
 // PhoneCall interface - matching the one from useInterviewData
 interface PhoneCall {
@@ -30,7 +30,7 @@ interface TranscriptHeaderProps {
   selectedPhoneCall?: PhoneCall | null;
 }
 
-export function TranscriptHeader({ 
+export function TranscriptHeader({
   title = "Interview Transcripts",
   description = "Review your interview sessions, transcripts, and feedback",
   selectedPhoneCall: _selectedPhoneCall

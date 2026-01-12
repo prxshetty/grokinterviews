@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useRouter } from 'next/navigation';
 import { Play } from 'lucide-react';
 
@@ -16,7 +16,7 @@ interface InterviewReportProps {
 
 export default function InterviewReport({ report }: InterviewReportProps) {
   const router = useRouter();
-  
+
   // Handle null/undefined report
   if (!report) {
     return (
@@ -41,7 +41,7 @@ export default function InterviewReport({ report }: InterviewReportProps) {
 
   return (
     <div className="w-full max-w-[340px] mx-auto">
-      <button 
+      <button
         onClick={handleViewAnalysis}
         className="w-full rounded-2xl border border-border bg-background p-1 shadow-[0_4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-all duration-300 hover:bg-muted/50 hover:border-muted-foreground/30"
         title="View Analysis"

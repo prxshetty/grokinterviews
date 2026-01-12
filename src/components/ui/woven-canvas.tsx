@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 
 interface WovenCanvasProps {
@@ -34,7 +34,7 @@ export function WovenCanvas({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(containerWidth, containerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    
+
     // Ensure canvas respects container boundaries
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
@@ -42,7 +42,7 @@ export function WovenCanvas({
     renderer.domElement.style.position = 'absolute';
     renderer.domElement.style.top = '0';
     renderer.domElement.style.left = '0';
-    
+
     mountRef.current.appendChild(renderer.domElement);
 
     const mouse = new THREE.Vector2(0, 0);
@@ -58,139 +58,139 @@ export function WovenCanvas({
     const torusKnot = new THREE.TorusKnotGeometry(1.5, 0.5, 200, 32);
 
     for (let i = 0; i < particleCount; i++) {
-        const positionAttribute = torusKnot.attributes.position;
-        if (!positionAttribute) continue;
-        
-        const vertexIndex = i % positionAttribute.count;
-        const x = positionAttribute.getX(vertexIndex) + 2; // Shift particles to the right
-        const y = positionAttribute.getY(vertexIndex);
-        const z = positionAttribute.getZ(vertexIndex);
-        
-        positions[i * 3] = x;
-        positions[i * 3 + 1] = y;
-        positions[i * 3 + 2] = z;
-        originalPositions[i * 3] = x;
-        originalPositions[i * 3 + 1] = y;
-        originalPositions[i * 3 + 2] = z;
+      const positionAttribute = torusKnot.attributes.position;
+      if (!positionAttribute) continue;
 
-        const color = new THREE.Color();
-        color.setHSL(Math.random(), 0.8, isDarkMode ? 0.5 : 0.7);
-        colors[i * 3] = color.r;
-        colors[i * 3 + 1] = color.g;
-        colors[i * 3 + 2] = color.b;
-        
-        velocities[i * 3] = 0;
-        velocities[i * 3 + 1] = 0;
-        velocities[i * 3 + 2] = 0;
+      const vertexIndex = i % positionAttribute.count;
+      const x = positionAttribute.getX(vertexIndex) + 2; // Shift particles to the right
+      const y = positionAttribute.getY(vertexIndex);
+      const z = positionAttribute.getZ(vertexIndex);
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+      originalPositions[i * 3] = x;
+      originalPositions[i * 3 + 1] = y;
+      originalPositions[i * 3 + 2] = z;
+
+      const color = new THREE.Color();
+      color.setHSL(Math.random(), 0.8, isDarkMode ? 0.5 : 0.7);
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+
+      velocities[i * 3] = 0;
+      velocities[i * 3 + 1] = 0;
+      velocities[i * 3 + 2] = 0;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-        size: 0.02,
-        vertexColors: true,
-        blending: isDarkMode ? THREE.NormalBlending : THREE.AdditiveBlending,
-        transparent: true,
-        opacity: isDarkMode ? 1.0 : opacity,
+      size: 0.02,
+      vertexColors: true,
+      blending: isDarkMode ? THREE.NormalBlending : THREE.AdditiveBlending,
+      transparent: true,
+      opacity: isDarkMode ? 1.0 : opacity,
     });
 
     const points = new THREE.Points(geometry, material);
     scene.add(points);
 
     const handleMouseMove = (event: MouseEvent) => {
-        const containerRect = mountRef.current?.getBoundingClientRect();
-        if (!containerRect) return;
-        
-        // Calculate mouse position relative to the container
-        const relativeX = event.clientX - containerRect.left;
-        const relativeY = event.clientY - containerRect.top;
-        
-        mouse.x = (relativeX / containerRect.width) * 2 - 1;
-        mouse.y = -(relativeY / containerRect.height) * 2 + 1;
+      const containerRect = mountRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
+
+      // Calculate mouse position relative to the container
+      const relativeX = event.clientX - containerRect.left;
+      const relativeY = event.clientY - containerRect.top;
+
+      mouse.x = (relativeX / containerRect.width) * 2 - 1;
+      mouse.y = -(relativeY / containerRect.height) * 2 + 1;
     };
     window.addEventListener('mousemove', handleMouseMove);
 
     const animate = () => {
-        requestAnimationFrame(animate);        
-        const mouseWorld = new THREE.Vector3(mouse.x * 3, mouse.y * 3, 0);
+      requestAnimationFrame(animate);
+      const mouseWorld = new THREE.Vector3(mouse.x * 3, mouse.y * 3, 0);
 
-        if (positions && originalPositions && velocities) {
-            for (let i = 0; i < particleCount; i++) {
-                const ix = i * 3;
-                const iy = i * 3 + 1;
-                const iz = i * 3 + 2;
-                
-                const currentPos = new THREE.Vector3(positions[ix]!, positions[iy]!, positions[iz]!);
-                const originalPos = new THREE.Vector3(originalPositions[ix]!, originalPositions[iy]!, originalPositions[iz]!);
-                const velocity = new THREE.Vector3(velocities[ix]!, velocities[iy]!, velocities[iz]!);
+      if (positions && originalPositions && velocities) {
+        for (let i = 0; i < particleCount; i++) {
+          const ix = i * 3;
+          const iy = i * 3 + 1;
+          const iz = i * 3 + 2;
 
-                const dist = currentPos.distanceTo(mouseWorld);
-                if (dist < mouseInteractionRadius) {
-                    const force = (mouseInteractionRadius - dist) * 0.01;
-                    const direction = new THREE.Vector3().subVectors(currentPos, mouseWorld).normalize();
-                    velocity.add(direction.multiplyScalar(force));
-                }
+          const currentPos = new THREE.Vector3(positions[ix]!, positions[iy]!, positions[iz]!);
+          const originalPos = new THREE.Vector3(originalPositions[ix]!, originalPositions[iy]!, originalPositions[iz]!);
+          const velocity = new THREE.Vector3(velocities[ix]!, velocities[iy]!, velocities[iz]!);
 
-                // Return to original position
-                const returnForce = new THREE.Vector3().subVectors(originalPos, currentPos).multiplyScalar(0.001);
-                velocity.add(returnForce);
-                
-                // Damping
-                velocity.multiplyScalar(0.95);
+          const dist = currentPos.distanceTo(mouseWorld);
+          if (dist < mouseInteractionRadius) {
+            const force = (mouseInteractionRadius - dist) * 0.01;
+            const direction = new THREE.Vector3().subVectors(currentPos, mouseWorld).normalize();
+            velocity.add(direction.multiplyScalar(force));
+          }
 
-                // Update positions with velocity
-                positions[ix] = positions[ix]! + velocity.x;
-                positions[iy] = positions[iy]! + velocity.y;
-                positions[iz] = positions[iz]! + velocity.z;
-                
-                // Store velocity for next frame
-                velocities[ix] = velocity.x;
-                velocities[iy] = velocity.y;
-                velocities[iz] = velocity.z;
-            }
+          // Return to original position
+          const returnForce = new THREE.Vector3().subVectors(originalPos, currentPos).multiplyScalar(0.001);
+          velocity.add(returnForce);
+
+          // Damping
+          velocity.multiplyScalar(0.95);
+
+          // Update positions with velocity
+          positions[ix] = positions[ix]! + velocity.x;
+          positions[iy] = positions[iy]! + velocity.y;
+          positions[iz] = positions[iz]! + velocity.z;
+
+          // Store velocity for next frame
+          velocities[ix] = velocity.x;
+          velocities[iy] = velocity.y;
+          velocities[iz] = velocity.z;
         }
-        const positionAttribute = geometry.attributes.position;
-        if (positionAttribute) {
-            positionAttribute.needsUpdate = true;
-        }
+      }
+      const positionAttribute = geometry.attributes.position;
+      if (positionAttribute) {
+        positionAttribute.needsUpdate = true;
+      }
 
-        // points.rotation.y = elapsedTime * rotationSpeed; // Rotation disabled
-        renderer.render(scene, camera);
+      // points.rotation.y = elapsedTime * rotationSpeed; // Rotation disabled
+      renderer.render(scene, camera);
     };
     animate();
 
     const handleResize = () => {
-        if (!mountRef.current) return;
-        const containerRect = mountRef.current.getBoundingClientRect();
-        const containerWidth = containerRect.width || window.innerWidth;
-        const containerHeight = containerRect.height || window.innerHeight;
-        
-        camera.aspect = containerWidth / containerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(containerWidth, containerHeight);
+      if (!mountRef.current) return;
+      const containerRect = mountRef.current.getBoundingClientRect();
+      const containerWidth = containerRect.width || window.innerWidth;
+      const containerHeight = containerRect.height || window.innerHeight;
+
+      camera.aspect = containerWidth / containerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(containerWidth, containerHeight);
     };
     window.addEventListener('resize', handleResize);
-    
+
     // Use ResizeObserver to handle container size changes
     const resizeObserver = new ResizeObserver(() => {
       handleResize();
     });
-    
+
     if (mountRef.current) {
       resizeObserver.observe(mountRef.current);
     }
 
     return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('mousemove', handleMouseMove);
-        resizeObserver.disconnect();
-        if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
-            mountRef.current.removeChild(renderer.domElement);
-        }
-        renderer.dispose();
-        geometry.dispose();
-        material.dispose();
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      resizeObserver.disconnect();
+      if (mountRef.current && renderer.domElement.parentNode === mountRef.current) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+      geometry.dispose();
+      material.dispose();
     };
   }, [particleCount, mouseInteractionRadius, rotationSpeed, opacity]);
 

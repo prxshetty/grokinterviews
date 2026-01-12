@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, FC } from 'react';
 
 interface InnerGlowVisualizerProps {
   values: Float32Array;
@@ -14,7 +14,7 @@ interface InnerGlowVisualizerProps {
   blur?: number;
 }
 
-const InnerGlowVisualizer: React.FC<InnerGlowVisualizerProps> = ({
+const InnerGlowVisualizer: FC<InnerGlowVisualizerProps> = ({
   values,
   color,
   startHue,

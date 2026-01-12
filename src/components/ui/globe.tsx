@@ -1,6 +1,6 @@
-import React from "react";
+import { FC } from "react";
 
-const Globe: React.FC = () => {
+const Globe: FC = () => {
   return (
     <>
       <style>

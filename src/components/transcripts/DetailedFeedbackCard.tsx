@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import { ReactNode } from 'react';
 
 interface DetailedFeedbackCardProps {
   title: string;
   feedback: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
 export function DetailedFeedbackCard({ title, feedback }: DetailedFeedbackCardProps) {

@@ -1,8 +1,8 @@
 'use client';
-import { ReactNode } from 'react';
+import { ReactNode, Children } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import React from 'react';
+
 
 type PresetType =
   | 'fade'
@@ -156,7 +156,7 @@ function AnimatedGroup({
       variants={containerVariants}
       className={cn(className)}
     >
-      {React.Children.map(children, (child, index) => (
+      {Children.map(children, (child, index) => (
         <motion.div key={index} variants={itemVariants}>
           {child}
         </motion.div>
