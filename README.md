@@ -229,7 +229,7 @@ Key tables: `profiles`, `topics`, `categories`, `questions`, `resources`, `user_
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details. If you're looking for ideas on what to work on, feel free to check out our [ROADMAP.md](ROADMAP.md).
 
 1.  Fork the repository
 2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
