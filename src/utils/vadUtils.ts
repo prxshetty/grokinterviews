@@ -41,17 +41,17 @@ export class VoiceActivityDetector {
 
     try {
       console.log('🎯 Initializing Voice Activity Detector...');
-      
+
       // Dynamic import to prevent SSR issues
       if (!MicVAD && typeof window !== 'undefined') {
         const vadModule = await import('@ricky0123/vad-web');
         MicVAD = vadModule.MicVAD;
       }
-      
+
       if (!MicVAD) {
         throw new Error('VAD not available in this environment');
       }
-      
+
       this.vad = await MicVAD.new({
         positiveSpeechThreshold: this.config.positiveSpeechThreshold!,
         negativeSpeechThreshold: this.config.negativeSpeechThreshold!,
@@ -61,12 +61,10 @@ export class VoiceActivityDetector {
         minSpeechFrames: this.config.minSpeechFrames!,
         submitUserSpeechOnPause: this.config.submitUserSpeechOnPause!,
         onSpeechStart: () => {
-          console.log('🗣️ Speech detected - starting');
           this.clearSilenceTimer();
           this.config.onSpeechStart?.();
         },
         onSpeechEnd: (_audio: Float32Array) => {
-          console.log('🤫 Speech ended - starting silence timer');
           // Call onSpeechPause immediately when speech detection ends
           this.config.onSpeechPause?.();
           this.startSilenceTimer();
@@ -80,7 +78,6 @@ export class VoiceActivityDetector {
       });
 
       this.isInitialized = true;
-      console.log('✅ Voice Activity Detector initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize VAD:', error);
       throw new Error('Failed to initialize Voice Activity Detector');
@@ -95,7 +92,6 @@ export class VoiceActivityDetector {
     if (!this.vad || this.isListening) return;
 
     try {
-      console.log('🎤 Starting VAD listening...');
       this.vad.start();
       this.isListening = true;
     } catch (error) {
@@ -121,7 +117,6 @@ export class VoiceActivityDetector {
     if (!this.vad || this.isListening) return;
 
     try {
-      console.log('▶️ Resuming VAD listening...');
       this.vad.start();
       this.isListening = true;
     } catch (error) {
@@ -133,7 +128,6 @@ export class VoiceActivityDetector {
     if (!this.vad || !this.isListening) return;
 
     try {
-      console.log('🛑 Stopping VAD listening...');
       this.vad.pause();
       this.isListening = false;
       this.clearSilenceTimer();
@@ -150,7 +144,6 @@ export class VoiceActivityDetector {
     this.clearSilenceTimer();
     this.isInitialized = false;
     this.isListening = false;
-    console.log('🗑️ VAD destroyed');
   }
 
   private startSilenceTimer(): void {

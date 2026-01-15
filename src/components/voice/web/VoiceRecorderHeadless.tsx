@@ -297,11 +297,9 @@ const VoiceRecorderHeadless = forwardRef<VoiceRecorderHeadlessRef, VoiceRecorder
 
       // Fallback if WAV is not supported (rare)
       if (!MediaRecorder.isTypeSupported('audio/wav')) {
-        console.warn('⚠️ WAV not supported, trying WebM');
         if (MediaRecorder.isTypeSupported('audio/webm')) {
           mediaRecorderOptions.mimeType = 'audio/webm';
         } else {
-          console.warn('⚠️ Neither WAV nor WebM supported, using default');
           delete mediaRecorderOptions.mimeType;
         }
       }
