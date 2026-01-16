@@ -470,9 +470,6 @@ export default function WebInterviewPageContent() {
   }, [setRecordingActive, setSpeakingDetected]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      routerRef.current.push('/signin?redirect=/voice/web');
-    }
   }, [user, loading]);
 
   if (loading || !imagesLoaded) {
@@ -486,10 +483,6 @@ export default function WebInterviewPageContent() {
         />
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (

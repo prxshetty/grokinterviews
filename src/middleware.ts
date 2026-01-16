@@ -52,7 +52,9 @@ export async function middleware(req: NextRequest) {
     }
 
     // Check if the request is for a protected route
-    const isProtectedRoute = req.nextUrl.pathname.startsWith('/topics') || req.nextUrl.pathname.startsWith('/transcripts');
+    const isProtectedRoute = req.nextUrl.pathname.startsWith('/topics') ||
+      req.nextUrl.pathname.startsWith('/transcripts') ||
+      req.nextUrl.pathname.startsWith('/voice');
     const isAuthRoute = req.nextUrl.pathname.startsWith('/auth') || req.nextUrl.pathname.startsWith('/signin');
     const isConfirmRoute = req.nextUrl.pathname === '/auth/confirm';
 
@@ -90,5 +92,5 @@ export async function middleware(req: NextRequest) {
 
 // Specify which routes this middleware should run on
 export const config = {
-  matcher: ['/topics/:path*', '/transcripts/:path*', '/auth/:path*', '/signin'],
+  matcher: ['/topics/:path*', '/transcripts/:path*', '/voice/:path*', '/auth/:path*', '/signin'],
 };
