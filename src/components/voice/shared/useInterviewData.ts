@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { VoiceOption } from '@/types/voice.types';
 import {
@@ -88,10 +87,6 @@ function convertStoredSession(stored: StoredVoiceSession): InterviewSession {
 
 export function useInterviewData() {
   const { user } = useAuth();
-  const router = useRouter();
-
-  const routerRef = useRef(router);
-  routerRef.current = router;
 
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,17 +122,6 @@ export function useInterviewData() {
   fetchSessionsRef.current = fetchSessions;
 
   useEffect(() => {
-    if (!user) {
-      // DEV BYPASS: Check for cookie in development
-      if (process.env.NODE_ENV === 'development') {
-        const hasBypass = document.cookie.split('; ').some(row => row.startsWith('dev-bypass=true'));
-        if (hasBypass) return;
-      }
-
-      routerRef.current.push('/signin');
-      return;
-    }
-
     if (!hasFetchedDataRef.current) {
       hasFetchedDataRef.current = true;
       fetchSessionsRef.current();
