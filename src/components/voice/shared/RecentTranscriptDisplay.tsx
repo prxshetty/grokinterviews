@@ -55,12 +55,13 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
     const currentCount = processedTranscripts.length;
 
     if (scrollContainerRef.current && currentCount > lastTranscriptCountRef.current) {
-      // Use requestAnimationFrame for smoother scrolling
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-        }
-      });
+      // Use setTimeout to ensure DOM has updated before scrolling
+      setTimeout(() => {
+        scrollContainerRef.current?.scrollTo({
+          top: scrollContainerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 50);
     }
 
     lastTranscriptCountRef.current = currentCount;
@@ -106,8 +107,8 @@ const RecentTranscriptDisplay = memo(function RecentTranscriptDisplay({
 
             <div
               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${transcript.interaction_type === 'user_response'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                 }`}
             >
               <p className="text-sm">{transcript.transcript_text}</p>

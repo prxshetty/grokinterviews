@@ -128,6 +128,12 @@ export function useInterviewData() {
 
   useEffect(() => {
     if (!user) {
+      // DEV BYPASS: Check for cookie in development
+      if (process.env.NODE_ENV === 'development') {
+        const hasBypass = document.cookie.split('; ').some(row => row.startsWith('dev-bypass=true'));
+        if (hasBypass) return;
+      }
+
       routerRef.current.push('/signin');
       return;
     }

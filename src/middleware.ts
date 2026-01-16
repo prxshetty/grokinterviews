@@ -58,6 +58,13 @@ export async function middleware(req: NextRequest) {
 
     // If trying to access a protected route without being logged in
     if (isProtectedRoute && !user) {
+      // DEV BYPASS: Allow access if dev-bypass cookie is present and we are in development
+      const devBypass = req.cookies.get('dev-bypass');
+
+      if (process.env.NODE_ENV === 'development' && devBypass?.value === 'true') {
+        return res;
+      }
+
       const redirectUrl = new URL('/signin', req.url);
       redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
       return NextResponse.redirect(redirectUrl);
