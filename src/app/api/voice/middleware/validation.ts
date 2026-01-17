@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supabase/server';
-import { checkRateLimit as checkUserRateLimit } from '@/utils/rateLimiting';
+
 import {
   ConversationRequest,
   ConversationResponse,
@@ -37,8 +37,6 @@ export class ValidationMiddleware {
         conversationHistory: body.conversationHistory || [],
         sessionId: body.sessionId || null,
         sessionType: body.sessionType || 'behavioral',
-        config: body.config || null,
-        checkRateLimit: body.checkRateLimit || false,
         voiceId: body.voiceId,
         voiceName: body.voiceName
       };
@@ -86,69 +84,7 @@ export class ValidationMiddleware {
     }
   }
 
-  static async handleRateLimitCheck(
-    userId: string,
-    voiceId?: string
-  ): Promise<NextResponse> {
-    try {
-      const rateLimitResult = await checkUserRateLimit('web', userId, voiceId);
 
-      if (!rateLimitResult.isAllowed) {
-        return NextResponse.json({
-          error: ERROR_MESSAGES.RATE_LIMIT_EXCEEDED,
-          message: rateLimitResult.message,
-          rateLimited: true
-        }, { status: HTTP_STATUS.RATE_LIMIT });
-      }
-
-      return NextResponse.json({
-        rateLimited: false,
-        remainingAttempts: rateLimitResult.remainingAttempts
-      });
-    } catch (error) {
-      return NextResponse.json({
-        error: 'Rate limit check failed'
-      }, { status: HTTP_STATUS.INTERNAL_SERVER_ERROR });
-    }
-  }
-
-  static async validateRateLimit(
-    userId: string,
-    currentQuestionCount: number,
-    voiceId?: string
-  ): Promise<{
-    isAllowed: boolean;
-    error?: NextResponse;
-  }> {
-    // Only check rate limiting for new interviews (first question)
-    if (currentQuestionCount > 0) {
-      return { isAllowed: true };
-    }
-
-    try {
-      const rateLimitResult = await checkUserRateLimit('web', userId, voiceId);
-
-      if (!rateLimitResult.isAllowed) {
-        return {
-          isAllowed: false,
-          error: NextResponse.json({
-            error: ERROR_MESSAGES.RATE_LIMIT_EXCEEDED,
-            message: rateLimitResult.message,
-            rateLimited: true
-          }, { status: HTTP_STATUS.RATE_LIMIT })
-        };
-      }
-
-      return { isAllowed: true };
-    } catch (error) {
-      return {
-        isAllowed: false,
-        error: NextResponse.json({
-          error: 'Rate limit validation failed'
-        }, { status: HTTP_STATUS.INTERNAL_SERVER_ERROR })
-      };
-    }
-  }
 
   static handleError(error: any): NextResponse {
     console.error('API Error:', error);

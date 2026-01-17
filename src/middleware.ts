@@ -54,17 +54,15 @@ export async function middleware(req: NextRequest) {
     // Check if the request is for a protected route
     const isProtectedRoute = req.nextUrl.pathname.startsWith('/topics') ||
       req.nextUrl.pathname.startsWith('/transcripts') ||
-      req.nextUrl.pathname.startsWith('/voice');
+      req.nextUrl.pathname.startsWith('/voice') ||
+      req.nextUrl.pathname.startsWith('/api/');
     const isAuthRoute = req.nextUrl.pathname.startsWith('/auth') || req.nextUrl.pathname.startsWith('/signin');
     const isConfirmRoute = req.nextUrl.pathname === '/auth/confirm';
 
     // If trying to access a protected route without being logged in
     if (isProtectedRoute && !user) {
-      // DEV BYPASS: Allow access if dev-bypass cookie is present and we are in development
-      const devBypass = req.cookies.get('dev-bypass');
-
-      if (process.env.NODE_ENV === 'development' && devBypass?.value === 'true') {
-        return res;
+      if (req.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
       const redirectUrl = new URL('/signin', req.url);
@@ -90,7 +88,15 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-// Specify which routes this middleware should run on
 export const config = {
-  matcher: ['/topics/:path*', '/transcripts/:path*', '/voice/:path*', '/auth/:path*', '/signin'],
+  matcher: [
+    '/topics/:path*',
+    '/transcripts/:path*',
+    '/voice/:path*',
+    '/auth/:path*',
+    '/signin',
+    '/api/generate-answer',
+    '/api/test-ai-connection',
+    '/api/voice/:path*'
+  ],
 };
