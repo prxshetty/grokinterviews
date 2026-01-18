@@ -12,8 +12,28 @@ export const ContainerScroll = ({
   images: { src: string; srcDark?: string; alt: string }[];
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+
+  // Find the scroll container (CustomScrollArea) on mount
+  useEffect(() => {
+    // The CustomScrollArea is a div with overflow-y-auto, find it by traversing up
+    if (containerRef.current) {
+      let parent = containerRef.current.parentElement;
+      while (parent) {
+        const style = window.getComputedStyle(parent);
+        if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+          scrollContainerRef.current = parent;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+    }
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
+    container: scrollContainerRef,
+    offset: ["start center", "center center"],
   });
   const [isMobile, setIsMobile] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -91,7 +111,7 @@ export const ContainerScroll = ({
 
   return (
     <div
-      className="h-[50rem] sm:h-[60rem] md:h-[80rem] flex items-center justify-center relative p-2 md:p-20"
+      className="h-[35rem] sm:h-[40rem] md:h-[50rem] flex items-center justify-center relative p-2 md:p-20"
       ref={setRefs}
     >
       <div

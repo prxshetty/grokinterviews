@@ -15,7 +15,7 @@ export * from './circular-progress';
 export { Badge, badgeVariants } from './badge';
 export { Button, buttonVariants } from './button';
 export { DemoButton } from './demo-button';
-export { Feature } from './feature-with-advantages';
+
 export { Footer as FooterSection } from './footer-section';
 export { IconHover3D } from './icon-3d-hover';
 export { Input } from './input';

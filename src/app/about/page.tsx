@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { Faq3 } from '@/components/ui/faq3'
 import ContactForm from './components/ContactForm'
 import { GROK_INTERVIEW_FAQ_ITEMS } from '@/data/faq'
+import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: 'About GrokInterviews',
@@ -16,11 +17,8 @@ export default function AboutPage() {
         {/* Header Section */}
         <header className="mb-16 md:mb-24 text-left">
           <div className="max-w-3xl">
-            <h2 className="text-2xl md:text-3xl text-gray-600 dark:text-gray-400 font-editorial font-extralight tracking-wide">
-              About Us
-            </h2>
             <h1 className="text-5xl md:text-7xl mt-2 font-editorial font-extralight tracking-[-1.8px] leading-[110%] text-black dark:text-white">
-              GrokInterviews
+              About Us
             </h1>
           </div>
         </header>
@@ -83,6 +81,7 @@ export default function AboutPage() {
           <ContactForm />
         </section>
       </main>
+      <Footer />
     </div>
   )
 }
