@@ -53,14 +53,31 @@ export class ValidationMiddleware {
     }
   }
 
-  static async validateAuthentication(): Promise<{
+  static async validateAuthentication(request?: NextRequest): Promise<{
     isAuthenticated: boolean;
     user?: User;
     error?: NextResponse;
   }> {
     try {
       const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+
+      let user = supabaseUser;
+
+      // DEV BYPASS: Support mock admin user on localhost
+      if (!user && process.env.NODE_ENV === 'development' && request) {
+        const devBypass = request.cookies.get('dev-bypass')?.value === 'true';
+        if (devBypass) {
+          user = {
+            id: '00000000-0000-0000-0000-000000000000',
+            email: 'admin@admin.com',
+            user_metadata: { full_name: 'Local Admin' },
+            app_metadata: {},
+            aud: 'authenticated',
+            role: 'authenticated'
+          } as any;
+        }
+      }
 
       if (!user) {
         return {

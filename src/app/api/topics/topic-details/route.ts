@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient, shouldUseAdminClient } from '@/utils/supabase/admin';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Category } from '@/types/database';
 
@@ -76,7 +77,10 @@ async function getQuestionsForCategory(supabase: SupabaseClient, categoryId: num
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  // Use admin client in development to bypass RLS
+  const supabase = shouldUseAdminClient()
+    ? createAdminClient()
+    : await createClient();
   try {
     const url = new URL(request.url);
     const topicId = url.searchParams.get('topicId');
@@ -121,9 +125,6 @@ export async function GET(request: NextRequest) {
 
     // Next, get all categories for this topic
     console.log(`API - Fetching categories for topic ID: ${topicId}`);
-
-    // Try to get categories for this topic
-    console.log(`API - Fetching categories for topic ID ${topicId}`);
 
     // Get categories directly using the numeric ID
     // Handle 'topic-123' format by extracting the numeric part

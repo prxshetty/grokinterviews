@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient, shouldUseAdminClient } from '@/utils/supabase/admin';
 import { Category, CategoryWithQuestions } from '@/types/database';
 
 // Utility function to generate slugs
@@ -18,7 +19,10 @@ function slugify(text: string): string {
 // Removed convertQuestionsToLegacyFormat (will be fully removed if not used elsewhere after refactor)
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  // Use admin client in development to bypass RLS
+  const supabase = shouldUseAdminClient()
+    ? createAdminClient()
+    : await createClient();
   try {
     const url = new URL(request.url);
     const categoryId = url.searchParams.get('categoryId');
@@ -30,7 +34,7 @@ export async function GET(request: NextRequest) {
     if (categoryId && topicId) {
       try {
         console.time('category-with-questions-query');
-        
+
         const topicIdValue: string | number = topicId;
         // Simplified topicId resolution, assuming topicId from client is numeric or a valid slug/name for direct use if needed
         // For this path, we primarily need topicId for the categories.topic_id match.
@@ -54,7 +58,7 @@ export async function GET(request: NextRequest) {
           console.error(`Error fetching category with questions from database for ${topicId}/${categoryId}:`, categoryError);
           // throw categoryError; // Or handle more gracefully
         }
-        
+
         if (categoryData) {
           // Ensure questions is an array
           const questionsArray = Array.isArray(categoryData.questions) ? categoryData.questions : [];

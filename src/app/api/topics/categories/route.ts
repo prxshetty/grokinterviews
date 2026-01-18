@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient, shouldUseAdminClient } from '@/utils/supabase/admin';
 import { GET as dbGet } from './db-route';
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  // Use admin client in development to bypass RLS
+  const supabase = shouldUseAdminClient()
+    ? createAdminClient()
+    : await createClient();
   const url = new URL(request.url);
   const categoryId = url.searchParams.get('categoryId');
   const getTopicOnly = url.searchParams.get('getTopicOnly');

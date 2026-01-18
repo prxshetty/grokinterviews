@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient, shouldUseAdminClient } from '@/utils/supabase/admin';
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
   try {
     const url = new URL(request.url);
     const domain = url.searchParams.get('domain');
@@ -13,6 +13,11 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Use admin client in development to bypass RLS
+    const supabase = shouldUseAdminClient()
+      ? createAdminClient()
+      : await createClient();
 
     console.log(`API - Fetching section headers for domain: ${domain}`);
 

@@ -56,6 +56,37 @@ export async function middleware(req: NextRequest) {
       req.nextUrl.pathname.startsWith('/transcripts') ||
       req.nextUrl.pathname.startsWith('/voice') ||
       req.nextUrl.pathname.startsWith('/api/');
+
+    // DEV BYPASS: Allow local testing with mock admin account
+    const isDev = process.env.NODE_ENV === 'development';
+    const isLocal = req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1';
+
+    if (isDev && isLocal) {
+      const devBypass = req.cookies.get('dev-bypass')?.value === 'true';
+      const devAuthParam = req.nextUrl.searchParams.get('dev-auth') === 'admin';
+
+      if (devBypass || devAuthParam) {
+        if (!user) {
+          user = {
+            id: '00000000-0000-0000-0000-000000000000',
+            email: 'admin@admin.com',
+            user_metadata: { full_name: 'Local Admin' },
+            app_metadata: {},
+            aud: 'authenticated',
+            role: 'authenticated'
+          } as any;
+        }
+
+        // If it was a query param, set cookie and redirect to clean URL
+        if (devAuthParam) {
+          const url = req.nextUrl.clone();
+          url.searchParams.delete('dev-auth');
+          const response = NextResponse.redirect(url);
+          response.cookies.set('dev-bypass', 'true', { path: '/', maxAge: 60 * 60 * 24 * 7 });
+          return response;
+        }
+      }
+    }
     const isAuthRoute = req.nextUrl.pathname.startsWith('/auth') || req.nextUrl.pathname.startsWith('/signin');
     const isConfirmRoute = req.nextUrl.pathname === '/auth/confirm';
 

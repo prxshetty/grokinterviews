@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient, shouldUseAdminClient } from '@/utils/supabase/admin';
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  // Use admin client in development to bypass RLS
+  const supabase = shouldUseAdminClient()
+    ? createAdminClient()
+    : await createClient();
   try {
     const url = new URL(request.url);
     const domain = url.searchParams.get('domain');

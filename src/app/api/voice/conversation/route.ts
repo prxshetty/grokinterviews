@@ -151,7 +151,21 @@ export async function POST(request: NextRequest) {
 
     // Auth check (for user metadata in prompts, not for DB storage)
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+
+    let user = supabaseUser;
+
+    // DEV BYPASS: Support mock admin user on localhost
+    if (!user && process.env.NODE_ENV === 'development') {
+      const devBypass = request.cookies.get('dev-bypass')?.value === 'true';
+      if (devBypass) {
+        user = {
+          id: '00000000-0000-0000-0000-000000000000',
+          email: 'admin@admin.com',
+          user_metadata: { full_name: 'Local Admin' }
+        } as any;
+      }
+    }
 
     if (!user) {
       return NextResponse.json(

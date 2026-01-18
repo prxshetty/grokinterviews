@@ -18,7 +18,7 @@ scripts/
 !.yarn/versions
 interview_prep.db
 database-backups/*
-supabase/
+/supabase/
 # testing
 /coverage
 .vscode
