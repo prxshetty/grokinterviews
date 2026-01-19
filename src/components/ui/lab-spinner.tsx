@@ -1,20 +1,19 @@
 'use client';
 
-import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface LabSpinnerProps {
-    className?: string;
-    size?: 'sm' | 'md' | 'lg' | 'xl';
-    text?: string;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  text?: string;
 }
 
 const LabSpinner = ({ className, text }: LabSpinnerProps) => {
-    return (
-        <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
-            <div className="lab-loader-container">
-                <div className="lab-loader" />
-                <style jsx>{`
+  return (
+    <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
+      <div className="lab-loader-container">
+        <div className="lab-loader" />
+        <style jsx>{`
           .lab-loader-container {
             padding: 20px;
           }
@@ -88,14 +87,14 @@ const LabSpinner = ({ className, text }: LabSpinnerProps) => {
             }
           }
         `}</style>
-            </div>
-            {text && (
-                <p className="text-sm tracking-widest text-gray-600 dark:text-gray-400 animate-pulse">
-                    {text}
-                </p>
-            )}
-        </div>
-    );
+      </div>
+      {text && (
+        <p className="text-sm tracking-widest text-gray-600 dark:text-gray-400 animate-pulse">
+          {text}
+        </p>
+      )}
+    </div>
+  );
 };
 
 export default LabSpinner;

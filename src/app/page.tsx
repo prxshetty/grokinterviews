@@ -6,7 +6,6 @@ import { Suspense, lazy } from 'react';
 import { useCentralizedIntersection } from '@/hooks/ui';
 import { ContainerScroll } from '@/components/ui/container-scroll-animation';
 import VoiceHeroSection from '@/components/ui/VoiceHeroSection';
-import { Footer } from '@/components';
 
 // Lazy load non-critical components that are below the fold
 const FeatureSection = lazy(() => import('@/components/home/FeatureSection').then(module => ({ default: module.FeatureSection })));
