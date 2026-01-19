@@ -169,7 +169,7 @@ export default function ResourceCarousel() {
   return (
     <div
       ref={ref}
-      className={`mt-12 sm:mt-16 md:mt-20 transition-all duration-1000 w-full ${shouldAnimate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      className={`mt-12 sm:mt-16 md:mt-20 pt-20 transition-all duration-1000 w-full ${shouldAnimate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
       {/* Title and Subtitle Section */}
       <div className="text-center mb-8 sm:mb-12 md:mb-16 px-3 sm:px-4 md:px-6">
@@ -197,7 +197,7 @@ export default function ResourceCarousel() {
 
 
           {/* Row 1: All companies scrolling left */}
-          <div className="flex whitespace-nowrap animate-scroll-left w-max mb-1 sm:mb-2">
+          <div className="flex whitespace-nowrap animate-scroll-left w-max">
             {/* Duplicate resources for infinite scroll effect */}
             {[...resources, ...resources].map((resource, index) => (
               <div

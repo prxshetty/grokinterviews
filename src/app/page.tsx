@@ -4,7 +4,7 @@ import { HeroSection } from '@/components/ui/hero-section-1';
 import CompanyList from '@/components/home/CompanyList';
 import { Suspense, lazy } from 'react';
 import { useCentralizedIntersection } from '@/hooks/ui';
-import { ContainerScroll } from '@/components/ui/container-scroll-animation';
+import PreviewStack from '@/components/home/preview-stack';
 import VoiceHeroSection from '@/components/ui/VoiceHeroSection';
 
 // Lazy load non-critical components that are below the fold
@@ -62,41 +62,12 @@ export default function Home() {
       </div>
 
       <div className="mt-20 md:mt-32 lg:mt-40 relative z-10 bg-transparent">
-        <ContainerScroll
-          titleComponent={
+        <PreviewStack
+          title={
             <>
-              <h1 className="text-4xl md:text-6xl font-editorial font-light leading-[110%] tracking-[-1.8px]">
-                <span className="italic font-extralight">Maestro</span> of interviews
-              </h1>
+              <span className="italic font-extralight">Maestro</span> of interviews
             </>
           }
-          images={[
-            {
-              src: "/images/domain.webp",
-              srcDark: "/images/domain_dark.webp",
-              alt: "Domain Expertise Interface"
-            },
-            {
-              src: "/images/transcripts.webp",
-              srcDark: "/images/transcripts_dark.webp",
-              alt: "Transcripts Interface"
-            },
-            {
-              src: "/images/voice.webp",
-              srcDark: "/images/voice_dark.webp",
-              alt: "Voice Interview Interface"
-            },
-            {
-              src: "/images/qa.webp",
-              srcDark: "/images/qa_dark.webp",
-              alt: "Q&A Interview Interface"
-            },
-            {
-              src: "/images/bookmark.webp",
-              srcDark: "/images/bookmark_dark.webp",
-              alt: "Bookmark Interview Interface"
-            },
-          ]}
         />
       </div>
 
