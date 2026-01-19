@@ -26,13 +26,13 @@ interface ResourceListProps {
   onResourcesVisibilityChange?: (visible: boolean) => void;
 }
 
-export function ResourceList({ 
-  questionId, 
-  domain, 
-  topicId, 
-  categoryId, 
-  subcategoryId, 
-  isResourcesVisible = true 
+export function ResourceList({
+  questionId,
+  domain,
+  topicId,
+  categoryId,
+  subcategoryId,
+  isResourcesVisible = true
 }: ResourceListProps) {
   // UI state for scroll navigation
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -74,14 +74,14 @@ export function ResourceList({
 
   const { user } = useAuth();
   const isLoggedIn = !!user;
-  
+
   const { preferences, loading: loadingPrefs } = useUserPreferences({
     isLoggedIn,
     userId: user?.id || null
   });
 
   // Enhance PDF resources with metadata
-  const { enhancedResources: resources } = usePdfMetadata(
+  const { enhancedResources, error: pdfError } = usePdfMetadata(
     rawResources || [],
     {
       enabled: true,
@@ -89,6 +89,8 @@ export function ResourceList({
       delay: 200    // Small delay between batches
     }
   );
+  // prevents a flash of "no resources" while PDF enhancement is running
+  const resources = enhancedResources.length > 0 ? enhancedResources : (rawResources || []);
 
   const { tabs, activeTab, activeTabType, setActiveTabType, featuredResource, setFeaturedResource } = useResourceTabs({
     resources,
@@ -112,14 +114,11 @@ export function ResourceList({
     );
   }
 
-  // Show loading spinner for resource enhancement (but allow interaction)
-  // Enhancement loading states have been removed for cleaner build
-
   // Error state
-  if (error) {
+  if (error || pdfError) {
     return (
       <div className="text-red-500 text-center p-4">
-        <p>Error loading resources: {error}</p>
+        <p>Error loading resources: {error || pdfError}</p>
       </div>
     );
   }
@@ -210,7 +209,7 @@ export function ResourceList({
                   <ChevronLeft className="h-4 w-4" />
                 </button>
               )}
-              
+
               {/* Right Navigation Button */}
               {showRightArrow && (
                 <button
@@ -221,8 +220,8 @@ export function ResourceList({
                   <ChevronRight className="h-4 w-4" />
                 </button>
               )}
-              
-              <div 
+
+              <div
                 ref={scrollContainerRef}
                 className="overflow-x-auto scrollbar-hide"
                 onScroll={checkScrollPosition}

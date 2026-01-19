@@ -16,7 +16,7 @@ type PdfMetadataState = {
   processedIds: Set<number>;
 };
 
-type PdfMetadataAction = 
+type PdfMetadataAction =
   | { type: 'START_LOADING' }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'UPDATE_PROGRESS'; payload: number }
@@ -92,7 +92,7 @@ export function usePdfMetadata(
   options: UsePdfMetadataOptions = {}
 ): UsePdfMetadataReturn {
   const { enabled = true, batchSize = 3, delay = 100 } = options;
-  
+
   const [state, dispatch] = useReducer(pdfMetadataReducer, {
     enhancedResources: [],
     loading: false,
@@ -134,10 +134,10 @@ export function usePdfMetadata(
 
     // Get current processed IDs at the time of processing
     const currentProcessedIds = state.processedIds;
-    const pdfResources = resourcesToProcess.filter(r => 
+    const pdfResources = resourcesToProcess.filter(r =>
       r.type === 'pdf' && r.url && !currentProcessedIds.has(r.id)
     );
-    
+
     if (pdfResources.length === 0) {
       dispatch({ type: 'SET_ENHANCED_RESOURCES', payload: resources });
       dispatch({ type: 'COMPLETE_LOADING' });
@@ -152,7 +152,7 @@ export function usePdfMetadata(
       // Process in batches
       for (let i = 0; i < pdfResources.length; i += batchSize) {
         const batch = pdfResources.slice(i, i + batchSize);
-        
+
         const batchPromises = batch.map(async (resource) => {
           const enhancedResource = await enhanceResource(resource);
           const originalIndex = resources.findIndex(r => r.id === resource.id);
@@ -163,7 +163,7 @@ export function usePdfMetadata(
         });
 
         const completedIds = await Promise.all(batchPromises);
-        
+
         // Update state
         dispatch({ type: 'MARK_PROCESSED', payload: completedIds });
         processedCount += batch.length;
@@ -221,8 +221,8 @@ export function usePdfMetadata(
     // Check for new PDFs that need processing
     const currentPdfIds = new Set(resources.filter(r => r.type === 'pdf').map(r => r.id));
     const hasNewPdfs = Array.from(currentPdfIds).some(id => !state.processedIds.has(id));
-    
-    
+
+
     if (hasNewPdfs) {
       processResourcesBatch(resources);
     } else {
@@ -275,7 +275,7 @@ export function useSinglePdfMetadata(resource: Resource | null) {
     pdfMetadataService.extractMetadata(resource.url)
       .then(metadata => {
         if (isCancelled) return;
-        
+
         const enhancedResource = enhanceResourceWithMetadata(resource, metadata);
         dispatch({ type: 'SET_RESOURCE', payload: enhancedResource });
       })
