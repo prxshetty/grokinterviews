@@ -22,14 +22,14 @@ class IntersectionManager {
 
   private getOrCreateObserver(threshold: number, rootMargin: string): IntersectionObserver {
     const key = this.getObserverKey(threshold, rootMargin);
-    
+
     if (!this.observers.has(key)) {
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             const isVisible = entry.isIntersecting;
             this.visibilityState.set(entry.target, isVisible);
-            
+
             const callbacks = this.callbacks.get(entry.target);
             if (callbacks) {
               callbacks.forEach(callback => callback(isVisible));
@@ -38,10 +38,10 @@ class IntersectionManager {
         },
         { threshold, rootMargin }
       );
-      
+
       this.observers.set(key, observer);
     }
-    
+
     return this.observers.get(key)!;
   }
 
@@ -51,41 +51,41 @@ class IntersectionManager {
     options: { threshold?: number; rootMargin?: string; once?: boolean } = {}
   ): () => void {
     const { threshold = 0.1, rootMargin = '0px 0px -50px 0px', once = true } = options;
-    
+
     const observer = this.getOrCreateObserver(threshold, rootMargin);
-    
+
     // Add callback to the set
     if (!this.callbacks.has(element)) {
       this.callbacks.set(element, new Set());
     }
-    
-    const wrappedCallback = once 
+
+    const wrappedCallback = once
       ? (isVisible: boolean) => {
-          if (isVisible) {
-            callback(isVisible);
-            this.unobserve(element, wrappedCallback);
-          }
+        if (isVisible) {
+          callback(isVisible);
+          this.unobserve(element, wrappedCallback);
         }
+      }
       : callback;
-    
+
     this.callbacks.get(element)!.add(wrappedCallback);
     observer.observe(element);
-    
+
     // Return cleanup function
     return () => this.unobserve(element, wrappedCallback);
   }
 
   unobserve(element: Element, callback?: (isVisible: boolean) => void): void {
     const callbacks = this.callbacks.get(element);
-    
+
     if (callback && callbacks) {
       callbacks.delete(callback);
-      
+
       // If no more callbacks for this element, stop observing
       if (callbacks.size === 0) {
         this.callbacks.delete(element);
         this.visibilityState.delete(element);
-        
+
         // Find and unobserve from all observers
         this.observers.forEach(observer => {
           observer.unobserve(element);
@@ -95,7 +95,7 @@ class IntersectionManager {
       // Remove all callbacks for this element
       this.callbacks.delete(element);
       this.visibilityState.delete(element);
-      
+
       this.observers.forEach(observer => {
         observer.unobserve(element);
       });
@@ -126,20 +126,17 @@ export function useCentralizedIntersection(options: {
   useEffect(() => {
     setMounted(true);
 
-    const timer = setTimeout(() => {
-      if (ref.current) {
-        const manager = IntersectionManager.getInstance();
-        
-        cleanupRef.current = manager.observe(
-          ref.current,
-          (visible) => setIsVisible(visible),
-          { threshold, rootMargin, once }
-        );
-      }
-    }, 100);
+    if (ref.current) {
+      const manager = IntersectionManager.getInstance();
+
+      cleanupRef.current = manager.observe(
+        ref.current,
+        (visible) => setIsVisible(visible),
+        { threshold, rootMargin, once }
+      );
+    }
 
     return () => {
-      clearTimeout(timer);
       if (cleanupRef.current) {
         cleanupRef.current();
       }

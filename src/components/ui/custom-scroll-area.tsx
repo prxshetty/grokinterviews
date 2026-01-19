@@ -21,7 +21,7 @@ export const CustomScrollArea = ({ children, className }: CustomScrollAreaProps)
     return (
         <div
             className={cn(
-                "h-screen w-full overflow-y-auto",
+                "relative h-screen w-full overflow-y-auto",
                 // Scrollbar base styles
                 "[&::-webkit-scrollbar]:w-1.5",
                 "[&::-webkit-scrollbar-track]:bg-transparent",

@@ -4,7 +4,6 @@ import ClientProviders from '@/components/client-providers';
 import { cn } from '@/lib/utils';
 import { Manrope } from 'next/font/google'
 import { PPEditorialUltralight } from '@/fonts/pp-editorial';
-import { CustomScrollArea } from '@/components/ui/custom-scroll-area';
 
 
 const manrope = Manrope({
@@ -116,9 +115,7 @@ export default function RootLayout({
         PPEditorialUltralight.variable
       )}>
         <ClientProviders>
-          <CustomScrollArea>
-            {children}
-          </CustomScrollArea>
+          {children}
         </ClientProviders>
       </body>
     </html>

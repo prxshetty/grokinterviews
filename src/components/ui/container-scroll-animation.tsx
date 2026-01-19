@@ -12,27 +12,10 @@ export const ContainerScroll = ({
   images: { src: string; srcDark?: string; alt: string }[];
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLElement | null>(null);
 
-  // Find the scroll container (CustomScrollArea) on mount
-  useEffect(() => {
-    // The CustomScrollArea is a div with overflow-y-auto, find it by traversing up
-    if (containerRef.current) {
-      let parent = containerRef.current.parentElement;
-      while (parent) {
-        const style = window.getComputedStyle(parent);
-        if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-          scrollContainerRef.current = parent;
-          break;
-        }
-        parent = parent.parentElement;
-      }
-    }
-  }, []);
-
+  // Use native window scroll (no custom container needed)
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    container: scrollContainerRef,
     offset: ["start center", "center center"],
   });
   const [isMobile, setIsMobile] = useState(false);
@@ -149,7 +132,7 @@ export const Header = ({ translate, titleComponent }: any) => {
     >
       {titleComponent}
       <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mt-4 font-light">
-        Experience the future of interview preparation with AI-powered insights
+        Experience the future of interview preparation with structured resources curated for you
       </p>
     </motion.div>
   );

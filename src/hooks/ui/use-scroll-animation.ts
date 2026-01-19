@@ -16,30 +16,25 @@ export function useScrollAnimation(threshold = 0.2): ScrollAnimationHook {
   useEffect(() => {
     setMounted(true);
 
-    const timer = setTimeout(() => {
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry && entry.isIntersecting) {
-            setIsVisible(true);
-            observer.unobserve(entry.target);
-          }
-        },
-        { threshold }
-      );
-
-      if (ref.current) {
-        observer.observe(ref.current);
-      }
-
-      return () => {
-        if (ref.current) {
-          observer.unobserve(ref.current);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry && entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
         }
-        clearTimeout(timer);
-      };
-    }, 100);
+      },
+      { threshold }
+    );
 
-    return () => clearTimeout(timer);
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
   }, [threshold]);
 
   return { ref, isVisible, mounted };
