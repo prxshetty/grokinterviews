@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -27,7 +27,6 @@ import {
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 import { Logo } from '@/components/ui/Logo';
 import { DEFAULT_AVATAR_URL, MAIN_NAV_ITEMS } from '@/config';
-import { getDomainLabel } from '@/config/domain.constants';
 import { cn } from '@/lib/utils';
 
 
@@ -45,26 +44,13 @@ const MemoizedLogo = memo(({ isScrolled }: { isScrolled: boolean }) => (
 MemoizedLogo.displayName = 'MemoizedLogo';
 
 // Memoized navigation links to prevent re-renders
-const MemoizedNavLinks = memo(({
-  currentDomainLabel,
-  user
-}: {
-  currentDomainLabel: string;
-  user: any;
-}) => {
+const MemoizedNavLinks = memo(({ user }: { user: any }) => {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href;
 
   return (
     <div className="flex items-center space-x-8">
-      <Link
-        href="/topics"
-        className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-      >
-        {currentDomainLabel}
-      </Link>
-
-      {MAIN_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
+      {MAIN_NAV_ITEMS.map((item) => {
         // Skip auth-required items if user is not logged in
         if (item.authRequired && !user) return null;
 
@@ -89,7 +75,6 @@ const MemoizedNavLinks = memo(({
 MemoizedNavLinks.displayName = 'MemoizedNavLinks';
 
 function MainNavigation({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -191,24 +176,6 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
 
 
 
-
-  const extractDomainFromPath = useCallback((path: string, section: 'topics') => {
-    const parts = path.split('/');
-    if (parts.length >= 3 && parts[1] === section) {
-      return parts[2];
-    }
-    return null;
-  }, []);
-
-  // Memoize current domain calculation
-  const currentDomainLabel = useMemo(() => {
-    const domain = extractDomainFromPath(pathname, 'topics');
-    return domain ? getDomainLabel(domain) : 'Topics';
-  }, [pathname, extractDomainFromPath]);
-
-  const handleTopicsLinkClick = useCallback(() => {
-    setIsMobileMenuOpen(false);
-  }, [setIsMobileMenuOpen]);
 
   const handleSignOut = async () => {
     setIsMobileMenuOpen(false);
@@ -351,17 +318,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                       {/* Navigation Links */}
                       <nav className="flex-1 px-6 py-8">
                         <div className="space-y-1">
-                          <SheetClose asChild>
-                            <Link
-                              href="/topics"
-                              onClick={handleTopicsLinkClick}
-                              className="flex items-center px-3 py-4 text-lg font-medium text-foreground hover:text-primary hover:bg-accent/50 rounded-lg transition-colors"
-                            >
-                              {currentDomainLabel}
-                            </Link>
-                          </SheetClose>
-
-                          {MAIN_NAV_ITEMS.filter(item => item.id !== 'topics').map((item) => {
+                          {MAIN_NAV_ITEMS.map((item) => {
                             // Skip auth-required items if user is not logged in
                             if (item.authRequired && !user) return null;
 
@@ -477,10 +434,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
 
               {/* Desktop Navigation - Memoized */}
               <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex">
-                <MemoizedNavLinks
-                  currentDomainLabel={currentDomainLabel}
-                  user={user}
-                />
+                <MemoizedNavLinks user={user} />
               </div>
 
               {/* User Section - Right aligned */}
