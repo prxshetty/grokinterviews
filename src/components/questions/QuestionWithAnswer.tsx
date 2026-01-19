@@ -230,7 +230,7 @@ function QuestionWithAnswerComponent({
               )}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <div className={`font-medium text-gray-800 dark:text-gray-100 whitespace-normal break-words text-left ${isTabletOrSmaller ? 'text-sm leading-5' : 'text-base'
+              <div className={`font-semibold tracking-tight leading-snug text-gray-900 dark:text-white whitespace-normal break-words text-left ${isTabletOrSmaller ? 'text-sm' : 'text-base'
                 }`}>
                 {question.question_text || 'Question text not available'}
               </div>
@@ -284,8 +284,8 @@ function QuestionWithAnswerComponent({
 
         {/* Content Layout - Mobile: Single pane with tabs, Desktop: Two panes */}
         <div className={`w-full ${isTabletOrSmaller
-            ? 'space-y-3'
-            : 'pt-3 flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)] min-h-[700px]'
+          ? 'space-y-3'
+          : 'pt-3 flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)] min-h-[700px]'
           }`}>
 
           {/* Mobile: Single pane based on active tab */}

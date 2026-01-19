@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DOMAIN_OPTIONS } from '@/config/domain.constants';
 import { motion } from 'framer-motion';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface TopicDomainSelectorProps {
   className?: string;
@@ -140,7 +141,7 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
     return (
       <div className={cn("w-full max-w-4xl mx-auto", className)}>
         <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-2 border-current border-r-transparent animate-spin rounded-full" />
+          <LoadingSpinner size="lg" />
         </div>
       </div>
     );

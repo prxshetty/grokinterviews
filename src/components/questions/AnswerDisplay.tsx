@@ -6,7 +6,8 @@ import { Copy, Check, AlertCircle, RotateCw, MessageSquare } from 'lucide-react'
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+
+import LabSpinner from '@/components/ui/lab-spinner';
 import { useIsTabletOrSmaller } from '@/hooks/ui';
 import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
@@ -133,7 +134,7 @@ export function AnswerDisplay({
     <div className="h-full overflow-y-auto">
       {isLoading ? (
         <div className="h-full flex items-center justify-center">
-          <LoadingSpinner size="lg" text="Generating answer..." />
+          <LabSpinner size="lg" text="Generating answer..." />
         </div>
       ) : error ? (
         <div className="h-full flex flex-col items-center justify-center p-6 text-center">
