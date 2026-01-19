@@ -2,7 +2,6 @@ import { Metadata } from 'next'
 import { Faq3 } from '@/components/ui/faq3'
 import ContactForm from './components/ContactForm'
 import { GROK_INTERVIEW_FAQ_ITEMS } from '@/data/faq'
-import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: 'About GrokInterviews',
@@ -26,13 +25,13 @@ export default function AboutPage() {
         {/* Our Mission Section */}
         <section className="mb-16 md:mb-24 max-w-3xl">
           <h2 className="text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white mb-6">
-            Our Mission
+            The Mission
           </h2>
           <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
             <p>
-              At GrokInterviews, our mission is to empower software engineers and
-              data scientists with the most comprehensive and intelligent tools
-              for interview preparation. We aggregate, organize, and present a
+              This project is to empower software engineers and
+              data scientists with the most comprehensive and intelligent resources
+              for interview preparation. Aggregated, organized, and presented a
               vast array of resources, enhanced by AI, to help you master
               technical concepts and excel in your interviews.
             </p>
@@ -46,8 +45,8 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
             <p>
-              GrokInterviews is proudly open source. We believe in transparency and community collaboration.
-              Check out our code, contribute, or star us on GitHub!
+              GrokInterviews is proudly open source. I believe in transparency and community collaboration.
+              Check out the code, contribute, or star it on GitHub!
             </p>
             <a
               href="https://github.com/prxshetty/grokinterviews"
@@ -55,7 +54,7 @@ export default function AboutPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
             >
-              Visit our GitHub Repository
+              Visit GitHub Repository
               <span className="text-xl">→</span>
             </a>
           </div>
@@ -81,7 +80,6 @@ export default function AboutPage() {
           <ContactForm />
         </section>
       </main>
-      <Footer />
     </div>
   )
 }
