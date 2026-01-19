@@ -9,11 +9,11 @@ interface YouTubeThumbnailWithFallbackProps extends Omit<ImageProps, 'src' | 'al
   className?: string;
 }
 
-export function YouTubeThumbnailWithFallback({ 
-  videoId, 
-  alt, 
-  className, 
-  ...props 
+export function YouTubeThumbnailWithFallback({
+  videoId,
+  alt,
+  className,
+  ...props
 }: YouTubeThumbnailWithFallbackProps) {
   const qualities = useMemo(() => ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault'], []);
   const [currentQualityIndex, setCurrentQualityIndex] = useState(0);
@@ -33,6 +33,7 @@ export function YouTubeThumbnailWithFallback({
       onError={handleImageError}
       className={className}
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      unoptimized={true}
       {...props}
     />
   );
