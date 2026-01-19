@@ -2,56 +2,9 @@
 
 import { HeroSection } from '@/components/ui/hero-section-1';
 import CompanyList from '@/components/home/CompanyList';
-import { Suspense, lazy } from 'react';
-import { useCentralizedIntersection } from '@/hooks/ui';
 import PreviewStack from '@/components/home/preview-stack';
 import VoiceHeroSection from '@/components/ui/VoiceHeroSection';
-
-// Lazy load non-critical components that are below the fold
-const FeatureSection = lazy(() => import('@/components/home/FeatureSection').then(module => ({ default: module.FeatureSection })));
-
-function FeatureSkeleton() {
-  return (
-    <div className="py-16 animate-pulse">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64 mx-auto mb-8"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="p-6 border rounded-lg">
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FeatureSectionWrapper() {
-  const { ref, isVisible, mounted } = useCentralizedIntersection({
-    threshold: 0.05,
-    rootMargin: '800px',
-    once: true
-  })
-
-  // Always render with visibility - skeleton takes same space as content
-  return (
-    <div
-      ref={ref}
-      className="mt-0 mb-16 sm:mb-20 md:mb-24"
-    >
-      {mounted && isVisible ? (
-        <Suspense fallback={<FeatureSkeleton />}>
-          <FeatureSection />
-        </Suspense>
-      ) : (
-        <FeatureSkeleton />
-      )}
-    </div>
-  )
-}
+import WaveSection from '@/components/home/WaveSection';
 
 export default function Home() {
   return (
@@ -81,8 +34,8 @@ export default function Home() {
         <VoiceHeroSection title="Voice Interview" description="Access to 3 voice interview options, complete control over your interview experience." />
       </div>
 
-      {/* Feature Section - Lazy loaded */}
-      <FeatureSectionWrapper />
+      {/* Wave Section */}
+      <WaveSection />
     </div>
   );
 }
