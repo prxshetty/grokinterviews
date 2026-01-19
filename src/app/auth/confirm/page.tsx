@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { BackgroundPathsOnly } from '@/components/home/background';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 function ConfirmContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -94,15 +95,15 @@ function ConfirmContent() {
   return (
     <>
       {status === 'loading' && (
-        <>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-6"></div>
+        <div className="flex flex-col items-center">
+          <LoadingSpinner size="lg" className="mb-6" />
           <h1 className="text-4xl md:text-5xl font-light tracking-tight text-black dark:text-white mb-4">
             Verifying Your Email
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
             {message}
           </p>
-        </>
+        </div>
       )}
 
       {status === 'success' && (
@@ -179,15 +180,15 @@ function LoadingState({
   message: string;
 }) {
   return (
-    <>
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-6"></div>
+    <div className="flex flex-col items-center">
+      <LoadingSpinner size="lg" className="mb-6" />
       <h1 className="text-4xl md:text-5xl font-light tracking-tight text-black dark:text-white mb-4">
         {title}
       </h1>
       <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
         {message}
       </p>
-    </>
+    </div>
   );
 }
 

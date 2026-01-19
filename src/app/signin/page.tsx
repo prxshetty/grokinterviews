@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { TurnstileComponent } from '@/components/ui/turnstile';
 import { useTurnstile } from '@/hooks/useTurnstile';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -566,9 +567,8 @@ export default function SignIn() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center px-4 bg-transparent">
       <div className="w-full max-w-sm space-y-8">
         <Suspense fallback={
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          <div className="flex justify-center py-8">
+            <LoadingSpinner size="sm" text="Loading..." />
           </div>
         }>
           <SignInForm />

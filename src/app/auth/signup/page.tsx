@@ -2,6 +2,7 @@
 
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 function SignUpContent() {
   const router = useRouter();
@@ -26,10 +27,7 @@ export default function SignUp() {
   return (
     <Suspense fallback={
       <div className="min-h-screen w-full flex items-center justify-center bg-transparent">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Redirecting to sign up page...</p>
-        </div>
+        <LoadingSpinner size="sm" text="Redirecting to sign up page..." />
       </div>
     }>
       <SignUpContent />
