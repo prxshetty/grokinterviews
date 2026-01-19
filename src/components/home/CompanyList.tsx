@@ -163,49 +163,13 @@ export default function ResourceCarousel() {
     };
   }, []);
 
-  // Show invisible placeholder during SSR to prevent layout shift
-  if (!mounted) {
-    return (
-      <div className="mt-12 sm:mt-16 md:mt-20 transition-all duration-1000 w-full">
-        {/* Title and Subtitle Placeholder */}
-        <div className="text-center mb-8 sm:mb-12 md:mb-16 px-3 sm:px-4 md:px-6">
-          <div className="h-8 sm:h-10 md:h-12 lg:h-14 w-64 sm:w-80 md:w-96 mx-auto opacity-0 mb-4 sm:mb-6" /> {/* Invisible title placeholder */}
-          <div className="h-4 sm:h-5 md:h-6 w-48 sm:w-64 md:w-80 mx-auto opacity-0" /> {/* Invisible subtitle placeholder */}
-        </div>
-        <div className="group w-full overflow-hidden relative max-w-[100vw]">
-          <div className="relative py-2 sm:py-3 w-full overflow-hidden">
-            {/* Row 1 skeleton */}
-            <div className="flex whitespace-nowrap mb-0 sm:mb-3">
-              {[...Array(14)].map((_, index) => (
-                <div
-                  key={`row1-${index}`}
-                  className="flex flex-col items-center justify-center mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 w-16 sm:w-20 md:w-24 lg:w-28 xl:w-32 opacity-0 flex-shrink-0"
-                >
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 mb-3 sm:mb-4" />
-                </div>
-              ))}
-            </div>
-            {/* Row 2 skeleton */}
-            <div className="flex whitespace-nowrap">
-              {[...Array(7)].map((_, index) => (
-                <div
-                  key={`row2-${index}`}
-                  className="flex flex-col items-center justify-center mx-2 sm:mx-3 md:mx-4 lg:mx-6 xl:mx-8 w-16 sm:w-20 md:w-24 lg:w-28 xl:w-32 opacity-0 flex-shrink-0"
-                >
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 mb-3 sm:mb-4" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Always render the same structure to avoid hydration mismatch
+  const shouldAnimate = mounted && isVisible;
 
   return (
     <div
       ref={ref}
-      className={`mt-12 sm:mt-16 md:mt-20 transition-all duration-1000 w-full ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      className={`mt-12 sm:mt-16 md:mt-20 transition-all duration-1000 w-full ${shouldAnimate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
       {/* Title and Subtitle Section */}
       <div className="text-center mb-8 sm:mb-12 md:mb-16 px-3 sm:px-4 md:px-6">

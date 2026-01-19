@@ -94,19 +94,18 @@ export function FeatureSection() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentFeatureIndex(prev => (prev + 1) % features.length);
-    }, 4500); // Change every 1.5 seconds - faster switching
+    }, 4500); // Change every 4.5 seconds
 
     return () => clearInterval(interval);
   }, [features.length]);
 
-  if (!mounted) {
-    return <div className="w-full py-20 lg:py-40 opacity-0" />;
-  }
+  // Always render the same structure to avoid hydration mismatch
+  const shouldAnimate = mounted && isVisible;
 
   return (
     <div
       ref={ref}
-      className={`w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-32 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      className={`w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-32 transition-all duration-1000 ${shouldAnimate ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
         }`}
     >
       <div className="mx-auto max-w-7xl">

@@ -1,2 +1,2 @@
 export { default as CompanyList } from './CompanyList';
-export { FeatureSection } from './FeatureSection'; 
+export { FeatureSection } from './FeatureSection';

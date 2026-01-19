@@ -6,7 +6,7 @@ import { Suspense, lazy } from 'react';
 import { useCentralizedIntersection } from '@/hooks/ui';
 import { ContainerScroll } from '@/components/ui/container-scroll-animation';
 import VoiceHeroSection from '@/components/ui/VoiceHeroSection';
-import Footer from '@/components/layout/Footer';
+import { Footer } from '@/components';
 
 // Lazy load non-critical components that are below the fold
 const FeatureSection = lazy(() => import('@/components/home/FeatureSection').then(module => ({ default: module.FeatureSection })));
@@ -37,21 +37,13 @@ function FeatureSectionWrapper() {
     once: true
   })
 
-  if (!mounted) {
-    return (
-      <div className="mt-0 mb-16 sm:mb-20 md:mb-24 opacity-0">
-        <FeatureSkeleton />
-      </div>
-    )
-  }
-
+  // Always render with visibility - skeleton takes same space as content
   return (
     <div
       ref={ref}
-      className={`mt-0 mb-16 sm:mb-20 md:mb-24 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`}
+      className="mt-0 mb-16 sm:mb-20 md:mb-24"
     >
-      {isVisible ? (
+      {mounted && isVisible ? (
         <Suspense fallback={<FeatureSkeleton />}>
           <FeatureSection />
         </Suspense>
@@ -116,13 +108,11 @@ export default function Home() {
 
       {/* Voice Hero Section */}
       <div className="mt-16 sm:mt-16 md:mt-20 lg:mt-24 mb-12 sm:mb-16 md:mb-20">
-        <VoiceHeroSection title="Voice Interview" description="Seamlessly connect through the web or a real-time AI voice call—wherever you are." />
+        <VoiceHeroSection title="Voice Interview" description="Access to 3 voice interview options, complete control over your interview experience." />
       </div>
 
       {/* Feature Section - Lazy loaded */}
       <FeatureSectionWrapper />
-
-      <Footer />
     </div>
   );
 }
