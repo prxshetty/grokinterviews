@@ -29,8 +29,7 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
             <p>
-              This project is to empower software engineers and
-              data scientists with the most comprehensive and intelligent resources
+              This project is for students and engineers with the most comprehensive and intelligent resources
               for interview preparation. Aggregated, organized, and presented a
               vast array of resources, enhanced by AI, to help you master
               technical concepts and excel in your interviews.
@@ -45,8 +44,7 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
             <p>
-              GrokInterviews is proudly open source. I believe in transparency and community collaboration.
-              Check out the code, contribute, or star it on GitHub!
+              This project is open source. Check out the code, contribute more features, or star it on GitHub!
             </p>
             <a
               href="https://github.com/prxshetty/grokinterviews"
