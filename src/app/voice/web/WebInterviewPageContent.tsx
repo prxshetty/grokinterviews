@@ -29,7 +29,7 @@ import {
 } from '@/hooks/voice';
 
 import { InterviewService, type TerminationReason } from '@/services/interviewService';
-import { getAIConfig, type AIConfig } from '@/utils/ai-config-storage';
+import { getOpenAIKeyForVoice, type AIConfig } from '@/utils/ai-config-storage';
 
 const getBehavioralDefaults = (): InterviewModeConfig => ({
   industry: '',
@@ -61,10 +61,18 @@ export default function WebInterviewPageContent() {
   // AI Configuration for Voice
   const [aiConfig, setAiConfig] = useState<AIConfig | null>(null);
 
-  // Load AI config on mount
+  // Load AI config on mount - for voice features, always use OpenAI key
   useEffect(() => {
-    const config = getAIConfig();
-    setAiConfig(config);
+    const openAIKey = getOpenAIKeyForVoice();
+    if (openAIKey) {
+      setAiConfig({
+        provider: 'openai',
+        apiKey: openAIKey,
+        modelId: 'gpt-4o-mini'
+      });
+    } else {
+      setAiConfig(null);
+    }
   }, []);
 
   // Local component state
