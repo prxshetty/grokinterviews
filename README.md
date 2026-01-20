@@ -204,7 +204,7 @@ The application uses a sophisticated PostgreSQL database with:
 *   **Real-time Subscriptions** for live updates
 *   **Optimized Indexing** for sub-second query performance
 
-Key tables: `profiles`, `topics`, `categories`, `questions`, `resources`, `user_progress`, `user_activity`, `user_bookmarks`, `user_preferences`
+Key tables: `profiles`, `topics`, `categories`, `questions`, `resources`, `user_progress`, `user_activity`, `user_preferences`
 
 ## Recent Engineering Achievements
 
