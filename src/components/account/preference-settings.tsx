@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
 import {
     getAnswerDepth,
     setAnswerDepth,
@@ -9,16 +8,6 @@ import {
     setIncludeCode,
     type AnswerDepth,
 } from '@/utils/ai-config-storage'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
 
 export function PreferenceSettings() {
     const [answerDepth, setAnswerDepthState] = useState<AnswerDepth>('standard')
@@ -59,33 +48,23 @@ export function PreferenceSettings() {
                                 </p>
                             </div>
 
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full sm:w-40 justify-between text-sm capitalize bg-white dark:text-gray-200 dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                                    >
-                                        {answerDepth}
-                                        <ChevronDown className="h-4 w-4 opacity-70" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56 bg-white/95 dark:bg-black/95 border border-gray-200 dark:border-white/10 shadow-lg rounded-md backdrop-blur-md">
-                                    <DropdownMenuLabel>Detail Level</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuRadioGroup
-                                        value={answerDepth}
-                                        onValueChange={(val) => {
-                                            const depth = val as AnswerDepth
+                            <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                                {(['brief', 'standard', 'comprehensive'] as AnswerDepth[]).map((depth) => (
+                                    <button
+                                        key={depth}
+                                        onClick={() => {
                                             setAnswerDepthState(depth)
                                             setAnswerDepth(depth)
                                         }}
+                                        className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 capitalize ${answerDepth === depth
+                                            ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+                                            }`}
                                     >
-                                        <DropdownMenuRadioItem value="brief">Brief</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="standard">Standard</DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="comprehensive">Comprehensive</DropdownMenuRadioItem>
-                                    </DropdownMenuRadioGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                        {depth}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
