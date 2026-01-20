@@ -60,7 +60,6 @@ export async function middleware(req: NextRequest) {
     // DEV BYPASS: Allow local testing with mock admin account
     const isDev = process.env.NODE_ENV === 'development';
     const isLocal = req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1';
-
     if (isDev && isLocal) {
       const devBypass = req.cookies.get('dev-bypass')?.value === 'true';
       const devAuthParam = req.nextUrl.searchParams.get('dev-auth') === 'admin';

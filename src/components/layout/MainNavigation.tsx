@@ -76,17 +76,13 @@ MemoizedNavLinks.displayName = 'MemoizedNavLinks';
 
 function MainNavigation({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [showPasswordResetReminder, setShowPasswordResetReminder] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Use the shared auth state from the provider
   const { user, profile, signOut, supabase, refreshAuth } = useAuth();
-
-
-
-
 
   // Optimized initialization with throttled scroll handler
   useEffect(() => {
@@ -94,28 +90,15 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
     setMounted(true);
 
     // Throttled scroll handler for better performance
-    let ticking = false;
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 50);
-          ticking = false;
-        });
-        ticking = true;
-      }
+      setIsScrolled(window.scrollY > 50);
     };
 
     // Use passive listener for better performance
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Check password reset reminder only once
-    const urlParams = new URLSearchParams(window.location.search);
-    const mode = urlParams.get('mode');
-    const dismissed = sessionStorage.getItem('globalPasswordResetReminderDismissed');
-
-    if (mode === 'reset' && !dismissed) {
-      setShowPasswordResetReminder(true);
-    }
+    // Check initial scroll position
+    handleScroll();
 
     // Cleanup
     return () => {
@@ -172,11 +155,6 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
 
   useImagePreloader(avatarUrls, true);
 
-
-
-
-
-
   const handleSignOut = async () => {
     setIsMobileMenuOpen(false);
     await signOut();
@@ -187,11 +165,6 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
   const logoElement = useMemo(() => (
     <MemoizedLogo isScrolled={isScrolled} />
   ), [isScrolled]);
-
-  const dismissPasswordResetReminder = () => {
-    setShowPasswordResetReminder(false);
-    sessionStorage.setItem('globalPasswordResetReminderDismissed', 'true');
-  };
 
   // Show invisible placeholder during SSR to prevent layout shift, then show content immediately
   if (!mounted) {
@@ -240,42 +213,23 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {showPasswordResetReminder && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 text-sm">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center space-x-2 flex-1 pr-4">
-              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <span>Password reset link used successfully.</span>
-              <a
-                href="/account?tab=password-security"
-                className="underline hover:no-underline font-medium"
-              >
-                Update your password
-              </a>
-              <span>when ready.</span>
-            </div>
-            <button
-              onClick={dismissPasswordResetReminder}
-              className="text-white/80 hover:text-white text-xl leading-none flex-shrink-0 w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded"
-              title="Dismiss reminder"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
       <header>
         <nav
           data-state={isMobileMenuOpen ? 'active' : 'inactive'}
-          className="fixed z-20 w-full px-2 group top-0 left-0 right-0"
+          className={cn(
+            "z-20 w-full px-2 group left-0 right-0",
+            // Use absolute positioning for topics and questions pages so it scroll away
+            // Use fixed positioning users expect for all other pages
+            pathname?.startsWith('/topics') || pathname?.startsWith('/questions')
+              ? "absolute top-0"
+              : "fixed top-0"
+          )}
         >
           <div
             className={cn(
               'mx-auto mt-2 px-3 sm:px-4 md:px-6 transition-all duration-300',
               isScrolled
-                ? 'max-w-5xl rounded-2xl border bg-background/80 dark:bg-background/70 backdrop-blur-lg'
+                ? 'max-w-5xl rounded-2xl border bg-background/80 dark:bg-background/70 backdrop-blur-lg dark:border-white/10'
                 : 'max-w-7xl'
             )}
           >
@@ -368,7 +322,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                                   className="flex items-center w-full px-3 py-2 text-sm text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                                 >
                                   <Settings className="mr-2 h-4 w-4" />
-                                  Account
+                                  Settings
                                 </Link>
                               </SheetClose>
                               <SheetClose asChild>
@@ -409,13 +363,6 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                               <Link href="/signin?mode=signin" className="w-full">
                                 <Button variant="default" className="w-full">
                                   Sign In
-                                </Button>
-                              </Link>
-                            </SheetClose>
-                            <SheetClose asChild>
-                              <Link href="/auth/signup" className="w-full">
-                                <Button variant="outline" className="w-full">
-                                  Sign Up
                                 </Button>
                               </Link>
                             </SheetClose>
@@ -483,7 +430,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                         <DropdownMenuItem asChild>
                           <Link href="/account" className="flex items-center">
                             <Settings className="mr-2 h-4 w-4" />
-                            Account
+                            Settings
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -515,13 +462,8 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <Link href="/signin?mode=signin">
-                      <Button variant="ghost" size="sm">
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link href="/auth/signup">
                       <Button variant="default" size="sm">
-                        Sign Up
+                        Sign In
                       </Button>
                     </Link>
                   </div>
