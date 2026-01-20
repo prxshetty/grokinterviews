@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, memo } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useImagePreloader } from '@/hooks';
 
@@ -75,7 +75,6 @@ const MemoizedNavLinks = memo(({ user }: { user: any }) => {
 MemoizedNavLinks.displayName = 'MemoizedNavLinks';
 
 function MainNavigation({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -165,7 +164,7 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
     setIsMobileMenuOpen(false);
     await signOut();
-    router.push('/');
+    window.location.href = '/';
   };
 
   // Use memoized logo component

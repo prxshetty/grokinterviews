@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { DOMAIN_OPTIONS } from '@/config/domain.constants';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useAuth } from '@/components/AuthProvider';
 
 interface TopicDomainSelectorProps {
   className?: string;
@@ -117,6 +118,9 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
   const router = useRouter();
   const pathname = usePathname();
 
+  // Client-side auth guard as defense-in-depth
+  const { user, loading } = useAuth();
+
   useEffect(() => {
     const pathSegments = pathname.split('/');
     if (pathSegments.length >= 3 && pathSegments[1] === 'topics') {
@@ -127,11 +131,38 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
     }
   }, [pathname]);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      window.location.href = '/signin';
+    }
+  }, [loading, user]);
+
   const handleDomainSelect = (domain: string) => {
     setIsNavigating(true);
     setSelectedDomain(domain);
     router.push(`/topics/${domain}`);
   };
+
+  if (loading) {
+    return (
+      <div className={cn("w-full max-w-4xl mx-auto", className)}>
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="lg" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className={cn("w-full max-w-4xl mx-auto", className)}>
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="lg" />
+        </div>
+      </div>
+    );
+  }
+
 
   if (selectedDomain && !isNavigating) {
     return null;
