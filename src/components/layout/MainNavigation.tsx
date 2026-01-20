@@ -91,18 +91,25 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
 
     // Throttled scroll handler for better performance
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      // Check window.scrollY for window-level scroll
+      // Check document.body.scrollTop or documentElement.scrollTop for body-level scroll
+      const scrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
+      setIsScrolled(scrollY > 50);
     };
 
     // Use passive listener for better performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Listen on window (captures most) AND body just in case
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    // Some browsers/setup might fire scroll on body
+    document.body.addEventListener('scroll', handleScroll, { passive: true });
 
     // Check initial scroll position
     handleScroll();
 
     // Cleanup
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+      document.body.removeEventListener('scroll', handleScroll);
     };
   }, []);
 

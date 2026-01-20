@@ -155,19 +155,14 @@ canvas {
 
 html,
 body {
+  height: 100%;
+  width: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overflow-y: auto;
-  /* background-color: var(--background-color); - Handled by layout.tsx class to avoid covering scrollbar track */
+  background-color: var(--background-color);
   color: var(--text-color);
   font-family: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-html {
-  background: transparent;
-  overflow-y: overlay;
-  /* Try to force overlay scrollbars if supported */
 }
 
 /* Custom styled scrollbar on the main document */

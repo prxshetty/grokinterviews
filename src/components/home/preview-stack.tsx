@@ -2,6 +2,7 @@
 
 import { CardStack, CardStackItem } from "@/components/ui/card-stack";
 import { useScrollAnimation } from "@/hooks/ui";
+import { useIsMobile } from "@/hooks/ui/use-mobile";
 
 const items: CardStackItem[] = [
     {
@@ -48,6 +49,7 @@ type PreviewStackProps = {
 
 export default function PreviewStack({ title, subtitle }: PreviewStackProps) {
     const { ref, isVisible, mounted } = useScrollAnimation();
+    const isMobile = useIsMobile();
     const shouldAnimate = mounted && isVisible;
 
     return (
@@ -55,7 +57,7 @@ export default function PreviewStack({ title, subtitle }: PreviewStackProps) {
             ref={ref}
             className={`w-full transition-all duration-1000 ${shouldAnimate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
         >
-            <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto w-full max-w-5xl px-4 sm:px-4 lg:px-8">
                 {(title || subtitle) && (
                     <div className="text-center mb-8">
                         {title && (
@@ -77,6 +79,11 @@ export default function PreviewStack({ title, subtitle }: PreviewStackProps) {
                     intervalMs={2500}
                     pauseOnHover
                     showDots
+                    maxVisible={isMobile ? 1 : 7}
+                    cardWidth={isMobile ? 320 : 520}
+                    cardHeight={isMobile ? 280 : 320}
+                    overlap={isMobile ? 0 : 0.60}
+                    spreadDeg={isMobile ? 0 : 25}
                 />
             </div>
         </div>
