@@ -9,6 +9,7 @@ const footerLinks = [
   { title: 'Privacy', href: '/privacy' },
   { title: 'Terms', href: '/terms' },
   { title: 'Topics', href: '/topics' },
+  { title: 'Voice', href: '/voice' },
 ];
 
 export function Footer() {
@@ -40,7 +41,7 @@ export function Footer() {
               </Link>
             ))}
             <Link
-              href="https://github.com/prxshetty/grokinterviews"
+              href="https://github.com/prxshetty"
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground/60 hover:text-foreground transition-colors duration-200 flex items-center gap-2"

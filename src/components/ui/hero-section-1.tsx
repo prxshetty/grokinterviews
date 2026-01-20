@@ -64,11 +64,9 @@ export function HeroSection() {
                         {/* Badge Section */}
                         <div className={`w-full flex justify-start transition-all duration-500 ${isReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                             <Link
-                                href="https://github.com/prxshetty/grokinterviews"
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href="/about"
                                 className="hover:bg-background dark:hover:border-t-border bg-muted group flex w-fit items-center gap-2 sm:gap-3 rounded-full border p-1 pl-3 sm:pl-4 shadow-md shadow-black/5 transition-all duration-300 dark:border-t-white/5 dark:shadow-zinc-950 max-w-[calc(100vw-3rem)] sm:max-w-none">
-                                <span className="text-foreground text-xs sm:text-sm truncate">⭐ Star us on GitHub! </span>
+                                <span className="text-foreground text-xs sm:text-sm truncate">Private by design. Local by default.</span>
                                 <span className="dark:border-background block h-3 sm:h-4 w-0.5 border-l bg-white dark:bg-zinc-700 flex-shrink-0"></span>
                                 <div className="bg-background group-hover:bg-muted size-5 sm:size-6 overflow-hidden rounded-full duration-500 flex-shrink-0">
                                     <div className="flex w-10 sm:w-12 -translate-x-1/2 duration-500 ease-in-out group-hover:translate-x-0">
@@ -106,7 +104,7 @@ export function HeroSection() {
                                 variant="ghost"
                                 className="flex-1 sm:flex-none rounded-xl h-10 sm:h-11 px-4 sm:px-8 text-sm sm:text-base font-medium">
                                 <Link href="/voice">
-                                    <span className="text-nowrap">View Interviews</span>
+                                    <span className="text-nowrap">Try Voice</span>
                                 </Link>
                             </Button>
                         </div>

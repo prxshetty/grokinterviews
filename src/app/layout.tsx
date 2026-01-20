@@ -2,17 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import ClientProviders from '@/components/client-providers';
 import { cn } from '@/lib/utils';
-import { Manrope } from 'next/font/google'
 import { PPEditorialUltralight } from '@/fonts/pp-editorial';
-
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-manrope',
-});
-
-
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -89,6 +79,9 @@ export default function RootLayout({
 
         {/* Font loading is handled automatically by Next.js */}
 
+        {/* Satoshi Font from Fontshare */}
+        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet" />
+
         {/* Preconnect to external domains for faster loading */}
         <link rel="preconnect" href="https://upload.wikimedia.org" />
         <link rel="preconnect" href="https://html.tailus.io" />
@@ -111,7 +104,6 @@ export default function RootLayout({
       </head>
       <body className={cn(
         'min-h-screen bg-background font-sans antialiased',
-        manrope.variable,
         PPEditorialUltralight.variable
       )}>
         <ClientProviders>

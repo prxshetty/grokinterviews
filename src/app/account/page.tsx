@@ -56,8 +56,8 @@ function AccountPageContent() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as typeof activeTab)}
                     className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap ${isActive
-                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-md scale-[1.02]'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-black dark:bg-white text-white dark:text-black shadow-md scale-[1.02]'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                       }`}
                   >
                     <Icon className={`w-5 h-5 ${isActive ? 'text-white dark:text-black' : 'text-gray-500 dark:text-gray-400'}`} />

@@ -10,7 +10,7 @@ export const MAIN_NAV_TOPICS: NavTopic[] = DOMAIN_OPTIONS.map(domain => ({
   id: domain.id,
   label: domain.label,
   abbreviation: domain.label.split(' ').map(word => word[0]).join('').toUpperCase()
-})); 
+}));
 
 export interface NavItem {
   id: string;
@@ -28,7 +28,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'voice',
-    label: 'Interviews',
+    label: 'Voice',
     href: '/voice',
     authRequired: false
   },

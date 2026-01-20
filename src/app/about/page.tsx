@@ -62,7 +62,7 @@ export default function AboutPage() {
 
         {/* Contact Section */}
         <section id="contact-form" className="max-w-3xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center">
             <h2 className="text-4xl font-editorial font-extralight mb-4">Let's Have a Chat</h2>
             <p className="text-gray-600 dark:text-gray-400">
               Questions about our platform, features, or just want to say hello? We're here to help
