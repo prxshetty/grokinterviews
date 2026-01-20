@@ -1,10 +1,17 @@
 'use client';
 
 import { Check } from 'lucide-react';
+import { useScrollAnimation } from '@/hooks/ui';
 
 export default function WaveSection() {
+    const { ref, isVisible, mounted } = useScrollAnimation();
+    const shouldAnimate = mounted && isVisible;
+
     return (
-        <div className="w-full py-24 sm:py-32">
+        <div
+            ref={ref}
+            className={`w-full py-24 sm:py-32 transition-all duration-1000 ${shouldAnimate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+        >
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-editorial font-light leading-[110%] tracking-[-1.8px] text-foreground sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl mb-6">
