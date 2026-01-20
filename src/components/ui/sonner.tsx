@@ -19,11 +19,11 @@ const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
   useEffect(() => {
     const handleToast = (event: CustomEvent) => {
       const { message, description } = event.detail
-      
-      const isStreakToast = 
+
+      const isStreakToast =
         (message && (message.includes('streak') || message.includes('🔥') || message.includes('🚀'))) ||
         (description && (description.includes('streak') || description.includes('momentum') || description.includes('fire')))
-      
+
       if (isStreakToast) {
         setTimeout(() => {
           fireStreakConfetti()
@@ -32,7 +32,7 @@ const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
     }
 
     window.addEventListener('toast-created' as any, handleToast)
-    
+
     return () => {
       window.removeEventListener('toast-created' as any, handleToast)
     }
@@ -44,7 +44,7 @@ const Toaster = ({ theme: themeFromProps, ...otherProps }: ToasterProps) => {
       className="toaster group"
       toastOptions={{
         classNames: {
-          toast: "sonner-glassy-toast group toast group-[.toaster]:shadow-lg",
+          toast: "sonner-solid-toast group toast group-[.toaster]:shadow-lg",
           description: "group-[.toast]:text-muted-foreground",
           actionButton:
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",

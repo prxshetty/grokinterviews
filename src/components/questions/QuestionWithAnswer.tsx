@@ -137,6 +137,7 @@ function QuestionWithAnswerComponent({
     answerRef: answerRef as React.RefObject<HTMLDivElement | null>,
     isExpanded: isExpandedState,
     hasAnswer: Boolean(generatedAnswer || question.answer_text),
+    isStreaming: isGenerating,
     onCompletionChange: onCompletionChange as (questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void,
     userId: user?.id || undefined
   });

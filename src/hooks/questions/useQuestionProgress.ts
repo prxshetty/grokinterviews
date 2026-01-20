@@ -10,6 +10,7 @@ interface UseQuestionProgressProps {
   answerRef: RefObject<HTMLDivElement | null>;
   isExpanded: boolean;
   hasAnswer: boolean;
+  isStreaming?: boolean;
   onCompletionChange: ((questionId: number, isCompleted: boolean, topicId?: number, categoryId?: number) => void) | undefined;
   userId?: string | undefined;
 }
@@ -29,6 +30,7 @@ export function useQuestionProgress({
   answerRef,
   isExpanded,
   hasAnswer,
+  isStreaming = false,
   onCompletionChange,
   userId
 }: UseQuestionProgressProps): UseQuestionProgressReturn {
@@ -88,8 +90,8 @@ export function useQuestionProgress({
 
       setScrollProgress(percentage);
 
-      // Mark as completed when 90% scrolled and not already completed
-      if (percentage >= 90 && !isCompleted && questionId) {
+      // Mark as completed when 90% scrolled and not already completed AND not streaming (streaming causes near empty respunses)
+      if (percentage >= 90 && !isCompleted && !isStreaming && questionId) {
         setIsCompleted(true); // Optimistic UI update
 
         // Store completion in cache
@@ -115,7 +117,7 @@ export function useQuestionProgress({
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       clearTimeout(initialCheckTimeout);
     };
-  }, [isExpanded, hasAnswer, questionId, isCompleted, onCompletionChange, topicId, categoryId, domain, answerRef]);
+  }, [isExpanded, hasAnswer, questionId, isCompleted, isStreaming, onCompletionChange, topicId, categoryId, domain, answerRef]);
 
   const toggleCompletion = () => {
     const newCompletedState = !isCompleted;

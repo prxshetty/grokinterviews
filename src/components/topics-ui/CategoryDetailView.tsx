@@ -502,6 +502,17 @@ export default function CategoryDetailView({
     );
   }
 
+  if (selectedSubtopic && !subtopicDetails) {
+    return (
+      <LoadingSpinner
+        size="lg"
+        color="primary"
+        text="Loading topic questions..."
+        centered={true}
+      />
+    );
+  }
+
   // If a subtopic is selected, show its details
   if (selectedSubtopic && subtopicDetails) {
     return (
