@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { TurnstileComponent } from '@/components/ui/turnstile';
@@ -12,10 +12,8 @@ function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, refreshAuth, supabase } = useAuth();
+  const { user, supabase } = useAuth();
 
   // Turnstile state management
   const { token: turnstileToken, isVerified: isTurnstileVerified, error: turnstileError, setToken: setTurnstileToken, setError: setTurnstileError, reset: resetTurnstile } = useTurnstile();
