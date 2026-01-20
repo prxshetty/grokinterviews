@@ -37,24 +37,17 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Open Source Section */}
         <section className="mb-16 md:mb-24 max-w-3xl">
           <h2 className="text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white mb-6">
-            Open Source
+            Our Technology
           </h2>
           <div className="space-y-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
             <p>
-              This project is open source. Check out the code, contribute more features, or star it on GitHub!
+              We prioritize privacy and speed by leveraging a local-first architecture. Everything—from your learning progress to your custom bookmarks—is cached directly on your device.
             </p>
-            <a
-              href="https://github.com/prxshetty/grokinterviews"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
-            >
-              Visit GitHub Repository
-              <span className="text-xl">→</span>
-            </a>
+            <p>
+              By bringing your own API keys, your sensitive data remains under your control, ensuring that your interview preparation is both private and incredibly fast.
+            </p>
           </div>
         </section>
 

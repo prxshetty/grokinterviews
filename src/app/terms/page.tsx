@@ -70,7 +70,7 @@ export default function TermsOfService() {
     <div style={containerStyle}>
       <div style={headerStyle}>
         <h1 style={h1Style}>Terms of Service</h1>
-        <div style={lastUpdatedStyle}>Last updated: July 2025</div>
+        <div style={lastUpdatedStyle}>Last updated: January 2026</div>
       </div>
 
       <div style={contentStyle}>
@@ -86,9 +86,7 @@ export default function TermsOfService() {
           <ul style={ulStyle}>
             <li style={liStyle}>Access to 3.6+ million curated learning resources</li>
             <li style={liStyle}>81,499+ technical interview questions across 5 major domains</li>
-            <li style={liStyle}>AI-powered personalized answers and recommendations</li>
-            <li style={liStyle}>Progress tracking and analytics</li>
-            <li style={liStyle}>Bookmark and study planning features</li>
+            <li style={liStyle}>Local-first progress tracking and bookmarking</li>
           </ul>
         </section>
 
@@ -146,7 +144,7 @@ export default function TermsOfService() {
         <section style={sectionStyle}>
           <h2 style={h2Style}>6. Privacy and Data Protection</h2>
           <p style={pStyle}>Your privacy is important to us. Our collection and use of personal information is governed by our Privacy Policy, which is incorporated into these Terms by reference. By using our service, you consent to our Privacy Policy.</p>
-          <p style={pStyle}>We use your data to provide personalized learning experiences, track progress, and improve our service. All data is processed in accordance with applicable data protection laws.</p>
+          <p style={pStyle}>We do not collect or store your learning data, progress, or bookmarks on our servers; this information remains in your browser's local storage. We only store your email for authentication purposes.</p>
         </section>
 
         <section style={sectionStyle}>

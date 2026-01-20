@@ -75,7 +75,7 @@ export default function PrivacyPolicy() {
     <div style={containerStyle}>
       <div style={headerStyle}>
         <h1 style={h1Style}>Privacy Policy</h1>
-        <div style={lastUpdatedStyle}>Last updated: July 2025</div>
+        <div style={lastUpdatedStyle}>Last updated: January 2026</div>
       </div>
 
       <div style={contentStyle}>
@@ -96,14 +96,11 @@ export default function PrivacyPolicy() {
             <li style={liStyle}>Google account ID for authentication purposes</li>
           </ul>
 
-          <h3 style={h3Style}>2.2 Usage and Activity Data</h3>
-          <p style={pStyle}>We automatically collect information about your interaction with our Service:</p>
+          <h3 style={h3Style}>2.2 Local-First Storage</h3>
+          <p style={pStyle}>We prioritize your privacy by storing most data locally on your device:</p>
           <ul style={ulStyle}>
-            <li style={liStyle}><strong>Progress Tracking:</strong> Your completion status across 81,499+ interview questions</li>
-            <li style={liStyle}><strong>Activity Data:</strong> Learning session metadata (time spent, completion status)</li>
-            <li style={liStyle}><strong>Local Data:</strong> Bookmarks and API keys are stored locally on your device and are not collected by our servers</li>
-            <li style={liStyle}><strong>Preferences:</strong> Your learning preferences and difficulty settings</li>
-            <li style={liStyle}><strong>Performance Analytics:</strong> Your progress across different domains</li>
+            <li style={liStyle}><strong>Local Data:</strong> Bookmarks, progress tracking, and API keys are stored in your browser's local storage and are not collected by our servers.</li>
+            <li style={liStyle}><strong>Email Only:</strong> We only store your email address for authentication purposes.</li>
           </ul>
 
           <h3 style={h3Style}>2.3 Technical Data</h3>
@@ -123,26 +120,16 @@ export default function PrivacyPolicy() {
           <h3 style={h3Style}>3.1 Core Service Functionality</h3>
           <ul style={ulStyle}>
             <li style={liStyle}>Providing access to our library of 3.6+ million learning resources</li>
-            <li style={liStyle}>Generating personalized AI-powered answers using Groq API</li>
-            <li style={liStyle}>Tracking your progress across topics and categories</li>
-            <li style={liStyle}>Creating personalized learning recommendations</li>
-            <li style={liStyle}>Maintaining your bookmarks and study lists</li>
+            <li style={liStyle}>Generating AI-powered answers using your own API keys</li>
+            <li style={liStyle}>Allowing you to track your progress and bookmarks locally</li>
           </ul>
 
-          <h3 style={h3Style}>3.2 Personalization and Analytics</h3>
-          <ul style={ulStyle}>
-            <li style={liStyle}>Customizing content based on your learning preferences</li>
-            <li style={liStyle}>Providing progress analytics and performance insights</li>
-            <li style={liStyle}>Generating activity grids showing learning patterns</li>
-            <li style={liStyle}>Recommending study paths and next topics</li>
-          </ul>
 
-          <h3 style={h3Style}>3.3 Service Improvement</h3>
+
+          <h3 style={h3Style}>3.2 Service Improvement</h3>
           <ul style={ulStyle}>
-            <li style={liStyle}>Analyzing usage patterns to improve our platform</li>
-            <li style={liStyle}>Optimizing our AI models and content recommendations</li>
+            <li style={liStyle}>Analyzing aggregated, non-personal usage patterns to improve our platform</li>
             <li style={liStyle}>Identifying and fixing technical issues</li>
-            <li style={liStyle}>Developing new features based on user behavior</li>
           </ul>
         </section>
 
@@ -171,9 +158,8 @@ export default function PrivacyPolicy() {
           <h3 style={h3Style}>5.1 Data Storage</h3>
           <ul style={ulStyle}>
             <li style={liStyle}>Your account data is stored securely using Supabase (PostgreSQL) with Row Level Security (RLS)</li>
-            <li style={liStyle}><strong>Local Storage:</strong> Bookmarks, complete interview transcripts, and API keys are stored exclusively on your local device</li>
-            <li style={liStyle}>We implement database encryption and secure access controls</li>
-            <li style={liStyle}>Real-time data synchronization with encrypted connections</li>
+            <li style={liStyle}><strong>Local Storage:</strong> Bookmarks, progress, and API keys are stored exclusively on your local device.</li>
+            <li style={liStyle}>We implement secure access controls for authentication data.</li>
           </ul>
 
           <h3 style={h3Style}>5.2 Security Measures</h3>
@@ -203,8 +189,7 @@ export default function PrivacyPolicy() {
           <h3 style={h3Style}>6.2 Privacy Settings</h3>
           <ul style={ulStyle}>
             <li style={liStyle}>Control your learning preferences and AI model selection</li>
-            <li style={liStyle}>Manage bookmark and progress visibility</li>
-            <li style={liStyle}>Opt out of certain data collection features</li>
+            <li style={liStyle}>Manage bookmark and progress locally</li>
           </ul>
 
           <h3 style={h3Style}>6.3 Communication</h3>
@@ -216,9 +201,8 @@ export default function PrivacyPolicy() {
           <p style={pStyle}>We use essential cookies and similar technologies to:</p>
           <ul style={ulStyle}>
             <li style={liStyle}>Maintain your session and authentication state</li>
-            <li style={liStyle}>Remember your preferences and settings</li>
+            <li style={liStyle}>Remember your locally-stored preferences</li>
             <li style={liStyle}>Analyze site usage and performance</li>
-            <li style={liStyle}>Provide personalized content and recommendations</li>
           </ul>
           <p style={pStyle}>You can control cookies through your browser settings, but disabling them may affect the functionality of our Service.</p>
         </section>
