@@ -123,6 +123,14 @@ export function isAIConfigured(): boolean {
     return getAIConfig() !== null;
 }
 
+export function getOpenAIKeyForVoice(): string | null {
+    return getAPIKey('openai');
+}
+
+export function isVoiceConfigured(): boolean {
+    return !!getOpenAIKeyForVoice();
+}
+
 // Clear all AI config
 export function clearAllAIConfig(): void {
     if (typeof window === 'undefined') return;

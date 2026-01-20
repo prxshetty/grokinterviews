@@ -3,15 +3,7 @@ import { NextResponse } from 'next/server';
 import { createAIClient, type AIProvider } from '@/utils/ai-client';
 
 
-interface Resource {
-  id: number;
-  question_id: number;
-  type: 'youtube' | 'paper' | 'note' | 'code_snippet' | string;
-  title: string | null;
-  url: string | null;
-  created_at: string;
-  relevance_score?: number | null;
-}
+
 
 type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
 
@@ -50,45 +42,10 @@ export async function POST(request: Request) {
 
     const client = createAIClient(provider as AIProvider, apiKey);
 
-    let resources: Resource[] = [];
-    try {
-      // Replaced Supabase fetch with R2 fetch
-      const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
-      if (r2Url) {
-        const r2Response = await fetch(`${r2Url}/resources/q-${questionId}.json`);
-        if (r2Response.ok) {
-          resources = await r2Response.json();
-        } else if (r2Response.status !== 404) {
-          console.error(`Failed to fetch resources from R2: ${r2Response.statusText}`);
-        }
-      } else {
-        console.warn("NEXT_PUBLIC_R2_PUBLIC_URL not set, skipping logic to fetch resources.");
-      }
-    } catch (err) { console.error('Err fetching resources:', err); }
-
-    const formatResources = (type: string): string => resources.filter(r => r.type === type).map(r => {
-      if (['youtube', 'paper', 'website', 'pdf', 'book', 'image'].includes(type)) {
-        return `- [${r.title || (r.url ? new URL(r.url).hostname : 'Link')}](${r.url || ''})`;
-      }
-      if (type === 'note') return `- ${r.title || r.url || 'Note'}`;
-      return '';
-    }).join('\\n');
-
-    const formattedData = {
-      youtube_links: formatResources('youtube'),
-      papers: formatResources('paper'),
-      pdfs: formatResources('pdf'),
-      websites: formatResources('website'),
-      books: formatResources('book'),
-      images: formatResources('image'),
-      notes: formatResources('note')
-    };
-
     const systemPromptContent = "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions. Always respond in well-formatted Markdown.";
     const userMessageSegments = [
       `Please answer the following interview question using Markdown format:`,
       `"${questionText}"`,
-      `\\nAnswer Depth: ${preferences.depth}`,
     ];
 
     if (preferences.include_code) {
@@ -97,23 +54,19 @@ export async function POST(request: Request) {
       userMessageSegments.push(`Focus on theoretical explanations rather than code examples.`);
     }
 
-    const resourceInfoSegments: string[] = [];
-    if (formattedData.youtube_links) resourceInfoSegments.push(`**Relevant YouTube Videos:**\\n${formattedData.youtube_links}`);
-    if (formattedData.papers) resourceInfoSegments.push(`**Relevant Research Papers:**\\n${formattedData.papers}`);
-    if (formattedData.pdfs) resourceInfoSegments.push(`**Relevant PDFs:**\\n${formattedData.pdfs}`);
-    if (formattedData.websites) resourceInfoSegments.push(`**Relevant Websites:**\\n${formattedData.websites}`);
-    if (formattedData.books) resourceInfoSegments.push(`**Relevant Books:**\\n${formattedData.books}`);
-    if (formattedData.images) resourceInfoSegments.push(`**Relevant Images:**\\n${formattedData.images}`);
-    if (formattedData.notes) resourceInfoSegments.push(`**Relevant Notes:**\\n${formattedData.notes}`);
+    const depthInstructions: Record<AnswerDepth, string> = {
+      brief: "Provide a concise, high-level summary. Focus on the core concept and answer. Keep it under 2 paragraphs.",
+      standard: "Provide a balanced explanation. Cover the core concept, key details, and common use cases. Avoid excessive verbosity.",
+      comprehensive: "Provide an in-depth, exhaustive explanation. Include theoretical background, detailed examples, edge cases, pros/cons, and best practices. Break down complex topics thoroughly."
+    };
 
-    if (resourceInfoSegments.length > 0) {
-      userMessageSegments.push("\\n**Supplementary Resources (for context, do not explicitly cite unless part of the answer flow):**");
-      userMessageSegments.push(...resourceInfoSegments);
-    }
+    const depthInstruction = depthInstructions[preferences.depth] || depthInstructions.standard;
+
+    userMessageSegments.push(`\n**Instruction:** ${depthInstruction}`);
 
     const finalUserMessage = userMessageSegments.join('\\n');
-    const maxTokens = preferences.depth === 'brief' ? 768 : preferences.depth === 'comprehensive' ? 4096 : 1024;
-    const useCompletionTokens = provider === 'openai';
+    const maxTokens = 16384;
+    const isOpenAIModel = provider === 'openai';
 
     const requestOptions: any = {
       messages: [
@@ -124,22 +77,42 @@ export async function POST(request: Request) {
       stream: false,
     };
 
-    if (useCompletionTokens) {
+    if (isOpenAIModel) {
       requestOptions.max_completion_tokens = maxTokens;
     } else {
       requestOptions.max_tokens = maxTokens;
       requestOptions.temperature = 0.7;
-      requestOptions.top_p = 1;
     }
 
-    const chatCompletion = await client.chat.completions.create(requestOptions);
-    const generatedAnswer = (chatCompletion as any).choices[0]?.message?.content || 'No answer generated.';
+    requestOptions.stream = true;
 
-    return NextResponse.json({
-      id: questionId,
-      question_text: questionText,
-      answer_text: generatedAnswer,
-      needs_generation: false,
+    // Create a streaming response
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const streamResponse = await client.chat.completions.create(requestOptions) as unknown as AsyncIterable<any>;
+
+          for await (const chunk of streamResponse) {
+            const content = (chunk as any).choices?.[0]?.delta?.content || '';
+            if (content) {
+              controller.enqueue(encoder.encode(content));
+            }
+          }
+        } catch (error) {
+          console.error('Streaming error:', error);
+          controller.error(error);
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
     });
 
   } catch (error: unknown) {

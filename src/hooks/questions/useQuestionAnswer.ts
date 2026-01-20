@@ -104,12 +104,22 @@ export function useQuestionAnswer({
         return;
       }
 
-      const data = await response.json();
+      if (!response.body) {
+        throw new Error('Response body is unavailable for streaming');
+      }
 
-      if (data.answer_text) {
-        setGeneratedAnswer(data.answer_text);
-      } else {
-        setError('No answer was generated');
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let answerText = '';
+      setGeneratedAnswer('');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        answerText += chunk;
+        setGeneratedAnswer(answerText);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate answer due to an unexpected error.';

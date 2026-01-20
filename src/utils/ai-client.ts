@@ -25,14 +25,14 @@ export interface AIModelConfig {
 export const PROVIDER_MODELS: Record<AIProvider, AIModelConfig[]> = {
     openai: [
         {
-            id: 'gpt-5-nano-2025-08-07',
-            name: 'GPT-5 Nano',
+            id: 'gpt-4.1-nano',
+            name: 'GPT-4.1 Nano',
             tier: 'cheap',
             speed: 5,
             quality: 3,
-            inputPrice: 0.05,
+            inputPrice: 0.10,
             outputPrice: 0.40,
-            description: 'Fastest, most cost-efficient GPT-5 variant',
+            description: 'Fastest, most cost-efficient non-thinking variant',
         },
         {
             id: 'gpt-5-mini-2025-08-07',

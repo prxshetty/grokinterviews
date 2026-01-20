@@ -5,9 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import { Copy, Check, AlertCircle, RotateCw, MessageSquare } from 'lucide-react';
 import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-
-
-import LabSpinner from '@/components/ui/lab-spinner';
 import { useIsTabletOrSmaller } from '@/hooks/ui';
 import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
@@ -17,15 +14,12 @@ const defaultMarkdownComponents = {
   // Add any default components here
 };
 
-// Code block component with copy functionality
-const CodeBlock = ({ inline, className, children, ...props }: any) => {
-  const [isCopied, setIsCopied] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-  const codeRef = useRef<HTMLElement>(null);
+// Code block memoized
+import { memo } from 'react';
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+const CodeBlock = memo(function CodeBlock({ inline, className, children, ...props }: any) {
+  const codeRef = useRef<HTMLElement>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const copyToClipboard = useCallback(() => {
     if (codeRef.current) {
@@ -66,16 +60,14 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
         <span className="text-xs text-gray-500 dark:text-gray-400 font-mono uppercase tracking-wider select-none">
           {language || 'Code'}
         </span>
-        {isClient && (
-          <button
-            type="button"
-            className="h-6 w-6 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex items-center justify-center rounded"
-            onClick={copyToClipboard}
-            title="Copy code"
-          >
-            {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          </button>
-        )}
+        <button
+          type="button"
+          className="h-6 w-6 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex items-center justify-center rounded"
+          onClick={copyToClipboard}
+          title="Copy code"
+        >
+          {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        </button>
       </div>
 
       {/* Code Content */}
@@ -86,7 +78,10 @@ const CodeBlock = ({ inline, className, children, ...props }: any) => {
       </pre>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return prevProps.children === nextProps.children && prevProps.className === nextProps.className;
+});
+
 
 type AnswerDisplayProps = {
   answerText: string | null;
@@ -158,11 +153,7 @@ export function AnswerDisplay({
 
   return (
     <div className="h-full overflow-y-auto">
-      {isLoading ? (
-        <div className="h-full flex items-center justify-center">
-          <LabSpinner size="lg" text="Generating answer..." />
-        </div>
-      ) : error ? (
+      {error ? (
         <div className="h-full flex flex-col items-center justify-center p-6 text-center">
           <AlertCircle className="h-10 w-10 text-red-500 mb-4" />
           <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-2">
@@ -195,7 +186,7 @@ export function AnswerDisplay({
             )}
           </div>
         </div>
-      ) : answerText ? (
+      ) : answerText || isLoading ? (
         <div className="h-full flex flex-col relative">
           {/* Progress bar - desktop fixed at bottom, mobile handled in parent */}
           {shouldShowProgress && isHydrated && !isTabletOrSmaller && (
@@ -214,7 +205,6 @@ export function AnswerDisplay({
             </div>
           )}
 
-
           <div className="max-w-none p-4 flex-1 text-sm text-gray-800 dark:text-gray-200">
             <ReactMarkdown
               components={{
@@ -226,9 +216,8 @@ export function AnswerDisplay({
                 h5: (props) => <h5 className="font-bold mt-2" {...props} />,
                 h6: (props) => <h6 className="font-bold mt-1" {...props} />,
                 code: CodeBlock,
-                pre: ({ children }) => <>{children}</>, // Let CodeBlock handle the pre element
+                pre: ({ children }) => <>{children}</>,
                 p: ({ children, ...props }) => {
-                  // Prevent invalid nesting of block elements (div, pre) inside paragraphs
                   const hasBlockElement = Children.toArray(children).some(
                     (child) => {
                       if (isValidElement(child)) {
@@ -240,7 +229,6 @@ export function AnswerDisplay({
                     }
                   );
 
-                  // If we have block elements, render as a div instead of p to avoid nesting issues
                   if (hasBlockElement) {
                     return <div {...props}>{children}</div>;
                   }
@@ -258,16 +246,19 @@ export function AnswerDisplay({
               }}
               remarkPlugins={[remarkGfm]}
             >
-              {answerText}
+              {answerText || ''}
             </ReactMarkdown>
+
+            {/* ChatGPT-style streaming cursor */}
+            {isLoading && (
+              <span className="inline-block w-2 h-2 ml-0.5 rounded-full bg-gray-600 dark:bg-gray-300 animate-pulse" style={{ verticalAlign: 'middle' }} />
+            )}
           </div>
 
           {/* Add bottom padding when progress bar is visible at bottom (desktop only) */}
           {isHydrated && !isTabletOrSmaller && shouldShowProgress && (
             <div className="h-16" />
           )}
-
-
         </div>
       ) : (
         <div className="h-full flex flex-col items-center justify-center p-6 text-center">
