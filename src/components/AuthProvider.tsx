@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (process.env.NODE_ENV === 'development') {
       console.log(`AuthProvider event: ${event}`, session?.user?.id);
     }
-    
+
     setSession(session);
     const currentUser = session?.user ?? null;
     setUser(currentUser);
@@ -94,24 +94,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (initializedRef.current) {
       return;
     }
-    
+
     initializedRef.current = true;
-    
+
     const initializeAuth = async () => {
       try {
         setLoading(true);
+
+        // DEV BYPASS: Check for dev-bypass cookie in development on localhost
+        const isDev = process.env.NODE_ENV === 'development';
+        const isLocalhost = typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+        if (isDev && isLocalhost) {
+          const devBypass = document.cookie.split('; ').find(row => row.startsWith('dev-bypass='));
+          if (devBypass && devBypass.split('=')[1] === 'true') {
+            // Create mock user and profile for local development
+            const mockUser = {
+              id: '00000000-0000-0000-0000-000000000000',
+              email: 'admin@admin.com',
+              user_metadata: { full_name: 'Local Admin' },
+              app_metadata: {},
+              aud: 'authenticated',
+              role: 'authenticated',
+              created_at: new Date().toISOString(),
+            } as User;
+
+            const mockProfile: Profile = {
+              id: '00000000-0000-0000-0000-000000000000',
+              full_name: 'Local Admin',
+              email: 'admin@admin.com',
+              avatar_url: null,
+              bio: null,
+              custom_api_key: null,
+              preferred_model: null,
+              role: 'authenticated',
+              specific_model_id: null,
+              username: 'local_admin',
+              website: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            setUser(mockUser);
+            setProfile(mockProfile);
+            setSession(null); // No real session, but user is "authenticated"
+            setLoading(false);
+            console.log('AuthProvider: Dev bypass active - using mock admin user');
+            return undefined; // No cleanup needed for dev bypass
+          }
+        }
+
         const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
           throw new Error('Failed to get initial session.');
         }
-        
+
         await handleAuthStateChangeRef.current('INITIAL_SESSION', initialSession);
-        
+
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
           handleAuthStateChangeRef.current(event, session);
         });
-        
+
         return () => {
           authListener?.subscription?.unsubscribe();
         };
@@ -129,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cleanup.then(unsubscribe => unsubscribe && unsubscribe());
     };
   }, []); // Empty dependency array - only run once
-  
+
   const refreshAuth = useCallback(async () => {
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
