@@ -480,7 +480,12 @@ function MainNavigation({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
-      <main className="flex-1 w-full pt-14">
+      <main className={cn(
+        "flex-1 w-full",
+        // Only add top padding for pages with fixed nav (non-topics/questions pages)
+        // Topics/questions pages have absolute nav that scrolls with content
+        !(pathname?.startsWith('/topics') || pathname?.startsWith('/questions')) && "pt-14"
+      )}>
         {children}
       </main>
     </>

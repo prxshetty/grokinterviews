@@ -48,8 +48,6 @@ export default function CategoryDetailView({
     questionCache.setUserId(user?.id);
   }, [user?.id]);
 
-
-
   // Local state for UI elements
   const [isLoading, setIsLoading] = useState(false);
 
@@ -533,7 +531,7 @@ export default function CategoryDetailView({
   if (selectedSubtopic && subtopicDetails) {
     return (
       <motion.div
-        className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12"
+        className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 pt-0 sm:pt-4"
         initial="hidden"
         animate="visible"
         variants={fadeInVariants}
@@ -689,7 +687,7 @@ export default function CategoryDetailView({
   // Render category details
   return (
     <motion.div
-      className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 py-4 pt-8 sm:pt-12"
+      className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-x-hidden min-h-screen flex flex-col px-4 sm:px-6 lg:px-8 pt-0 sm:pt-4"
       initial="hidden"
       animate="visible"
       variants={fadeInVariants}
