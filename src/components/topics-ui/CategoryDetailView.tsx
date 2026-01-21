@@ -128,24 +128,33 @@ export default function CategoryDetailView({
     return grouped;
   }, [memoizedFilteredQuestions]);
 
+  // Helper function to scroll to top that works across different browsers and production builds
+  const scrollToTop = () => {
+    // Try multiple methods to ensure scroll works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+
   // Scroll to top when view changes
   useEffect(() => {
     // Scroll when mounting or changing categories (effectively a "new page")
-    // Use timeout to ensure it runs after layout and browser restoration
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 10);
-    return () => clearTimeout(timer);
+    // Use requestAnimationFrame for better timing with React's render cycle
+    const rafId = requestAnimationFrame(() => {
+      // Additional timeout to ensure we're past any layout shifts
+      setTimeout(scrollToTop, 50);
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [categoryId]);
 
   useEffect(() => {
     // Scroll when entering a subtopic
     if (!selectedSubtopic) return;
 
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 10);
-    return () => clearTimeout(timer);
+    const rafId = requestAnimationFrame(() => {
+      setTimeout(scrollToTop, 50);
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [selectedSubtopic]);
 
   // Memoize data for the subtopic grid
