@@ -48,6 +48,8 @@ export default function CategoryDetailView({
     questionCache.setUserId(user?.id);
   }, [user?.id]);
 
+
+
   // Local state for UI elements
   const [isLoading, setIsLoading] = useState(false);
 
@@ -127,6 +129,19 @@ export default function CategoryDetailView({
 
     return grouped;
   }, [memoizedFilteredQuestions]);
+
+  // Scroll to top when view changes
+  useEffect(() => {
+    // Scroll when mounting or changing categories (effectively a "new page")
+    window.scrollTo(0, 0);
+  }, [categoryId]);
+
+  useEffect(() => {
+    // Scroll when entering a subtopic
+    if (selectedSubtopic) {
+      window.scrollTo(0, 0);
+    }
+  }, [selectedSubtopic]);
 
   // Memoize data for the subtopic grid
   const subtopicItemsForGrid = useMemo(() => {

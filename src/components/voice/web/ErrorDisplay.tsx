@@ -1,4 +1,5 @@
-
+import React, { useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface ErrorDisplayProps {
   ttsError?: string | null;
@@ -15,65 +16,40 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   rateLimitMessage,
   onDismissRecordingError,
 }) => {
-  if (!ttsError && !recordingError && !rateLimited) {
-    return null;
-  }
+  // TTS Error Toast
+  useEffect(() => {
+    if (ttsError) {
+      toast.error('TTS Error', {
+        description: ttsError,
+        duration: 5000,
+      });
+    }
+  }, [ttsError]);
 
-  return (
-    <div className="space-y-4 mb-6">
-      {/* TTS Error Display */}
-      {ttsError && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <div className="text-red-500">⚠️</div>
-            <div>
-              <h4 className="text-red-800 dark:text-red-400 font-medium">TTS Error</h4>
-              <p className="text-red-700 dark:text-red-300 text-sm">{ttsError}</p>
-            </div>
-          </div>
-        </div>
-      )}
+  // Recording Error Toast
+  useEffect(() => {
+    if (recordingError) {
+      toast.error('Recording Error', {
+        description: recordingError,
+        duration: 5000,
+        ...(onDismissRecordingError && { onDismiss: () => onDismissRecordingError() }),
+        ...(onDismissRecordingError && { onAutoClose: () => onDismissRecordingError() }),
+      });
+    }
+  }, [recordingError, onDismissRecordingError]);
 
-      {/* Recording Error Display */}
-      {recordingError && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="text-red-500">⚠️</div>
-              <div>
-                <h4 className="text-red-800 dark:text-red-400 font-medium">Recording Error</h4>
-                <p className="text-red-700 dark:text-red-300 text-sm">{recordingError}</p>
-              </div>
-            </div>
-            {onDismissRecordingError && (
-              <button
-                onClick={onDismissRecordingError}
-                className="text-red-500 hover:text-red-700 text-sm font-medium"
-              >
-                Dismiss
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+  // Rate Limit Toast
+  useEffect(() => {
+    if (rateLimited) {
+      toast.error('Interview Limit Reached', {
+        description: rateLimitMessage || 'You can practice one interview per week.',
+        duration: 8000,
+      });
+    }
+  }, [rateLimited, rateLimitMessage]);
 
-      {/* Rate Limit Message */}
-      {rateLimited && (
-        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <div className="text-orange-500">🚫</div>
-            <div>
-              <h4 className="text-orange-800 dark:text-orange-400 font-medium">Interview Limit Reached</h4>
-              <p className="text-orange-700 dark:text-orange-300 text-sm">{rateLimitMessage}</p>
-              <p className="text-orange-600 dark:text-orange-400 text-xs mt-1">
-                You can practice one interview per week. This helps ensure quality feedback and prevents system overload.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  // This component doesn't render anything visually itself anymore
+  return null;
 };
 
 export default ErrorDisplay;
