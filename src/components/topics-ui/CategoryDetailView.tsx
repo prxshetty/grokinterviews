@@ -71,9 +71,8 @@ export default function CategoryDetailView({
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(() => searchParams.get('difficulty'));
 
   // State for Accordion: stores the value (questionId.toString()) of the currently open item.
-  const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(
-    highlightedQuestionId ? highlightedQuestionId.toString() : undefined
-  );
+  // We initialize to undefined so no question is auto-opened on load.
+  const [openQuestionId, setOpenQuestionId] = useState<string | undefined>(undefined);
 
   // Track if we should allow scroll effects to prevent interference with manual accordion operations
   const [allowScrollEffect, setAllowScrollEffect] = useState(true);
@@ -280,30 +279,32 @@ export default function CategoryDetailView({
 
   // Auto-scroll to question or category section when question is highlighted from URL
   useEffect(() => {
+    // Wait for Turnstile verification before attempting to scroll - questions aren't in DOM until verified
+    if (!isTurnstileVerified) return undefined;
+
     if (highlightedQuestionId &&
       (memoizedFilteredQuestions.length > 0 || (hasGroupedQuestions && Object.keys(questionsByCategory).length > 0)) &&
       allowScrollEffect &&
       handledQuestionId !== highlightedQuestionId) {
 
-      const performStagedScroll = () => {
+      const performScroll = () => {
         let scrollTarget = null;
-        let isQuestionElement = false;
 
         const possibleQuestionSelectors = [
+          `#question-${highlightedQuestionId}`,
           `[data-value="${highlightedQuestionId}"]`,
           `[value="${highlightedQuestionId}"]`,
-          `#question-${highlightedQuestionId}`,
           `[data-question-id="${highlightedQuestionId}"]`
         ];
 
         for (const selector of possibleQuestionSelectors) {
           scrollTarget = document.querySelector(selector);
           if (scrollTarget) {
-            isQuestionElement = true;
             break;
           }
         }
 
+        // Fallback to category if question not found
         if (!scrollTarget && hasGroupedQuestions && Object.keys(questionsByCategory).length > 0) {
           const categoryIdFromUrl = searchParams.get('categoryId');
 
@@ -321,49 +322,29 @@ export default function CategoryDetailView({
           const navHeight = 64;
           const additionalOffset = 20;
           const elementRect = scrollTarget.getBoundingClientRect();
-          let scrollPosition;
-
-          if (isQuestionElement) {
-            scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
-          } else {
-            scrollPosition = window.scrollY + elementRect.top - navHeight - additionalOffset;
-          }
-
-          scrollPosition = Math.max(0, scrollPosition);
+          const scrollPosition = Math.max(0, window.scrollY + elementRect.top - navHeight - additionalOffset);
 
           window.scrollTo({
             top: scrollPosition,
             behavior: 'smooth'
           });
 
-          setTimeout(() => {
-            setOpenQuestionId(highlightedQuestionId.toString());
-            setHandledQuestionId(highlightedQuestionId);
-
-            setTimeout(() => {
-              const updatedElement = isQuestionElement
-                ? document.querySelector(`[data-value="${highlightedQuestionId}"]`)
-                : document.getElementById(`category-${searchParams.get('categoryId') || ''}`);
-
-              if (updatedElement) {
-                const updatedRect = updatedElement.getBoundingClientRect();
-                if (updatedRect.top < navHeight || updatedRect.top > navHeight + 100) {
-                  const adjustedPosition = window.scrollY + updatedRect.top - navHeight - additionalOffset;
-                  window.scrollTo({
-                    top: Math.max(0, adjustedPosition),
-                    behavior: 'smooth'
-                  });
-                }
-              }
-            }, 300);
-          }, 500);
+          setHandledQuestionId(highlightedQuestionId);
         }
       };
 
-      performStagedScroll();
-      setTimeout(performStagedScroll, 800);
+      // Use requestAnimationFrame to ensure DOM has painted after Turnstile verification
+      const rafId = requestAnimationFrame(() => {
+        // Double RAF to ensure layout is complete
+        requestAnimationFrame(performScroll);
+      });
+
+      return () => cancelAnimationFrame(rafId);
     }
-  }, [highlightedQuestionId, hasGroupedQuestions, questionsByCategory, searchParams, memoizedFilteredQuestions, allowScrollEffect, handledQuestionId]);
+    return undefined;
+  }, [highlightedQuestionId, hasGroupedQuestions, questionsByCategory, searchParams, memoizedFilteredQuestions, allowScrollEffect, handledQuestionId, isTurnstileVerified]);
+
+
 
   // Handle back button click - use parent handler if provided, otherwise fallback to URL manipulation
   const handleBackToMainCategories = useCallback(() => {
@@ -465,10 +446,30 @@ export default function CategoryDetailView({
 
   // Turnstile handlers
   const handleTurnstileVerify = useCallback((_token: string) => {
-
     setIsTurnstileVerified(true);
     setTurnstileError(null);
-  }, []);
+
+    // Scroll to highlighted question after Turnstile verification
+    if (highlightedQuestionId && handledQuestionId !== highlightedQuestionId) {
+      // Wait for React to render the questions, then scroll
+      setTimeout(() => {
+        const scrollTarget = document.getElementById(`question-${highlightedQuestionId}`) ||
+          document.querySelector(`[data-value="${highlightedQuestionId}"]`);
+
+        if (scrollTarget) {
+          scrollTarget.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          setHandledQuestionId(highlightedQuestionId);
+        }
+      }, 100);
+    }
+  }, [highlightedQuestionId, handledQuestionId]);
+
+
+
+
 
   const handleTurnstileError = useCallback((error: string) => {
     setIsTurnstileVerified(false);

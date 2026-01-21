@@ -192,6 +192,7 @@ function QuestionWithAnswerComponent({
   return (
     <AccordionItem
       value={questionId.toString()}
+      id={`question-${questionId}`}
       className={`group border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md ${isTabletOrSmaller ? 'mb-2' : 'mb-3'
         }`}
     >
