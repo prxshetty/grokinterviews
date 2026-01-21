@@ -217,6 +217,20 @@ export function AnswerDisplay({
                 h6: (props) => <h6 className="font-bold mt-1" {...props} />,
                 code: CodeBlock,
                 pre: ({ children }) => <>{children}</>,
+                table: (props) => (
+                  <div className="overflow-x-auto my-4 border rounded-lg border-gray-200 dark:border-gray-700">
+                    <table className="w-full text-sm text-left border-collapse" {...props} />
+                  </div>
+                ),
+                thead: (props) => <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300" {...props} />,
+                tbody: (props) => <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700" {...props} />,
+                tr: (props) => <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" {...props} />,
+                th: (props) => (
+                  <th className="px-6 py-3 font-semibold border-b border-r border-gray-200 dark:border-gray-700 last:border-r-0" {...props} />
+                ),
+                td: (props) => (
+                  <td className="px-6 py-4 border-r border-gray-200 dark:border-gray-700 last:border-r-0" {...props} />
+                ),
                 p: ({ children, ...props }) => {
                   const hasBlockElement = Children.toArray(children).some(
                     (child) => {

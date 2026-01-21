@@ -286,7 +286,7 @@ function QuestionWithAnswerComponent({
         {/* Content Layout - Mobile: Single pane with tabs, Desktop: Two panes */}
         <div className={`w-full ${isTabletOrSmaller
           ? 'space-y-3'
-          : 'pt-3 flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)] min-h-[700px]'
+          : `pt-3 h-[calc(100vh-200px)] min-h-[700px] grid gap-6 ${isResourcesVisible ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`
           }`}>
 
           {/* Mobile: Single pane based on active tab */}
@@ -339,7 +339,7 @@ function QuestionWithAnswerComponent({
             /* Desktop: Two-pane layout */
             <>
               {/* Left Pane - Generated Answer */}
-              <div className={`flex-1 flex flex-col h-full ${isResourcesVisible ? 'lg:w-1/2' : 'lg:w-full'}`}>
+              <div className="flex flex-col h-full min-w-0 min-h-0">
                 <div
                   ref={answerRef}
                   className="flex-1 flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800/50"
@@ -356,7 +356,7 @@ function QuestionWithAnswerComponent({
 
               {/* Right Pane - Resource Preview */}
               {isResourcesVisible && (
-                <div className="flex-1 lg:w-1/2 flex flex-col h-full">
+                <div className="flex flex-col h-full min-w-0 min-h-0">
                   <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-800/50 rounded-lg overflow-hidden">
                     <div className="h-full">
                       <Suspense fallback={<ResourceListSkeleton />}>
@@ -376,7 +376,7 @@ function QuestionWithAnswerComponent({
 
         {/* Desktop Controls - Only show on desktop when expanded */}
         {!isTabletOrSmaller && isExpandedState && onRequestClose && (
-          <div className="mt-4 flex justify-between items-center">
+          <div className="mt-4 flex justify-between items-center bg-white dark:bg-gray-800 py-2 border-t border-gray-100 dark:border-gray-700 z-10 relative">
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setIsResourcesVisible(!isResourcesVisible)}
