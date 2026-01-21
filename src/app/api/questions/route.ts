@@ -189,6 +189,11 @@ export async function POST(request: NextRequest) {
                 id,
                 name,
                 domain_id,
+                section_id,
+                section:section_id (
+                  id,
+                  name
+                ),
                 domain:domain_id (
                     id,
                     code

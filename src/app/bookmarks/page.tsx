@@ -29,6 +29,7 @@ interface Bookmark {
   categoryName: string;
   domain: string | null;
   sectionName: string | null;
+  sectionId?: number | null;
   createdAt: string;
   timeAgo: string;
 }
@@ -37,6 +38,15 @@ function buildQuestionUrl(bookmark: Bookmark): string {
   if (!bookmark.domain) {
     return `/topics?q=${bookmark.questionId}`;
   }
+  if (bookmark.sectionId) {
+    const params = new URLSearchParams();
+    params.set('category', `header-${bookmark.sectionId}`);
+    params.set('q', bookmark.questionId.toString());
+    params.set('categoryId', bookmark.categoryId.toString());
+    return `/topics/${bookmark.domain}?${params.toString()}`;
+  }
+
+  // Fallback (shouldn't be hit for new fetches, but safety for partial data)
   const sectionSlug = bookmark.sectionName
     ? `header-${bookmark.sectionName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()}`
     : `bookmark-topic-${bookmark.topicId}`;
@@ -154,7 +164,8 @@ function BookmarksPage() {
             categoryId: category?.id || 0,
             categoryName: category?.name || 'Unknown Category',
             domain: domain?.code || null,
-            sectionName: topic?.name || null,
+            sectionName: topic?.section?.name || topic?.name || null,
+            sectionId: topic?.section?.id || topic?.section_id || null,
             createdAt: createdAt,
             timeAgo: 'Your list' // Since we lost the timestamp
           };
