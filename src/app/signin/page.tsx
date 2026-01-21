@@ -187,7 +187,7 @@ function SignInForm() {
         </h1>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 text-center">
-          Sign in or create an account to continue
+          Sign in to continue
         </p>
 
         {/* Error message */}

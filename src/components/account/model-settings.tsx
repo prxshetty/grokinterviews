@@ -17,6 +17,8 @@ import {
     getSelectedModel,
     setSelectedModel,
     hasAPIKey,
+    getAPIKey,
+    clearAPIKey,
 } from '@/utils/ai-config-storage'
 
 export function ModelSettings() {
@@ -35,7 +37,11 @@ export function ModelSettings() {
         const storedProvider = getSelectedProvider()
         if (storedProvider) {
             setProvider(storedProvider)
-            setIsKeyStored(hasAPIKey(storedProvider))
+            const hasKey = hasAPIKey(storedProvider)
+            setIsKeyStored(hasKey)
+            if (hasKey) {
+                setApiKeyInput(getAPIKey(storedProvider) || '')
+            }
             const storedModel = getSelectedModel(storedProvider)
             setSelectedModelId(storedModel)
         }
@@ -45,8 +51,9 @@ export function ModelSettings() {
     const handleProviderChange = (newProvider: AIProvider) => {
         setProvider(newProvider)
         setSelectedProvider(newProvider)
-        setIsKeyStored(hasAPIKey(newProvider))
-        setApiKeyInput('')
+        const hasKey = hasAPIKey(newProvider)
+        setIsKeyStored(hasKey)
+        setApiKeyInput(getAPIKey(newProvider) || '')
 
         // Load stored model for this provider or set default
         const storedModel = getSelectedModel(newProvider)
@@ -111,6 +118,16 @@ export function ModelSettings() {
         } finally {
             setIsSaving(false)
         }
+    }
+
+    const handleClearApiKey = () => {
+        if (!provider) return
+        clearAPIKey(provider)
+        setIsKeyStored(false)
+        setApiKeyInput('')
+        toast.success("API Key Cleared", {
+            description: "The API key has been removed from your browser storage."
+        })
     }
 
     const renderSpeedMeter = (count: number) => (
@@ -221,6 +238,14 @@ export function ModelSettings() {
                                     {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
+                            {isKeyStored && (
+                                <button
+                                    onClick={handleClearApiKey}
+                                    className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[80px] flex items-center justify-center"
+                                >
+                                    Clear
+                                </button>
+                            )}
                             <button
                                 onClick={handleSaveApiKey}
                                 disabled={!apiKeyInput.trim() || isSaving}
@@ -292,26 +317,9 @@ export function ModelSettings() {
                 <section className="pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h3 className="text-base lg:text-lg font-medium text-gray-800 dark:text-gray-200 mb-3">Voice Interviews</h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                        Voice interview features use OpenAI's audio models for the best experience.
+                        Voice interview features currently use OpenAI's cheaper audio models for the best experience.
                     </p>
                 </section>
-
-                {/* Not Configured Warning */}
-                {!provider && (
-                    <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                        <p className="text-sm text-amber-800 dark:text-amber-200">
-                            ⚠️ Please select an AI provider and configure your API key to generate answers.
-                        </p>
-                    </div>
-                )}
-
-                {provider && !isKeyStored && (
-                    <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                        <p className="text-sm text-amber-800 dark:text-amber-200">
-                            ⚠️ Please enter your {PROVIDER_INFO[provider].name} API key to generate answers.
-                        </p>
-                    </div>
-                )}
             </div>
         </TooltipProvider>
     )

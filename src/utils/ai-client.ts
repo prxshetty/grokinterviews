@@ -1,7 +1,4 @@
-// Multi-provider AI client using OpenAI SDK
-
 import OpenAI from 'openai';
-
 export type AIProvider = 'openai' | 'google';
 
 // Base URLs for OpenAI SDK compatibility
@@ -123,7 +120,7 @@ export function createAIClient(provider: AIProvider, apiKey: string): OpenAI {
 export const PROVIDER_INFO: Record<AIProvider, { name: string; description: string }> = {
     openai: {
         name: 'OpenAI',
-        description: 'GPT-5 series models',
+        description: 'GPT series models',
     },
     google: {
         name: 'Google',
