@@ -131,14 +131,21 @@ export default function CategoryDetailView({
   // Scroll to top when view changes
   useEffect(() => {
     // Scroll when mounting or changing categories (effectively a "new page")
-    window.scrollTo(0, 0);
+    // Use timeout to ensure it runs after layout and browser restoration
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 10);
+    return () => clearTimeout(timer);
   }, [categoryId]);
 
   useEffect(() => {
     // Scroll when entering a subtopic
-    if (selectedSubtopic) {
-      window.scrollTo(0, 0);
-    }
+    if (!selectedSubtopic) return;
+
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 10);
+    return () => clearTimeout(timer);
   }, [selectedSubtopic]);
 
   // Memoize data for the subtopic grid
