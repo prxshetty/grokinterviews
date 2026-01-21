@@ -177,7 +177,7 @@ export default function ResourceCarousel() {
           Powered by <span className="italic font-extralight">Millions</span> of Resources
         </h2>
         <p className="max-w-2xl mx-auto text-balance text-sm sm:text-base md:text-lg text-muted-foreground">
-          Millions of videos, PDFs, and papers across every topic—indexed and searchable in one place. Stop scouring YouTube or the web; your entire study stack is right here.
+          Questions, videos, books and papers across every topic—indexed and searchable in one place. Stop scouring YouTube or the web; your entire study stack is right here.
         </p>
       </div>
 
