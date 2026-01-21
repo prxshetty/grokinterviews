@@ -30,16 +30,6 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  icons: {
-    icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/logo.svg', type: 'image/svg+xml', sizes: '32x32' },
-    ],
-    apple: [
-      { url: '/logo.svg', type: 'image/svg+xml' },
-    ],
-    shortcut: '/favicon.svg',
-  },
   manifest: '/site.webmanifest',
   robots: {
     index: true,
