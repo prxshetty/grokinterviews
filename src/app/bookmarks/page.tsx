@@ -38,23 +38,23 @@ function buildQuestionUrl(bookmark: Bookmark): string {
   if (!bookmark.domain) {
     return `/topics?q=${bookmark.questionId}`;
   }
+
+  const params = new URLSearchParams();
+
+  // Set category (section)
   if (bookmark.sectionId) {
-    const params = new URLSearchParams();
     params.set('category', `header-${bookmark.sectionId}`);
-    params.set('q', bookmark.questionId.toString());
-    params.set('categoryId', bookmark.categoryId.toString());
-    return `/topics/${bookmark.domain}?${params.toString()}`;
+  } else {
+    const sectionSlug = bookmark.sectionName
+      ? `header-${bookmark.sectionName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()}`
+      : `bookmark-topic-${bookmark.topicId}`;
+    params.set('category', sectionSlug);
   }
 
-  // Fallback (shouldn't be hit for new fetches, but safety for partial data)
-  const sectionSlug = bookmark.sectionName
-    ? `header-${bookmark.sectionName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()}`
-    : `bookmark-topic-${bookmark.topicId}`;
+  if (bookmark.topicId) {
+    params.set('subtopic', `topic-${bookmark.topicId}`);
+  }
 
-  // Construct URL properly
-  const params = new URLSearchParams();
-  params.set('category', sectionSlug);
-  params.set('subtopic', `topic-${bookmark.topicId}`);
   params.set('q', bookmark.questionId.toString());
   params.set('categoryId', bookmark.categoryId.toString());
 
