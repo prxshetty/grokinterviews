@@ -118,6 +118,37 @@ export function useQuestionAnswer({
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
+
+        if (chunk.includes('__ERROR__')) {
+          const errorMatch = chunk.match(/__ERROR__(.+?)__ERROR__/);
+          if (errorMatch && errorMatch[1]) {
+            try {
+              const errorData = JSON.parse(errorMatch[1]);
+              setError(errorData.error || 'An error occurred while generating the answer.');
+
+              if (errorData.type === 'auth_error') {
+                toast.error('Invalid API key. Please update it in Account Settings.');
+              } else if (errorData.type === 'rate_limit') {
+                toast.error('Rate limit exceeded. Please wait a moment and try again.');
+              } else if (errorData.type === 'model_error') {
+                toast.error('Model not available. Please select a different model.');
+              } else {
+                toast.error(errorData.error || 'An error occurred while generating the answer.');
+              }
+
+              setGeneratedAnswer(null);
+              generationAttemptedRef.current = false;
+              return;
+            } catch {
+              setError('An error occurred while generating the answer.');
+              toast.error('An error occurred while generating the answer.');
+              setGeneratedAnswer(null);
+              generationAttemptedRef.current = false;
+              return;
+            }
+          }
+        }
+
         answerText += chunk;
         setGeneratedAnswer(answerText);
       }
@@ -126,7 +157,6 @@ export function useQuestionAnswer({
       console.error(`Generation error for question ${questionId}:`, errorMessage);
       setError(errorMessage);
       toast.error(errorMessage);
-      // Reset the ref on error so user can retry
       generationAttemptedRef.current = false;
     } finally {
       setIsGenerating(false);

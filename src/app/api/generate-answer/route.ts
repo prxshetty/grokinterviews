@@ -1,13 +1,7 @@
 // src/app/api/generate-answer/route.ts
 import { NextResponse } from 'next/server';
 import { createAIClient, type AIProvider } from '@/utils/ai-client';
-
-
-
-
 type AnswerDepth = 'brief' | 'standard' | 'comprehensive';
-
-
 
 export async function POST(request: Request) {
   const {
@@ -41,6 +35,33 @@ export async function POST(request: Request) {
     };
 
     const client = createAIClient(provider as AIProvider, apiKey);
+
+    // Pre-flight key validation
+    try {
+      if (provider === 'openai') {
+        await client.models.list();
+      } else if (provider === 'google') {
+        // no lightweight validation endpoint
+      }
+    } catch (validationError: unknown) {
+      const errorMessage = validationError instanceof Error ? validationError.message : 'Unknown error';
+
+      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('invalid_api_key')) {
+        return NextResponse.json(
+          { error: 'Invalid API key. Please check your API key in Account Settings.', type: 'auth_error' },
+          { status: 401 }
+        );
+      }
+
+      if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+        return NextResponse.json(
+          { error: 'Rate limit exceeded. Please wait a moment and try again.', type: 'rate_limit' },
+          { status: 429 }
+        );
+      }
+
+      throw validationError;
+    }
 
     const systemPromptContent = "You are a helpful AI assistant specialized in providing clear, accurate answers to technical interview questions. Always respond in well-formatted Markdown.";
     const userMessageSegments = [
@@ -99,9 +120,29 @@ export async function POST(request: Request) {
               controller.enqueue(encoder.encode(content));
             }
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Streaming error:', error);
-          controller.error(error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          let userFriendlyError = 'An error occurred while generating the answer.';
+          let errorType = 'unknown_error';
+
+          if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('invalid_api_key')) {
+            userFriendlyError = 'Invalid API key. Please check your API key in Account Settings.';
+            errorType = 'auth_error';
+          } else if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+            userFriendlyError = 'Rate limit exceeded. Please wait a moment and try again.';
+            errorType = 'rate_limit';
+          } else if (errorMessage.includes('model') || errorMessage.includes('does not exist')) {
+            userFriendlyError = 'Model not available. Please select a different model in Account Settings.';
+            errorType = 'model_error';
+          }
+
+          const errorPayload = JSON.stringify({
+            __stream_error__: true,
+            error: userFriendlyError,
+            type: errorType
+          });
+          controller.enqueue(encoder.encode(`\n\n__ERROR__${errorPayload}__ERROR__`));
         } finally {
           controller.close();
         }

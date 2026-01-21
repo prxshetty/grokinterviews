@@ -3,8 +3,12 @@ import { NextResponse } from 'next/server';
 import { createAIClient, type AIProvider } from '@/utils/ai-client';
 
 export async function POST(request: Request) {
+    let provider: string | undefined;
+
     try {
-        const { provider, apiKey } = await request.json();
+        const body = await request.json();
+        provider = body.provider;
+        const { apiKey } = body;
 
         if (!provider || !apiKey) {
             return NextResponse.json({ error: 'Provider and API key required' }, { status: 400 });
@@ -33,10 +37,16 @@ export async function POST(request: Request) {
 
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-        if (errorMessage.includes('401') || errorMessage.includes('Unauthorized') || errorMessage.includes('invalid')) {
+        // Check for common auth errors
+        if (
+            errorMessage.includes('401') ||
+            errorMessage.includes('Unauthorized') ||
+            errorMessage.includes('invalid_api_key') ||
+            (errorMessage.includes('400') && provider === 'google')
+        ) {
             return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
         }
 
-        return NextResponse.json({ error: 'Connection failed' }, { status: 500 });
+        return NextResponse.json({ error: 'Connection failed', details: errorMessage }, { status: 500 });
     }
 }
