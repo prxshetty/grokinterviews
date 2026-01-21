@@ -99,7 +99,7 @@ export function getModelConfig(provider: AIProvider, modelId: string): AIModelCo
 // Get default model for a provider (balanced tier)
 export function getDefaultModel(provider: AIProvider): AIModelConfig {
     const models = PROVIDER_MODELS[provider];
-    const balanced = models.find(m => m.tier === 'balanced');
+    const balanced = models.find(m => m.tier === 'cheap');
     return balanced ?? models[0]!;
 }
 
