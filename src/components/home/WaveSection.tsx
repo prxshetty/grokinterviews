@@ -18,7 +18,7 @@ export default function WaveSection() {
                         Ready to ace the <span className="italic font-extralight">Technical</span> Interview?
                     </h2>
                     <p className="mt-4 text-base sm:text-lg md:text-xl text-muted-foreground mx-auto max-w-xl">
-                        GrokInterviews transforms your preparation with an all-in-one platform that has everything you need to ace your next interview.
+                        An unfair advantage in a crowded market. Replace scattered prep with a single, intelligent ecosystem designed to turn interviews into offers.
                     </p>
                 </div>
                 <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">

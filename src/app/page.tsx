@@ -14,13 +14,14 @@ export default function Home() {
         <HeroSection />
       </div>
 
-      <div className="mt-20 md:mt-32 lg:mt-40 relative z-10 bg-transparent">
+      <div className="mt-20 md:mt-32 lg:mt-40 pb-16 md:pb-24 relative z-10 bg-transparent">
         <PreviewStack
           title={
             <>
               <span className="italic font-extralight">Maestro</span> of interviews
             </>
           }
+          subtitle="So many features that interviews would be a breeze."
         />
       </div>
 
