@@ -205,7 +205,7 @@ export function AnswerDisplay({
             </div>
           )}
 
-          <div className="max-w-none p-4 flex-1 text-sm text-gray-800 dark:text-gray-200">
+          <div className="max-w-none p-4 flex-1 text-sm text-gray-800 dark:text-gray-200 select-text">
             <ReactMarkdown
               components={{
                 ...defaultMarkdownComponents,
