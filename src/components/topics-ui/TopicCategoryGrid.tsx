@@ -66,7 +66,7 @@ function TopicCategoryGridComponent({
     setSelectedItemId(itemId);
 
     if (basePath) {
-      router.push(`${basePath}/${itemId}`);
+      router.push(`${basePath}/${itemId}`, { scroll: false });
     } else if (onSelectItem) {
       onSelectItem(itemId, level); // Pass the selected item ID and the current level
     } else if (onSelectCategory) {
@@ -130,7 +130,7 @@ function TopicCategoryGridComponent({
         <div className="flex items-center justify-between mb-6 gap-3">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push('/topics')}
+              onClick={() => router.push('/topics', { scroll: false })}
               className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
               title="Back to Topics"
             >

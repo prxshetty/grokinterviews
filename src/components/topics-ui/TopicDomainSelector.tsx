@@ -140,7 +140,7 @@ export default function TopicDomainSelector({ className }: TopicDomainSelectorPr
   const handleDomainSelect = (domain: string) => {
     setIsNavigating(true);
     setSelectedDomain(domain);
-    router.push(`/topics/${domain}`);
+    router.push(`/topics/${domain}`, { scroll: false });
   };
 
   if (loading) {

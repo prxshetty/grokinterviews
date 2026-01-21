@@ -375,7 +375,7 @@ export default function CategoryDetailView({
       searchParams.delete('category');
       searchParams.delete('q');
       const newUrl = `${pathname}?${searchParams.toString()}`;
-      router.push(newUrl);
+      router.push(newUrl, { scroll: false });
     }
   }, [onBackToMainCategories, pathname, router]);
 
@@ -384,7 +384,7 @@ export default function CategoryDetailView({
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.set('subtopic', topicId);
     newSearchParams.delete('q');
-    router.push(`${pathname}?${newSearchParams.toString()}`);
+    router.push(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
 
     setSelectedSubtopic(topicId);
     await loadSubtopicDetails(topicId);
@@ -395,7 +395,7 @@ export default function CategoryDetailView({
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete('subtopic');
     newSearchParams.delete('q');
-    router.push(`${pathname}?${newSearchParams.toString()}`);
+    router.push(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
 
     setSelectedSubtopic(null);
     setSubtopicDetails(null);

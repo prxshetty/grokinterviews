@@ -210,7 +210,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.set('category', categoryId);
     params.delete('q'); // Clear question ID when a new category is selected
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
 
     // Load category details
     await loadCategoryDetails(categoryId);
@@ -226,7 +226,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.set('difficulty', difficulty);
     params.delete('q'); // Clear question ID when difficulty is selected
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
 
     // Load difficulty questions
     setIsLoading(prev => ({ ...prev, difficultyQuestions: true }));
@@ -251,7 +251,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     // Update URL
     const params = new URLSearchParams(searchParams.toString());
     params.delete('difficulty');
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router, setSelectedDifficulty, setDifficultyQuestions]);
 
   // Handle back to main categories
@@ -263,7 +263,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('category');
     params.delete('q'); // Clear question ID when going back
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router, setSelectedCategory, setCategoryDetails]);
 
   // Handle page change
@@ -271,7 +271,7 @@ function TopicPageClient({ initialDomain }: TopicPageClientProps) {
     setCurrentPage(page);
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', page.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, pathname, router, setCurrentPage]);
 
   // Load topics when domain changes
