@@ -17,9 +17,9 @@ const sizeClasses = {
 export function Logo({ className, size = 'md', showText = true, textClassName }: LogoProps) {
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      <svg 
-        className={cn('flex-shrink-0', sizeClasses[size])} 
-        viewBox="0 0 1200 1200" 
+      <svg
+        className={cn('flex-shrink-0', sizeClasses[size])}
+        viewBox="0 0 1200 1200"
         xmlns="http://www.w3.org/2000/svg"
         fill="currentColor"
       >
