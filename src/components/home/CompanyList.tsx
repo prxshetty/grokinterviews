@@ -185,7 +185,7 @@ export default function ResourceCarousel() {
         {/* Gradient masks removed for cleaner look */}
         <div className="absolute inset-0 z-10 flex scale-95 items-center justify-center opacity-0 duration-500 group-hover:scale-100 group-hover:opacity-100">
           <Link
-            href="/about"
+            href="/topics"
             className="block text-xs sm:text-sm duration-150 hover:opacity-75 bg-white/30 dark:bg-black/30 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
           >
             <span>Explore All Resources</span>

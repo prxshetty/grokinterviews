@@ -46,7 +46,7 @@ export function Footer() {
                 <span className="text-[13px] text-foreground/50 font-medium whitespace-nowrap">
                   Built by{' '}
                   <Link
-                    href="https://x.com/prxshetty"
+                    href="https://pranamshetty.dev"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
