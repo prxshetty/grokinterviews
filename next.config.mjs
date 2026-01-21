@@ -178,10 +178,7 @@ const nextConfig = {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
           },
-          {
-            key: 'Permissions-Policy',
-            value: 'browsing-topics=(), interest-cohort=(), run-ad-auction=(), join-ad-interest-group=(), private-state-token-redemption=(), private-state-token-issuance=(), private-aggregation=(), attribution-reporting=()',
-          },
+
         ],
       },
       {
