@@ -7,6 +7,9 @@ import { InlineLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { useIsTabletOrSmaller } from '@/hooks/ui';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import Link from 'next/link';
 
 // Default markdown components
@@ -258,7 +261,8 @@ export function AnswerDisplay({
                   />
                 ),
               }}
-              remarkPlugins={[remarkGfm]}
+              remarkPlugins={[remarkGfm, remarkMath]}
+              rehypePlugins={[rehypeKatex]}
             >
               {answerText || ''}
             </ReactMarkdown>
