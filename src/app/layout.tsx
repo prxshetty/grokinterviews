@@ -54,6 +54,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'GrokInterviews - AI-Powered Interview Preparation',
     description: 'Ace your tech interviews with an AI-enhanced platform. 3.6M+ resources, 81K+ questions across AI, Web Dev, System Design, DSA, and ML.',
+    images: ['/twitter-image.png'],
   },
 };
 
