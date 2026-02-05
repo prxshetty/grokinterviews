@@ -18,53 +18,25 @@ A comprehensive, enterprise-grade interview preparation platform featuring **3.6
 *   **30 RESTful API Endpoints** for comprehensive data access
 *   **51 React Components** with modular, reusable architecture
 
-## Domain Coverage
-
-| Domain | Topics | Categories | Questions |
-| :--- | :--- | :--- | :--- |
-| **AI & Machine Learning** | 813 | 6,673 | 33,363 |
-| **Web Development** | 431 | 4,016 | 20,080 |
-| **System Design** | 461 | 2,360 | 11,800 |
-| **Data Structures & Algorithms** | 305 | 1,715 | 8,575 |
-| **Machine Learning** | 384 | 1,536 | 7,681 |
-
 ## Key Features
 
 ### Voice Interview Practice
 *   **Real-time Voice Interviews** with AI-powered behavioral interview simulation
 *   **Dual Interview Modes** - Web-based interviews and authentic phone call experiences
-*   **Advanced Voice Settings** with multiple TTS providers (Google Cloud TTS, Groq/PlayAI)
-*   **Premium Voice Options** including Google's high-quality Chirp3-HD voices
+*   **Advanced Voice Settings** with multiple TTS providers (OpenAI TTS)
 *   **Voice Activity Detection (VAD)** for natural conversation flow
 *   **Real-time Transcription** with instant feedback during interviews
 
 ### AI-Powered Learning
-*   **Dynamic Answer Generation** using multiple LLM models via Groq API
+*   **Dynamic Answer Generation** using multiple LLM models
 *   **Personalized Learning Paths** with intelligent resource recommendations
-*   **Smart Content Filtering** by difficulty, keywords, and learning preferences
+*   **Smart Content Filtering** by difficulty
 
 ### Advanced Progress Tracking
 *   **Real-time Progress Analytics** with completion percentages
 *   **Hierarchical Progress Calculation** (Domain → Section → Topic → Category → Questions)
 *   **Visual Activity Grids** showing learning streaks and patterns
 *   **Intelligent Bookmarking System** for personalized study plans
-
-### Search & Navigation
-*   **Multi-level Topic Hierarchy** with intuitive navigation
-*   **Advanced Filtering Options** by difficulty, domain, and keywords
-*   **Smart Search Functionality** across 81K+ questions
-*   **Responsive Grid Layouts** optimized for all devices
-
-## Technical Architecture
-
-### Frontend Stack
-```typescript
-- Next.js 14 App Router with React Server Components
-- TypeScript for type safety and developer experience
-- Tailwind CSS + Shadcn UI for modern, accessible components
-- React Hooks with optimized state management
-- Framer Motion for smooth animations and transitions
-```
 
 ## Getting Started
 
@@ -90,21 +62,15 @@ A comprehensive, enterprise-grade interview preparation platform featuring **3.6
 3.  **Environment Setup**
     ```bash
     cp .env.example .env.local
-    # Add your Supabase, Groq API, and Google Cloud TTS credentials
+    # Add your credentials
     ```
 
-4.  **Database Setup**
-    ```bash
-    # Run database migrations (if any)
-    # The database schema is automatically managed by Supabase
-    ```
-
-5.  **Start development server**
+4.  **Start development server**
     ```bash
     npm run dev
     ```
 
-6.  **Open your browser**
+5.  **Open your browser**
     ```
     http://localhost:3000
     ```
