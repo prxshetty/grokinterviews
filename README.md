@@ -55,12 +55,6 @@ A comprehensive, enterprise-grade interview preparation platform featuring **3.6
 *   **Smart Search Functionality** across 81K+ questions
 *   **Responsive Grid Layouts** optimized for all devices
 
-### User Experience
-*   **Seamless Authentication** with Google OAuth integration
-*   **Dark/Light Mode Support** with system preference detection
-*   **Personalized Dashboard** with progress insights and recommendations
-*   **Mobile-First Responsive Design** using Tailwind CSS
-
 ## Technical Architecture
 
 ### Frontend Stack
@@ -70,27 +64,6 @@ A comprehensive, enterprise-grade interview preparation platform featuring **3.6
 - Tailwind CSS + Shadcn UI for modern, accessible components
 - React Hooks with optimized state management
 - Framer Motion for smooth animations and transitions
-```
-
-### Backend & Database
-```sql
-- Supabase (PostgreSQL) with Row Level Security (RLS)
-- 15+ interconnected tables with complex relationships
-- Materialized views for optimized progress calculations
-- Real-time subscriptions for live progress updates
-- Intelligent caching strategies and batch processing
-```
-
-### AI & API Integration
-```javascript
-- Groq API integration for LLM-powered answer generation
-- Google Cloud TTS for premium voice synthesis
-- 30 RESTful API endpoints with comprehensive error handling
-- Voice Activity Detection (VAD) for natural conversation flow
-- Real-time audio processing and transcription
-- Request deduplication and intelligent caching
-- User preference-based AI model selection
-- Resource filtering based on learning preferences
 ```
 
 ## Getting Started
@@ -163,70 +136,6 @@ grokinterviews/
 └── ...
 ```
 
-## API Endpoints
-
-<details>
-<summary>View All 30 API Endpoints</summary>
-
-### User Management
-- `GET /api/user/progress` - Overall user progress
-- `GET /api/user/stats` - User statistics and analytics
-- `GET /api/user/domains` - Domain-specific progress
-- `GET /api/user/activity` - User activity tracking
-- `GET /api/user/bookmarks` - User bookmarks
-
-### Content Management
-- `GET /api/topics` - Topic hierarchy
-- `GET /api/topics/categories` - Topic categories
-- `GET /api/topics/by-section` - Section-based topics
-- `GET /api/topics/topic-details` - Detailed topic information
-- `GET /api/questions` - Question management
-- `GET /api/questions/difficulty` - Difficulty-based filtering
-- `GET /api/section-headers` - Section headers
-
-### Progress Tracking
-- `GET /api/user/progress/summary` - Progress summaries
-- `GET /api/user/progress/category` - Category progress
-- `GET /api/user/progress/topic` - Topic progress
-- `GET /api/user/progress/subtopic` - Subtopic progress
-- `POST /api/user/progress/update-all-sections` - Batch updates
-
-And 13 more specialized endpoints...
-</details>
-
-## Database Schema
-
-The application uses a sophisticated PostgreSQL database with:
-
-*   **15+ Interconnected Tables** with foreign key relationships
-*   **Materialized Views** for complex progress calculations
-*   **Row Level Security (RLS)** for data protection
-*   **Real-time Subscriptions** for live updates
-*   **Optimized Indexing** for sub-second query performance
-
-Key tables: `profiles`, `topics`, `categories`, `questions`, `resources`, `user_progress`, `user_activity`, `user_preferences`
-
-## Recent Engineering Achievements
-
-*   **Voice Interview System**: Built comprehensive voice interview platform with dual modes
-*   **Multi-TTS Integration**: Implemented Google Cloud TTS and Groq/PlayAI voice synthesis
-*   **Premium Voice Features**: Added high-quality Chirp3-HD voices with voice selection
-*   **Real-time Audio Processing**: Integrated Voice Activity Detection for natural flow
-*   **Performance Optimization**: Implemented React.memo, useMemo, and lazy loading
-*   **Database Optimization**: Created materialized views reducing query time by 80%
-*   **Component Architecture**: Consolidated duplicate components reducing bundle size by 30%
-*   **Real-time Features**: Built activity tracking processing 200+ events per user
-*   **AI Integration**: Implemented dynamic answer generation with multiple LLM models
-*   **Progressive Web App**: Added offline capabilities and mobile optimization
-
-## Performance Metrics
-
-*   **Sub-second Query Performance** for 81K+ questions
-*   **Mobile-First Responsive** design with 95+ Lighthouse scores
-*   **Real-time Updates** with Supabase subscriptions
-*   **Intelligent Caching** reducing API calls by 60%
-*   **Optimized Bundle Size** with code splitting and lazy loading
-
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details. If you're looking for ideas on what to work on, feel free to check out our [ROADMAP.md](ROADMAP.md).
@@ -240,18 +149,3 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-*   **Groq** for providing fast LLM inference
-*   **Supabase** for the robust backend infrastructure
-*   **Next.js** and **React** communities for excellent documentation
-*   **Tailwind CSS** and **Shadcn UI** for modern, accessible components
-
----
-
-<div align="center">
-  <strong>Built for the developer community</strong>
-  <br>
-  <sub>Advancing technical interview preparation through open source innovation.</sub>
-</div>
