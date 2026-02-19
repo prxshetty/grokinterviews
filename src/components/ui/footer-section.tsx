@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Github } from 'lucide-react';
 
 const footerLinks = [
   { title: 'About', href: '/about' },
@@ -42,17 +43,16 @@ export function Footer() {
                   Grok Interviews
                 </span>
               </Link>
-              <div className="flex flex-col border-l border-foreground/10 pl-3 ml-1">
-                <span className="text-[13px] text-foreground/50 font-medium whitespace-nowrap">
-                  Built by{' '}
-                  <Link
-                    href="https://pranamshetty.dev"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <span className="text-foreground/70 hover:text-foreground underline transition-colors">Pranam</span>
-                  </Link>
-                </span>
+              <div className="flex items-center border-l border-foreground/10 pl-3 ml-1">
+                <Link
+                  href="https://github.com/prxshetty/grokinterviews"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-foreground/50 hover:text-foreground transition-colors"
+                  aria-label="View Source on GitHub"
+                >
+                  <Github className="w-5 h-5" />
+                </Link>
               </div>
             </div>
           </div>

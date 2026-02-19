@@ -34,6 +34,10 @@ export default function AboutPage() {
               vast array of resources, enhanced by AI, to help you master
               technical concepts and excel in your interviews.
             </p>
+            <p>
+              Best of all, GrokInterviews is completely <strong>open source and free</strong>. We believe that high-quality
+              educational resources should be accessible to everyone, regardless of their background or financial status.
+            </p>
           </div>
         </section>
 
