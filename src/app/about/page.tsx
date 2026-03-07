@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { Faq3 } from '@/components/ui/faq3'
 import ContactForm from './components/ContactForm'
 import { GROK_INTERVIEW_FAQ_ITEMS } from '@/data/faq'
-
 export const metadata: Metadata = {
   title: 'About GrokInterviews',
   description:
@@ -22,7 +22,6 @@ export default function AboutPage() {
           </div>
         </header>
 
-        {/* Our Mission Section */}
         <section className="mb-16 md:mb-24 max-w-3xl">
           <h2 className="text-3xl md:text-4xl font-editorial font-extralight text-black dark:text-white mb-6">
             The Mission
@@ -38,6 +37,21 @@ export default function AboutPage() {
               Best of all, GrokInterviews is completely <strong>open source and free</strong>. We believe that high-quality
               educational resources should be accessible to everyone, regardless of their background or financial status.
             </p>
+          </div>
+          <div className="mt-8">
+            <Link
+              href="https://github.com/prxshetty/grokinterviews"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-black px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm transition-all hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
+            >
+              <span className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
+                <div className="relative h-full w-6 bg-black/5 dark:bg-white/10" />
+              </span>
+              <span className="relative flex items-center gap-2">
+                View Repository <span className="text-gray-400 dark:text-gray-500">&rarr;</span>
+              </span>
+            </Link>
           </div>
         </section>
 
