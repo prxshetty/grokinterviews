@@ -25,17 +25,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
       }
       if (!user) {
-        console.log('No user found in section-progress');
         return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
       }
       userId = user.id;
-      console.log('Found user ID from auth for section-progress:', userId); // Updated log
     } catch (e: any) {
       console.error('Authentication process error in section-progress:', e.message);
       return NextResponse.json({ error: 'Authentication process failed' }, { status: 500 });
     }
 
-    console.log(`Calculating section progress for domain ${domain}, section ${sectionName}`);
 
     // Get all topics for this section
     let subtopicsQuery = supabase // Use session client
@@ -56,7 +53,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!subtopics || subtopics.length === 0) {
-      console.log(`No subtopics found for section ${sectionName}`);
       return NextResponse.json({
         completionPercentage: 0,
         subtopicsCompleted: 0,
@@ -66,7 +62,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log(`Found ${subtopics.length} subtopics for section ${sectionName}`);
 
     // Get all categories for these subtopics
     const subtopicIds = subtopics.map(subtopic => subtopic.id);
@@ -81,7 +76,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!categories || categories.length === 0) {
-      console.log(`No categories found for section ${sectionName}`);
       return NextResponse.json({
         completionPercentage: 0,
         subtopicsCompleted: 0,
@@ -91,7 +85,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log(`Found ${categories.length} categories for section ${sectionName}`);
 
     // Group categories by subtopic
     const categoriesBySubtopic: Record<string, any[]> = {};
@@ -117,7 +110,6 @@ export async function GET(request: NextRequest) {
     }
 
     const totalQuestions = questions?.length || 0;
-    console.log(`Found ${totalQuestions} questions for section ${sectionName}`);
 
     // Group questions by category
     const questionsByCategory: Record<string, any[]> = {};
@@ -145,7 +137,6 @@ export async function GET(request: NextRequest) {
     const uniqueCompletedQuestions = new Set(completedData?.map(item => item.question_id) || []);
     const questionsCompleted = uniqueCompletedQuestions.size;
 
-    console.log(`User has completed ${questionsCompleted}/${totalQuestions} questions in section ${sectionName}`);
 
     // Calculate how many categories are "completed" (all questions completed)
     const completedCategories = new Set();
@@ -202,7 +193,6 @@ export async function GET(request: NextRequest) {
     // Calculate completion percentage based on subtopic completion
     const totalSubtopics = subtopics.length;
 
-    console.log(`Section ${sectionName}: ${subtopicsCompleted} fully completed subtopics, ${partiallyCompletedSubtopics} partially completed subtopics out of ${totalSubtopics} total`);
 
     // Calculate completion percentage
     let completionPercentage = 0;
@@ -217,7 +207,6 @@ export async function GET(request: NextRequest) {
         // Ensure it shows at least 25% if one subtopic is completed
         if (subtopicsCompleted === 1 && completionPercentage < 25) {
           completionPercentage = 25;
-          console.log(`Adjusted completion percentage to 25% for section ${sectionName} with 1 completed subtopic`);
         }
       }
       // If no subtopics are fully completed but some are partially completed
@@ -228,34 +217,21 @@ export async function GET(request: NextRequest) {
         // Ensure it shows at least 15% if one subtopic is partially completed
         if (partiallyCompletedSubtopics === 1 && completionPercentage < 15) {
           completionPercentage = 15;
-          console.log(`Adjusted completion percentage to 15% for section ${sectionName} with 1 partially completed subtopic`);
         }
       }
       // If no subtopics are completed or partially completed but some questions are, show some progress
       else if (questionsCompleted > 0 && totalQuestions > 0) {
         const questionBasedPercentage = Math.round((questionsCompleted / totalQuestions) * 100);
         completionPercentage = Math.min(10, questionBasedPercentage);
-        console.log(`Using question-based percentage for section ${sectionName}: ${completionPercentage}%`);
       }
 
       // If all subtopics are completed, ensure it shows 100%
       if (subtopicsCompleted === totalSubtopics && totalSubtopics > 0) {
         completionPercentage = 100;
-        console.log(`All subtopics completed for section ${sectionName}, setting to 100%`);
       }
 
-      // Log the calculation details
-      console.log(`Section ${sectionName} progress calculation:`, {
-        subtopicsCompleted,
-        partiallyCompletedSubtopics,
-        totalSubtopics,
-        questionsCompleted,
-        totalQuestions,
-        completionPercentage
-      });
     }
 
-    console.log(`Section ${sectionName} progress: ${subtopicsCompleted}/${totalSubtopics} subtopics, ${questionsCompleted}/${totalQuestions} questions, ${completionPercentage}% complete`);
 
     return NextResponse.json({
       completionPercentage,

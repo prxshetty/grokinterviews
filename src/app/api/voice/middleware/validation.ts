@@ -64,8 +64,13 @@ export class ValidationMiddleware {
 
       let user = supabaseUser;
 
-      // DEV BYPASS: Support mock admin user on localhost
-      if (!user && process.env.NODE_ENV === 'development' && request) {
+      // DEV BYPASS: Support mock admin user on localhost when explicitly enabled
+      if (
+        !user &&
+        process.env.NODE_ENV === 'development' &&
+        process.env.ENABLE_DEV_AUTH_BYPASS === 'true' &&
+        request
+      ) {
         const devBypass = request.cookies.get('dev-bypass')?.value === 'true';
         if (devBypass) {
           user = {

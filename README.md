@@ -65,6 +65,23 @@ A comprehensive, enterprise-grade interview preparation platform featuring **3.6
     # Add your credentials
     ```
 
+   **Optional: Local development auth bypass**
+
+   If you need to work locally without going through full auth each time, you can enable the dev-only bypass:
+
+   ```bash
+   # Server + middleware checks
+   ENABLE_DEV_AUTH_BYPASS=true
+
+   # Client-side AuthProvider check
+   NEXT_PUBLIC_ENABLE_DEV_AUTH_BYPASS=true
+   ```
+
+   Then start the app locally and hit:
+   - `http://localhost:3000/topics?dev-auth=admin` (sets the `dev-bypass` cookie for localhost)
+
+   > Security note: this bypass is intended for local development only. Do **not** enable these flags in staging or production.
+
 4.  **Start development server**
     ```bash
     npm run dev
