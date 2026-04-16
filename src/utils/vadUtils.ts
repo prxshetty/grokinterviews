@@ -40,7 +40,6 @@ export class VoiceActivityDetector {
     if (this.isInitialized) return;
 
     try {
-      console.log('🎯 Initializing Voice Activity Detector...');
 
       // Dynamic import to prevent SSR issues
       if (!MicVAD && typeof window !== 'undefined') {
@@ -72,14 +71,13 @@ export class VoiceActivityDetector {
           // We wait for the silence timeout to ensure the user is truly done
         },
         onVADMisfire: () => {
-          console.log('⚠️ VAD misfire detected');
           this.config.onVADMisfire?.();
         }
       });
 
       this.isInitialized = true;
     } catch (error) {
-      console.error('❌ Failed to initialize VAD:', error);
+      console.error('Failed to initialize VAD:', error);
       throw new Error('Failed to initialize Voice Activity Detector');
     }
   }
@@ -95,7 +93,7 @@ export class VoiceActivityDetector {
       this.vad.start();
       this.isListening = true;
     } catch (error) {
-      console.error('❌ Failed to start VAD:', error);
+      console.error('Failed to start VAD:', error);
       throw new Error('Failed to start Voice Activity Detector');
     }
   }
@@ -104,12 +102,11 @@ export class VoiceActivityDetector {
     if (!this.vad || !this.isListening) return;
 
     try {
-      console.log('⏸️ Pausing VAD listening...');
       this.vad.pause();
       this.isListening = false;
       this.clearSilenceTimer();
     } catch (error) {
-      console.error('❌ Failed to pause VAD:', error);
+      console.error('Failed to pause VAD:', error);
     }
   }
 
@@ -120,7 +117,7 @@ export class VoiceActivityDetector {
       this.vad.start();
       this.isListening = true;
     } catch (error) {
-      console.error('❌ Failed to resume VAD:', error);
+      console.error('Failed to resume VAD:', error);
     }
   }
 
@@ -132,7 +129,7 @@ export class VoiceActivityDetector {
       this.isListening = false;
       this.clearSilenceTimer();
     } catch (error) {
-      console.error('❌ Failed to stop VAD:', error);
+      console.error('Failed to stop VAD:', error);
     }
   }
 
@@ -149,7 +146,6 @@ export class VoiceActivityDetector {
   private startSilenceTimer(): void {
     this.clearSilenceTimer();
     this.silenceTimer = setTimeout(() => {
-      console.log('⏰ Silence timeout reached - user finished speaking');
       this.config.onSpeechEnd?.();
     }, this.SILENCE_TIMEOUT);
   }

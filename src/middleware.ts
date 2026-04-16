@@ -57,10 +57,11 @@ export async function middleware(req: NextRequest) {
       req.nextUrl.pathname.startsWith('/voice') ||
       req.nextUrl.pathname.startsWith('/api/');
 
-    // DEV BYPASS: Allow local testing with mock admin account
+    // DEV BYPASS: Allow local testing with mock admin account only when explicitly enabled
     const isDev = process.env.NODE_ENV === 'development';
     const isLocal = req.nextUrl.hostname === 'localhost' || req.nextUrl.hostname === '127.0.0.1';
-    if (isDev && isLocal) {
+    const isDevBypassEnabled = process.env.ENABLE_DEV_AUTH_BYPASS === 'true';
+    if (isDev && isLocal && isDevBypassEnabled) {
       const devBypass = req.cookies.get('dev-bypass')?.value === 'true';
       const devAuthParam = req.nextUrl.searchParams.get('dev-auth') === 'admin';
 

@@ -101,12 +101,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         setLoading(true);
 
-        // DEV BYPASS: Check for dev-bypass cookie in development on localhost
+        // DEV BYPASS: Check for dev-bypass cookie in development on localhost when explicitly enabled
         const isDev = process.env.NODE_ENV === 'development';
         const isLocalhost = typeof window !== 'undefined' &&
           (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const isDevBypassEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_AUTH_BYPASS === 'true';
 
-        if (isDev && isLocalhost) {
+        if (isDev && isLocalhost && isDevBypassEnabled) {
           const devBypass = document.cookie.split('; ').find(row => row.startsWith('dev-bypass='));
           if (devBypass && devBypass.split('=')[1] === 'true') {
             // Create mock user and profile for local development
@@ -140,7 +141,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setProfile(mockProfile);
             setSession(null); // No real session, but user is "authenticated"
             setLoading(false);
-            console.log('AuthProvider: Dev bypass active - using mock admin user');
             return undefined; // No cleanup needed for dev bypass
           }
         }

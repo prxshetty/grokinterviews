@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
     if (userError) throw userError;
     if (!user) throw new Error('User not authenticated');
     userId = user.id;
-    console.log('Found user ID from auth for domain-subtopics:', userId); // Updated log
   } catch (error: any) {
     console.error('Domain-subtopics User/Auth Error:', error.message); // Updated log
     return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
@@ -31,8 +30,6 @@ export async function GET(request: NextRequest) {
     if (!domain) {
       return NextResponse.json({ error: 'Domain parameter is required' }, { status: 400 });
     }
-
-    console.log(`Fetching progress for subtopics in domain ${domain}${topicId ? ` for topic ${topicId}` : ''}`);
 
     // First get the domain_id from the domain code
     const { data: domainData, error: domainError } = await supabase
@@ -98,7 +95,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!topics || topics.length === 0) {
-      console.log(`No topics found for domain ${domain}`);
       return NextResponse.json({ subtopics: [] });
     }
 
@@ -112,8 +108,6 @@ export async function GET(request: NextRequest) {
 
     // Apply mainTopicsOnly filter if requested
     if (mainTopicsOnly) {
-      console.log(`Filtering to include only main topics for domain ${domain}`);
-
       // Get unique sections and find the first (main) topic for each
       const uniqueSections = new Set(subtopics.map(s => s.section_id).filter(Boolean));
       const mainTopicIds = new Set<number>();
@@ -130,7 +124,6 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      console.log(`Found ${mainTopicIds.size} main topics for domain ${domain}: ${Array.from(mainTopicIds).join(', ')}`);
       subtopics = subtopics.filter(s => mainTopicIds.has(s.id));
     }
 
@@ -157,8 +150,6 @@ export async function GET(request: NextRequest) {
       is_completed: progressMap.get(subtopic.id) === 'completed',
       is_viewed: progressMap.has(subtopic.id)
     }));
-
-    console.log(`Returning ${subtopicsWithProgress.length} subtopics for domain ${domain}`);
 
     return NextResponse.json(
       { subtopics: subtopicsWithProgress },

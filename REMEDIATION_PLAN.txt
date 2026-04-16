@@ -1,0 +1,36 @@
+Repository Remediation Plan (based on inline review comments)
+Date: 2026-04-16
+
+Scope:
+1) Keep the project OSS/free and avoid over-engineering.
+2) Remove noisy/unprofessional logs in runtime code.
+3) Tighten development-only bypass behavior.
+4) Remove misplaced ad-hoc test artifacts from app runtime tree.
+
+Planned and implemented actions:
+
+1. Development auth bypass hardening
+- Keep dev bypass available for local developer productivity.
+- Require an explicit feature flag in addition to NODE_ENV/localhost:
+  ENABLE_DEV_AUTH_BYPASS=true
+- Apply this in middleware, AuthProvider, and voice auth validation paths.
+
+2. Logging cleanup (production hygiene)
+- Remove high-volume console.log statements from:
+  - src/app/api/user/progress/domain-subtopics/route.ts
+  - src/app/api/user/progress/section-progress/route.ts
+  - src/app/api/user/activity/route.ts
+  - src/app/api/topics/topic-details/route.ts
+- Retain error logs for failure observability.
+
+3. Unprofessional log tone cleanup
+- Replace emoji-heavy error messages in VAD utility logs with neutral/professional phrasing.
+- Remove remaining emoji-style console.log debug messages there.
+
+4. Remove ad-hoc test script from runtime API tree
+- Delete src/app/api/section-headers/test.ts.
+- If needed later, reintroduce as a script under a dedicated scripts/ directory.
+
+Notes:
+- The BYOK/local-only key model is acceptable for an OSS/free product, but should be explicitly documented as a tradeoff.
+- Future optional enhancement: centralized structured logger with environment-based log levels.

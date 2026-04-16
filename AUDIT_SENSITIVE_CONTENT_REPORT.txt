@@ -1,0 +1,51 @@
+# Sensitive / Professionalism Audit Report
+
+Date: 2026-04-16
+
+## Findings
+
+1. **Development auth bypass behavior in runtime code**
+   - `src/middleware.ts:64-85`
+   - `src/components/AuthProvider.tsx:104-144`
+   - `src/app/api/voice/conversation/route.ts:158-167`
+   - `src/app/api/voice/middleware/validation.ts:67-79`
+   - Issue: The code supports a `dev-bypass` cookie and `?dev-auth=admin` pattern that creates a mock authenticated admin user (`admin@admin.com`). This is guarded by development checks, but keeping bypass logic in production paths increases risk if environment gating is ever misconfigured.
+   - Recommendation: Move bypass logic behind a stricter feature flag (e.g., `ENABLE_DEV_AUTH_BYPASS`), compile-time dead code elimination, and ensure it is excluded from production builds. Add automated tests/CI checks that fail if bypass code is enabled in production.
+
+2. **Client-side API key storage is only obfuscated, not encrypted**
+   - `src/utils/ai-config-storage.ts:16-25`
+   - `src/utils/ai-config-storage.ts:53-56`
+   - Issue: API keys are stored in `localStorage` using reversible Base64/reverse obfuscation. This is easily recoverable by any script running in the page context and increases blast radius of XSS.
+   - Recommendation: Prefer server-side token exchange/session-bound credentials. If local storage is required, use Web Crypto with a user-derived key and add strict CSP + XSS hardening. At minimum, clearly mark this as insecure in docs and provide optional encrypted storage.
+
+3. **Exposed internal/support email addresses in public pages and mock identities**
+   - `src/app/about/components/ContactForm.tsx:8-11`
+   - `src/app/privacy/page.tsx:229`
+   - `src/app/terms/page.tsx:240`
+   - `src/components/AuthProvider.tsx:115,126`
+   - `src/middleware.ts:71`
+   - Issue: Repository contains plaintext email addresses. Support emails are typically intentional, but mock admin email values in auth flows can look like placeholder/test data and may be flagged by security/compliance reviews.
+   - Recommendation: Keep public support emails if intended, but centralize them in config/constants. Replace mock emails with clearly scoped non-routable examples and avoid “admin” identities in shared code.
+
+4. **Verbose production logging of identifiers and request context**
+   - `src/app/api/user/progress/domain-subtopics/route.ts:18,35,133,161`
+   - `src/app/api/user/progress/section-progress/route.ts:32,148,248,258`
+   - `src/app/api/user/activity/route.ts:21`
+   - `src/app/api/topics/topic-details/route.ts:9,25,54,95`
+   - Issue: Many API routes use `console.log` with potentially sensitive operational context (user IDs, topic/category IDs, raw record snippets). This is noisy and can leak metadata into centralized logs.
+   - Recommendation: Replace ad-hoc logs with structured logger levels, redact IDs where possible, and gate debug logs behind environment-based log levels.
+
+5. **Unprofessional / non-production style log messages (emoji-heavy debug text)**
+   - `src/utils/vadUtils.ts:43,75,82,98,107,112,123,135,152`
+   - Issue: Emoji-heavy logs (`🎯`, `⚠️`, `❌`, `⏰`) and conversational wording are more typical of experiments than production observability standards.
+   - Recommendation: Normalize to structured, professional log messages with stable event codes for alerting and troubleshooting.
+
+6. **Repository includes ad-hoc diagnostic script under app API tree**
+   - `src/app/api/section-headers/test.ts:1-4`
+   - `src/app/api/section-headers/test.ts:30-47`
+   - Issue: A manual test script with embedded SQL guidance lives alongside runtime API code. This can be mistaken for production code and encourages direct manual DB operations.
+   - Recommendation: Move this into `/scripts` or `/tools`, document usage, and keep app runtime directories focused on deployable endpoints.
+
+## Hardcoded secret scan summary
+
+No obvious hardcoded API keys, private keys, bearer tokens, or password literals were found in tracked source files during regex-based scanning. One match occurred in `.git/hooks/fsmonitor-watchman.sample` and appears to be a standard Git sample file (not application code).

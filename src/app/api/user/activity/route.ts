@@ -18,9 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication error' }, { status: 401 });
     } else if (user) {
       userId = user.id;
-      console.log('Found user ID from auth for activity:', userId);
     } else {
-      console.log('No user found from auth for activity');
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 
